@@ -16,7 +16,7 @@
 *.launch
 .settings/
 *.sublime-workspace
-backend.iml
+*.iml
 .editorconfig
 
 # IDE - VSCode
