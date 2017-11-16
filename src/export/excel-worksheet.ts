@@ -3,9 +3,9 @@ import * as MessageFormat from 'messageformat';
 
 import {ExcelTheme} from './lib/excel_default_styles';
 import {excelDefaultWorksheetOptions} from './lib/excel_default_options';
-import {IActiveQuiz, INickname} from '../interfaces/common.interfaces';
+import {IActiveQuiz, INickname} from 'arsnova-click-v2-types/src/common';
 import {ILeaderBoardItem, Leaderboard} from '../leaderboard/leaderboard';
-import {IQuestion} from '../interfaces/questions/interfaces';
+import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
 
 export abstract class ExcelWorksheet {
   get responsesWithConfidenceValue(): Array<INickname> {

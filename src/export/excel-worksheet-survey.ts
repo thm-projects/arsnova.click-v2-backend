@@ -1,7 +1,7 @@
-import {INickname} from '../interfaces/common.interfaces';
-import {IQuestion} from '../interfaces/questions/interfaces';
+import {INickname} from 'arsnova-click-v2-types/src/common';
+import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {calculateNumberOfAnswers} from './lib/excel_function_library';
-import {IExcelWorksheet} from '../interfaces/excel.interfaces';
+import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
 import {ExcelWorksheet} from './excel-worksheet';
 
 export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {

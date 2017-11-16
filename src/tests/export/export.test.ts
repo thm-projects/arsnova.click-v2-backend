@@ -6,9 +6,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as i18n from 'i18n';
 import {Member} from '../../quiz-manager/quiz-manager';
-import {IQuestionFreetext, IQuestionGroup, IQuestionRanged, IQuestionSurvey} from '../../interfaces/questions/interfaces';
+import {IQuestionFreetext, IQuestionGroup, IQuestionRanged, IQuestionSurvey} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {ExcelWorkbook} from '../../export/excel-workbook';
-import {IFreetextAnswerOption} from '../../interfaces/answeroptions/interfaces';
+import {IFreetextAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
 
 @suite class ExcelExportTestSuite {

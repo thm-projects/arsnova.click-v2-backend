@@ -1,6 +1,6 @@
-import {IFreetextAnswerOption} from '../interfaces/answeroptions/interfaces';
-import {IQuestion, IQuestionChoice, IQuestionFreetext, IQuestionRanged} from '../interfaces/questions/interfaces';
-import {IQuizResponse} from '../interfaces/common.interfaces';
+import {IFreetextAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import {IQuizResponse} from 'arsnova-click-v2-types/src/common';
+import {IQuestionChoice, IQuestionRanged, IQuestionFreetext, IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
 
 export declare interface ILeaderBoardItem {
   name: string;

@@ -3,9 +3,9 @@ import * as Hex from 'crypto-js/enc-hex';
 import * as fs from 'fs';
 import * as request from 'request';
 import {DatabaseTypes, DbDao} from '../db/DbDAO';
-import {IQuestion} from '../interfaces/questions/interfaces';
+import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {staticStatistics} from '../statistics';
-import {IAnswerOption} from '../interfaces/answeroptions/interfaces';
+import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 
 export const assetsUrlRegex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
 

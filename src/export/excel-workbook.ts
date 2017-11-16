@@ -2,8 +2,8 @@ import * as xlsx from 'excel4node';
 import * as MessageFormat from 'messageformat';
 
 import {ExcelTheme} from './lib/excel_default_styles';
-import {IActiveQuiz} from '../interfaces/common.interfaces';
-import {IExcelWorkbook, IExcelWorksheet} from '../interfaces/excel.interfaces';
+import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
+import {IExcelWorkbook, IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
 import {SummaryExcelWorksheet} from './excel-worksheet-summary';
 import {SingleChoiceExcelWorksheet} from './excel-worksheet-choice-single';
 import {MultipleChoiceExcelWorksheet} from './excel-worksheet-choice-multiple';

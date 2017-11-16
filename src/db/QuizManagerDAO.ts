@@ -1,7 +1,7 @@
 import {parseCachedAssetQuiz} from '../cache/assets';
 import {DatabaseTypes, DbDao} from './DbDAO';
-import {IQuestionGroup} from '../interfaces/questions/interfaces';
-import {IActiveQuiz} from '../interfaces/common.interfaces';
+import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
+import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
 import {ActiveQuizItem, ActiveQuizItemPlaceholder} from '../quiz-manager/quiz-manager';
 
 const activeQuizzes: Object = {};
@@ -60,7 +60,7 @@ export class QuizManagerDAO {
 
   public static initActiveQuiz(quiz: IQuestionGroup): IActiveQuiz {
     const name: string = QuizManagerDAO.normalizeQuizName(quiz.hashtag);
-    if (activeQuizzes[name] && !(activeQuizzes[name] instanceof ActiveQuizItemPlaceholder)) {
+    if (!activeQuizzes[name] || !(activeQuizzes[name] instanceof ActiveQuizItemPlaceholder)) {
       return;
     }
     QuizManagerDAO.convertLegacyQuiz(quiz);

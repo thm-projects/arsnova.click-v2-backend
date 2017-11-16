@@ -1,8 +1,8 @@
 import {NextFunction, Request, Response, Router} from 'express';
 import * as mjAPI from 'mathjax-node';
-import {IQuestion, IQuestionGroup} from '../interfaces/questions/interfaces';
+import {IQuestion, IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as fs from 'fs';
-import {IAnswerOption} from '../interfaces/answeroptions/interfaces';
+import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 import * as CAS from 'cas';
 import * as crypto from 'crypto';
 import * as path from 'path';

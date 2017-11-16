@@ -1,5 +1,5 @@
 import * as WebSocket from 'ws';
-import {IActiveQuiz, INickname} from '../interfaces/common.interfaces';
+import {IActiveQuiz, INickname} from 'arsnova-click-v2-types/src/common';
 import {DatabaseTypes, DbDao} from '../db/DbDAO';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
 

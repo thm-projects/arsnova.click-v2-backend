@@ -10,7 +10,7 @@ import * as process from 'process';
 import * as slimerjs from 'slimerjs';
 import {ChildProcess, spawn} from 'child_process';
 import {themes} from './themes/availableThemes';
-import {ITheme} from './interfaces/common.interfaces';
+import {ITheme} from 'arsnova-click-v2-types/src/common';
 import {DbDao} from './db/DbDAO';
 import {staticStatistics} from './statistics';
 import {createDefaultPaths} from './app_bootstrap';

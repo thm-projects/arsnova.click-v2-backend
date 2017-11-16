@@ -1,7 +1,7 @@
-import {INickname} from '../interfaces/common.interfaces';
-import {IQuestion, IQuestionRanged} from '../interfaces/questions/interfaces';
+import {INickname} from 'arsnova-click-v2-types/src/common';
+import {IQuestion, IQuestionRanged} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {calculateNumberOfRangedAnswers} from './lib/excel_function_library';
-import {IExcelWorksheet} from '../interfaces/excel.interfaces';
+import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
 import {ExcelWorksheet} from './excel-worksheet';
 
 export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {

@@ -1,7 +1,7 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import * as crypto from 'crypto';
 import {DatabaseTypes, DbDao} from '../db/DbDAO';
-import {IQuestionGroup} from '../interfaces/questions/interfaces';
+import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
 
 export class LegacyApiRouter {

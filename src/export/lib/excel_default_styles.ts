@@ -243,7 +243,7 @@ export class ExcelTheme {
     this._selectedTheme = theme;
   }
 
-  getStyles() {
+  getStyles(): any {
     return {
       quizNameRowStyle: {
         alignment: {

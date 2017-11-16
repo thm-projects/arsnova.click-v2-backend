@@ -1,4 +1,4 @@
-import {IActiveQuiz} from '../../interfaces/common.interfaces';
+import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
 
 export function calculateNumberOfAnswers(quiz: IActiveQuiz, questionIndex: number, answerNumber: number) {
   let numberOfAnswers = 0;

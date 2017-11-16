@@ -1,8 +1,8 @@
-import {INickname} from '../interfaces/common.interfaces';
-import {IExcelWorksheet} from '../interfaces/excel.interfaces';
+import {INickname} from 'arsnova-click-v2-types/src/common';
+import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
 import {ExcelWorksheet} from './excel-worksheet';
 import {ILeaderBoardItem, Leaderboard} from '../leaderboard/leaderboard';
-import {IQuestion} from '../interfaces/questions/interfaces';
+import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
 
 export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;

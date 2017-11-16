@@ -1,10 +1,10 @@
 import {Router, Request, Response, NextFunction} from 'express';
-import {IQuestion, IQuestionGroup} from '../interfaces/questions/interfaces';
-import {IActiveQuiz} from '../interfaces/common.interfaces';
+import {IQuestion, IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
+import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
 import {DatabaseTypes, DbDao} from '../db/DbDAO';
 import {MatchTextToAssetsDb} from '../cache/assets';
-import {IAnswerOption} from '../interfaces/answeroptions/interfaces';
-import {ISessionConfiguration} from '../interfaces/session_configuration/interfaces';
+import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import {ISessionConfiguration} from 'arsnova-click-v2-types/src/session_configuration/interfaces';
 import {ExcelWorkbook} from '../export/excel-workbook';
 import {Leaderboard} from '../leaderboard/leaderboard';
 import * as fs from 'fs';
@@ -52,7 +52,7 @@ export class QuizRouter {
     }
 
     const result: Object = {
-      status: `STATUS:SUCCESS`,
+      status: `STATUS:SUCCESSFUL`,
       step: `QUIZ:${quiz ? 'AVAILABLE' : isInactive ? 'EXISTS' : 'UNDEFINED'}`,
       payload
     };
@@ -364,6 +364,25 @@ export class QuizRouter {
     });
   }
 
+  public reserveQuizWithOverride(req: Request, res: Response): void {
+    if (!req.body.quizName || !req.body.privateKey) {
+      res.sendStatus(500);
+      res.end(JSON.stringify({
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:INVALID_DATA',
+        payload: {}
+      }));
+      return;
+    }
+    QuizManagerDAO.initInactiveQuiz(req.body.quizName);
+    DbDao.create(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
+    res.send({
+      status: 'STATUS:SUCCESSFUL',
+      step: 'QUIZ:RESERVED',
+      payload: {}
+    });
+  }
+
   public deleteQuiz(req: Request, res: Response): void {
     if (!req.body.quizName || !req.body.privateKey) {
       res.sendStatus(500);
@@ -378,7 +397,7 @@ export class QuizRouter {
     if (dbResult) {
       QuizManagerDAO.removeQuiz(req.body.quizName);
       res.send({
-        status: 'STATUS:SUCCESS',
+        status: 'STATUS:SUCCESSFUL',
         step: 'QUIZ:REMOVED',
         payload: {}
       });
@@ -407,7 +426,7 @@ export class QuizRouter {
       activeQuiz.onDestroy();
       QuizManagerDAO.setQuizAsInactive(req.body.quizName);
       res.send({
-        status: 'STATUS:SUCCESS',
+        status: 'STATUS:SUCCESSFUL',
         step: 'QUIZ:CLOSED',
         payload: {}
       });
@@ -536,6 +555,7 @@ export class QuizRouter {
     this._router.post('/reading-confirmation', this.showReadingConfirmation);
     this._router.post('/settings/update', this.updateQuizSettings);
     this._router.post('/reserve', this.reserveQuiz);
+    this._router.post('/reserve/override', this.reserveQuizWithOverride);
 
     this._router.patch('/reset/:quizName', this.resetQuiz);
 

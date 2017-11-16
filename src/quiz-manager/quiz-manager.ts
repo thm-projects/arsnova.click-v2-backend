@@ -1,7 +1,7 @@
 import * as WebSocket from 'ws';
-import {IQuestionGroup} from '../interfaces/questions/interfaces';
+import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import illegalNicks from '../nicknames/illegalNicks';
-import {IActiveQuiz, IActiveQuizSerialized, ICas, INickname, IQuizResponse, INicknameSerialized} from '../interfaces/common.interfaces';
+import {IActiveQuiz, IActiveQuizSerialized, ICas, INickname, IQuizResponse, INicknameSerialized} from 'arsnova-click-v2-types/src/common';
 
 export class Member implements INickname {
   get casProfile(): ICas {

@@ -1,5 +1,5 @@
 import {Router, Request, Response, NextFunction} from 'express';
-import {IActiveQuiz, INickname} from '../interfaces/common.interfaces';
+import {IActiveQuiz, INickname} from 'arsnova-click-v2-types/src/common';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
 
 export class MemberRouter {

@@ -8,7 +8,7 @@ import chaiHttp = require('chai-http');
 
 import app from '../../App';
 import {DatabaseTypes, DbDao} from '../../db/DbDAO';
-import {IQuestionGroup} from '../../interfaces/questions/interfaces';
+import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {staticStatistics} from '../../statistics';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
 
