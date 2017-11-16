@@ -55,7 +55,7 @@
     "@types/node": "^8.0.52",
     "@types/websocket": "0.0.34",
     "@types/ws": "^3.2.0",
-    "arsnova-click-v2-types": "git+ssh://git@git.thm.de:arsnova/arsnova-click-v2-types.git",
+    "arsnova-click-v2-types": "git+https://git.thm.de/arsnova/arsnova-click-v2-types.git",
     "chai": "^4.1.2",
     "chai-http": "^3.0.0",
     "del": "^3.0.0",
