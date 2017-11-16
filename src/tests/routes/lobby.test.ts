@@ -20,6 +20,10 @@ const hashtag = 'mocha-test-api-v1';
   private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/lobby`;
   private _hashtag = hashtag;
 
+  static before() {
+    QuizManagerDAO.initInactiveQuiz(hashtag);
+  }
+
   static after() {
     QuizManagerDAO.removeQuiz(hashtag);
   }
