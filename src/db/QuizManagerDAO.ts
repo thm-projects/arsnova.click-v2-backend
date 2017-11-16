@@ -61,6 +61,7 @@ export class QuizManagerDAO {
   public static initActiveQuiz(quiz: IQuestionGroup): IActiveQuiz {
     const name: string = QuizManagerDAO.normalizeQuizName(quiz.hashtag);
     if (!activeQuizzes[name] || !(activeQuizzes[name] instanceof ActiveQuizItemPlaceholder)) {
+      console.log('trying to init an active quiz which is not inactive');
       return;
     }
     QuizManagerDAO.convertLegacyQuiz(quiz);
