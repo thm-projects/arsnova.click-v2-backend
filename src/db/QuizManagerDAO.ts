@@ -190,9 +190,11 @@ export class QuizManagerDAO {
             countdownEnd: legacyQuiz.configuration.music.countdownEndVolume,
             useGlobalVolume: legacyQuiz.configuration.music.isUsingGlobalVolume,
           },
-          lobbyEnabled: legacyQuiz.configuration.music.lobbyEnabled,
-          countdownRunningEnabled: legacyQuiz.configuration.music.countdownRunningEnabled,
-          countdownEndEnabled: legacyQuiz.configuration.music.countdownEndEnabled
+          enabled: {
+            lobby: legacyQuiz.configuration.music.lobbyEnabled,
+            countdownRunning: legacyQuiz.configuration.music.countdownRunningEnabled,
+            countdownEnd: legacyQuiz.configuration.music.countdownEndEnabled,
+          }
         },
         nicks: {
           selectedNicks: legacyQuiz.configuration.nicks.selectedValues,
