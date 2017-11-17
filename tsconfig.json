@@ -3,9 +3,13 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
+    "baseUrl": "src",
     "sourceMap": false,
     "experimentalDecorators": true,
     "outDir": "dist/",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
     "lib": ["es6"]
   },
   "include": ["src/**/*.ts"],
