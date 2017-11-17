@@ -80,7 +80,9 @@ const expect = chai.expect;
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/authorize`;
 
   @test async authorizeExists() {
-    const res = await chai.request(router).get(`${this._baseApiRoute}`);
+    const res = await chai.request(router)
+      .get(`${this._baseApiRoute}`)
+      .set('referer', staticStatistics.rewriteAssetCacheUrl);
     expect(res.type).to.eql('text/html');
   }
 }
