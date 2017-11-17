@@ -3,15 +3,18 @@ import * as mjAPI from 'mathjax-node';
 import {IQuestion, IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as fs from 'fs';
 import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import * as CAS from 'cas';
 import * as crypto from 'crypto';
 import * as path from 'path';
 import * as fileType from 'file-type';
 import {MatchTextToAssetsDb} from '../cache/assets';
 import {MathjaxDAO} from '../db/MathjaxDAO';
+import {request} from 'http';
+import * as xml2js from 'xml2js';
+import * as https from 'https';
+import {CasDAO} from '../db/CasDAO';
+import {ICasData} from 'arsnova-click-v2-types/src/common';
 
-const casSettings = {base_url: 'https://cas.thm.de/cas', service: 'arsnova_click_v2'};
-const cas = new CAS(casSettings);
+const casSettings = {base_url: 'https://cas.thm.de/cas'};
 
 export class LibRouter {
   get router(): Router {
@@ -236,19 +239,66 @@ export class LibRouter {
 
   public authorize(req: Request, res: Response, next: NextFunction): void {
     const ticket = req.params.ticket;
+    let serviceUrl = req.headers.referer;
+    if (serviceUrl instanceof Array) {
+      serviceUrl = serviceUrl[0];
+    }
+    serviceUrl = encodeURIComponent(serviceUrl.replace(`?ticket=${ticket}`, ''));
+
     if (ticket) {
-      cas.validate(ticket, function(err, status, username) {
-        if (err) {
-          // Handle the error
-          res.send({error: err});
-        } else {
-          // Log the user in
-          res.send({status: status, username: username});
-        }
+
+      const casRequest = https.get(`${casSettings.base_url}/serviceValidate?ticket=${ticket}&service=${serviceUrl}`, (casResponse) => {
+
+        let data = '';
+
+        casResponse.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        casResponse.on('end', () => {
+          xml2js.parseString(data, (err, result) => {
+            console.log('received response from cas server', err, result);
+            if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
+              res.send({
+                status: 'STATUS:FAILED',
+                step: 'AUTHENTICATE',
+                payload: {err, result}
+              });
+              return;
+            } else {
+              const resultData = result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:attributes'][0];
+              const casDataElement: ICasData = {
+                username: resultData['cas:username'],
+                displayName: resultData['cas:displayNmae'],
+                mail: resultData['cas:mail'],
+              };
+              CasDAO.add(ticket, casDataElement);
+              res.send({
+                status: 'STATUS:SUCCESSFUL',
+                step: 'AUTHENTICATE',
+                payload: {ticket}
+              });
+            }
+          });
+        });
       });
+
+      casRequest.on('error', (error) => {
+        console.log('error at requesting cas url', error);
+        casRequest.abort();
+        res.send({
+          status: 'STATUS:FAILED',
+          step: 'AUTHENTICATE',
+          payload: {error}
+        });
+        return;
+      });
+
     } else {
-      const loginUrl = `${casSettings.base_url}?service=${req.headers.referer}/${this.randomValueHex(12)}`;
+
+      const loginUrl = `${casSettings.base_url}/login?service=${serviceUrl}`;
       res.redirect(loginUrl);
+
     }
   }
 
@@ -269,7 +319,7 @@ export class LibRouter {
     this._router.post('/cache/quiz/assets', this.cacheQuizAssets.bind(this));
     this._router.get('/cache/quiz/assets/:digest', this.getCache.bind(this));
 
-    this._router.get('/authorize', this.authorize.bind(this));
+    this._router.get('/authorize/:ticket?', this.authorize.bind(this));
   }
 
 }

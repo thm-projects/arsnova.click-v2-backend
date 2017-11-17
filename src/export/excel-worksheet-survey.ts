@@ -145,8 +145,8 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       })[0];
       if (this._isCasRequired) {
         const profile = nickItem.casProfile;
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.id);
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail instanceof Array ? profile.mail.slice(-1)[0] : profile.mail);
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
       }
       const chosenAnswer: Array<string> = <any>nickItem.responses[this._questionIndex].value;
       chosenAnswer.forEach((answerIndex: string, index: number) => {

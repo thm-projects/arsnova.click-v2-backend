@@ -98,7 +98,7 @@ import {QuizManagerDAO} from '../../db/QuizManagerDAO';
     const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
     for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
       quiz.nicknames.push(
-        new Member({id: memberIndex, name: `testnick${memberIndex + 1}`, webSocketAuthorization: 0, responses: []}),
+        new Member({id: memberIndex, name: `testnick${memberIndex + 1}`, webSocketAuthorization: 0, responses: [], ticket: null}),
       );
     }
     await assert.equal(quiz.nicknames.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);

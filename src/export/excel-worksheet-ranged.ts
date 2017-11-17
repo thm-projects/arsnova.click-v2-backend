@@ -236,8 +236,8 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
         const profile = this.quiz.nicknames.filter((nick: INickname) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.id);
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail instanceof Array ? profile.mail.slice(-1)[0] : profile.mail);
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
       }
       this.ws.cell(nextStartRow, nextColumnIndex++).number(responseItem.value);
       if (this.responsesWithConfidenceValue.length > 0) {

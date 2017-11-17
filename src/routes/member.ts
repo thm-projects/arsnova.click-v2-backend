@@ -1,6 +1,7 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import {IActiveQuiz, INickname} from 'arsnova-click-v2-types/src/common';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
+import {CasDAO} from '../db/CasDAO';
 
 export class MemberRouter {
   get router(): Router {
@@ -32,9 +33,18 @@ export class MemberRouter {
       }));
       return;
     }
+    if (!req.body.nickname || (activeQuiz.originalObject.sessionConfig.nicks.restrictToCasLogin && !req.body.ticket)) {
+      res.sendStatus(500);
+      res.end(JSON.stringify({
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:ADD_MEMBER:INVALID_PARAMETERS',
+        payload: {}
+      }));
+      return;
+    }
     try {
       const webSocketAuthorization: number = Math.random();
-      activeQuiz.addMember(req.body.nickname, webSocketAuthorization);
+      activeQuiz.addMember(req.body.nickname, webSocketAuthorization, req.body.ticket);
       res.send({
         status: 'STATUS:SUCCESSFUL',
         step: 'LOBBY:MEMBER_ADDED',

@@ -1,10 +1,13 @@
 import * as WebSocket from 'ws';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import illegalNicks from '../nicknames/illegalNicks';
-import {IActiveQuiz, IActiveQuizSerialized, ICas, INickname, IQuizResponse, INicknameSerialized} from 'arsnova-click-v2-types/src/common';
+import {
+  IActiveQuiz, IActiveQuizSerialized, ICasData, INickname, IQuizResponse, INicknameSerialized
+} from 'arsnova-click-v2-types/src/common';
+import {CasDAO} from '../db/CasDAO';
 
 export class Member implements INickname {
-  get casProfile(): ICas {
+  get casProfile(): ICasData {
     return this._casProfile;
   }
   set webSocketAuthorization(value: number) {
@@ -43,16 +46,17 @@ export class Member implements INickname {
   private _webSocket: WebSocket;
   private _webSocketAuthorization: number;
   private _responses: Array<IQuizResponse>;
-  private _casProfile: ICas;
+  private _casProfile: ICasData;
 
   constructor(
-    {id, name, colorCode, responses, webSocketAuthorization}:
-      { id: number, name: string, colorCode?: string, responses?: Array<IQuizResponse>, webSocketAuthorization: number}) {
+    {id, name, colorCode, responses, webSocketAuthorization, ticket}:
+      { id: number, name: string, colorCode?: string, responses?: Array<IQuizResponse>, webSocketAuthorization: number, ticket: string}) {
     this._id = id;
     this._name = name;
     this._colorCode = colorCode || this.generateRandomColorCode();
     this._responses = responses || [];
     this._webSocketAuthorization = webSocketAuthorization;
+    this._casProfile = CasDAO.match(ticket);
   }
 
   private hashCode(str: string): number { // java String#hashCode
@@ -244,18 +248,18 @@ export class ActiveQuizItem implements IActiveQuiz {
     });
   }
 
-  public addMember(name: string, webSocketAuthorization: number, profile?: ICas): boolean {
+  public addMember(name: string, webSocketAuthorization: number, ticket?: string): boolean {
     const foundMembers: number = this.findMemberByName(name).length;
 
     if (this.originalObject.sessionConfig.nicks.blockIllegalNicks && illegalNicks.indexOf(name.toUpperCase()) > -1) {
       throw new Error('LOBBY:ILLEGAL_NAME');
     }
-    if (this.originalObject.sessionConfig.nicks.restrictToCasLogin && !profile) {
+    if (this.originalObject.sessionConfig.nicks.restrictToCasLogin && !ticket) {
       throw new Error('LOBBY:CAS_LOGIN_REQUIRED');
     }
 
     if (foundMembers === 0) {
-      const member: INickname = new Member({id: this.nicknames.length, name, webSocketAuthorization});
+      const member: INickname = new Member({id: this.nicknames.length, name, webSocketAuthorization, ticket});
       this.nicknames.push(member);
       this.pushMessageToClients({
         status: 'STATUS:SUCCESSFUL',

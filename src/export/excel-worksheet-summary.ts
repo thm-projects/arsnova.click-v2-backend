@@ -268,8 +268,8 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         const profile = this.quiz.nicknames.filter((nick: INickname) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
-        this.ws.cell(targetRow, nextColumnIndex++).string(profile.id);
-        this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail instanceof Array ? profile.mail.slice(-1)[0] : profile.mail);
+        this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
+        this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail[0]);
       }
       const correctQuestionNumbers = this.leaderBoardData[indexInList].correctQuestions.map((item) => item + 1);
       this.ws.cell(targetRow, nextColumnIndex++).string(correctQuestionNumbers.join(', '));
@@ -309,8 +309,8 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         const profile = this.quiz.nicknames.filter((nick: INickname) => {
           return nick.name === responseItem.name;
         })[0].casProfile;
-        this.ws.cell(targetRow, nextColumnIndex++).string(profile.id);
-        this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail instanceof Array ? profile.mail.slice(-1)[0] : profile.mail);
+        this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
+        this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail[0]);
       }
       const leaderboardItem = this._leaderBoardData.filter((item) => item.name === responseItem.name)[0];
       if (leaderboardItem) {

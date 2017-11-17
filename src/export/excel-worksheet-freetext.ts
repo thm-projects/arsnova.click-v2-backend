@@ -174,8 +174,8 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       this.ws.cell(nextStartRow, nextColumnIndex++).string(nickItem.name);
       if (this._isCasRequired) {
         const profile = nickItem.casProfile;
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.id);
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail instanceof Array ? profile.mail.slice(-1)[0] : profile.mail);
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
       }
       this.ws.cell(nextStartRow, nextColumnIndex++).string(nickItem.responses[this._questionIndex].value);
       if (this.responsesWithConfidenceValue.length > 0) {
