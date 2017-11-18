@@ -57,6 +57,7 @@ export class Member implements INickname {
     this._responses = responses || [];
     this._webSocketAuthorization = webSocketAuthorization;
     this._casProfile = CasDAO.match(ticket);
+    CasDAO.remove(ticket);
   }
 
   private hashCode(str: string): number { // java String#hashCode
