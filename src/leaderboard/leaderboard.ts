@@ -1,13 +1,6 @@
 import {IFreetextAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import {IQuizResponse} from 'arsnova-click-v2-types/src/common';
+import {IQuizResponse, ILeaderBoardItem} from 'arsnova-click-v2-types/src/common';
 import {IQuestionChoice, IQuestionRanged, IQuestionFreetext, IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
-
-export declare interface ILeaderBoardItem {
-  name: string;
-  responseTime: number;
-  correctQuestions: Array<number>;
-  confidenceValue: number;
-}
 
 export class Leaderboard {
   private isCorrectSingleChoiceQuestion(response: number, question: IQuestionChoice): boolean {

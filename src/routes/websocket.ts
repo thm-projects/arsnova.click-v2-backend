@@ -3,12 +3,6 @@ import {IActiveQuiz, INickname} from 'arsnova-click-v2-types/src/common';
 import {DatabaseTypes, DbDao} from '../db/DbDAO';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
 
-export declare interface IMessage {
-  status: string;
-  step: string;
-  payload: any;
-}
-
 export class WebSocketRouter {
   static get wss(): WebSocket.Server {
     return this._wss;
