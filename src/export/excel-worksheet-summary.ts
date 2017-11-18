@@ -1,7 +1,7 @@
-import {INickname} from 'arsnova-click-v2-types/src/common';
+import {ILeaderBoardItem, INickname} from 'arsnova-click-v2-types/src/common';
 import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
 import {ExcelWorksheet} from './excel-worksheet';
-import {ILeaderBoardItem, Leaderboard} from '../leaderboard/leaderboard';
+import {Leaderboard} from '../leaderboard/leaderboard';
 import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
 
 export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
