@@ -17,6 +17,7 @@ export function MatchTextToAssetsDb(value: string) {
       const digest = Hex.stringify(sha256(matchedValueElement));
       const cachePath = `${__dirname}/../../cache/${digest}`;
       if (fs.existsSync(cachePath)) {
+        DbDao.create(DatabaseTypes.assets, {url: matchedValueElement, digest, path: cachePath}, matchedValueElement.replace(/\./g, '_'));
         return;
       }
       if (!matchedValueElement.startsWith('http')) {

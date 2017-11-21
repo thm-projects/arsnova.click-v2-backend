@@ -65,6 +65,9 @@ const hashtag = 'mocha-test-lib';
 @suite class CacheQuizAssetsLibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/cache/quiz/assets`;
   private _hashtag = hashtag;
+  private _quiz: IQuestionGroup = JSON.parse(fs.readFileSync(
+    path.join(__dirname, '..', '..', '..', 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
+  ).toString('UTF-8'));
 
   static before() {
     QuizManagerDAO.initInactiveQuiz(hashtag);
@@ -75,16 +78,16 @@ const hashtag = 'mocha-test-lib';
   }
 
   @test async postNewAssetExists() {
-    const quiz: IQuestionGroup = JSON.parse(fs.readFileSync(
-      path.join(__dirname, '..', '..', '..', 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
-    ).toString('UTF-8'));
-    quiz.hashtag = this._hashtag;
-    const res = await chai.request(router).post(`${this._baseApiRoute}/`).send({quiz});
+    this._quiz.hashtag = this._hashtag;
+    const res = await chai.request(router).post(`${this._baseApiRoute}/`).send({quiz: this._quiz});
     expect(res.type).to.eql('application/json');
+  }
 
-    const parsedQuiz: IQuestionGroup = QuizManagerDAO.initActiveQuiz(quiz).originalObject;
+  @test async quizWithAssetUrlsExists() {
+    this._quiz.hashtag = this._hashtag;
+    const parsedQuiz: IQuestionGroup = QuizManagerDAO.initActiveQuiz(this._quiz).originalObject;
     expect(parsedQuiz.questionList.map(question => question.questionText).filter(
-        questionText => questionText.indexOf(staticStatistics.rewriteAssetCacheUrl) > -1).length
+      questionText => questionText.indexOf(staticStatistics.rewriteAssetCacheUrl) > -1).length
     ).to.be.greaterThan(0, 'Expect to find the rewritten assets cache url');
   }
 

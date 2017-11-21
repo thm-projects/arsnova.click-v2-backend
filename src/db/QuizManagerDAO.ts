@@ -4,12 +4,12 @@ import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
 import {ActiveQuizItem, ActiveQuizItemPlaceholder} from '../quiz-manager/quiz-manager';
 
-const activeQuizzes: Object = {};
-
 const privateServerConfig = require('../../settings.json');
 privateServerConfig.public.limitActiveQuizzes = parseFloat(privateServerConfig.public.limitActiveQuizzes);
 
 export class QuizManagerDAO {
+  private static activeQuizzes = {};
+
   private static checkABCDOrdering(hashtag: string): boolean {
     let ordered = true;
     if (!hashtag || hashtag.length < 2 || hashtag.charAt(0) !== 'a') {
@@ -30,7 +30,7 @@ export class QuizManagerDAO {
 
   public static getRenameRecommendations(quizName: string): Array<string> {
     const result = [];
-    const count = Object.keys(activeQuizzes).filter((value: string) => {
+    const count = Object.keys(this.activeQuizzes).filter((value: string) => {
       const name: string = QuizManagerDAO.normalizeQuizName(value);
       return name.startsWith(quizName.toLowerCase());
     }).length;
@@ -45,22 +45,22 @@ export class QuizManagerDAO {
 
   public static setQuizAsInactive(quizName: string): void {
     const name: string = QuizManagerDAO.normalizeQuizName(quizName);
-    if (activeQuizzes[name]) {
-      activeQuizzes[name] = new ActiveQuizItemPlaceholder(name);
+    if (this.activeQuizzes[name]) {
+      this.activeQuizzes[name] = new ActiveQuizItemPlaceholder(name);
     }
   }
 
   public static initInactiveQuiz(quizName: string): void {
     const name: string = QuizManagerDAO.normalizeQuizName(quizName);
-    if (activeQuizzes[name]) {
+    if (this.activeQuizzes[name]) {
       return;
     }
-    activeQuizzes[name] = new ActiveQuizItemPlaceholder(name);
+    this.activeQuizzes[name] = new ActiveQuizItemPlaceholder(name);
   }
 
   public static initActiveQuiz(quiz: IQuestionGroup): IActiveQuiz {
     const name: string = QuizManagerDAO.normalizeQuizName(quiz.hashtag);
-    if (!activeQuizzes[name] || !(activeQuizzes[name] instanceof ActiveQuizItemPlaceholder)) {
+    if (!this.activeQuizzes[name] || !(this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder)) {
       console.log('trying to init an active quiz which is not inactive');
       return;
     }
@@ -68,91 +68,91 @@ export class QuizManagerDAO {
     if (privateServerConfig.public.cacheQuizAssets) {
       parseCachedAssetQuiz(quiz.questionList);
     }
-    activeQuizzes[name] = new ActiveQuizItem({nicknames: [], originalObject: quiz});
-    return activeQuizzes[name];
+    this.activeQuizzes[name] = new ActiveQuizItem({nicknames: [], originalObject: quiz});
+    return this.activeQuizzes[name];
   }
 
   public static removeQuiz(originalName: string): boolean {
     const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    if (!activeQuizzes[name]) {
+    if (!this.activeQuizzes[name]) {
       return;
     }
-    delete activeQuizzes[name];
+    delete this.activeQuizzes[name];
     return true;
   }
 
   public static getActiveQuizByName(originalName: string): IActiveQuiz {
     const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    if (activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
+    if (this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
       return;
     }
-    return activeQuizzes[name];
+    return this.activeQuizzes[name];
   }
 
   public static updateActiveQuiz(data: IActiveQuiz): void {
     const name: string = QuizManagerDAO.normalizeQuizName(data.originalObject.hashtag);
-    if (activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
+    if (this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
       return;
     }
-    activeQuizzes[name] = data;
+    this.activeQuizzes[name] = data;
   }
 
   public static getAllActiveQuizNames(): Array<string> {
-    return Object.keys(activeQuizzes)
+    return Object.keys(this.activeQuizzes)
       .filter(name => !this.isInactiveQuiz(name));
   }
 
   public static getAllPersistedQuizzes(): Object {
-    return activeQuizzes;
+    return this.activeQuizzes;
   }
 
   public static getPersistedQuizByName(originalName: string): IActiveQuiz {
     const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    return activeQuizzes[name];
+    return this.activeQuizzes[name];
   }
 
   public static isActiveQuiz(originalName: string): boolean {
     const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    return activeQuizzes[name] && activeQuizzes[name] instanceof ActiveQuizItem;
+    return this.activeQuizzes[name] && this.activeQuizzes[name] instanceof ActiveQuizItem;
   }
 
   public static isInactiveQuiz(originalName: string): boolean {
     const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    return activeQuizzes[name] && activeQuizzes[name] instanceof ActiveQuizItemPlaceholder;
+    return this.activeQuizzes[name] && this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder;
   }
 
   public static getAllActiveMembers(): number {
-    return Object.keys(activeQuizzes).filter((value: string) => {
+    return Object.keys(this.activeQuizzes).filter((value: string) => {
       const name: string = QuizManagerDAO.normalizeQuizName(value);
-      if (activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
+      if (this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
         return;
       }
-      return activeQuizzes[name].nicknames.length;
+      return this.activeQuizzes[name].nicknames.length;
     }).reduce((a: number, b: string) => {
       const name: string = QuizManagerDAO.normalizeQuizName(b);
-      return parseInt(a + activeQuizzes[name].nicknames.length, 10);
+      return parseInt(a + this.activeQuizzes[name].nicknames.length, 10);
     }, 0);
   }
 
   public static getAllPersistedDemoQuizzes(): String[] {
-    return Object.keys(activeQuizzes).filter((value: string) => {
+    return Object.keys(this.activeQuizzes).filter((value: string) => {
       const name: string = QuizManagerDAO.normalizeQuizName(value);
-      return activeQuizzes[name].name.toLowerCase().startsWith('demo quiz');
+      return this.activeQuizzes[name].name.toLowerCase().startsWith('demo quiz');
     });
   }
 
   public static getAllPersistedAbcdQuizzes(): String[] {
-    return Object.keys(activeQuizzes).filter((value: string) => {
+    return Object.keys(this.activeQuizzes).filter((value: string) => {
       const name: string = QuizManagerDAO.normalizeQuizName(value);
-      return QuizManagerDAO.checkABCDOrdering(activeQuizzes[name].name);
+      return QuizManagerDAO.checkABCDOrdering(this.activeQuizzes[name].name);
     });
   }
 
   public static getAllPersistedAbcdQuizzesByLength(length: number): String[] {
-    return Object.keys(activeQuizzes).filter((value: string) => {
+    return Object.keys(this.activeQuizzes).filter((value: string) => {
       const name: string = QuizManagerDAO.normalizeQuizName(value);
-      return QuizManagerDAO.checkABCDOrdering(activeQuizzes[name].name) &&
-        activeQuizzes[name].originalObject.questionList[0].answerOptionList.length === length;
+      return QuizManagerDAO.checkABCDOrdering(this.activeQuizzes[name].name) &&
+        this.activeQuizzes[name].originalObject.questionList[0].answerOptionList.length === length;
     });
   }
 
@@ -212,5 +212,5 @@ export class QuizManagerDAO {
 }
 
 DbDao.getState()[DatabaseTypes.quiz].forEach((value) => {
-  activeQuizzes[QuizManagerDAO.normalizeQuizName(value.quizName)] = new ActiveQuizItemPlaceholder(value.quizName);
+  QuizManagerDAO.initInactiveQuiz(value.quizName);
 });
