@@ -9,9 +9,12 @@ import chaiHttp = require('chai-http');
 import router from '../../App';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {staticStatistics} from '../../statistics';
+import {QuizManagerDAO} from '../../db/QuizManagerDAO';
 
 chai.use(chaiHttp);
 const expect = chai.expect;
+
+const hashtag = 'mocha-test-lib';
 
 @suite class LibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib`;
@@ -61,13 +64,28 @@ const expect = chai.expect;
 
 @suite class CacheQuizAssetsLibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/cache/quiz/assets`;
+  private _hashtag = hashtag;
+
+  static before() {
+    QuizManagerDAO.initInactiveQuiz(hashtag);
+  }
+
+  static after() {
+    QuizManagerDAO.removeQuiz(hashtag);
+  }
 
   @test async postNewAssetExists() {
     const quiz: IQuestionGroup = JSON.parse(fs.readFileSync(
       path.join(__dirname, '..', '..', '..', 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
     ).toString('UTF-8'));
+    quiz.hashtag = this._hashtag;
     const res = await chai.request(router).post(`${this._baseApiRoute}/`).send({quiz});
     expect(res.type).to.eql('application/json');
+
+    const parsedQuiz: IQuestionGroup = QuizManagerDAO.initActiveQuiz(quiz).originalObject;
+    expect(parsedQuiz.questionList.map(question => question.questionText).filter(
+        questionText => questionText.indexOf(staticStatistics.rewriteAssetCacheUrl) > -1).length
+    ).to.be.greaterThan(0, 'Expect to find the rewritten assets cache url');
   }
 
   @test async getByDigestExists() {
