@@ -8,7 +8,6 @@ import * as path from 'path';
 import * as fileType from 'file-type';
 import {MatchTextToAssetsDb} from '../cache/assets';
 import {MathjaxDAO} from '../db/MathjaxDAO';
-import {request} from 'http';
 import * as xml2js from 'xml2js';
 import * as https from 'https';
 import {CasDAO} from '../db/CasDAO';
@@ -35,9 +34,9 @@ export class LibRouter {
       // determines whether Message.Set() calls are logged
       displayMessages: false,
       // determines whether error messages are shown on the console
-      displayErrors: true,
+      displayErrors: false,
       // determines whether "unknown characters" (i.e., no glyph in the configured fonts) are saved in the error array
-      undefinedCharError: true,
+      undefinedCharError: false,
       // a convenience option to add MathJax extensions
       extensions: '',
       // for webfont urls in the CSS for HTML output
@@ -49,7 +48,7 @@ export class LibRouter {
           'tex2jax.js', 'mml2jax.js', 'asciimath2jax.js', 'AssistiveMML.js'
         ],
         TeX: {
-          extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js']
+          extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js', 'autoload-all.js', 'color.js']
         },
         tex2jax: {
           processEscapes: true,
@@ -167,31 +166,35 @@ export class LibRouter {
       res.end(`Malformed request received -> ${req.body}`);
       return;
     }
-    const mathjaxArray = [].concat(JSON.parse(req.body.mathjax));
+    const mathjaxArray = [...JSON.parse(req.body.mathjax)];
     const result = [];
-    if (mathjaxArray) {
-      mathjaxArray.forEach((mathjaxPlain, index) => {
-        const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
-        if (dbResult) {
-          result.push(dbResult);
-          return;
-        }
-        mjAPI.typeset({
-          math: mathjaxPlain.replace(/ ?\${1,2} ?/g, ''),
-          format: req.body.format,
-          html: req.body.output === 'html',
-          css: req.body.output === 'html',
-          svg: req.body.output === 'svg',
-          mml: req.body.output === 'mml'
-        }).then(data => {
-          result.push(data);
-          MathjaxDAO.updateRenderedData(data, mathjaxPlain);
-          if (index === mathjaxArray.length - 1) {
-            res.send(JSON.stringify(result));
+    new Promise((async resolve => {
+      if (mathjaxArray) {
+        await mathjaxArray.forEach(async (mathjaxPlain, index) => {
+          const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
+          if (dbResult) {
+            result.push(dbResult);
+            return;
           }
+          await mjAPI.typeset({
+            math: mathjaxPlain.replace(/( ?\${1,2} ?)/g, ''),
+            format: req.body.format,
+            html: req.body.output === 'html',
+            css: req.body.output === 'html',
+            svg: req.body.output === 'svg',
+            mml: req.body.output === 'mml'
+          }).then(data => {
+            result.push(data);
+            MathjaxDAO.updateRenderedData(data, mathjaxPlain);
+          }, error => {
+            console.log(error);
+          });
         });
-      });
-    }
+      }
+      resolve();
+    })).then(() => {
+      res.send(JSON.stringify(result));
+    });
   }
 
   public cacheQuizAssets(req: Request, res: Response, next: NextFunction): void {
