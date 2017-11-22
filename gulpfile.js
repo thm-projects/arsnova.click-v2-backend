@@ -32,12 +32,7 @@ gulp.task('assets', function() {
 gulp.task('clean', function clean() {
   // You can use multiple globbing patterns as you would with `gulp.src`,
   // for example if you are using del 2.0 or above, return its promise
-  return del([ 'clean-test-generated' ]);
-});
-
-gulp.task('clean-test-generated', function () {
-  return gulp.src('test-generated', {read: true})
-    .pipe(clean());
+  return del([ 'test-generated/*' ]);
 });
 
 gulp.task('default', gulp.series(gulp.parallel('scripts', 'js-scripts', 'assets', 'clean')));
