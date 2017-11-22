@@ -134,6 +134,25 @@ export class QuizManagerDAO {
     }, 0);
   }
 
+  public static getLastPersistedNumberForData(data): number {
+    let maxNumber = 0;
+    data.forEach((demoQuizName  => {
+      const currentNumber = parseInt(demoQuizName.substring(demoQuizName.lastIndexOf(' '), demoQuizName.length), 10);
+      if (currentNumber > maxNumber) {
+        maxNumber = currentNumber;
+      }
+    }));
+    return maxNumber;
+  }
+
+  public static getLastPersistedDemoQuizNumber(): number {
+    return QuizManagerDAO.getLastPersistedNumberForData(QuizManagerDAO.getAllPersistedDemoQuizzes());
+  }
+
+  public static getLastPersistedAbcdQuizNumberByLength(length: number): number {
+    return QuizManagerDAO.getLastPersistedNumberForData(QuizManagerDAO.getAllPersistedAbcdQuizzesByLength(length));
+  }
+
   public static getAllPersistedDemoQuizzes(): String[] {
     return Object.keys(this.activeQuizzes).filter((value: string) => {
       const name: string = QuizManagerDAO.normalizeQuizName(value);

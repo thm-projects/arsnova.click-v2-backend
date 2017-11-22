@@ -38,7 +38,7 @@ const privateKey = Math.random().toString(10);
     const res = await chai.request(app).get(`${this._baseApiRoute}/generate/demo/en`);
     expect(res.type).to.equal('application/json');
     expect(res.status).to.equal(200);
-    expect(res.body.hashtag).to.equal('Demo Quiz ' + (QuizManagerDAO.getAllPersistedDemoQuizzes().length + 1));
+    expect(res.body.hashtag).to.equal('Demo Quiz ' + (QuizManagerDAO.getLastPersistedDemoQuizNumber() + 1));
   }
 
   @test async generateAbcdQuiz() {

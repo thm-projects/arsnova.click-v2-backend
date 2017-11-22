@@ -59,16 +59,6 @@ export class WebSocketRouter {
             }
             ws.send(JSON.stringify(res));
           }
-
-          if (message.step === 'QUIZ:ACTIVE_QUIZZES') {
-            ws.send(JSON.stringify({
-              status: 'STATUS:SUCCESSFUL',
-              step: 'QUIZ:ACTIVE_QUIZZES',
-              payload: {
-                activeQuizzes: QuizManagerDAO.getAllPersistedDemoQuizzes()
-              }
-            }));
-          }
         } catch (ex) {
           console.log('error while receiving ws message', ex);
           ws.send(`Hello, you sent -> ${message}`);

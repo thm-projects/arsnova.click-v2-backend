@@ -67,7 +67,7 @@ export class QuizRouter {
         demoQuizPath = path.join(basePath, 'en.demo_quiz.json');
       }
       const result: IQuestionGroup = JSON.parse(fs.readFileSync(demoQuizPath).toString());
-      result.hashtag = 'Demo Quiz ' + (QuizManagerDAO.getAllPersistedDemoQuizzes().length + 1);
+      result.hashtag = 'Demo Quiz ' + (QuizManagerDAO.getLastPersistedDemoQuizNumber() + 1);
       QuizManagerDAO.convertLegacyQuiz(result);
       res.setHeader('Response-Type', 'application/json');
       res.send(result);
@@ -89,7 +89,7 @@ export class QuizRouter {
       for (let i  = 0; i < answerLength; i++) {
         abcdName += String.fromCharCode(65 + i);
       }
-      result.hashtag = `${abcdName} ${(QuizManagerDAO.getAllPersistedAbcdQuizzesByLength(answerLength).length + 1)}`;
+      result.hashtag = `${abcdName} ${(QuizManagerDAO.getLastPersistedAbcdQuizNumberByLength(answerLength) + 1)}`;
       QuizManagerDAO.convertLegacyQuiz(result);
       res.setHeader('Response-Type', 'application/json');
       res.send(result);
