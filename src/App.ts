@@ -86,6 +86,7 @@ class App {
     this.express = express();
     this.middleware();
     this.routes();
+		throw new Error(JSON.stringify(process.env));
   }
 
   // Configure Express middleware.

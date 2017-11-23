@@ -8,6 +8,7 @@ build:
   only:
     - master
     - CI
+    - serverConfigWithoutNPM
   tags:
     - nodejs
   script:
@@ -33,6 +34,7 @@ deploy:
   only:
     - master
     - CI
+    - serverConfigWithoutNPM
   tags:
     - ssh
   dependencies:
