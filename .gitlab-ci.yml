@@ -16,7 +16,7 @@ build:
     - npm run prod
   artifacts:
     paths:
-      - backend/dist
+      - dist
 
 test:
   stage: test
