@@ -70,10 +70,5 @@ export class ApiRouter {
 
 // Create the ApiRouter, and export its configured Express.Router
 const apiRoutes: ApiRouter = new ApiRouter();
-apiRoutes.router.stack.forEach(function(r){
-  if (r.route && r.route.path){
-    console.log(r.route.path)
-  }
-});
 
 export default apiRoutes.router;
