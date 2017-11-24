@@ -4,13 +4,6 @@
   "license": "MIT",
   "repository": "git@git.thm.de:arsnova/arsnova.click-v2.git",
   "description": "Version 2 of arsnova.click (Backend)",
-  "config": {
-    "portInternal": "3000",
-    "portExternal": "3000",
-    "routePrefix": "",
-    "rewriteAssetCacheUrl": "",
-    "themePreviewHost": "http://localhost:4200"
-  },
   "scripts": {
     "prod": "gulp",
     "prestart": "npm run prod",
