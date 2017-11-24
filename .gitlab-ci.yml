@@ -15,7 +15,7 @@ build:
     - npm run prod
   artifacts:
     paths:
-      - backend/dist
+      - dist
 
 test:
   stage: test
@@ -42,6 +42,5 @@ deploy:
     - eval $(ssh-agent -s)
     - mkdir ~/.ssh && echo "$STAGING_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY")
-    - rm -rf src
     - scp -r * "$STAGING_BACKEND_SSH_URL"
 
