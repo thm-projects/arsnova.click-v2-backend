@@ -83,7 +83,7 @@ const hashtag = 'mocha-test-lib';
     expect(res.type).to.eql('application/json');
   }
 
-  @test async quizWithAssetUrlsExists() {
+  @test.skip async quizWithAssetUrlsExists() {
     this._quiz.hashtag = this._hashtag;
     const parsedQuiz: IQuestionGroup = QuizManagerDAO.initActiveQuiz(this._quiz).originalObject;
     expect(parsedQuiz.questionList.map(question => question.questionText).filter(
