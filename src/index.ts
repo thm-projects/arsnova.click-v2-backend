@@ -30,13 +30,14 @@ server.on('close', onClose);
 
 const languages = ['en', 'de', 'fr', 'it', 'es'];
 const params: any = [path.join(__dirname, 'phantomDriver.js')];
-const themePreviewEndpoint = `${process.env.BACKEND_THEME_PREVIEW_HOST}/preview`;
+const themePreviewEndpoint = `${process.env.BACKEND_THEME_PREVIEW_HOST || `http://localhost:4200`}/preview`;
 themes.forEach((theme: ITheme) => {
   languages.forEach((languageKey) => {
     params.push(`${themePreviewEndpoint}/${theme.id}/${languageKey}`);
   });
 });
-const command: ChildProcess = spawn(slimerjs.path, params);
+const suffix = process.platform === 'win32' ? '.bat' : '';
+const command: ChildProcess = spawn(`${slimerjs.path}${suffix}`, params);
 command.stdout.on('data', (data) => {
   debug(`arsnova.click:phantomjs (stdout): ${data.toString()}`);
 });
@@ -46,7 +47,6 @@ command.stderr.on('data', (data) => {
 command.on('exit', () => {
   debug(`arsnova.click:phantomjs (exit): All preview images have been generated`);
 });
-
 
 function normalizePort(val: number | string): number | string | boolean {
   const portCheck: number = (typeof val === 'string') ? parseInt(val, 10) : val;
