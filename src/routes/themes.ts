@@ -27,12 +27,12 @@ export class ThemesRouter {
   }
 
   public getTheme(req: Request, res: Response): void {
-    const filePath = path.join(__dirname, `../../images/themes/${req.params.themeId}_${req.params.languageId}.png`);
+    const filePath = path.join(__dirname, '..', '..', 'images', 'themes', `${req.params.themeId}_${req.params.languageId}.png`);
     fs.exists(filePath, (exists: boolean) => {
       if (exists) {
         fs.readFile(filePath, (err, data: Buffer) => {
           res.setHeader('Content-Type', 'image/png');
-          res.end(data.toString('UTF-8'));
+          res.end(data);
         });
       }
     });
