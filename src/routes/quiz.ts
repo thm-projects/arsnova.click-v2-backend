@@ -41,19 +41,24 @@ export class QuizRouter {
     const payload: { available?: boolean, provideNickSelection?: boolean, authorizeViaCas?: boolean } = {};
 
     const isInactive: boolean = QuizManagerDAO.isInactiveQuiz(req.params.quizName);
+    let isInProgress = false;
 
     if (quiz) {
-      const sessionConfig: ISessionConfiguration = QuizManagerDAO.getActiveQuizByName(req.params.quizName).originalObject.sessionConfig;
-      const provideNickSelection: boolean = sessionConfig.nicks.selectedNicks.length > 0;
+      if (quiz.currentQuestionIndex === -1) {
+        const sessionConfig: ISessionConfiguration = QuizManagerDAO.getActiveQuizByName(req.params.quizName).originalObject.sessionConfig;
+        const provideNickSelection: boolean = sessionConfig.nicks.selectedNicks.length > 0;
 
-      payload.available = true;
-      payload.provideNickSelection = provideNickSelection;
-      payload.authorizeViaCas = sessionConfig.nicks.restrictToCasLogin;
+        payload.available = true;
+        payload.provideNickSelection = provideNickSelection;
+        payload.authorizeViaCas = sessionConfig.nicks.restrictToCasLogin;
+      } else {
+        isInProgress = true;
+      }
     }
 
     const result: Object = {
       status: `STATUS:SUCCESSFUL`,
-      step: `QUIZ:${quiz ? 'AVAILABLE' : isInactive ? 'EXISTS' : 'UNDEFINED'}`,
+      step: `QUIZ:${quiz && !isInProgress ? 'AVAILABLE' : isInactive || isInProgress ? 'EXISTS' : 'UNDEFINED'}`,
       payload
     };
     res.send(result);
