@@ -1,4 +1,8 @@
-const availableNicks: Object = {
+import * as fs from 'fs';
+import * as path from 'path';
+import {IAvailableNicks} from 'arsnova-click-v2-types/src/common';
+
+const availableNicks: IAvailableNicks = {
   'disney': [
     'Donald Duck',
     'Daisy Duck',
@@ -217,7 +221,8 @@ const availableNicks: Object = {
     'Richard Hamming',
     'Maurice V. Wilkes',
     'Alan J. Perlis'
-  ]
+  ],
+  'emojis': fs.readdirSync(path.join(__dirname, '..', '..', 'images', 'emojis')).map(fileName => `:${fileName.substring(0, fileName.length - 4)}:`)
 };
 
 export default availableNicks;
