@@ -8,15 +8,22 @@ export class Leaderboard {
   }
 
   private isCorrectMultipleChoiceQuestion(response: Array<number>, question: IQuestionChoice): number {
-    let hasCorrectAnswer = 0;
-    response.forEach((element) => {
-      if (question.answerOptionList[element].isCorrect) {
-        hasCorrectAnswer++;
+    let hasCorrectAnswers = 0;
+    let hasWrongAnswers = 0;
+    question.answerOptionList.forEach((answeroption, answerIndex) => {
+      if (answeroption.isCorrect) {
+        if (response.indexOf(answerIndex) > -1) {
+          hasCorrectAnswers++;
+        } else {
+          hasWrongAnswers++;
+        }
+      } else {
+        if (response.indexOf(answerIndex) > -1) {
+          hasWrongAnswers++;
+        }
       }
     });
-    return question.answerOptionList.filter((answeroption) => {
-      return answeroption.isCorrect;
-    }).length === hasCorrectAnswer ? 1 : hasCorrectAnswer ? 0 : -1;
+    return !hasWrongAnswers && hasCorrectAnswers ? 1 : hasWrongAnswers && hasCorrectAnswers ? 0 : -1;
   }
 
   private isCorrectRangedQuestion(response: number, question: IQuestionRanged): number {

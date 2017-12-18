@@ -485,6 +485,9 @@ export class QuizRouter {
       }));
       return;
     }
+
+    // TODO: The quiz contains the rewritten cached asset urls. Restore them to the original value!
+
     const wb = new ExcelWorkbook({
       themeName: req.params.theme,
       translation: req.params.language,
