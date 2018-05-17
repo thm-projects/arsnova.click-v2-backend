@@ -30,11 +30,8 @@ export class ApiRouter {
   }
 
   public getAll(req: Request, res: Response): void {
-    const buildInfo = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'build.json')).toString('UTF-8'));
-
     res.send({
-      serverConfig: settings.public,
-      buildConfig: buildInfo
+      serverConfig: settings.public
     });
   }
 

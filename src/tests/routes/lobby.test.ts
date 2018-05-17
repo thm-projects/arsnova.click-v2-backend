@@ -4,11 +4,13 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as WebSocket from 'ws';
 
 import app from '../../App';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {staticStatistics} from '../../statistics';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
+import {WebSocketRouter} from '../../routes/websocket';
 
 const chaiHttp = require('chai-http');
 
@@ -23,10 +25,12 @@ const hashtag = 'mocha-test-api-v1';
 
   static before() {
     QuizManagerDAO.initInactiveQuiz(hashtag);
+    WebSocketRouter.wss = new WebSocket.Server({port: staticStatistics.port});
   }
 
   static after() {
     QuizManagerDAO.removeQuiz(hashtag);
+    WebSocketRouter.wss.close();
   }
 
   @test async baseApiExists() {

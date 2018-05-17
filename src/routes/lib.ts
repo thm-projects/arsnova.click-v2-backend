@@ -183,8 +183,10 @@ export class LibRouter {
       });
 
     } else {
-      res.sendStatus(404);
-      res.end();
+      fs.readFile(path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png'), (err, data: Buffer) => {
+        res.contentType(fileType(data).mime);
+        res.end(data);
+      });
     }
   }
 

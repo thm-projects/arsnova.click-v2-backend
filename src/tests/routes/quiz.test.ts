@@ -4,6 +4,7 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as WebSocket from 'ws';
 
 const chaiHttp = require('chai-http');
 
@@ -12,6 +13,7 @@ import {DatabaseTypes, DbDao} from '../../db/DbDAO';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {staticStatistics} from '../../statistics';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
+import {WebSocketRouter} from '../../routes/websocket';
 
 chai.use(chaiHttp);
 const expect = chai.expect;
@@ -24,9 +26,14 @@ const privateKey = Math.random().toString(10);
   private _hashtag = hashtag;
   private _privateKey = privateKey;
 
+  static before() {
+    WebSocketRouter.wss = new WebSocket.Server({port: staticStatistics.port});
+  }
+
   static after() {
     QuizManagerDAO.removeQuiz(hashtag);
     DbDao.delete(DatabaseTypes.quiz, {quizName: hashtag, privateKey: privateKey});
+    WebSocketRouter.wss.close();
   }
 
   @test async baseApiExists() {
