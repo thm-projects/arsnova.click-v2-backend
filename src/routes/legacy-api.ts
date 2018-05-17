@@ -119,6 +119,6 @@ export class LegacyApiRouter {
 }
 
 // Create the LegacyApiRouter, and export its configured Express.Router
-const legacyApiRoutes: LegacyApiRouter = new LegacyApiRouter();
-
-export default legacyApiRoutes.router;
+const legacyApiRoutes = new LegacyApiRouter();
+const legacyApiRouter = legacyApiRoutes.router;
+export { legacyApiRouter };

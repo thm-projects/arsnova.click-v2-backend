@@ -1,6 +1,7 @@
 import {Router, Request, Response, NextFunction} from 'express';
-import {IActiveQuiz, INickname} from 'arsnova-click-v2-types/src/common';
+import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
+import {ActiveQuizItem} from '../quiz-manager/quiz-manager';
 
 export class MemberRouter {
   get router(): Router {
@@ -23,6 +24,7 @@ export class MemberRouter {
 
   public addMember(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
+
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
@@ -32,6 +34,7 @@ export class MemberRouter {
       }));
       return;
     }
+
     if (!req.body.nickname || (activeQuiz.originalObject.sessionConfig.nicks.restrictToCasLogin && !req.body.ticket)) {
       res.sendStatus(500);
       res.end(JSON.stringify({
@@ -41,21 +44,30 @@ export class MemberRouter {
       }));
       return;
     }
+
     try {
       const webSocketAuthorization: number = Math.random();
-      activeQuiz.addMember(req.body.nickname, webSocketAuthorization, req.body.ticket);
+      if (!req.body.groupName) {
+        req.body.groupName = 'Default';
+      }
+
+      const members = activeQuiz.memberGroups.find((value => value.name === req.body.groupName)).members;
+
+      activeQuiz.addMember(req.body.nickname, webSocketAuthorization, req.body.groupName, req.body.ticket);
+
       res.send({
         status: 'STATUS:SUCCESSFUL',
         step: 'LOBBY:MEMBER_ADDED',
         payload: {
-          member: activeQuiz.nicknames[activeQuiz.nicknames.length - 1].serialize(),
-          nicknames: activeQuiz.nicknames.map((value: INickname) => {
-            return value.serialize();
+          member: members[members.length - 1].serialize(),
+          memberGroups: activeQuiz.memberGroups.map(memberGroup => {
+            return memberGroup.serialize();
           }),
           sessionConfiguration: activeQuiz.originalObject.sessionConfig,
           webSocketAuthorization: webSocketAuthorization
         }
       });
+
     } catch (ex) {
       res.sendStatus(500);
       res.end(JSON.stringify({
@@ -115,7 +127,7 @@ export class MemberRouter {
       }));
       return;
     }
-    const result: boolean = activeQuiz ? activeQuiz.removeMember(req.params.nickname) : false;
+    const result: boolean = activeQuiz.removeMember(req.params.nickname);
     const response: Object = {status: `STATUS:${result ? 'SUCCESSFUL' : 'FAILED'}`};
     if (result) {
       Object.assign(response, {
@@ -137,13 +149,12 @@ export class MemberRouter {
       }));
       return;
     }
+
     res.send({
       status: 'STATUS:SUCCESSFUL',
       step: 'QUIZ:GET_MEMBERS',
       payload: {
-        nicknames: activeQuiz.nicknames.map((value: INickname) => {
-          return value.serialize();
-        })
+        memberGroups: activeQuiz.memberGroups.map(memberGroup => memberGroup.serialize())
       }
     });
   }
@@ -160,7 +171,9 @@ export class MemberRouter {
       return;
     }
     const names: Array<String> = activeQuiz.originalObject.sessionConfig.nicks.selectedNicks.filter((nick) => {
-      return activeQuiz.nicknames.filter(value => value.name === nick).length === 0;
+      return activeQuiz.memberGroups.filter(memberGroup => {
+        return memberGroup.members.filter(value => value.name === nick).length === 0;
+      }).length === 0;
     });
     res.send({
       status: 'STATUS:SUCCESSFUL',
@@ -180,17 +193,19 @@ export class MemberRouter {
       }));
       return;
     }
-    if (activeQuiz.nicknames.filter(value => {
-        return value.name === req.body.nickname;
-      })[0].responses[activeQuiz.currentQuestionIndex].responseTime) {
-      res.sendStatus(500);
-      res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:DUPLICATE_MEMBER_RESPONSE',
-        payload: {}
-      }));
-      return;
-    }
+
+    activeQuiz.memberGroups.map(memberGroup => {
+      if ((<ActiveQuizItem>activeQuiz).findMemberByName(req.body.nickname).responses[activeQuiz.currentQuestionIndex].responseTime) {
+
+        res.sendStatus(500);
+        res.end(JSON.stringify({
+          status: 'STATUS:FAILED',
+          step: 'QUIZ:DUPLICATE_MEMBER_RESPONSE',
+          payload: {}
+        }));
+        return;
+      }
+    });
 
     if (typeof req.body.value === 'undefined') {
       res.sendStatus(500);
@@ -228,6 +243,6 @@ export class MemberRouter {
 }
 
 // Create the ApiRouter, and export its configured Express.Router
-const memberRoutes: MemberRouter = new MemberRouter();
-
-export default memberRoutes.router;
+const memberRoutes = new MemberRouter();
+const memberRouter = memberRoutes.router;
+export { memberRouter };

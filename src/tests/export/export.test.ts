@@ -10,6 +10,7 @@ import {IQuestionFreetext, IQuestionGroup, IQuestionRanged, IQuestionSurvey} fro
 import {ExcelWorkbook} from '../../export/excel-workbook';
 import {IFreetextAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
+import {staticStatistics} from '../../statistics';
 
 @suite class ExcelExportTestSuite {
   private _hashtag = 'mocha-export-test';
@@ -30,7 +31,7 @@ import {QuizManagerDAO} from '../../db/QuizManagerDAO';
       defaultLocale: 'en',
 
       // where to store json files - defaults to './locales' relative to modules directory
-      directory: path.join(__dirname, '..', '..', '..', 'i18n'),
+      directory: path.join(staticStatistics.pathToAssets, 'i18n'),
 
       // what to use as the indentation unit - defaults to "\t"
       indent: '\t',
@@ -86,7 +87,7 @@ import {QuizManagerDAO} from '../../db/QuizManagerDAO';
     await assert.equal(QuizManagerDAO.isInactiveQuiz(this._hashtag), true, 'Expected to find an inactive quiz item');
 
     const quiz: IQuestionGroup = JSON.parse(fs.readFileSync(
-      path.join(__dirname, '..', '..', '..', 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
+      path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
     ).toString('UTF-8'));
     quiz.hashtag = this._hashtag;
     QuizManagerDAO.initActiveQuiz(quiz);
@@ -97,11 +98,18 @@ import {QuizManagerDAO} from '../../db/QuizManagerDAO';
   @test async addMembers() {
     const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
     for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
-      quiz.nicknames.push(
-        new Member({id: memberIndex, name: `testnick${memberIndex + 1}`, webSocketAuthorization: 0, responses: [], ticket: null}),
+      quiz.memberGroups[0].members.push(
+        new Member({
+          id: memberIndex,
+          name: `testnick${memberIndex + 1}`,
+          groupName: 'Default',
+          webSocketAuthorization: 0,
+          responses: [],
+          ticket: null
+        }),
       );
     }
-    await assert.equal(quiz.nicknames.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
+    await assert.equal(quiz.memberGroups[0].members.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
   }
 
   @test async addResponses() {
@@ -167,7 +175,7 @@ import {QuizManagerDAO} from '../../db/QuizManagerDAO';
           default:
             throw new Error(`Unsupported question type ${question.TYPE}`);
         }
-        quiz.nicknames[memberIndex].responses.push({
+        quiz.memberGroups[0].members[memberIndex].responses.push({
           value: value,
           responseTime: this.randomIntFromInterval(0, quiz.originalObject.questionList[questionIndex].timer),
           confidence: this.randomIntFromInterval(0, 100),

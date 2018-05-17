@@ -85,43 +85,45 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       lastColumn: minColums
     });
 
-    const responses = this.quiz.nicknames.map(nickname => nickname.responses[this._questionIndex]);
-    const hasEntries: boolean = responses.length > 0;
-    const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
-    const attendeeEntryRowStyle: Object = hasEntries ?
-                                          defaultStyles.attendeeEntryRowStyle :
-                                          Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
-                                            alignment: {
-                                              horizontal: 'center'
-                                            }
-                                          });
-    this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
-
-    responses.forEach((responseItem: IQuizResponse, indexInList: number): void => {
-      let nextColumnIndex = 3;
-      const targetRow: number = indexInList + 11;
-      if (this._isCasRequired) {
-        nextColumnIndex += 2;
-      }
-      if (this.responsesWithConfidenceValue.length > 0) {
-        this.ws.cell(targetRow, nextColumnIndex++).style({
+    this.quiz.memberGroups.forEach((memberGroup) => {
+      const responses = memberGroup.members.map(nickname => nickname.responses[this._questionIndex]);
+      const hasEntries: boolean = responses.length > 0;
+      const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
+      const attendeeEntryRowStyle: Object = hasEntries ?
+        defaultStyles.attendeeEntryRowStyle :
+        Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
           alignment: {
             horizontal: 'center'
           }
         });
-      }
-      this.ws.cell(targetRow, nextColumnIndex).style({
-        alignment: {
-          horizontal: 'center'
-        },
-        numberFormat: '#,##0;'
+      this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
+
+      responses.forEach((responseItem: IQuizResponse, indexInList: number): void => {
+        let nextColumnIndex = 3;
+        const targetRow: number = indexInList + 11;
+        if (this._isCasRequired) {
+          nextColumnIndex += 2;
+        }
+        if (this.responsesWithConfidenceValue.length > 0) {
+          this.ws.cell(targetRow, nextColumnIndex++).style({
+            alignment: {
+              horizontal: 'center'
+            }
+          });
+        }
+        this.ws.cell(targetRow, nextColumnIndex).style({
+          alignment: {
+            horizontal: 'center'
+          },
+          numberFormat: '#,##0;'
+        });
       });
     });
   }
 
   public addSheetData(): void {
     const answerList = this._question.answerOptionList;
-    const allResponses: Array<INickname> = this.quiz.nicknames.filter(nickname => {
+    const allResponses: Array<INickname> = this.quiz.memberGroups[0].members.filter(nickname => {
       return nickname.responses.map(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
@@ -131,12 +133,12 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     this.ws.cell(2, 1).string(this.mf('export.question'));
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.nicknames.length * 100;
+    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      this.quiz.nicknames.forEach((nickItem) => {
+      this.quiz.memberGroups[0].members.forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -165,13 +167,13 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile = this.quiz.nicknames.filter((nick: INickname) => {
+        const profile = this.quiz.memberGroups[0].members.filter((nick: INickname) => {
           return nick.name === responseItem.name;
         })[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
       }
-      const nickItem = this.quiz.nicknames.filter(nick => nick.name === responseItem.name)[0];
+      const nickItem = this.quiz.memberGroups[0].members.filter(nick => nick.name === responseItem.name)[0];
       const chosenAnswer = this._question.answerOptionList.filter((answer, index) => {
         const responseValue = nickItem.responses[this._questionIndex].value;
         if (responseValue instanceof Array) {

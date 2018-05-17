@@ -17,15 +17,17 @@ export class ExcelWorkbook implements IExcelWorkbook {
     return this._theme;
   }
 
-  private _wb: xlsx.Workbook;
-  private _theme: ExcelTheme;
-  private _translation: string;
-  private _mf: MessageFormat;
-  private _quiz: IActiveQuiz;
+  private readonly _wb: xlsx.Workbook;
+  private readonly _theme: ExcelTheme;
+  private readonly _translation: string;
+  private readonly _mf: MessageFormat;
+  private readonly _quiz: IActiveQuiz;
 
   protected _worksheets: Array<IExcelWorksheet> = [];
 
-  constructor({themeName, quiz, translation, mf}: {themeName: string, quiz: IActiveQuiz, translation: string, mf: MessageFormat}) {
+  constructor(
+    {themeName, quiz, translation, mf}: {themeName: string, quiz: IActiveQuiz, translation: string, mf: MessageFormat}
+    ) {
     this._wb = new xlsx.Workbook({
       jszip: {
         compression: 'DEFLATE'

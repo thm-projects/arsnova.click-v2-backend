@@ -4,13 +4,14 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import chaiHttp = require('chai-http');
 
 import app from '../../App';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {DatabaseTypes, DbDao} from '../../db/DbDAO';
 import {staticStatistics} from '../../statistics';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
+
+const chaiHttp = require('chai-http');
 
 chai.use(chaiHttp);
 const expect = chai.expect;
@@ -64,7 +65,7 @@ const privateKey = Math.random().toString(10);
 
   @test async updateQuestionGroup() {
     const quiz: IQuestionGroup = JSON.parse(fs.readFileSync(
-      path.join(__dirname, '..', '..', '..', 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
+      path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
     ).toString('UTF-8'));
     quiz.hashtag = this._hashtag;
     const res = await chai.request(app).post(`${this._baseApiRoute}/updateQuestionGroup`).send({

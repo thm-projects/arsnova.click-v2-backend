@@ -38,6 +38,6 @@ export class NicksRouter {
 }
 
 // Create the ApiRouter, and export its configured Express.Router
-const nicksRoutes: NicksRouter = new NicksRouter();
-
-export default nicksRoutes.router;
+const nicksRoutes = new NicksRouter();
+const nicksRouter = nicksRoutes.router;
+export { nicksRouter };

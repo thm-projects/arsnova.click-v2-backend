@@ -1,6 +1,7 @@
 import {NextFunction, Request, Response, Router} from 'express';
 import * as mjAPI from 'mathjax-node';
 import {IQuestion, IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
+import {ILinkImage} from 'arsnova-click-v2-types/src/assets/library';
 import * as fs from 'fs';
 import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 import * as crypto from 'crypto';
@@ -12,7 +13,12 @@ import * as xml2js from 'xml2js';
 import * as https from 'https';
 import {CasDAO} from '../db/CasDAO';
 import {ICasData} from 'arsnova-click-v2-types/src/common';
+import {staticStatistics} from '../statistics';
+import * as MessageFormat from 'messageformat';
 
+const derivates: Array<string> = require('../../assets/imageDerivates');
+
+const themeData = JSON.parse(fs.readFileSync(path.join(staticStatistics.pathToAssets, 'themeData.json')).toString());
 const casSettings = {base_url: 'https://cas.thm.de/cas'};
 
 export class LibRouter {
@@ -20,7 +26,7 @@ export class LibRouter {
     return this._router;
   }
 
-  private _router: Router;
+  private readonly _router: Router;
 
   /**
    * Initialize the LibRouter
@@ -73,20 +79,140 @@ export class LibRouter {
     });
   }
 
+  public getLinkImages(req: Request, res: Response, next: NextFunction): void {
+    const theme = req.params.theme || 'theme-Material';
+    const basePath = `${staticStatistics.rewriteAssetCacheUrl}/api/v1/files/images/theme/${theme}`;
+    const manifestPath = `${staticStatistics.rewriteAssetCacheUrl}/lib/manifest/${theme}`;
+
+    const result: Array<ILinkImage> = [
+      {
+        tagName: 'link',
+        className: 'theme-meta-data',
+        rel: 'manifest',
+        id: 'link-manifest',
+        href: `${manifestPath}`,
+        type: 'image/png'
+      },
+      {
+        tagName: 'link',
+        className: 'theme-meta-data',
+        rel: 'apple-touch-icon',
+        id: 'link-apple-touch-default',
+        href: `${basePath}/logo_s32x32.png`,
+        type: 'image/png'
+      },
+      {
+        tagName: 'link',
+        className: 'theme-meta-data',
+        rel: 'apple-touch-icon-precomposed',
+        id: 'link-apple-touch-precomposed-default',
+        href: `${basePath}/logo_s32x32.png`,
+        type: 'image/png'
+      },
+      {
+        tagName: 'meta',
+        className: 'theme-meta-data',
+        name: 'theme-color',
+        id: 'meta-theme-color',
+        content: `${themeData[theme].exportedAtRowStyle.bg}`
+      },
+      {
+        tagName: 'meta',
+        className: 'theme-meta-data',
+        name: 'msapplication-TileColor',
+        id: 'meta-tile-color',
+        content: `${themeData[theme].exportedAtRowStyle.bg}`
+      },
+      {
+        tagName: 'meta',
+        className: 'theme-meta-data',
+        name: 'msapplication-TileImage',
+        id: 'meta-tile-image',
+        content: `${basePath}/logo_s144x144.png`,
+        type: 'image/png'
+      }
+    ];
+
+    derivates.forEach(derivate => {
+      result.push(
+        {
+          tagName: 'link',
+          className: 'theme-meta-data',
+          rel: 'icon',
+          href: `${basePath}/logo_s${derivate}.png`,
+          id: `link-icon-${derivate}`,
+          sizes: derivate,
+          type: 'image/png'
+        },
+        {
+          tagName: 'link',
+          className: 'theme-meta-data',
+          rel: 'apple-touch-icon-precomposed',
+          href: `${basePath}/logo_s${derivate}.png`,
+          id: `link-apple-touch-precomposed-${derivate}`,
+          sizes: derivate,
+          type: 'image/png'
+        }
+      );
+    });
+
+    result.push(
+      {
+        tagName: 'link',
+        className: 'theme-meta-data',
+        rel: 'shortcut icon',
+        sizes: '64x64',
+        id: 'link-favicon',
+        href: `${basePath}/logo_s64x64.png`,
+        type: 'image/png'
+      }
+    );
+
+    res.json(result);
+  }
+
   public getFavicon(req: Request, res: Response, next: NextFunction): void {
     const theme = req.params.theme || 'theme-Material';
-    const filePath = path.join(__dirname, '..', '..', 'images', 'favicons', `favicon-${theme}.png`);
-    fs.exists(filePath, (exists: boolean) => {
-      if (exists) {
-        fs.readFile(filePath, (err, data: Buffer) => {
-          res.contentType(fileType(data).mime);
-          res.end(data);
-        });
-      } else {
-        res.sendStatus(404);
-        res.end();
-      }
+    const filePath = path.join(staticStatistics.pathToAssets, 'images', 'theme', `${theme}`, `logo_s64x64.png`);
+    const exists = fs.existsSync(filePath);
+
+    if (exists) {
+      fs.readFile(filePath, (err, data: Buffer) => {
+        res.contentType(fileType(data).mime);
+        res.end(data);
+      });
+
+    } else {
+      res.sendStatus(404);
+      res.end();
+    }
+  }
+
+  public getManifest(req: Request, res: I18nResponse, next: NextFunction): void {
+    const theme = req.params.theme || 'theme-Material';
+    const mf: MessageFormat = res.__mf;
+
+    const manifest = {
+      short_name: 'arsnovaClick',
+      name: 'arsnova.click',
+      description: mf('manifest.description'),
+      background_color: themeData[theme].exportedAtRowStyle.bg,
+      theme_color: themeData[theme].exportedAtRowStyle.bg,
+      start_url: `${req.header('Origin')}`,
+      display: 'standalone',
+      orientation: 'portrait',
+      icons: []
+    };
+
+    derivates.forEach((derivate) => {
+      manifest.icons.push({
+        src: `${staticStatistics.rewriteAssetCacheUrl}/api/v1/files/images/theme/${theme}/logo_s${derivate}.png`,
+        sizes: derivate,
+        type: 'image/png'
+      });
     });
+
+    res.send(manifest);
   }
 
   public getFirstMathjaxExample(req: Request, res: Response, next: NextFunction): void {
@@ -155,7 +281,7 @@ export class LibRouter {
   }
 
   public getThirdMathjaxExample(req: Request, res: Response, next: NextFunction): void {
-    fs.readFile(path.join(__dirname, '..', '..', 'images', 'mathjax', 'example_3.svg'), (err, data: Buffer) => {
+    fs.readFile(path.join(staticStatistics.pathToAssets, 'images', 'mathjax', 'example_3.svg'), (err, data: Buffer) => {
       res.send(JSON.stringify(data.toString('utf8')));
     });
   }
@@ -168,32 +294,45 @@ export class LibRouter {
     }
     const mathjaxArray = [...JSON.parse(req.body.mathjax)];
     const result = [];
-    new Promise((async resolve => {
-      if (mathjaxArray) {
-        await mathjaxArray.forEach(async (mathjaxPlain, index) => {
-          const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
-          if (dbResult) {
-            result.push(dbResult);
-            return;
-          }
-          await mjAPI.typeset({
-            math: mathjaxPlain.replace(/( ?\${1,2} ?)/g, ''),
-            format: req.body.format,
-            html: req.body.output === 'html',
-            css: req.body.output === 'html',
-            svg: req.body.output === 'svg',
-            mml: req.body.output === 'mml'
-          }).then(data => {
-            result.push(data);
-            MathjaxDAO.updateRenderedData(data, mathjaxPlain);
-          }, error => {
-            console.log(error);
-          });
+    if (!mathjaxArray.length) {
+      res.send(JSON.stringify({
+        status: 'STATUS:FAILED',
+        step: 'renderMathjax',
+        payload: {
+          mathjax: req.body.mathjax,
+          format: req.body.format,
+          mathjaxArray,
+          output: req.body.output,
+        }
+      }));
+
+      return;
+    }
+
+    mathjaxArray.forEach(async (mathjaxPlain, index) => {
+      const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
+
+      if (dbResult) {
+        result.push(dbResult);
+
+      } else {
+
+        const data = await mjAPI.typeset({
+          math: mathjaxPlain.replace(/( ?\${1,2} ?)/g, ''),
+          format: req.body.format,
+          html: req.body.output === 'html',
+          css: req.body.output === 'html',
+          svg: req.body.output === 'svg',
+          mml: req.body.output === 'mml'
         });
+
+        MathjaxDAO.updateRenderedData(data, mathjaxPlain);
+        result.push(data);
       }
-      resolve();
-    })).then(() => {
-      res.send(JSON.stringify(result));
+
+      if (index === mathjaxArray.length - 1) {
+        res.send(JSON.stringify(result));
+      }
     });
   }
 
@@ -223,7 +362,7 @@ export class LibRouter {
       res.end(`Malformed request received -> ${req.body}, ${req.params}`);
       return;
     }
-    fs.readFile(path.join(__dirname, '..', '..', 'cache', req.params.digest), (err, data: Buffer) => {
+    fs.readFile(path.join(staticStatistics.pathToCache, req.params.digest), (err, data: Buffer) => {
       const fileTypeOfBuffer = fileType(data);
       if (fileTypeOfBuffer) {
         res.contentType(fileTypeOfBuffer.mime);
@@ -312,7 +451,9 @@ export class LibRouter {
   private init(): void {
     this._router.get('/', this.getAll);
 
+    this._router.get('/linkImages/:theme?', this.getLinkImages);
     this._router.get('/favicon/:theme?', this.getFavicon);
+    this._router.get('/manifest/:theme?', this.getManifest);
 
     this._router.post('/mathjax', this.renderMathjax.bind(this));
     this._router.get('/mathjax/example/first', this.getFirstMathjaxExample);
@@ -328,6 +469,6 @@ export class LibRouter {
 }
 
 // Create the LibRouter, and export its configured Express.Router
-const libRoutes: LibRouter = new LibRouter();
-
-export default libRoutes.router;
+const libRoutes = new LibRouter();
+const libRouter = libRoutes.router;
+export { libRouter };

@@ -29,11 +29,11 @@ export abstract class ExcelWorksheet {
   get ws(): xlsx.Worksheet {
     return this._ws;
   }
-  private _mf: MessageFormat;
-  private _createdAt: string;
-  private _quiz: IActiveQuiz;
-  private _columnsToFormat: number;
-  private _responsesWithConfidenceValue: Array<INickname>;
+  private readonly _mf: MessageFormat;
+  private readonly _createdAt: string;
+  private readonly _quiz: IActiveQuiz;
+  private readonly _columnsToFormat: number;
+  private readonly _responsesWithConfidenceValue: Array<INickname>;
 
   protected _leaderBoardData: Array<ILeaderBoardItem>;
   protected _ws: xlsx.Worksheet;
@@ -41,7 +41,7 @@ export abstract class ExcelWorksheet {
   protected _theme: ExcelTheme;
   protected _translation: string;
 
-  constructor(
+  protected constructor(
     {theme, translation, quiz, mf, questionIndex}:
       {theme: ExcelTheme, translation: string, quiz: IActiveQuiz, mf: MessageFormat, questionIndex?: number}) {
     this._theme = theme;
@@ -64,11 +64,11 @@ export abstract class ExcelWorksheet {
 
     this._columnsToFormat = 4;
     if (questionIndex) {
-      this._responsesWithConfidenceValue = this._quiz.nicknames.filter(nickname => {
+      this._responsesWithConfidenceValue = this._quiz.memberGroups[0].members.filter(nickname => {
         return nickname.responses[questionIndex].confidence > -1;
       });
     } else {
-      this._responsesWithConfidenceValue = this._quiz.nicknames.filter(nickname => {
+      this._responsesWithConfidenceValue = this._quiz.memberGroups[0].members.filter(nickname => {
         return nickname.responses.filter(responseItem => responseItem.confidence > -1).length;
       });
     }
@@ -98,7 +98,7 @@ export abstract class ExcelWorksheet {
     const correctResponses: any = {};
 
     const question: IQuestion = this.quiz.originalObject.questionList[questionIndex];
-    this.quiz.nicknames.forEach(attendee => {
+    this.quiz.memberGroups[0].members.forEach(attendee => {
       if (leaderBoard.isCorrectResponse(attendee.responses[questionIndex], question) === 1) {
         if (!correctResponses[attendee.name]) {
           correctResponses[attendee.name] = {responseTime: 0, correctQuestions: [], confidenceValue: 0};

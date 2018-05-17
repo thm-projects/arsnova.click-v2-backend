@@ -2,10 +2,8 @@ import {parseCachedAssetQuiz} from '../cache/assets';
 import {DatabaseTypes, DbDao} from './DbDAO';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
-import {ActiveQuizItem, ActiveQuizItemPlaceholder} from '../quiz-manager/quiz-manager';
-
-const privateServerConfig = require('../../settings.json');
-privateServerConfig.public.limitActiveQuizzes = parseFloat(privateServerConfig.public.limitActiveQuizzes);
+import {ActiveQuizItem, ActiveQuizItemPlaceholder, MemberGroup} from '../quiz-manager/quiz-manager';
+import {settings} from '../statistics';
 
 export class QuizManagerDAO {
   private static activeQuizzes = {};
@@ -65,10 +63,11 @@ export class QuizManagerDAO {
       return;
     }
     QuizManagerDAO.convertLegacyQuiz(quiz);
-    if (privateServerConfig.public.cacheQuizAssets) {
+    if (settings.public.cacheQuizAssets) {
       parseCachedAssetQuiz(quiz.questionList);
     }
-    this.activeQuizzes[name] = new ActiveQuizItem({nicknames: [], originalObject: quiz});
+    const memberGroups = quiz.sessionConfig.nicks.memberGroups.map(groupName => new MemberGroup(groupName));
+    this.activeQuizzes[name] = new ActiveQuizItem({memberGroups, originalObject: quiz});
     return this.activeQuizzes[name];
   }
 
@@ -122,16 +121,20 @@ export class QuizManagerDAO {
   }
 
   public static getAllActiveMembers(): number {
-    return Object.keys(this.activeQuizzes).filter((value: string) => {
-      const name: string = QuizManagerDAO.normalizeQuizName(value);
+    let memberCount = 0;
+
+    Object.keys(this.activeQuizzes).forEach(quiz => {
+      const name: string = QuizManagerDAO.normalizeQuizName(quiz);
       if (this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
         return;
       }
-      return this.activeQuizzes[name].nicknames.length;
-    }).reduce((a: number, b: string) => {
-      const name: string = QuizManagerDAO.normalizeQuizName(b);
-      return parseInt(a + this.activeQuizzes[name].nicknames.length, 10);
-    }, 0);
+
+      this.activeQuizzes[name].memberGroups.forEach(memberGroup => {
+        memberCount += memberGroup.members.length;
+      });
+    });
+
+    return memberCount;
   }
 
   public static getLastPersistedNumberForData(data): number {

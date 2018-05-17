@@ -4,12 +4,13 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import chaiHttp = require('chai-http');
 
 import app from '../../App';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {staticStatistics} from '../../statistics';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
+
+const chaiHttp = require('chai-http');
 
 chai.use(chaiHttp);
 const expect = chai.expect;
@@ -36,7 +37,7 @@ const hashtag = 'mocha-test-api-v1-member';
     await expect(QuizManagerDAO.isInactiveQuiz(this._hashtag)).to.be.true;
 
     const quiz: IQuestionGroup = JSON.parse(fs.readFileSync(
-      path.join(__dirname, '..', '..', '..', 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
+      path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
     ).toString('UTF-8'));
     quiz.hashtag = this._hashtag;
     QuizManagerDAO.initActiveQuiz(quiz);
@@ -59,7 +60,8 @@ const hashtag = 'mocha-test-api-v1-member';
   @test async addMember() {
     const res = await chai.request(app).put(`${this._baseApiRoute}/`).send({
       quizName: this._hashtag,
-      nickname: this._nickname
+      nickname: this._nickname,
+      groupName: 'Default'
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');

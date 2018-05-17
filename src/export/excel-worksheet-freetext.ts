@@ -8,7 +8,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
   private _question: IQuestion;
   private _questionIndex: number;
-  private allResponses: Array<INickname> = this.quiz.nicknames.filter(nickname => {
+  private allResponses: Array<INickname> = this.quiz.memberGroups[0].members.filter(nickname => {
     return nickname.responses.filter(response => {
       return !!response.value && response.value !== -1 ? response.value : null;
     })[0];
@@ -77,8 +77,8 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       lastColumn: minColums
     });
 
-    const hasEntries = this.quiz.nicknames.length > 0;
-    const attendeeEntryRows = hasEntries ? (this.quiz.nicknames.length) : 1;
+    const hasEntries = this.quiz.memberGroups[0].members.length > 0;
+    const attendeeEntryRows = hasEntries ? (this.quiz.memberGroups[0].members.length) : 1;
     const attendeeEntryRowStyle = hasEntries ?
                                   defaultStyles.attendeeEntryRowStyle :
                                   Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
@@ -139,7 +139,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
                               this.mf('global.' + (answerOption.configTrimWhitespaces ? 'yes' : 'no')));
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.nicknames.length * 100;
+    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
     this.ws.cell(7, 3).string(this.mf('view.answeroptions.free_text_question.config_use_keywords') + ': ' +
                               this.mf('global.' + (answerOption.configUseKeywords ? 'yes' : 'no')));
@@ -149,7 +149,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      this.quiz.nicknames.forEach((nickItem) => {
+      this.quiz.memberGroups[0].members.forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));

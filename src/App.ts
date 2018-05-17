@@ -10,14 +10,14 @@ import {NextFunction, Router, Response, Request} from 'express';
 import options from './cors.config';
 import {dynamicStatistics, staticStatistics} from './statistics';
 
-import ApiRouter from './routes/api';
-import LibRouter from './routes/lib';
-import LegacyApiRouter from './routes/legacy-api';
-import QuizRouter from './routes/quiz';
-import LobbyRouter from './routes/lobby';
-import NicksRouter from './routes/nicks';
-import ThemesRouter from './routes/themes';
-import MemberRouter from './routes/member';
+import {apiRouter} from './routes/api';
+import {libRouter} from './routes/lib';
+import {legacyApiRouter} from './routes/legacy-api';
+import {quizRouter} from './routes/quiz';
+import {lobbyRouter} from './routes/lobby';
+import {nicksRouter} from './routes/nicks';
+import {themesRouter} from './routes/themes';
+import {memberRouter} from './routes/member';
 
 i18n.configure({
   // setup some locales - other locales default to en silently
@@ -27,7 +27,7 @@ i18n.configure({
   fallbacks: {'nl': 'de'},
 
   // where to store json files - defaults to './locales' relative to modules directory
-  directory: path.join(__dirname, '../i18n'),
+  directory: path.join(staticStatistics.pathToAssets, 'i18n'),
 
   // watch for changes in json files to reload locale on updates - defaults to false
   autoReload: true,
@@ -35,7 +35,7 @@ i18n.configure({
   // whether to write new locale information to disk - defaults to true
   updateFiles: false,
 
-  // sync locale information accros all files - defaults to false
+  // sync locale information across all files - defaults to false
   syncFiles: false,
 
   // what to use as the indentation unit - defaults to "\t"
@@ -78,25 +78,29 @@ i18n.configure({
 // Creates and configures an ExpressJS web server.
 class App {
 
+  get express(): express.Application {
+    return this._express;
+  }
+
   // ref to Express instance
-  public express: express.Application;
+  private readonly _express: express.Application;
 
   // Run configuration methods on the Express instance.
   constructor() {
-    this.express = express();
+    this._express = express();
     this.middleware();
     this.routes();
   }
 
   // Configure Express middleware.
   private middleware(): void {
-    this.express.use(logger('dev'));
-    this.express.use(busboy());
-    this.express.use(bodyParser.json());
-    this.express.use(i18n.init);
-    this.express.use(bodyParser.urlencoded({extended: false}));
-    this.express.use(cors(options));
-    this.express.options('*', cors(options));
+    this._express.use(logger('dev'));
+    this._express.use(busboy());
+    this._express.use(bodyParser.json());
+    this._express.use(i18n.init);
+    this._express.use(bodyParser.urlencoded({extended: false}));
+    this._express.use(cors(options));
+    this._express.options('*', cors(options));
   }
 
   // Configure API endpoints.
@@ -105,15 +109,15 @@ class App {
     router.get(`/`, (req: Request, res: Response, next: NextFunction) => {
       res.send(Object.assign({}, staticStatistics, dynamicStatistics()));
     });
-    this.express.use(`${staticStatistics.routePrefix}/`, router);
-    this.express.use(`${staticStatistics.routePrefix}/lib`, LibRouter);
-    this.express.use(`${staticStatistics.routePrefix}/api`, LegacyApiRouter);
-    this.express.use(`${staticStatistics.routePrefix}/api/v1`, ApiRouter);
-    this.express.use(`${staticStatistics.routePrefix}/api/v1/quiz`, QuizRouter);
-    this.express.use(`${staticStatistics.routePrefix}/api/v1/member`, MemberRouter);
-    this.express.use(`${staticStatistics.routePrefix}/api/v1/lobby`, LobbyRouter);
-    this.express.use(`${staticStatistics.routePrefix}/api/v1/nicks`, NicksRouter);
-    this.express.use(`${staticStatistics.routePrefix}/api/v1/themes`, ThemesRouter);
+    this._express.use(`${staticStatistics.routePrefix}/`, router);
+    this._express.use(`${staticStatistics.routePrefix}/lib`, libRouter);
+    this._express.use(`${staticStatistics.routePrefix}/api`, legacyApiRouter);
+    this._express.use(`${staticStatistics.routePrefix}/api/v1`, apiRouter);
+    this._express.use(`${staticStatistics.routePrefix}/api/v1/quiz`, quizRouter);
+    this._express.use(`${staticStatistics.routePrefix}/api/v1/member`, memberRouter);
+    this._express.use(`${staticStatistics.routePrefix}/api/v1/lobby`, lobbyRouter);
+    this._express.use(`${staticStatistics.routePrefix}/api/v1/nicks`, nicksRouter);
+    this._express.use(`${staticStatistics.routePrefix}/api/v1/themes`, themesRouter);
   }
 
 }

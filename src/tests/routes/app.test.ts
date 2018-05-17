@@ -2,10 +2,11 @@
 /// <reference path="../../../node_modules/mocha-typescript/globals.d.ts" />
 
 import * as chai from 'chai';
-import chaiHttp = require('chai-http');
 
 import app from '../../App';
 import {staticStatistics} from '../../statistics';
+
+const chaiHttp = require('chai-http');
 
 chai.use(chaiHttp);
 const expect = chai.expect;

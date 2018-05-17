@@ -4,7 +4,8 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import chaiHttp = require('chai-http');
+
+const chaiHttp = require('chai-http');
 
 import app from '../../App';
 import {DatabaseTypes, DbDao} from '../../db/DbDAO';
@@ -74,7 +75,7 @@ const privateKey = Math.random().toString(10);
 
   @test async getStatusWhenAvailable() {
     const quiz: IQuestionGroup = JSON.parse(fs.readFileSync(
-      path.join(__dirname, '..', '..', '..', 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
+      path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
     ).toString('UTF-8'));
     quiz.hashtag = this._hashtag;
     QuizManagerDAO.initActiveQuiz(quiz);

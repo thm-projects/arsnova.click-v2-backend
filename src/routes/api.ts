@@ -1,10 +1,8 @@
 import {Request, Response, Router} from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-
-const privateServerConfig = require('../../settings.json');
-privateServerConfig.public.limitActiveQuizzes = parseFloat(privateServerConfig.public.limitActiveQuizzes);
-const publicServerConfig = privateServerConfig.public;
+import {staticStatistics, settings} from '../statistics';
+import * as fileType from 'file-type';
 
 declare global {
   interface UploadRequest extends Request {
@@ -21,7 +19,7 @@ export class ApiRouter {
     return this._router;
   }
 
-  private _router: Router;
+  private readonly _router: Router;
 
   /**
    * Initialize the ApiRouter
@@ -32,8 +30,11 @@ export class ApiRouter {
   }
 
   public getAll(req: Request, res: Response): void {
+    const buildInfo = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'build.json')).toString('UTF-8'));
+
     res.send({
-      serverConfig: publicServerConfig
+      serverConfig: settings.public,
+      buildConfig: buildInfo
     });
   }
 
@@ -46,13 +47,29 @@ export class ApiRouter {
   }
 
   public getFileByName(req: Request, res: Response): void {
-    const pathToFiles: string = path.join(__dirname, `../../${req.params.directory}/${req.params.subdirectory}`);
+    const pathToFiles: string = path.join(staticStatistics.pathToAssets, `${req.params.directory}`, `${req.params.subdirectory}`);
     if (req.params.fileName.indexOf('Random') > -1) {
       this.randomFile(pathToFiles).then((file: string) => {
-        res.send(fs.readFileSync(file));
+        res.send(fs.readFileSync(path.join(`${pathToFiles}`, file)));
       });
     } else {
-      res.send(fs.readFileSync(`${pathToFiles}/${req.params.fileName}`));
+      res.send(fs.readFileSync(path.join(`${pathToFiles}`, `${req.params.fileName}`)));
+    }
+  }
+
+  public getThemeImageFileByName(req: Request, res: Response): void {
+    const pathToFiles = path.join(
+      staticStatistics.pathToAssets, 'images', 'theme', `${req.params.themeName}`, `${req.params.fileName}`
+    );
+    if (fs.existsSync(pathToFiles)) {
+      fs.readFile(pathToFiles, (err, data: Buffer) => {
+        res.contentType(fileType(data).mime);
+        res.end(data);
+      });
+    } else {
+      res.status(404);
+      res.write('File not found');
+      res.end();
     }
   }
 
@@ -62,13 +79,14 @@ export class ApiRouter {
    */
   private init(): void {
     this._router.get('/', this.getAll);
-
-    this._router.get('/files/:directory/:subdirectory/:fileName', this.getFileByName);
+    this._router.get('/files/images/theme/:themeName/:fileName', this.getThemeImageFileByName.bind(this));
+    this._router.get('/files/:directory/:subdirectory/:fileName', this.getFileByName.bind(this));
   }
 
 }
 
 // Create the ApiRouter, and export its configured Express.Router
-const apiRoutes: ApiRouter = new ApiRouter();
+const apiRoutes = new ApiRouter();
+const apiRouter = apiRoutes.router;
+export { apiRouter };
 
-export default apiRoutes.router;

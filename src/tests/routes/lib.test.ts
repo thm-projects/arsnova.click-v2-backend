@@ -4,14 +4,14 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import chaiHttp = require('chai-http');
+import * as child_process from 'child_process';
 
 import router from '../../App';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {staticStatistics} from '../../statistics';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
 
-chai.use(chaiHttp);
+chai.use(require('chai-http'));
 const expect = chai.expect;
 
 const hashtag = 'mocha-test-lib';
@@ -27,7 +27,7 @@ const hashtag = 'mocha-test-lib';
   /*
   This Test will fail or not fail depending if the backend has been able to generate the frontend favicons before
    */
-  @test.skip
+  @test
   async faviconExists() {
     const res = await chai.request(router).get(`${this._baseApiRoute}/favicon`);
     expect(res.type).to.eql('image/png');
@@ -39,7 +39,7 @@ const hashtag = 'mocha-test-lib';
 
   @test async mathjaxExists() {
     const res = await chai.request(router).post(`${this._baseApiRoute}`).send({
-      mathjax: JSON.stringify('\\begin{align} a_1& =b_1+c_1/\\\\ a_2& =b_2+c_2-d_2+e_2 /\\end{align}'),
+      mathjax: JSON.stringify('\\begin a_1 = b_1 + c_1 a_2 = b_2 + c_2 - d_2 + e_2 \\end'),
       format: 'TeX',
       output: 'svg'
     });
@@ -66,7 +66,7 @@ const hashtag = 'mocha-test-lib';
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/cache/quiz/assets`;
   private _hashtag = hashtag;
   private _quiz: IQuestionGroup = JSON.parse(fs.readFileSync(
-    path.join(__dirname, '..', '..', '..', 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
+    path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
   ).toString('UTF-8'));
 
   static before() {

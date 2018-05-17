@@ -138,7 +138,9 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       if (this._isCasRequired) {
         nextColumnIndex += 2;
       }
-      const responseItem = this.quiz.nicknames.filter(nickitem => nickitem.name === leaderboardItem.name)[0].responses[this._questionIndex];
+      const responseItem = this.quiz.memberGroups[0].members.filter(nickitem => {
+        return nickitem.name === leaderboardItem.name;
+      })[0].responses[this._questionIndex];
       const castedQuestion = <IQuestionRanged>this._question;
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
@@ -201,13 +203,13 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(6, 4).number(numberOfInputValuesPerGroup.maxRange);
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.nicknames.length * 100;
+    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      this.quiz.nicknames.forEach((nickItem) => {
+      this.quiz.memberGroups[0].members.forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -227,13 +229,15 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
 
     let nextStartRow = 10;
     this.leaderBoardData.forEach((leaderboardItem) => {
-      const responseItem = this.quiz.nicknames.filter(nickitem => nickitem.name === leaderboardItem.name)[0].responses[this._questionIndex];
+      const responseItem = this.quiz.memberGroups[0].members.filter(nickitem => {
+        return nickitem.name === leaderboardItem.name;
+      })[0].responses[this._questionIndex];
 
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(leaderboardItem.name);
       if (this._isCasRequired) {
-        const profile = this.quiz.nicknames.filter((nick: INickname) => {
+        const profile = this.quiz.memberGroups[0].members.filter((nick: INickname) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);

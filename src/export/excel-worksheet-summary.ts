@@ -3,13 +3,15 @@ import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
 import {ExcelWorksheet} from './excel-worksheet';
 import {Leaderboard} from '../leaderboard/leaderboard';
 import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
+import {staticStatistics} from '../statistics';
+import * as path from 'path';
 
 export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
 
   private addLogoImage(): void {
     this.ws.addImage({
-      path: `${__dirname}/../../images/arsnova_click_small.png`,
+      path: path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png'),
       type: 'picture',
       position: {
         type: 'oneCellAnchor',
@@ -169,17 +171,17 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
   public addSheetData(): void {
     let currentRowIndex = 1;
-    const numberOfResponses = this.quiz.nicknames.filter(nickname => {
+    const numberOfResponses = this.quiz.memberGroups[0].members.filter(nickname => {
       return nickname.responses.filter(response => {
         return !!response.value && response.value !== -1;
       }).length;
     }).length;
-    const allResponses: Array<INickname> = this.quiz.nicknames.filter(nickname => {
+    const allResponses: Array<INickname> = this.quiz.memberGroups[0].members.filter(nickname => {
       return nickname.responses.map(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
     });
-    const numberOfAttendees = this.quiz.nicknames.length;
+    const numberOfAttendees = this.quiz.memberGroups[0].members.length;
     const numberOfQuestions = this.quiz.originalObject.questionList.length;
 
     this.ws.cell(currentRowIndex, 1)
@@ -198,7 +200,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.addLogoImage();
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.number_attendees')}:`);
-    this.ws.cell(currentRowIndex, 3).number(this.quiz.nicknames.length);
+    this.ws.cell(currentRowIndex, 3).number(this.quiz.memberGroups[0].members.length);
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_number_attendees_participated')}:`);
@@ -265,7 +267,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       const targetRow = indexInList + currentRowIndex;
       this.ws.cell(targetRow, nextColumnIndex++).string(leaderboardItem.name);
       if (this._isCasRequired) {
-        const profile = this.quiz.nicknames.filter((nick: INickname) => {
+        const profile = this.quiz.memberGroups[0].members.filter((nick: INickname) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
@@ -306,7 +308,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       const targetRow = indexInList + nextStartRow;
       this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile = this.quiz.nicknames.filter((nick: INickname) => {
+        const profile = this.quiz.memberGroups[0].members.filter((nick: INickname) => {
           return nick.name === responseItem.name;
         })[0].casProfile;
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
@@ -335,7 +337,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     const leaderBoard = new Leaderboard();
     const correctResponses: any = {};
 
-    this.quiz.nicknames.forEach(attendee => {
+    this.quiz.memberGroups[0].members.forEach(attendee => {
       for (let i = 0; i < this.quiz.originalObject.questionList.length; i++) {
         const question: IQuestion = this.quiz.originalObject.questionList[i];
         if (leaderBoard.isCorrectResponse(attendee.responses[i], question) === 1) {

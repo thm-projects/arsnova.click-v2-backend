@@ -15,7 +15,7 @@ export function MatchTextToAssetsDb(value: string) {
   if (matchedValue) {
     matchedValue.forEach((matchedValueElement: string) => {
       const digest = Hex.stringify(sha256(matchedValueElement));
-      const cachePath = `${__dirname}/../../cache/${digest}`;
+      const cachePath = `${staticStatistics.pathToCache}/${digest}`;
       if (fs.existsSync(cachePath)) {
         DbDao.create(DatabaseTypes.assets, {url: matchedValueElement, digest, path: cachePath}, matchedValueElement.replace(/\./g, '_'));
         return;

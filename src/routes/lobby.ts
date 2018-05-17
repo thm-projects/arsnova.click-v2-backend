@@ -1,5 +1,6 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
+import {WebSocketRouter} from './websocket';
 
 export class LobbyRouter {
   get router(): Router {
@@ -21,6 +22,15 @@ export class LobbyRouter {
   }
 
   public putOpenLobby(req: Request, res: Response): void {
+    const messageToWSSClients = JSON.stringify({
+      status: 'STATUS:SUCCESSFUL',
+      step: 'QUIZ:SET_ACTIVE',
+      payload: {
+        quizName: req.body.quiz.hashtag
+      }
+    });
+    WebSocketRouter.wss.clients.forEach(client => client.send(messageToWSSClients));
+
     res.send({
       status: 'STATUS:SUCCESSFUL',
       step: 'LOBBY:OPENED',
@@ -63,6 +73,6 @@ export class LobbyRouter {
 }
 
 // Create the ApiRouter, and export its configured Express.Router
-const lobbyRoutes: LobbyRouter = new LobbyRouter();
-
-export default lobbyRoutes.router;
+const lobbyRoutes = new LobbyRouter();
+const lobbyRouter = lobbyRoutes.router;
+export { lobbyRouter };

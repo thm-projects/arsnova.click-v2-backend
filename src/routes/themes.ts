@@ -1,7 +1,11 @@
 import {Router, Request, Response} from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
+import {staticStatistics} from '../statistics';
+import {ChildProcess, spawn} from 'child_process';
 import {themes} from '../themes/availableThemes';
+import {ITheme} from 'arsnova-click-v2-types/src/common';
+import * as process from 'process';
 
 export class ThemesRouter {
   get router(): Router {
@@ -27,15 +31,15 @@ export class ThemesRouter {
   }
 
   public getTheme(req: Request, res: Response): void {
-    const filePath = path.join(__dirname, '..', '..', 'images', 'themes', `${req.params.themeId}_${req.params.languageId}.png`);
-    fs.exists(filePath, (exists: boolean) => {
-      if (exists) {
-        fs.readFile(filePath, (err, data: Buffer) => {
-          res.setHeader('Content-Type', 'image/png');
-          res.end(data);
-        });
-      }
-    });
+    const filePath = path.join(staticStatistics.pathToAssets, 'images', 'theme', req.params.themeId, `preview_${req.params.languageId}.png`);
+    const exists = fs.existsSync(filePath);
+
+    if (exists) {
+      fs.readFile(filePath, (err, data: Buffer) => {
+        res.setHeader('Content-Type', 'image/png');
+        res.end(data);
+      });
+    }
   }
 
   public init(): void {
@@ -45,6 +49,6 @@ export class ThemesRouter {
 }
 
 // Create the ApiRouter, and export its configured Express.Router
-const themesRoutes: ThemesRouter = new ThemesRouter();
-
-export default themesRoutes.router;
+const themesRoutes = new ThemesRouter();
+const themesRouter = themesRoutes.router;
+export { themesRouter };

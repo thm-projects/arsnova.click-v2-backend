@@ -89,7 +89,8 @@ export class Leaderboard {
         name: keyList[index],
         responseTime: obj[value].responseTime || -1,
         correctQuestions: obj[value].correctQuestions,
-        confidenceValue: obj[value].confidenceValue / obj[value].correctQuestions.length
+        confidenceValue: obj[value].confidenceValue / obj[value].correctQuestions.length,
+        score: obj[value].score
       };
     });
   }

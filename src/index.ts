@@ -3,19 +3,22 @@ import App from './App';
 import * as debug from 'debug';
 import * as WebSocket from 'ws';
 import * as http from 'http';
-import * as path from 'path';
 import {WebSocketRouter} from './routes/websocket';
 import {Server} from 'http';
 import * as process from 'process';
-import * as slimerjs from 'slimerjs';
-import {ChildProcess, spawn} from 'child_process';
-import {themes} from './themes/availableThemes';
-import {ITheme} from 'arsnova-click-v2-types/src/common';
 import {DbDao} from './db/DbDAO';
 import {staticStatistics} from './statistics';
 import {createDefaultPaths} from './app_bootstrap';
 
 debug('arsnova.click: ts-express:server');
+
+declare global {
+  interface NodeModule {
+    hot: {
+      accept: Function
+    };
+  }
+}
 
 createDefaultPaths();
 
@@ -28,25 +31,15 @@ server.on('error', onError);
 server.on('listening', onListening);
 server.on('close', onClose);
 
-const languages = ['en', 'de', 'fr', 'it', 'es'];
-const params: any = [path.join(__dirname, 'phantomDriver.js')];
-const themePreviewEndpoint = `${process.env.BACKEND_THEME_PREVIEW_HOST || `http://localhost:4200`}/preview`;
-themes.forEach((theme: ITheme) => {
-  languages.forEach((languageKey) => {
-    params.push(`${themePreviewEndpoint}/${theme.id}/${languageKey}`);
+let currentApp = App;
+
+if (module.hot) {
+  module.hot.accept('./index', () => {
+    server.removeListener('request', currentApp);
+    server.on('request', App);
+    currentApp = App;
   });
-});
-const suffix = process.platform === 'win32' ? '.bat' : '';
-const command: ChildProcess = spawn(`${slimerjs.path}${suffix}`, params);
-command.stdout.on('data', (data) => {
-  debug(`arsnova.click:phantomjs (stdout): ${data.toString()}`);
-});
-command.stderr.on('data', (data) => {
-  debug(`arsnova.click:phantomjs (stderr): ${data.toString()}`);
-});
-command.on('exit', () => {
-  debug(`arsnova.click:phantomjs (exit): All preview images have been generated`);
-});
+}
 
 function normalizePort(val: number | string): number | string | boolean {
   const portCheck: number = (typeof val === 'string') ? parseInt(val, 10) : val;
@@ -81,7 +74,7 @@ function onError(error: NodeJS.ErrnoException): void {
 function onListening(): void {
   const addr: { port: number; family: string; address: string; } = server.address();
   const bind: string = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
-  debug(`Listening on ${bind}`);
+  console.log(`Listening on ${bind}`);
 
   WebSocketRouter.wss = new WebSocket.Server({server});
 }

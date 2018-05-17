@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import {IAvailableNicks} from 'arsnova-click-v2-types/src/common';
+import {staticStatistics} from '../statistics';
 
 const availableNicks: IAvailableNicks = {
   'disney': [
@@ -222,7 +223,7 @@ const availableNicks: IAvailableNicks = {
     'Maurice V. Wilkes',
     'Alan J. Perlis'
   ],
-  'emojis': fs.readdirSync(path.join(__dirname, '..', '..', 'images', 'emojis')).map(fileName => `:${fileName.substring(0, fileName.length - 4)}:`)
+  'emojis': fs.readdirSync(path.join(staticStatistics.pathToAssets, 'images', 'emojis')).map(fileName => `:${fileName.substring(0, fileName.length - 4)}:`)
 };
 
 export default availableNicks;

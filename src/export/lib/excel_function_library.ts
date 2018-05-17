@@ -2,7 +2,7 @@ import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
 
 export function calculateNumberOfAnswers(quiz: IActiveQuiz, questionIndex: number, answerNumber: number) {
   let numberOfAnswers = 0;
-  quiz.nicknames.forEach(nickname => {
+  quiz.memberGroups[0].members.forEach(nickname => {
     const response = nickname.responses[questionIndex].value;
     if (response instanceof Array) {
       numberOfAnswers += response.indexOf(answerNumber) > -1 ? 1 : 0;
@@ -17,7 +17,7 @@ export function calculateNumberOfRangedAnswers(quiz: IActiveQuiz, questionIndex:
   let numberOfAnswersInMinRange = 0;
   let numberOfAnswersInMaxRange = 0;
   let numberOfCorrectAnswers = 0;
-  quiz.nicknames.forEach((nickname) => {
+  quiz.memberGroups[0].members.forEach((nickname) => {
       if (nickname.responses[questionIndex].value <= maxRange && nickname.responses[questionIndex].value > correctValue) {
         numberOfAnswersInMaxRange++;
       } else if (nickname.responses[questionIndex].value === correctValue) {

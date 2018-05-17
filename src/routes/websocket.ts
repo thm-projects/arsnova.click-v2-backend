@@ -22,25 +22,47 @@ export class WebSocketRouter {
 
           if (message.step === 'WEBSOCKET:AUTHORIZE') {
             const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(message.payload.quizName);
-            activeQuiz.nicknames.forEach(nickname => {
-              if (nickname.webSocketAuthorization === parseFloat(message.payload.webSocketAuthorization)) {
-                nickname.webSocket = ws;
-                ws.send(JSON.stringify({status: 'STATUS:SUCCESSFUL', step: 'WEBSOCKET:AUTHORIZED'}));
-              }
-            });
+            const res = {status: '', step: ''};
+
+            if (!activeQuiz) {
+              res.status = 'STATUS:SUCCESSFUL';
+              res.step = 'LOBBY:INACTIVE';
+              ws.send(JSON.stringify(res));
+            } else {
+              activeQuiz.memberGroups.forEach((memberGroup) => {
+                memberGroup.members.forEach(nickname => {
+                  if (nickname.webSocketAuthorization === parseFloat(message.payload.webSocketAuthorization)) {
+                    nickname.webSocket = ws;
+                    ws.send(JSON.stringify({status: 'STATUS:SUCCESSFUL', step: 'WEBSOCKET:AUTHORIZED'}));
+                  }
+                });
+              });
+            }
           }
 
           if (message.step === 'WEBSOCKET:AUTHORIZE_AS_OWNER') {
             const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(message.payload.quizName);
-            const isOwner: Object = DbDao.read(DatabaseTypes.quiz, {
-              quizName: message.payload.quizName,
-              privateKey: message.payload.webSocketAuthorization
-            });
-            if (Object.keys(isOwner).length > 0) {
-              activeQuiz.ownerSocket = ws;
-              ws.send(JSON.stringify({status: 'STATUS:SUCCESSFUL', step: 'WEBSOCKET:AUTHORIZED'}));
+            const res = {status: '', step: ''};
+
+            if (!activeQuiz) {
+              res.status = 'STATUS:SUCCESSFUL';
+              res.step = 'LOBBY:INACTIVE';
+              ws.send(JSON.stringify(res));
             } else {
-              ws.send(JSON.stringify({status: 'STATUS:FAILED', step: 'INSUFFICIENT_PERMISSIONS'}));
+              const isOwner: Object = DbDao.read(DatabaseTypes.quiz, {
+                quizName: message.payload.quizName,
+                privateKey: message.payload.webSocketAuthorization
+              });
+              if (Object.keys(isOwner).length > 0) {
+                activeQuiz.ownerSocket = ws;
+                res.status = 'STATUS:SUCCESSFUL';
+                res.step = 'WEBSOCKET:AUTHORIZED';
+                ws.send(JSON.stringify(res));
+              } else {
+                res.status = 'STATUS:FAILED';
+                res.step = 'INSUFFICIENT_PERMISSIONS';
+                ws.send(JSON.stringify(res));
+              }
             }
           }
 
@@ -52,16 +74,25 @@ export class WebSocketRouter {
             } else {
               res.step = 'LOBBY:ALL_PLAYERS';
               res.payload = {
-                members: activeQuiz.nicknames.map((value: INickname) => {
-                  return value.serialize();
+                members: activeQuiz.memberGroups.map((memberGroup) => {
+                  return memberGroup.members.map((nickname: INickname) => {
+                    return nickname.serialize();
+                  });
+                }).reduce((previousValue, currentValue) => {
+                  return previousValue.concat(...currentValue);
                 })
               };
             }
             ws.send(JSON.stringify(res));
           }
+
         } catch (ex) {
           console.log('error while receiving ws message', ex);
-          ws.send(`Hello, you sent -> ${message}`);
+          ws.send(JSON.stringify({
+            status: `Exception raised`,
+            message,
+            exception: `${ex.message}`
+          }));
         }
       });
       ws.on('close', (code, message) => {
@@ -71,7 +102,9 @@ export class WebSocketRouter {
         console.log('ws error', err);
       });
 
-      ws.send(JSON.stringify({status: 'STATUS:SUCCESSFUL', step: 'CONNECTED', payload: {}}));
+      ws.send(JSON.stringify({status: 'STATUS:SUCCESSFUL', step: 'CONNECTED', payload: {
+        activeQuizzes: QuizManagerDAO.getAllActiveQuizNames()
+      }}));
     });
   }
 }

@@ -1,6 +1,6 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import {IQuestion, IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
+import {IActiveQuiz, IMemberGroupSerialized} from 'arsnova-click-v2-types/src/common';
 import {DatabaseTypes, DbDao} from '../db/DbDAO';
 import {MatchTextToAssetsDb} from '../cache/assets';
 import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
@@ -10,10 +10,7 @@ import {Leaderboard} from '../leaderboard/leaderboard';
 import * as fs from 'fs';
 import * as path from 'path';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
-
-const privateServerConfig = require('../../settings.json');
-privateServerConfig.public.limitActiveQuizzes = parseFloat(privateServerConfig.public.limitActiveQuizzes);
-const publicServerConfig = privateServerConfig.public;
+import {staticStatistics, settings} from '../statistics';
 
 export class QuizRouter {
   get router(): Router {
@@ -38,7 +35,14 @@ export class QuizRouter {
 
   public getIsAvailableQuiz(req: Request, res: Response): void {
     const quiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
-    const payload: { available?: boolean, provideNickSelection?: boolean, authorizeViaCas?: boolean } = {};
+    const payload: {
+      available?: boolean,
+      provideNickSelection?: boolean,
+      authorizeViaCas?: boolean,
+      memberGroups?: Array<IMemberGroupSerialized>,
+      maxMembersPerGroup?: number,
+      autoJoinToGroup?: boolean
+    } = {};
 
     const isInactive: boolean = QuizManagerDAO.isInactiveQuiz(req.params.quizName);
     let isInProgress = false;
@@ -51,6 +55,9 @@ export class QuizRouter {
         payload.available = true;
         payload.provideNickSelection = provideNickSelection;
         payload.authorizeViaCas = sessionConfig.nicks.restrictToCasLogin;
+        payload.maxMembersPerGroup = sessionConfig.nicks.maxMembersPerGroup;
+        payload.autoJoinToGroup = sessionConfig.nicks.autoJoinToGroup;
+        payload.memberGroups = quiz.memberGroups.map(memberGroup => memberGroup.serialize());
       } else {
         isInProgress = true;
       }
@@ -66,7 +73,7 @@ export class QuizRouter {
 
   public generateDemoQuiz(req: Request, res: Response): void {
     try {
-      const basePath = path.join(__dirname, '..', '..', 'predefined_quizzes', 'demo_quiz');
+      const basePath = path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz');
       let demoQuizPath = path.join(basePath, `${req.params.languageId.toLowerCase()}.demo_quiz.json`);
       if (!fs.existsSync(demoQuizPath)) {
         demoQuizPath = path.join(basePath, 'en.demo_quiz.json');
@@ -84,7 +91,7 @@ export class QuizRouter {
   public generateAbcdQuiz(req: Request, res: Response): void {
     try {
       const answerLength = req.params.answerLength || 4;
-      const basePath = path.join(__dirname, '..', '..', 'predefined_quizzes', 'abcd_quiz');
+      const basePath = path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'abcd_quiz');
       let abcdQuizPath = path.join(basePath, `${req.params.languageId.toLowerCase()}.abcd_quiz.json`);
       if (!fs.existsSync(abcdQuizPath)) {
         abcdQuizPath = path.join(basePath, 'en.abcd_quiz.json');
@@ -145,7 +152,7 @@ export class QuizRouter {
           } else {
             DbDao.create(DatabaseTypes.quiz, {quizName: data.quiz.hashtag, privateKey});
             QuizManagerDAO.initInactiveQuiz(data.quiz.hashtag);
-            if (publicServerConfig.cacheQuizAssets) {
+            if (settings.public.cacheQuizAssets) {
               const quiz: IQuestionGroup = data.quiz;
               quiz.questionList.forEach((question: IQuestion) => {
                 MatchTextToAssetsDb(question.questionText);
@@ -323,8 +330,7 @@ export class QuizRouter {
 
   public reserveQuiz(req: Request, res: Response): void {
     if (!req.body.quizName || !req.body.privateKey) {
-      res.sendStatus(500);
-      res.end(JSON.stringify({
+      res.send(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:INVALID_DATA',
         payload: {}
@@ -332,18 +338,18 @@ export class QuizRouter {
       return;
     }
     const activeQuizzesAmount = QuizManagerDAO.getAllActiveQuizNames();
-    if (activeQuizzesAmount.length >= publicServerConfig.limitActiveQuizzes) {
+    if (activeQuizzesAmount.length >= settings.public.limitActiveQuizzes) {
       res.send({
         status: 'STATUS:FAILED',
         step: 'QUIZ:TOO_MUCH_ACTIVE_QUIZZES',
         payload: {
           activeQuizzes: activeQuizzesAmount,
-          limitActiveQuizzes: publicServerConfig.limitActiveQuizzes
+          limitActiveQuizzes: settings.public.limitActiveQuizzes
         }
       });
       return;
     }
-    if (publicServerConfig.createQuizPasswordRequired && !req.body.serverPassword) {
+    if (settings.public.createQuizPasswordRequired && !req.body.serverPassword) {
       res.send({
         status: 'STATUS:FAILED',
         step: 'QUIZ:SERVER_PASSWORD_REQUIRED',
@@ -351,13 +357,14 @@ export class QuizRouter {
       });
       return;
     }
-    if (req.body.serverPassword !== privateServerConfig.createQuizPassword) {
-      res.sendStatus(500);
-      res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
-        payload: {}
-      }));
+    if (req.body.serverPassword !== settings.createQuizPassword) {
+      res.send(JSON.stringify(
+        {
+          status: 'STATUS:FAILED',
+          step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
+          payload: {}
+        }
+      ));
       return;
     }
     QuizManagerDAO.initInactiveQuiz(req.body.quizName);
@@ -427,7 +434,17 @@ export class QuizRouter {
     }
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
     const dbResult: Object = DbDao.read(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
-    if (activeQuiz && dbResult) {
+
+    if (!dbResult) {
+      res.send({
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
+        payload: {}
+      });
+      return;
+    }
+
+    if (activeQuiz) {
       activeQuiz.onDestroy();
       QuizManagerDAO.setQuizAsInactive(req.body.quizName);
       res.send({
@@ -435,12 +452,7 @@ export class QuizRouter {
         step: 'QUIZ:CLOSED',
         payload: {}
       });
-    } else {
-      res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
-        payload: {}
-      });
+      return;
     }
   }
 
@@ -501,46 +513,93 @@ export class QuizRouter {
 
   private getLeaderBoardData(req: Request, res: Response, next: NextFunction): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
+    if (!activeQuiz) {
+      res.sendStatus(500);
+      res.end(JSON.stringify({
+        status: 'STATUS:FAILED',
+        step: 'GET_LEADERBOARD_DATA:QUIZ_INACTIVE',
+        payload: {}
+      }));
+      return;
+    }
+
     const index: number = +req.params.questionIndex;
     const questionAmount: number = activeQuiz.originalObject.questionList.length;
     const questionIndex: number = isNaN(index) ? 0 : index;
     const endIndex: number = isNaN(index) || index < 0 || index > questionAmount ? questionAmount : index + 1;
     const correctResponses: any = {};
     const partiallyCorrectResponses: any = {};
-    activeQuiz.nicknames.forEach(attendee => {
-      for (let i: number = questionIndex; i < endIndex; i++) {
-        const question: IQuestion = activeQuiz.originalObject.questionList[i];
-        if (['SurveyQuestion', 'ABCDSingleChoiceQuestion'].indexOf(question.TYPE) > -1) {
-          continue;
-        }
-        const isCorrect = this._leaderboard.isCorrectResponse(attendee.responses[i], question);
-        if (isCorrect === 1) {
-          if (!correctResponses[attendee.name]) {
-            correctResponses[attendee.name] = {responseTime: 0, correctQuestions: [], confidenceValue: 0};
+
+    const orderByGroups = activeQuiz.memberGroups.length > 1;
+    const memberGroupResults = {};
+
+    activeQuiz.memberGroups.forEach((memberGroup) => {
+      memberGroupResults[memberGroup.name] = {
+        correctQuestions: [],
+        responseTime: 0,
+        score: 0,
+        memberAmount: memberGroup.members.length
+      };
+
+      memberGroup.members.forEach(attendee => {
+        for (let i: number = questionIndex; i < endIndex; i++) {
+          const question: IQuestion = activeQuiz.originalObject.questionList[i];
+          if (['SurveyQuestion', 'ABCDSingleChoiceQuestion'].indexOf(question.TYPE) > -1) {
+            continue;
           }
-          correctResponses[attendee.name].correctQuestions.push(i);
-          correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-          correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-        } else if (isCorrect === 0) {
-          if (!partiallyCorrectResponses[attendee.name]) {
-            partiallyCorrectResponses[attendee.name] = {responseTime: 0, correctQuestions: [], confidenceValue: 0};
+          const isCorrect = this._leaderboard.isCorrectResponse(attendee.responses[i], question);
+          if (isCorrect === 1) {
+            if (!correctResponses[attendee.name]) {
+              correctResponses[attendee.name] = {responseTime: 0, correctQuestions: [], confidenceValue: 0};
+            }
+            correctResponses[attendee.name].correctQuestions.push(i);
+            correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
+            correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
+
+            memberGroupResults[memberGroup.name].correctQuestions.push(i);
+            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
+
+          } else if (isCorrect === 0) {
+
+            if (!partiallyCorrectResponses[attendee.name]) {
+              partiallyCorrectResponses[attendee.name] = {responseTime: 0, correctQuestions: [], confidenceValue: 0};
+            }
+
+            partiallyCorrectResponses[attendee.name].correctQuestions.push(i);
+            partiallyCorrectResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
+            partiallyCorrectResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
+
+          } else {
+
+            delete correctResponses[attendee.name];
+            delete partiallyCorrectResponses[attendee.name];
+            break;
           }
-          partiallyCorrectResponses[attendee.name].correctQuestions.push(i);
-          partiallyCorrectResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-          partiallyCorrectResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-        } else {
-          delete correctResponses[attendee.name];
-          delete partiallyCorrectResponses[attendee.name];
-          break;
         }
-      }
+      });
     });
+
+    if (orderByGroups) {
+      Object.keys(memberGroupResults).forEach(groupName => {
+        const memberGroup = memberGroupResults[groupName];
+        const maxMembersPerGroup = activeQuiz.originalObject.sessionConfig.nicks.maxMembersPerGroup;
+        // (10 / 1) * (1 / 1) * (1.815 / 1)
+        memberGroupResults[groupName].score = Math.round(
+          (maxMembersPerGroup / memberGroup.memberAmount) *
+          (memberGroup.correctQuestions.length / activeQuiz.originalObject.questionList.length) *
+          (memberGroup.responseTime / memberGroup.memberAmount) *
+          100
+        );
+      });
+    }
+
     res.send({
       status: 'STATUS:SUCCESSFUL',
       step: 'QUIZ:GET_LEADERBOARD_DATA',
       payload: {
         correctResponses: this._leaderboard.objectToArray(correctResponses),
         partiallyCorrectResponses: this._leaderboard.objectToArray(partiallyCorrectResponses),
+        memberGroupResults: this._leaderboard.objectToArray(memberGroupResults)
       }
     });
   }
@@ -573,6 +632,6 @@ export class QuizRouter {
 }
 
 // Create the ApiRouter, and export its configured Express.Router
-const quizRoutes: QuizRouter = new QuizRouter();
-
-export default quizRoutes.router;
+const quizRoutes = new QuizRouter();
+const quizRouter = quizRoutes.router;
+export { quizRouter };

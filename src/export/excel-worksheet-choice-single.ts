@@ -8,7 +8,7 @@ import {ExcelWorksheet} from './excel-worksheet';
 export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
   private _question: IQuestion;
-  private _questionIndex: number;
+  private readonly _questionIndex: number;
 
   public formatSheet(): void {
     const defaultStyles = this._theme.getStyles();
@@ -85,7 +85,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       lastColumn: minColums
     });
 
-    const responses = this.quiz.nicknames.map(nickname => nickname.responses[this._questionIndex]);
+    const responses = this.quiz.memberGroups[0].members.map(nickname => nickname.responses[this._questionIndex]);
     const hasEntries: boolean = responses.length > 0;
     const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
     const attendeeEntryRowStyle: any = hasEntries ?
@@ -135,7 +135,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
 
   public addSheetData(): void {
     const answerList = this._question.answerOptionList;
-    const allResponses: Array<INickname> = this.quiz.nicknames.filter(nickname => {
+    const allResponses: Array<INickname> = this.quiz.memberGroups[0].members.filter(nickname => {
       return nickname.responses.map(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
@@ -153,13 +153,13 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.nicknames.length * 100;
+    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      this.quiz.nicknames.forEach((nickItem) => {
+      this.quiz.memberGroups[0].members.forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -183,7 +183,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile: any = this.quiz.nicknames.filter(nickname => nickname.name === responseItem.name)[0].casProfile;
+        const profile: any = this.quiz.memberGroups[0].members.filter(nickname => nickname.name === responseItem.name)[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail instanceof Array ? profile.mail.slice(-1)[0] : profile.mail);
       }

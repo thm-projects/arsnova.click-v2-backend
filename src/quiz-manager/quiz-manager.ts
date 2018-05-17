@@ -2,11 +2,39 @@ import * as WebSocket from 'ws';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import illegalNicks from '../nicknames/illegalNicks';
 import {
-  IActiveQuiz, IActiveQuizSerialized, ICasData, INickname, IQuizResponse, INicknameSerialized
+  IActiveQuiz, IActiveQuizSerialized, ICasData, INickname, IQuizResponse, INicknameSerialized, IMemberGroup, IMemberGroupSerialized
 } from 'arsnova-click-v2-types/src/common';
 import {CasDAO} from '../db/CasDAO';
+import {WebSocketRouter} from '../routes/websocket';
+
+export class MemberGroup implements IMemberGroup {
+  get members(): Array<INickname> {
+    return this._members;
+  }
+  get name(): string {
+    return this._name;
+  }
+
+  private readonly _name: string;
+  private readonly _members: Array<INickname>;
+
+  constructor(name, members = []) {
+    this._name = name;
+    this._members = members;
+  }
+
+  public serialize(): IMemberGroupSerialized {
+    return {
+      name: this.name,
+      members: this.members.map(nick => nick.serialize())
+    };
+  }
+}
 
 export class Member implements INickname {
+  get groupName(): string {
+    return this._groupName;
+  }
   get casProfile(): ICasData {
     return this._casProfile;
   }
@@ -40,19 +68,30 @@ export class Member implements INickname {
     return this._webSocket;
   }
 
-  private _id: number;
-  private _name: string;
-  private _colorCode: string;
+  private readonly _id: number;
+  private readonly _name: string;
+  private readonly _groupName: string;
+  private readonly _colorCode: string;
+  private readonly _responses: Array<IQuizResponse>;
+  private readonly _casProfile: ICasData;
+
   private _webSocket: WebSocket;
   private _webSocketAuthorization: number;
-  private _responses: Array<IQuizResponse>;
-  private _casProfile: ICasData;
 
   constructor(
-    {id, name, colorCode, responses, webSocketAuthorization, ticket}:
-      { id: number, name: string, colorCode?: string, responses?: Array<IQuizResponse>, webSocketAuthorization: number, ticket: string}) {
+    {id, name, colorCode, responses, groupName, webSocketAuthorization, ticket}:
+      { id: number,
+        name: string,
+        colorCode?: string,
+        responses?: Array<IQuizResponse>,
+        groupName: string,
+        webSocketAuthorization: number,
+        ticket: string
+      }
+      ) {
     this._id = id;
     this._name = name;
+    this._groupName = groupName;
     this._colorCode = colorCode || this.generateRandomColorCode();
     this._responses = responses || [];
     this._webSocketAuthorization = webSocketAuthorization;
@@ -84,6 +123,7 @@ export class Member implements INickname {
     return {
       id: this.id,
       name: this.name,
+      groupName: this.groupName,
       colorCode: this.colorCode,
       responses: this.responses
     };
@@ -91,6 +131,9 @@ export class Member implements INickname {
 }
 
 export class ActiveQuizItem implements IActiveQuiz {
+  get memberGroups(): Array<IMemberGroup> {
+    return this._memberGroups;
+  }
   get ownerSocket(): WebSocket {
     return this._ownerSocket;
   }
@@ -113,41 +156,49 @@ export class ActiveQuizItem implements IActiveQuiz {
     return this._currentQuestionIndex;
   }
 
-  get nicknames(): Array<INickname> {
-    return this._nicknames;
-  }
-
   get name(): string {
     return this._name;
   }
 
-  private _name: string;
-  private _nicknames: Array<INickname>;
+  private readonly _name: string;
+  private readonly _memberGroups: Array<IMemberGroup>;
+  private readonly _originalObject: IQuestionGroup;
+
   private _currentQuestionIndex: number;
-  private _originalObject: IQuestionGroup;
   private _currentStartTimestamp = 0;
   private _ownerSocket: WebSocket;
   private _countdownInterval: any;
 
   constructor(
-    {nicknames, originalObject, currentQuestionIndex}:
-    { nicknames: Array<INickname>, originalObject: IQuestionGroup, currentQuestionIndex?: number }
+    {memberGroups, originalObject, currentQuestionIndex}:
+    { memberGroups: Array<IMemberGroup>, originalObject: IQuestionGroup, currentQuestionIndex?: number }
     ) {
     this._name = originalObject.hashtag;
-    this._nicknames = nicknames;
+    this._memberGroups = memberGroups;
     this._originalObject = originalObject;
     this._currentQuestionIndex = typeof currentQuestionIndex !== 'undefined' ? currentQuestionIndex : -1;
   }
 
   public serialize(): IActiveQuizSerialized {
     return {
-      nicknames: this._nicknames.map(nick => nick.serialize()),
+      memberGroups: this.memberGroups.map(memberGroup => {
+        return memberGroup.serialize();
+      }),
       originalObject: this._originalObject,
       currentQuestionIndex: this._currentQuestionIndex
     };
   }
 
   public onDestroy(): void {
+    const messageToAllWSSClients = JSON.stringify({
+      status: 'STATUS:SUCCESSFUL',
+      step: 'QUIZ:SET_INACTIVE',
+      payload: {
+        quizName: this.name
+      }
+    });
+    WebSocketRouter.wss.clients.forEach(client => client.send(messageToAllWSSClients));
+
     this.pushMessageToClients({
       status: 'STATUS:SUCCESSFUL',
       step: 'LOBBY:CLOSED',
@@ -156,10 +207,12 @@ export class ActiveQuizItem implements IActiveQuiz {
   }
 
   private pushMessageToClients(message: any): void {
-    this._nicknames.forEach(value => {
-      if (value.webSocket && value.webSocket.readyState === WebSocket.OPEN) {
-        value.webSocket.send(JSON.stringify(message));
-      } else if (value.webSocket) {} else {}
+    this.memberGroups.forEach(memberGroup => {
+      memberGroup.members.forEach(value => {
+        if (value.webSocket && value.webSocket.readyState === WebSocket.OPEN) {
+          value.webSocket.send(JSON.stringify(message));
+        } else if (value.webSocket) {} else {}
+      });
     });
     if (this._ownerSocket && this._ownerSocket.readyState === WebSocket.OPEN) {
       this._ownerSocket.send(JSON.stringify(message));
@@ -177,8 +230,10 @@ export class ActiveQuizItem implements IActiveQuiz {
   public reset(): void {
     this._currentQuestionIndex = -1;
     this._currentStartTimestamp = 0;
-    this._nicknames.forEach((member) => {
-      member.responses.splice(0, member.responses.length);
+    this.memberGroups.forEach(memberGroup => {
+      memberGroup.members.forEach(member => {
+        member.responses.splice(0, member.responses.length);
+      });
     });
     this.pushMessageToClients({
       status: 'STATUS:SUCCESSFUL',
@@ -193,13 +248,16 @@ export class ActiveQuizItem implements IActiveQuiz {
     let timer = this.originalObject.questionList[this.currentQuestionIndex].timer;
     this._countdownInterval = setInterval(() => {
       if (
-        !timer || this.nicknames.filter(nick => {
-          if (!nick.responses[this.currentQuestionIndex]) {
-            return false;
-          }
-          const value = nick.responses[this.currentQuestionIndex].value;
-          return typeof value === 'number' ? !isNaN(value) : value.length;
-        }).length === this.nicknames.length
+        !timer ||
+        this.memberGroups.forEach(memberGroup => {
+          return memberGroup.members.filter(nick => {
+            if (!nick.responses[this.currentQuestionIndex]) {
+              return false;
+            }
+            const value = nick.responses[this.currentQuestionIndex].value;
+            return typeof value === 'number' ? !isNaN(value) : value.length;
+          }).length === memberGroup.members.length;
+        })
       ) {
         clearInterval(this._countdownInterval);
         this._currentStartTimestamp = 0;
@@ -229,7 +287,9 @@ export class ActiveQuizItem implements IActiveQuiz {
   public nextQuestion(): number {
     if (this.currentQuestionIndex < this.originalObject.questionList.length - 1) {
       this.currentQuestionIndex++;
-      this.nicknames.forEach(member => member.responses.push({value: [], responseTime: 0, confidence: 0, readingConfirmation: false}));
+      this.memberGroups.forEach(memberGroup => memberGroup.members.forEach(member => {
+        member.responses.push({value: [], responseTime: 0, confidence: 0, readingConfirmation: false});
+      }));
       this.pushMessageToClients({
         status: 'STATUS:SUCCESSFUL',
         step: 'QUIZ:NEXT_QUESTION',
@@ -243,15 +303,22 @@ export class ActiveQuizItem implements IActiveQuiz {
     }
   }
 
-  public findMemberByName(name: string): Array<INickname> {
-    return this.nicknames.filter((nicks) => {
-      return nicks.name === name;
-    });
+  public findMemberByName(name: string): INickname {
+    return this.memberGroups.reduce((previousValue, currentValue) => {
+      return [...previousValue, ...currentValue.members];
+    }, []).find(nickname => nickname.name === name);
   }
 
-  public addMember(name: string, webSocketAuthorization: number, ticket?: string): boolean {
-    const foundMembers: number = this.findMemberByName(name).length;
+  public addMember(name: string, webSocketAuthorization: number, groupName: string = 'Default', ticket?: string): boolean {
+    const foundMembers = this.findMemberByName(name);
+    const group: IMemberGroup = this.memberGroups.find(memberGroup => memberGroup.name === groupName);
 
+    if (foundMembers) {
+      throw new Error('LOBBY:DUPLICATE_LOGIN');
+    }
+    if (!group) {
+      throw new Error('LOBBY:UNKOWN_GROUP');
+    }
     if (this.originalObject.sessionConfig.nicks.blockIllegalNicks && illegalNicks.indexOf(name.toUpperCase()) > -1) {
       throw new Error('LOBBY:ILLEGAL_NAME');
     }
@@ -259,83 +326,81 @@ export class ActiveQuizItem implements IActiveQuiz {
       throw new Error('LOBBY:CAS_LOGIN_REQUIRED');
     }
 
-    if (foundMembers === 0) {
-      const member: INickname = new Member({id: this.nicknames.length, name, webSocketAuthorization, ticket});
-      this.nicknames.push(member);
-      this.pushMessageToClients({
-        status: 'STATUS:SUCCESSFUL',
-        step: 'MEMBER:ADDED',
-        payload: {member: member.serialize()}
-      });
-      return true;
-    } else {
-      throw new Error('LOBBY:DUPLICATE_LOGIN');
-    }
+    const addedMember: INickname = new Member({
+      id: group.members.length,
+      name,
+      groupName,
+      webSocketAuthorization,
+      ticket
+    });
+    this.memberGroups.find(memberGroup => memberGroup.name === groupName).members.push(addedMember);
+    this.pushMessageToClients({
+      status: 'STATUS:SUCCESSFUL',
+      step: 'MEMBER:ADDED',
+      payload: {member: addedMember.serialize()}
+    });
+    return true;
   }
 
   public removeMember(name: string): boolean {
-    const foundMembers: Array<INickname> = this.findMemberByName(name);
-    if (foundMembers.length === 1) {
-      this.pushMessageToClients({
-        status: 'STATUS:SUCCESSFUL',
-        step: 'MEMBER:REMOVED',
-        payload: {
-          name: name
-        }
-      });
-      this.nicknames.splice(this.nicknames.indexOf(foundMembers[0]), 1);
-      return true;
+    const foundMembers = this.findMemberByName(name);
+
+    if (!foundMembers) {
+      return false;
     }
-    return false;
+
+    this.pushMessageToClients({
+      status: 'STATUS:SUCCESSFUL',
+      step: 'MEMBER:REMOVED',
+      payload: {
+        name: name
+      }
+    });
+
+    /* Must be beneath the pushMessageToClients call so that the target member will receive the kick notification */
+    this.memberGroups.forEach(memberGroup => {
+      if (memberGroup.name === foundMembers.groupName) {
+        memberGroup.members.splice(memberGroup.members.indexOf(foundMembers), 1);
+      }
+    });
+    return true;
   }
 
   public addResponseValue(nickname: string, data: Array<number>): void {
-    this.nicknames.filter(value => {
-      return value.name === nickname;
-    })[0].responses[this.currentQuestionIndex].responseTime = (new Date().getTime() - this._currentStartTimestamp) / 1000;
-    this.nicknames.filter(value => {
-      return value.name === nickname;
-    })[0].responses[this.currentQuestionIndex].value = data;
+    this.findMemberByName(nickname).responses[this.currentQuestionIndex].responseTime = (
+      (new Date().getTime() - this._currentStartTimestamp) / 1000
+    );
+    this.findMemberByName(nickname).responses[this.currentQuestionIndex].value = data;
 
     this.pushMessageToClients({
       status: 'STATUS:SUCCESSFUL',
       step: 'MEMBER:UPDATED_RESPONSE',
       payload: {
-        nickname: this.nicknames.filter(value => {
-          return value.name === nickname;
-        })[0].serialize()
+        nickname: this.findMemberByName(nickname).serialize()
       }
     });
   }
 
   public setConfidenceValue(nickname: string, confidenceValue: number): void {
-    this.nicknames.filter(member => {
-      return member.name === nickname;
-    })[0].responses[this.currentQuestionIndex].confidence = confidenceValue;
+    this.findMemberByName(nickname).responses[this.currentQuestionIndex].confidence = confidenceValue;
 
     this.pushMessageToClients({
       status: 'STATUS:SUCCESSFUL',
       step: 'MEMBER:UPDATED_RESPONSE',
       payload: {
-        nickname: this.nicknames.filter(value => {
-          return value.name === nickname;
-        })[0].serialize()
+        nickname: this.findMemberByName(nickname).serialize()
       }
     });
   }
 
   public setReadingConfirmation(nickname: string): void {
-    this.nicknames.filter(member => {
-      return member.name === nickname;
-    })[0].responses[this.currentQuestionIndex].readingConfirmation = true;
+    this.findMemberByName(nickname).responses[this.currentQuestionIndex].readingConfirmation = true;
 
     this.pushMessageToClients({
       status: 'STATUS:SUCCESSFUL',
       step: 'MEMBER:UPDATED_RESPONSE',
       payload: {
-        nickname: this.nicknames.filter(value => {
-          return value.name === nickname;
-        })[0].serialize()
+        nickname: this.findMemberByName(nickname).serialize()
       }
     });
   }
@@ -355,7 +420,7 @@ export class ActiveQuizItem implements IActiveQuiz {
 
 export class ActiveQuizItemPlaceholder implements IActiveQuiz {
   public name: string;
-  public nicknames: INickname[];
+  public memberGroups: Array<IMemberGroup>;
   public currentQuestionIndex: number;
   public originalObject: IQuestionGroup;
   public currentStartTimestamp: number;
