@@ -171,9 +171,9 @@ export class MemberRouter {
       return;
     }
     const names: Array<String> = activeQuiz.originalObject.sessionConfig.nicks.selectedNicks.filter((nick) => {
-      return activeQuiz.memberGroups.filter(memberGroup => {
-        return memberGroup.members.filter(value => value.name === nick).length === 0;
-      }).length === 0;
+      return !activeQuiz.memberGroups.find(memberGroup => {
+        return !!memberGroup.members.find(value => value.name === nick);
+      });
     });
     res.send({
       status: 'STATUS:SUCCESSFUL',

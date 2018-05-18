@@ -18,6 +18,7 @@ import {lobbyRouter} from './routes/lobby';
 import {nicksRouter} from './routes/nicks';
 import {themesRouter} from './routes/themes';
 import {memberRouter} from './routes/member';
+import {debugRouter} from './routes/debug';
 
 i18n.configure({
   // setup some locales - other locales default to en silently
@@ -118,8 +119,9 @@ class App {
     this._express.use(`${staticStatistics.routePrefix}/api/v1/lobby`, lobbyRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/nicks`, nicksRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/themes`, themesRouter);
-  }
 
+    this._express.use(`${staticStatistics.routePrefix}/debug`, debugRouter);
+  }
 }
 
 export default new App().express;

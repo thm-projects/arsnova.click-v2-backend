@@ -2,7 +2,7 @@ import * as sha256 from 'crypto-js/sha256';
 import * as Hex from 'crypto-js/enc-hex';
 import * as fs from 'fs';
 import * as request from 'request';
-import {DatabaseTypes, DbDao} from '../db/DbDAO';
+import {DatabaseTypes, DbDAO} from '../db/DbDAO';
 import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {staticStatistics} from '../statistics';
 import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
@@ -17,7 +17,7 @@ export function MatchTextToAssetsDb(value: string) {
       const digest = Hex.stringify(sha256(matchedValueElement));
       const cachePath = `${staticStatistics.pathToCache}/${digest}`;
       if (fs.existsSync(cachePath)) {
-        DbDao.create(DatabaseTypes.assets, {url: matchedValueElement, digest, path: cachePath}, matchedValueElement.replace(/\./g, '_'));
+        DbDAO.create(DatabaseTypes.assets, {url: matchedValueElement, digest, path: cachePath}, matchedValueElement.replace(/\./g, '_'));
         return;
       }
       if (!matchedValueElement.startsWith('http')) {
@@ -28,7 +28,7 @@ export function MatchTextToAssetsDb(value: string) {
         const contentType = response.headers['content-type'];
         const hasContentTypeMatched = acceptedFileTypes.some((contentTypeRegex) => contentType.match(contentTypeRegex));
         if (hasContentTypeMatched) {
-          DbDao.create(DatabaseTypes.assets, {url: matchedValueElement, digest, path: cachePath}, matchedValueElement.replace(/\./g, '_'));
+          DbDAO.create(DatabaseTypes.assets, {url: matchedValueElement, digest, path: cachePath}, matchedValueElement.replace(/\./g, '_'));
         } else {
           req.abort();
           fs.exists(cachePath, (exists: boolean) => {
@@ -46,7 +46,7 @@ export function MatchTextToAssetsDb(value: string) {
 }
 
 export function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>) {
-  const assetsCache = DbDao.read(DatabaseTypes.assets);
+  const assetsCache = DbDAO.read(DatabaseTypes.assets);
   const assetsBasePath = `${staticStatistics.rewriteAssetCacheUrl}/lib/cache/quiz/assets`;
   cacheAwareQuestions.forEach((question: IQuestion) => {
     const matchedQuestionText = question.questionText.match(assetsUrlRegex);

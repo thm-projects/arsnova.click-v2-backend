@@ -6,7 +6,7 @@ import * as http from 'http';
 import {WebSocketRouter} from './routes/websocket';
 import {Server} from 'http';
 import * as process from 'process';
-import {DbDao} from './db/DbDAO';
+import {DbDAO} from './db/DbDAO';
 import {staticStatistics} from './statistics';
 import {createDefaultPaths} from './app_bootstrap';
 
@@ -34,10 +34,10 @@ server.on('close', onClose);
 let currentApp = App;
 
 if (module.hot) {
-  module.hot.accept('./index', () => {
+  module.hot.accept('./main', () => {
     server.removeListener('request', currentApp);
-    server.on('request', App);
-    currentApp = App;
+    currentApp = require('./main');
+    server.on('request', currentApp);
   });
 }
 
@@ -71,8 +71,14 @@ function onError(error: NodeJS.ErrnoException): void {
   }
 }
 
+declare interface IInetAddress {
+  port: number;
+  family: string;
+  address: string;
+}
+
 function onListening(): void {
-  const addr: { port: number; family: string; address: string; } = server.address();
+  const addr: IInetAddress | string = server.address();
   const bind: string = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
   console.log(`Listening on ${bind}`);
 
@@ -80,7 +86,7 @@ function onListening(): void {
 }
 
 function onClose(): void {
-  DbDao.closeConnections();
+  DbDAO.closeConnections();
 
   WebSocketRouter.wss.close();
 }

@@ -9,8 +9,8 @@
     "test": "mocha --opts src/tests/mocha.opts",
     "prebuild:DEV": "npm run clean",
     "prebuild:PROD": "npm run clean",
+    "build:DEV": "webpack --config webpack.dev.config.js --mode development --colors",
     "build:PROD": "webpack --config webpack.prod.config.js --mode production --colors",
-    "build:DEV": "webpack --config webpack.dev.config.js --mode development --colors --watch",
     "job:images:logo": "cd dist/jobs/; node --experimental-modules GenerateImages.mjs --command=generateLogoImages",
     "job:images:frontend": "cd dist/jobs/; node --experimental-modules GenerateImages.mjs --command=generateFrontendPreview",
     "job:images": "cd dist/jobs/; node --experimental-modules GenerateImages.mjs --command=all"

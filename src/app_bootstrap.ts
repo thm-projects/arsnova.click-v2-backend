@@ -3,11 +3,10 @@ import * as path from 'path';
 import {staticStatistics} from './statistics';
 
 function createPath(basePath, pathRelativeToBase) {
-  fs.exists(path.join(basePath, pathRelativeToBase), (exists => {
-    if (!exists) {
-      fs.mkdir(path.join(basePath, pathRelativeToBase), (err) => console.log(err));
-    }
-  }));
+  const exists = fs.existsSync(path.join(basePath, pathRelativeToBase));
+  if (!exists) {
+    fs.mkdir(path.join(basePath, pathRelativeToBase), (err) => console.log(err));
+  }
 }
 
 function createAssetPath(pathRelativeToBase) {

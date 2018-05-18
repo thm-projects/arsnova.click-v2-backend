@@ -1,13 +1,14 @@
-// Reference mocha-typescript's global definitions:
-/// <reference path="../../../node_modules/mocha-typescript/globals.d.ts" />
+/// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
+
+import {suite, test} from 'mocha-typescript';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 
 import app from '../../App';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {DatabaseTypes, DbDao} from '../../db/DbDAO';
+import {DatabaseTypes, DbDAO} from '../../db/DbDAO';
 import {staticStatistics} from '../../statistics';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
 
@@ -26,7 +27,7 @@ const privateKey = Math.random().toString(10);
 
   static after() {
     QuizManagerDAO.removeQuiz(hashtag);
-    DbDao.delete(DatabaseTypes.quiz, {quizName: hashtag, privateKey: privateKey});
+    DbDAO.delete(DatabaseTypes.quiz, {quizName: hashtag, privateKey: privateKey});
   }
 
   @test async baseApiExists() {

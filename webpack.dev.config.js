@@ -34,6 +34,6 @@ const config = {
   ],
 };
 
-config.plugins.push(new WebpackShellPlugin({onBuildEnd: ['node dist/server.js --inspect=3001']}));
+//config.plugins.push(new WebpackShellPlugin({onBuildEnd: ['node dist/main.js --inspect=9229 --inspect-brk dist/main.js']}));
 
 module.exports = base.extend(config);

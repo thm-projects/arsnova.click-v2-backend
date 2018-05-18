@@ -1,6 +1,6 @@
 import * as WebSocket from 'ws';
 import {IActiveQuiz, INickname} from 'arsnova-click-v2-types/src/common';
-import {DatabaseTypes, DbDao} from '../db/DbDAO';
+import {DatabaseTypes, DbDAO} from '../db/DbDAO';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
 
 export class WebSocketRouter {
@@ -49,7 +49,7 @@ export class WebSocketRouter {
               res.step = 'LOBBY:INACTIVE';
               ws.send(JSON.stringify(res));
             } else {
-              const isOwner: Object = DbDao.read(DatabaseTypes.quiz, {
+              const isOwner: Object = DbDAO.read(DatabaseTypes.quiz, {
                 quizName: message.payload.quizName,
                 privateKey: message.payload.webSocketAuthorization
               });

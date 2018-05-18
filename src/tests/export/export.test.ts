@@ -1,6 +1,6 @@
-// Reference mocha-typescript's global definitions:
-/// <reference path="../../../node_modules/mocha-typescript/globals.d.ts" />
+/// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
+import {suite, test, slow} from 'mocha-typescript';
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';

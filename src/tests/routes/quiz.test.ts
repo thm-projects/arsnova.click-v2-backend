@@ -1,6 +1,6 @@
-// Reference mocha-typescript's global definitions:
-/// <reference path="../../../node_modules/mocha-typescript/globals.d.ts" />
+/// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
+import {suite, test} from 'mocha-typescript';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -9,7 +9,7 @@ import * as WebSocket from 'ws';
 const chaiHttp = require('chai-http');
 
 import app from '../../App';
-import {DatabaseTypes, DbDao} from '../../db/DbDAO';
+import {DatabaseTypes, DbDAO} from '../../db/DbDAO';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {staticStatistics} from '../../statistics';
 import {QuizManagerDAO} from '../../db/QuizManagerDAO';
@@ -32,7 +32,7 @@ const privateKey = Math.random().toString(10);
 
   static after() {
     QuizManagerDAO.removeQuiz(hashtag);
-    DbDao.delete(DatabaseTypes.quiz, {quizName: hashtag, privateKey: privateKey});
+    DbDAO.delete(DatabaseTypes.quiz, {quizName: hashtag, privateKey: privateKey});
     WebSocketRouter.wss.close();
   }
 

@@ -1,6 +1,6 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import * as crypto from 'crypto';
-import {DatabaseTypes, DbDao} from '../db/DbDAO';
+import {DatabaseTypes, DbDAO} from '../db/DbDAO';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {QuizManagerDAO} from '../db/QuizManagerDAO';
 
@@ -35,7 +35,7 @@ export class LegacyApiRouter {
       return;
     }
     QuizManagerDAO.initInactiveQuiz(sessionConfiguration.hashtag);
-    DbDao.create(DatabaseTypes.quiz, {quizName: sessionConfiguration.hashtag, privateKey: sessionConfiguration.privateKey});
+    DbDAO.create(DatabaseTypes.quiz, {quizName: sessionConfiguration.hashtag, privateKey: sessionConfiguration.privateKey});
     res.send('Hashtag successfully created');
   }
 

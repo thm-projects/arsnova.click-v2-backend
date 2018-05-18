@@ -1,5 +1,5 @@
 import {parseCachedAssetQuiz} from '../cache/assets';
-import {DatabaseTypes, DbDao} from './DbDAO';
+import {DatabaseTypes, DbDAO} from './DbDAO';
 import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
 import {ActiveQuizItem, ActiveQuizItemPlaceholder, MemberGroup} from '../quiz-manager/quiz-manager';
@@ -233,6 +233,6 @@ export class QuizManagerDAO {
   }
 }
 
-DbDao.getState()[DatabaseTypes.quiz].forEach((value) => {
+DbDAO.getState()[DatabaseTypes.quiz].forEach((value) => {
   QuizManagerDAO.initInactiveQuiz(value.quizName);
 });

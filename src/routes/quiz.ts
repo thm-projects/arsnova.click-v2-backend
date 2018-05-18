@@ -1,7 +1,7 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import {IQuestion, IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
 import {IActiveQuiz, IMemberGroupSerialized} from 'arsnova-click-v2-types/src/common';
-import {DatabaseTypes, DbDao} from '../db/DbDAO';
+import {DatabaseTypes, DbDAO} from '../db/DbDAO';
 import {MatchTextToAssetsDb} from '../cache/assets';
 import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 import {ISessionConfiguration} from 'arsnova-click-v2-types/src/session_configuration/interfaces';
@@ -17,7 +17,7 @@ export class QuizRouter {
     return this._router;
   }
 
-  private _router: Router;
+  private readonly _router: Router;
   private _leaderboard: Leaderboard = new Leaderboard();
 
   /**
@@ -142,7 +142,7 @@ export class QuizRouter {
       });
       promise.then(() => {
         quizData.forEach((data: {fileName: string, quiz: IQuestionGroup}) => {
-          const dbResult = DbDao.read(DatabaseTypes.quiz, {quizName: data.quiz.hashtag});
+          const dbResult = DbDAO.read(DatabaseTypes.quiz, {quizName: data.quiz.hashtag});
           if (dbResult) {
             duplicateQuizzes.push({
               quizName: data.quiz.hashtag,
@@ -150,7 +150,7 @@ export class QuizRouter {
               renameRecommendation: QuizManagerDAO.getRenameRecommendations(data.quiz.hashtag)
             });
           } else {
-            DbDao.create(DatabaseTypes.quiz, {quizName: data.quiz.hashtag, privateKey});
+            DbDAO.create(DatabaseTypes.quiz, {quizName: data.quiz.hashtag, privateKey});
             QuizManagerDAO.initInactiveQuiz(data.quiz.hashtag);
             if (settings.public.cacheQuizAssets) {
               const quiz: IQuestionGroup = data.quiz;
@@ -368,7 +368,7 @@ export class QuizRouter {
       return;
     }
     QuizManagerDAO.initInactiveQuiz(req.body.quizName);
-    DbDao.create(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
+    DbDAO.create(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
     res.send({
       status: 'STATUS:SUCCESSFUL',
       step: 'QUIZ:RESERVED',
@@ -387,7 +387,7 @@ export class QuizRouter {
       return;
     }
     QuizManagerDAO.initInactiveQuiz(req.body.quizName);
-    DbDao.create(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
+    DbDAO.create(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
     res.send({
       status: 'STATUS:SUCCESSFUL',
       step: 'QUIZ:RESERVED',
@@ -405,7 +405,7 @@ export class QuizRouter {
       }));
       return;
     }
-    const dbResult: boolean = DbDao.delete(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
+    const dbResult: boolean = DbDAO.delete(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
     if (dbResult) {
       QuizManagerDAO.removeQuiz(req.body.quizName);
       res.send({
@@ -433,7 +433,7 @@ export class QuizRouter {
       return;
     }
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
-    const dbResult: Object = DbDao.read(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
+    const dbResult: Object = DbDAO.read(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
 
     if (!dbResult) {
       res.send({
@@ -477,7 +477,7 @@ export class QuizRouter {
 
   public getExportFile(req: Request, res: I18nResponse): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
-    const dbResult: Object = DbDao.read(DatabaseTypes.quiz, {quizName: req.params.quizName, privateKey: req.params.privateKey});
+    const dbResult: Object = DbDAO.read(DatabaseTypes.quiz, {quizName: req.params.quizName, privateKey: req.params.privateKey});
 
     if (!dbResult) {
       res.sendStatus(500);
