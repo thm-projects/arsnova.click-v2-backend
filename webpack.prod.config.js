@@ -21,6 +21,9 @@ const buildInfo = Object.assign(buildInfoJson, {
 });
 
 const config = {
+  entry: [
+    './src/main.ts'
+  ],
   externals: [nodeExternals({
     whitelist: ['webpack/hot/poll?1000']
   })],

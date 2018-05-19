@@ -1,4 +1,5 @@
 import * as express from 'express';
+import * as compress from 'compression';
 import * as logger from 'morgan';
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
@@ -101,6 +102,7 @@ class App {
     this._express.use(i18n.init);
     this._express.use(bodyParser.urlencoded({extended: false}));
     this._express.use(cors(options));
+    this._express.use(compress());
     this._express.options('*', cors(options));
   }
 

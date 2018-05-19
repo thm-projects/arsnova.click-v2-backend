@@ -5,6 +5,10 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const WebpackShellPlugin = require('webpack-shell-plugin');
 
 const config = {
+  entry: [
+    'webpack/hot/poll?1000',
+    './src/main.ts'
+  ],
   devServer: {
     port: 3000,
     inline: true,

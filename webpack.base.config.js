@@ -1,10 +1,6 @@
 const path = require('path');
 
 const defaults = {
-  entry: [
-    'webpack/hot/poll?1000',
-    './src/main.ts'
-  ],
   target: 'node',
   node: {
     __dirname: false,
