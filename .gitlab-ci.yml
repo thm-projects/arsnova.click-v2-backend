@@ -7,7 +7,7 @@ build:
   stage: build
   only:
     - master
-    - CI
+    - fixPipeline
   tags:
     - nodejs
   script:
@@ -21,7 +21,7 @@ test:
   stage: test
   only:
     - master
-    - CI
+    - fixPipeline
   tags:
     - nodejs
   script:
