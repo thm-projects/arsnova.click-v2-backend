@@ -41,7 +41,6 @@ deploy:
     - chmod -R a+rX,ug+w .
     - eval $(ssh-agent -s)
     - mkdir ~/.ssh && echo "$STAGING_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-    - ssh-keygen -f "/root/.ssh/known_hosts" -R staging.arsnova.click
     - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY")
     - scp -r dist/* "$STAGING_BACKEND_SSH_URL"
 
