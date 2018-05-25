@@ -42,6 +42,7 @@ deploy:
     - eval $(ssh-agent -s)
     - mkdir ~/.ssh
     - ssh-keyscan "$STAGING_BACKEND_URL" >> ~/.ssh/known_hosts    
-    - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY | base64 --decode")
+    - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY")
+    - echo "test"
     - scp -r dist/* "$STAGING_BACKEND_SSH_URL"
 
