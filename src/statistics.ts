@@ -1,12 +1,12 @@
-import {cpus, freemem, loadavg, totalmem, hostname, networkInterfaces} from 'os';
+import { cpus, freemem, hostname, loadavg, networkInterfaces, totalmem } from 'os';
 import * as path from 'path';
-import {QuizManagerDAO} from './db/QuizManagerDAO';
+import { QuizManagerDAO } from './db/QuizManagerDAO';
 
 const interfaces = networkInterfaces();
 const localAddress = interfaces[Object.keys(interfaces).filter(netIface => {
   const singleInterface = interfaces[netIface][0];
   return singleInterface.family === 'IPv4' &&
-         singleInterface.internal === false;
+    singleInterface.internal === false;
 })[0]];
 const localIpv4Address = localAddress ? localAddress[0].address : '127.0.0.1';
 const portInternal = +process.env.BACKEND_PORT_INTERNAL || 3000;
@@ -33,7 +33,7 @@ export const dynamicStatistics = () => {
     totalmem: totalmem(),
     connectedUsers: QuizManagerDAO.getAllActiveMembers(),
     activeQuizzes: QuizManagerDAO.getAllActiveQuizNames(),
-    persistedQuizzes: Object.keys(QuizManagerDAO.getAllPersistedQuizzes()).length
+    persistedQuizzes: Object.keys(QuizManagerDAO.getAllPersistedQuizzes()).length,
   };
 };
 
@@ -41,8 +41,23 @@ export const settings = {
   public: {
     cacheQuizAssets: true,
     createQuizPasswordRequired: true,
-    limitActiveQuizzes: Infinity
+    limitActiveQuizzes: Infinity,
   },
   limitQuizCreationToCasAccounts: [],
-  createQuizPassword: 'abc'
+  createQuizPassword: 'abc',
+};
+
+export const cache = { 'arsnova-click-v2-backend': {} };
+export const availableLangs = ['en', 'de', 'fr', 'es', 'it'];
+export const projectGitLocation = {
+  'arsnova-click-v2-backend': path.join(__dirname),
+};
+export const projectBaseLocation = {
+  'arsnova-click-v2-backend': path.join(projectGitLocation['arsnova-click-v2-backend']),
+};
+export const projectAppLocation = {
+  'arsnova-click-v2-backend': path.join(projectBaseLocation['arsnova-click-v2-backend']),
+};
+export const i18nFileBaseLocation = {
+  'arsnova-click-v2-backend': path.join(projectBaseLocation['arsnova-click-v2-backend'], 'assets', 'i18n'),
 };

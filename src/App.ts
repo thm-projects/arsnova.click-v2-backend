@@ -1,32 +1,32 @@
-import * as express from 'express';
-import * as compress from 'compression';
-import * as logger from 'morgan';
 import * as bodyParser from 'body-parser';
-import * as cors from 'cors';
+import * as compress from 'compression';
 import * as busboy from 'connect-busboy';
+import * as cors from 'cors';
+import * as express from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import * as i18n from 'i18n';
+import * as logger from 'morgan';
 import * as path from 'path';
-
-import {NextFunction, Router, Response, Request} from 'express';
 import options from './cors.config';
-import {dynamicStatistics, staticStatistics} from './statistics';
 
-import {apiRouter} from './routes/api';
-import {libRouter} from './routes/lib';
-import {legacyApiRouter} from './routes/legacy-api';
-import {quizRouter} from './routes/quiz';
-import {lobbyRouter} from './routes/lobby';
-import {nicksRouter} from './routes/nicks';
-import {themesRouter} from './routes/themes';
-import {memberRouter} from './routes/member';
-import {debugRouter} from './routes/debug';
+import { apiRouter } from './routes/api';
+import { debugRouter } from './routes/debug';
+import { i18nApiRouter } from './routes/i18n-api';
+import { legacyApiRouter } from './routes/legacy-api';
+import { libRouter } from './routes/lib';
+import { lobbyRouter } from './routes/lobby';
+import { memberRouter } from './routes/member';
+import { nicksRouter } from './routes/nicks';
+import { quizRouter } from './routes/quiz';
+import { themesRouter } from './routes/themes';
+import { dynamicStatistics, staticStatistics } from './statistics';
 
 i18n.configure({
   // setup some locales - other locales default to en silently
   locales: ['en', 'de', 'it', 'es', 'fr'],
 
   // fall back from Dutch to German
-  fallbacks: {'nl': 'de'},
+  fallbacks: { 'nl': 'de' },
 
   // where to store json files - defaults to './locales' relative to modules directory
   directory: path.join(staticStatistics.pathToAssets, 'i18n'),
@@ -73,8 +73,8 @@ i18n.configure({
   // note that this will *not* overwrite existing properties with the same name
   api: {
     '__': 't',  // now req.__ becomes req.t
-    '__n': 'tn' // and req.__n can be called as req.tn
-  }
+    '__n': 'tn', // and req.__n can be called as req.tn
+  },
 });
 
 // Creates and configures an ExpressJS web server.
@@ -98,9 +98,9 @@ class App {
   private middleware(): void {
     this._express.use(logger('dev'));
     this._express.use(busboy());
-    this._express.use(bodyParser.json());
+    this._express.use(bodyParser.json({ limit: '50mb' }));
+    this._express.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
     this._express.use(i18n.init);
-    this._express.use(bodyParser.urlencoded({extended: false}));
     this._express.use(cors(options));
     this._express.use(compress());
     this._express.options('*', cors(options));
@@ -121,6 +121,7 @@ class App {
     this._express.use(`${staticStatistics.routePrefix}/api/v1/lobby`, lobbyRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/nicks`, nicksRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/themes`, themesRouter);
+    this._express.use(`${staticStatistics.routePrefix}/api/v1/plugin/i18nator`, i18nApiRouter);
 
     this._express.use(`${staticStatistics.routePrefix}/debug`, debugRouter);
   }
