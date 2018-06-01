@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { i18nDAO, I18nDAO } from '../db/i18nDAO';
+import { i18nDAO, I18nDAO } from '../db/I18nDAO';
 import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectBaseLocation, projectGitLocation } from '../statistics';
 
 export class I18nApiRouter {
