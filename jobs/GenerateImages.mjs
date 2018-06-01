@@ -1,4 +1,3 @@
-
 import path from 'path';
 import fs from 'fs';
 import gm from 'gm';
@@ -10,9 +9,10 @@ import child_process from 'child_process';
 
 import imagemin from 'imagemin';
 import imageminPngquant from 'imagemin-pngquant';
+
 const themeData = JSON.parse(fs.readFileSync(path.join('..', 'assets', 'themeData.json')).toString());
 
-const gmIM = gm.subClass({ imageMagick: true });
+const gmIM = gm.subClass({imageMagick: true});
 
 const themes = [
   'theme-Material',
@@ -64,23 +64,30 @@ class GenerateImages {
   }
 
   generateFrontendPreview() {
-    const params = [path.join(this.pathToAssets, '..', 'jobs', 'PhantomDriver.js')];
+    const CHROME_BIN = process.env.CHROME_BIN;
+    const flags = ['--headless', '--hide-scrollbars', '--remote-debugging-port=9222', '--disable-gpu'];
+    const params = [];
     const themePreviewEndpoint = `${process.env.BACKEND_THEME_PREVIEW_HOST || `http://localhost:4200`}/preview`;
     themes.forEach((theme) => {
       languages.forEach((languageKey) => {
         params.push(`${themePreviewEndpoint}/${theme}/${languageKey}`);
       });
     });
-    const command = child_process.spawn(`node`, params);
 
-    command.stdout.on('data', (data) => {
-      console.log(`phantomjs (stdout): ${data.toString().replace('\n', '')}`);
+    const chromeInstance = child_process.spawn(CHROME_BIN, flags);
+    const chromeDriver = child_process.spawn(`node`, [
+      path.join(this.pathToAssets, '..', 'jobs', 'ChromeFEPreview.js'), `--urls=${JSON.stringify(params)}`
+    ]);
+
+    chromeDriver.stdout.on('data', (data) => {
+      console.log(`chrome-headless (stdout): ${data.toString().replace('\n', '')}`);
     });
-    command.stderr.on('data', (data) => {
-      console.log(`phantomjs (stderr): ${data.toString().replace('\n', '')}`);
+    chromeDriver.stderr.on('data', (data) => {
+      console.log(`chrome-headless (stderr): ${data.toString().replace('\n', '')}`);
     });
-    command.on('exit', () => {
-      console.log(`phantomjs (exit): All preview images have been generated`);
+    chromeDriver.on('exit', () => {
+      console.log(`chrome-headless (exit): All preview images have been generated`);
+      chromeInstance.kill();
     });
   }
 
@@ -124,7 +131,7 @@ class GenerateImages {
               const minifiedBuffer = await imagemin.buffer(finalBuffer, {
                 plugins: [imageminPngquant({quality: '65-80'})]
               });
-              fs.writeFileSync(targetLogo, minifiedBuffer,  'binary');
+              fs.writeFileSync(targetLogo, minifiedBuffer, 'binary');
               resolveLogoImageGeneration();
             });
           });
