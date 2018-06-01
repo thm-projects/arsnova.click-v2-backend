@@ -59,5 +59,5 @@ export const projectAppLocation = {
   'arsnova-click-v2-backend': path.join(projectBaseLocation['arsnova-click-v2-backend']),
 };
 export const i18nFileBaseLocation = {
-  'arsnova-click-v2-backend': path.join(projectBaseLocation['arsnova-click-v2-backend'], 'assets', 'i18n'),
+  'arsnova-click-v2-backend': path.join(staticStatistics.pathToAssets, 'i18n'),
 };
