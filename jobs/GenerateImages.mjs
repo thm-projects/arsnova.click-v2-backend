@@ -30,6 +30,28 @@ const languages = ['en', 'de', 'fr', 'it', 'es'];
 
 const __dirname = path.resolve();
 
+const gmToBuffer = (data) => {
+  return new Promise((resolve, reject) => {
+    data.stream((err, stdout, stderr) => {
+      if (err) {
+        return reject(err);
+      }
+      const chunks = [];
+      stdout.on('data', (chunk) => {
+        chunks.push(chunk);
+      });
+      // these are 'once' because they can and do fire multiple times for multiple errors,
+      // but this is a promise so you'll have to deal with them one at a time
+      stdout.once('end', () => {
+        resolve(Buffer.concat(chunks));
+      });
+      stderr.once('data', (stderrmsg) => {
+        reject(String(stderrmsg));
+      });
+    });
+  });
+};
+
 class GenerateImages {
 
   constructor() {
@@ -108,33 +130,34 @@ class GenerateImages {
             roundY: Math.round((splittedDerivate[1] / Math.PI))
           };
 
-          gm(1, 1, 'none')
+          const bgData = gm(1, 1, 'none')
+          .setFormat('png')
           .fill(theme)
           .resize(size.width, size.height)
           .drawRectangle(0, 0, size.width, size.height, size.roundX, size.roundY)
-          .compose('copyopacity')
-          .toBuffer('PNG', (maskError, maskBuffer) => {
-            if (maskError || !maskBuffer) {
-              console.log(maskError, maskBuffer);
-              return;
-            }
+          .compose('copyopacity');
+          const bgBuffer = await gmToBuffer(bgData);
+          if (!bgBuffer) {
+            console.log('gm error', bgBuffer);
+            return;
+          }
 
-            gmIM(maskBuffer)
-            .composite(source)
-            .resize(size.width, size.height)
-            .toBuffer('PNG', async (finalError, finalBuffer) => {
-              if (finalError || !finalBuffer) {
-                console.log(finalError, finalBuffer);
-                return;
-              }
+          const fgData = gmIM(bgBuffer)
+          .setFormat('png')
+          .composite(source)
+          .resize(size.width, size.height);
+          const fgBuffer = await gmToBuffer(fgData);
+          if (!fgBuffer) {
+            console.log('gmIM error', fgBuffer);
+            return;
+          }
 
-              const minifiedBuffer = await imagemin.buffer(finalBuffer, {
-                plugins: [imageminPngquant({quality: '65-80'})]
-              });
-              fs.writeFileSync(targetLogo, minifiedBuffer, 'binary');
-              resolveLogoImageGeneration();
-            });
+          const minifiedBuffer = await imagemin.buffer(fgBuffer, {
+            plugins: [imageminPngquant({quality: '65-80'})]
           });
+          fs.writeFileSync(targetLogo, minifiedBuffer, 'binary');
+          console.log(`Icon with deriavate ${derivate} generated for theme ${themeName}`);
+          resolveLogoImageGeneration();
         });
       });
     });
