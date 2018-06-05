@@ -98,17 +98,17 @@ class GenerateImages {
 
     const chromeInstance = child_process.spawn(CHROME_BIN, flags);
     const chromeDriver = child_process.spawn(`node`, [
-      path.join(this.pathToAssets, '..', 'jobs', 'ChromeFEPreview.js'), `--urls=${JSON.stringify(params)}`
+      path.join(this.pathToAssets, '..', 'jobs', 'ChromeDriver.js'), `--urls=${JSON.stringify(params)}`
     ]);
 
     chromeDriver.stdout.on('data', (data) => {
-      console.log(`chrome-headless (stdout): ${data.toString().replace('\n', '')}`);
+      console.log(`ChromeDriver (stdout): ${data.toString().replace('\n', '')}`);
     });
     chromeDriver.stderr.on('data', (data) => {
-      console.log(`chrome-headless (stderr): ${data.toString().replace('\n', '')}`);
+      console.log(`ChromeDriver (stderr): ${data.toString().replace('\n', '')}`);
     });
     chromeDriver.on('exit', () => {
-      console.log(`chrome-headless (exit): All preview images have been generated`);
+      console.log(`ChromeDriver (exit): All preview images have been generated`);
       chromeInstance.kill();
     });
   }
