@@ -1,25 +1,25 @@
-import {NextFunction, Request, Response, Router} from 'express';
-import * as mjAPI from 'mathjax-node';
-import {IQuestion, IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {ILinkImage} from 'arsnova-click-v2-types/src/assets/library';
-import * as fs from 'fs';
-import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import { ILinkImage } from 'arsnova-click-v2-types/src/assets/library';
+import { ICasData } from 'arsnova-click-v2-types/src/common';
+import { IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as crypto from 'crypto';
-import * as path from 'path';
+import { NextFunction, Request, Response, Router } from 'express';
 import * as fileType from 'file-type';
-import {MatchTextToAssetsDb} from '../cache/assets';
-import {MathjaxDAO} from '../db/MathjaxDAO';
-import * as xml2js from 'xml2js';
+import * as fs from 'fs';
 import * as https from 'https';
-import {CasDAO} from '../db/CasDAO';
-import {ICasData} from 'arsnova-click-v2-types/src/common';
-import {staticStatistics} from '../statistics';
+import * as mjAPI from 'mathjax-node';
 import * as MessageFormat from 'messageformat';
+import * as path from 'path';
+import * as xml2js from 'xml2js';
+import { MatchTextToAssetsDb } from '../cache/assets';
+import { CasDAO } from '../db/CasDAO';
+import { MathjaxDAO } from '../db/MathjaxDAO';
+import { staticStatistics } from '../statistics';
 
 const derivates: Array<string> = require('../../assets/imageDerivates');
 
 const themeData = JSON.parse(fs.readFileSync(path.join(staticStatistics.pathToAssets, 'themeData.json')).toString());
-const casSettings = {base_url: 'https://cas.thm.de/cas'};
+const casSettings = { base_url: 'https://cas.thm.de/cas' };
 
 export class LibRouter {
   get router(): Router {
@@ -51,37 +51,37 @@ export class LibRouter {
       MathJax: {
         jax: ['input/TeX', 'input/MathML', 'input/AsciiMath', 'output/CommonHTML'],
         extensions: [
-          'tex2jax.js', 'mml2jax.js', 'asciimath2jax.js', 'AssistiveMML.js'
+          'tex2jax.js', 'mml2jax.js', 'asciimath2jax.js', 'AssistiveMML.js',
         ],
         TeX: {
-          extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js', 'autoload-all.js', 'color.js']
+          extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js', 'autoload-all.js', 'color.js'],
         },
         tex2jax: {
           processEscapes: true,
           processEnvironments: true,
           inlineMath: [['$', '$'], ['\\(', '\\)']],
           displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        }
-      }
+        },
+      },
     });
   }
 
   public getAll(req: Request, res: Response, next: NextFunction): void {
     res.send({
       paths: [
-        {name: '/mathjax', description: 'Returns the rendered output of a given mathjax string'},
-        {name: '/mathjax/example/first', description: 'Returns the rendered output of an example mathjax MathMl string as svg'},
-        {name: '/mathjax/example/second', description: 'Returns the rendered output of an example mathjax TeX string as svg'},
-        {name: '/mathjax/example/third', description: 'Returns the rendered output of an example mathjax TeX string as svg'},
-        {name: '/cache/quiz/assets', description: 'Parses the quiz content and caches all external resources'},
-        {name: '/authorize', description: 'Handles authentication via CAS'}
-      ]
+        { name: '/mathjax', description: 'Returns the rendered output of a given mathjax string' },
+        { name: '/mathjax/example/first', description: 'Returns the rendered output of an example mathjax MathMl string as svg' },
+        { name: '/mathjax/example/second', description: 'Returns the rendered output of an example mathjax TeX string as svg' },
+        { name: '/mathjax/example/third', description: 'Returns the rendered output of an example mathjax TeX string as svg' },
+        { name: '/cache/quiz/assets', description: 'Parses the quiz content and caches all external resources' },
+        { name: '/authorize', description: 'Handles authentication via CAS' },
+      ],
     });
   }
 
   public getLinkImages(req: Request, res: Response, next: NextFunction): void {
     const theme = req.params.theme || 'theme-Material';
-    const basePath = `${staticStatistics.rewriteAssetCacheUrl}/api/v1/files/images/theme/${theme}`;
+    const basePath = `/assets/images/theme/${theme}`;
     const manifestPath = `${staticStatistics.rewriteAssetCacheUrl}/lib/manifest/${theme}`;
 
     const result: Array<ILinkImage> = [
@@ -91,7 +91,7 @@ export class LibRouter {
         rel: 'manifest',
         id: 'link-manifest',
         href: `${manifestPath}`,
-        type: 'image/png'
+        type: 'image/png',
       },
       {
         tagName: 'link',
@@ -99,7 +99,7 @@ export class LibRouter {
         rel: 'apple-touch-icon',
         id: 'link-apple-touch-default',
         href: `${basePath}/logo_s32x32.png`,
-        type: 'image/png'
+        type: 'image/png',
       },
       {
         tagName: 'link',
@@ -107,21 +107,21 @@ export class LibRouter {
         rel: 'apple-touch-icon-precomposed',
         id: 'link-apple-touch-precomposed-default',
         href: `${basePath}/logo_s32x32.png`,
-        type: 'image/png'
+        type: 'image/png',
       },
       {
         tagName: 'meta',
         className: 'theme-meta-data',
         name: 'theme-color',
         id: 'meta-theme-color',
-        content: `${themeData[theme].exportedAtRowStyle.bg}`
+        content: `${themeData[theme].exportedAtRowStyle.bg}`,
       },
       {
         tagName: 'meta',
         className: 'theme-meta-data',
         name: 'msapplication-TileColor',
         id: 'meta-tile-color',
-        content: `${themeData[theme].exportedAtRowStyle.bg}`
+        content: `${themeData[theme].exportedAtRowStyle.bg}`,
       },
       {
         tagName: 'meta',
@@ -129,8 +129,8 @@ export class LibRouter {
         name: 'msapplication-TileImage',
         id: 'meta-tile-image',
         content: `${basePath}/logo_s144x144.png`,
-        type: 'image/png'
-      }
+        type: 'image/png',
+      },
     ];
 
     derivates.forEach(derivate => {
@@ -142,7 +142,7 @@ export class LibRouter {
           href: `${basePath}/logo_s${derivate}.png`,
           id: `link-icon-${derivate}`,
           sizes: derivate,
-          type: 'image/png'
+          type: 'image/png',
         },
         {
           tagName: 'link',
@@ -151,8 +151,8 @@ export class LibRouter {
           href: `${basePath}/logo_s${derivate}.png`,
           id: `link-apple-touch-precomposed-${derivate}`,
           sizes: derivate,
-          type: 'image/png'
-        }
+          type: 'image/png',
+        },
       );
     });
 
@@ -164,8 +164,8 @@ export class LibRouter {
         sizes: '64x64',
         id: 'link-favicon',
         href: `${basePath}/logo_s64x64.png`,
-        type: 'image/png'
-      }
+        type: 'image/png',
+      },
     );
 
     res.json(result);
@@ -193,6 +193,7 @@ export class LibRouter {
   public getManifest(req: Request, res: I18nResponse, next: NextFunction): void {
     const theme = req.params.theme || 'theme-Material';
     const mf: MessageFormat = res.__mf;
+    const basePath = req.header('Origin');
 
     const manifest = {
       short_name: 'arsnovaClick',
@@ -200,17 +201,17 @@ export class LibRouter {
       description: mf('manifest.description'),
       background_color: themeData[theme].exportedAtRowStyle.bg,
       theme_color: themeData[theme].exportedAtRowStyle.bg,
-      start_url: `${req.header('Origin')}`,
+      start_url: `${basePath}`,
       display: 'standalone',
       orientation: 'portrait',
-      icons: []
+      icons: [],
     };
 
     derivates.forEach((derivate) => {
       manifest.icons.push({
-        src: `${staticStatistics.rewriteAssetCacheUrl}/api/v1/files/images/theme/${theme}/logo_s${derivate}.png`,
+        src: `${basePath}/assets/images/theme/${theme}/logo_s${derivate}.png`,
         sizes: derivate,
-        type: 'image/png'
+        type: 'image/png',
       });
     });
 
@@ -305,7 +306,7 @@ export class LibRouter {
           format: req.body.format,
           mathjaxArray,
           output: req.body.output,
-        }
+        },
       }));
 
       return;
@@ -325,7 +326,7 @@ export class LibRouter {
           html: req.body.output === 'html',
           css: req.body.output === 'html',
           svg: req.body.output === 'svg',
-          mml: req.body.output === 'mml'
+          mml: req.body.output === 'mml',
         });
 
         MathjaxDAO.updateRenderedData(data, mathjaxPlain);
@@ -354,7 +355,7 @@ export class LibRouter {
     res.json({
       status: 'STATUS:SUCCESSFUL',
       step: 'CACHE:QUIZ_ASSETS',
-      payload: {}
+      payload: {},
     });
   }
 
@@ -373,12 +374,6 @@ export class LibRouter {
       }
       res.end(data.toString('UTF-8'));
     });
-  }
-
-  private randomValueHex (len: number = 40) {
-    return crypto.randomBytes(Math.ceil((len) / 2))
-                 .toString('hex') // convert to hexadecimal format
-                 .slice(0, len);   // return required number of characters
   }
 
   public authorize(req: Request, res: Response, next: NextFunction): void {
@@ -402,11 +397,11 @@ export class LibRouter {
         casResponse.on('end', () => {
           xml2js.parseString(data, (err, result) => {
             console.log('received response from cas server', err, result);
-            if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
+            if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
               res.send({
                 status: 'STATUS:FAILED',
                 step: 'AUTHENTICATE',
-                payload: {err, result}
+                payload: { err, result },
               });
               return;
             } else {
@@ -420,7 +415,7 @@ export class LibRouter {
               res.send({
                 status: 'STATUS:SUCCESSFUL',
                 step: 'AUTHENTICATE',
-                payload: {ticket}
+                payload: { ticket },
               });
             }
           });
@@ -433,7 +428,7 @@ export class LibRouter {
         res.send({
           status: 'STATUS:FAILED',
           step: 'AUTHENTICATE',
-          payload: {error}
+          payload: { error },
         });
         return;
       });
@@ -444,6 +439,11 @@ export class LibRouter {
       res.redirect(loginUrl);
 
     }
+  }
+
+  private randomValueHex(len: number = 40) {
+    return crypto.randomBytes(Math.ceil((len) / 2)).toString('hex') // convert to hexadecimal format
+    .slice(0, len);   // return required number of characters
   }
 
   /**
