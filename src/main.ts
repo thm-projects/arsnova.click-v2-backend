@@ -38,6 +38,20 @@ declare global {
   }
 }
 
+function censor(data) {
+  let i = 0;
+
+  return function (key, value) {
+    if (i !== 0 && typeof(data) === 'object' && typeof(value) === 'object' && data === value) {
+      return '[Circular]';
+    }
+
+    ++i; // so we know we aren't using the original object anymore
+
+    return value;
+  };
+}
+
 global.DAO = { CasDAO, I18nDAO, MathjaxDAO, QuizManagerDAO, DbDAO };
 global.createDump = () => {
   const daoDump = {};
@@ -50,7 +64,7 @@ global.createDump = () => {
     path.join(staticStatistics.pathToJobs, 'DumpCryptor.js'),
     `--base-path=${__dirname}`,
     '--command=encrypt',
-    `--data=${JSON.stringify(daoDump)}`,
+    `--data=${JSON.stringify(daoDump, censor(daoDump))}`,
   ];
   const instance = child_process.spawn(`node`, params);
   instance.stderr.on('data', (data) => {

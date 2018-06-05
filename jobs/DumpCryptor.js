@@ -17,7 +17,7 @@ class DumpDecryptor {
     console.log('Available commands:');
     console.log('help - Show this help');
     console.log('encrypt - Encrypt a plain text or object to a dump file');
-    console.log('decrypt - Decrypts a dump file');
+    console.log('decrypt - Decrypt a dump file and save the output to a json file');
     console.log('----------------------');
   }
 
@@ -51,7 +51,7 @@ class DumpDecryptor {
     return encryptedData;
   }
 
-  decrypt(inputFileName = 'dump') {
+  decrypt(inputFileName = 'dump', outputFile = 'decrypted_dump.json') {
     const inputFile = fs.readFileSync(`${path.join(this.pathToBase, inputFileName)}`);
     const parsedStr = inputFile.toString('UTF-8');
     const base64 = CryptoJS.enc.Base64.parse(parsedStr);
@@ -59,6 +59,10 @@ class DumpDecryptor {
       ciphertext: base64,
       salt: '',
     }, this.skey.key, {iv: this.skey.iv});
+
+    const fd = fs.openSync(`${path.join(this.pathToBase, outputFile)}`, 'w');
+    fs.writeSync(fd, JSON.parse(clearText.toString(CryptoJS.enc.Utf8)));
+    fs.closeSync(fd);
 
     return clearText.toString(CryptoJS.enc.Utf8);
   }
