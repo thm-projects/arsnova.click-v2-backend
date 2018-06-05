@@ -1,12 +1,16 @@
 const CryptoJS = require('crypto-js');
 const fs = require('fs');
 const path = require('path');
+const argv = require('minimist')(process.argv.slice(2));
 
-class DumpDecryptor {
+class DumpCryptor {
 
   constructor() {
-
     this.pathToBase = path.join(__dirname, '..');
+    this.buildPaths();
+  }
+
+  buildPaths() {
     this.pathToAssets = path.join(this.pathToBase, 'assets');
     this.cert = fs.readFileSync(`${path.join(this.pathToAssets, 'dump_cert.pem')}`, 'ascii');
     this.skey = this.getKeyAndIV(this.cert);
@@ -16,8 +20,8 @@ class DumpDecryptor {
     console.log('----------------------');
     console.log('Available commands:');
     console.log('help - Show this help');
-    console.log('encrypt - Encrypt a plain text or object to a dump file');
-    console.log('decrypt - Decrypt a dump file and save the output to a json file');
+    console.log('encrypt(data: string, output-file?: string) - Encrypt a plain text or object to a dump file');
+    console.log('decrypt(input-file: string, output-file?: string) - Decrypt a dump file and save the output to a json file');
     console.log('----------------------');
   }
 
@@ -41,8 +45,17 @@ class DumpDecryptor {
     };
   }
 
-  encrypt(plainData, inputFileName = 'dump') {
-    const fd = fs.openSync(`${path.join(this.pathToBase, inputFileName)}`, 'w');
+  encrypt(plainData, outputFile) {
+    if (!plainData) {
+      throw new Error('No data to encrypt specified - use --data=<plain-text>');
+    }
+    if (!outputFile) {
+      const date = new Date();
+      const dateFormatted = `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}-${date.getHours()}_${date.getMinutes()}`;
+      outputFile = `dump_${dateFormatted}`;
+    }
+
+    const fd = fs.openSync(`${path.join(this.pathToBase, outputFile)}`, 'w');
     const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(plainData), this.skey.key, {iv: this.skey.iv});
 
     fs.writeSync(fd, encryptedData.ciphertext.toString(CryptoJS.enc.Base64));
@@ -51,9 +64,16 @@ class DumpDecryptor {
     return encryptedData;
   }
 
-  decrypt(inputFileName = 'dump', outputFile = 'decrypted_dump.json') {
-    const inputFile = fs.readFileSync(`${path.join(this.pathToBase, inputFileName)}`);
-    const parsedStr = inputFile.toString('UTF-8');
+  decrypt(inputFile, outputFile) {
+    if (!inputFile) {
+      throw new Error('No input file specified - use --input-file=<path-to-file>');
+    }
+    if (!outputFile) {
+      outputFile = inputFile.replace('dump', 'decrypted_dump');
+    }
+
+    const inputFileContent = fs.readFileSync(`${path.join(this.pathToBase, inputFile)}`);
+    const parsedStr = inputFileContent.toString('UTF-8');
     const base64 = CryptoJS.enc.Base64.parse(parsedStr);
     const clearText = CryptoJS.AES.decrypt({
       ciphertext: base64,
@@ -68,35 +88,44 @@ class DumpDecryptor {
   }
 }
 
-const dumpCryptor = new DumpDecryptor();
-
-const executor = (line, argument) => {
-  if (!dumpCryptor[line]) {
-    console.log(`> Command ${line} not found!`);
-    dumpCryptor.help();
-    return;
-  }
-  console.log(`> Executing command: ${line}`);
-  const result = dumpCryptor[line](argument);
-  console.log(`> Command execution finished, return value was: ${result}`);
-};
+const dumpCryptor = new DumpCryptor();
 
 if (process.argv.length < 2) {
   dumpCryptor.help();
 } else {
-  let basePath = process.argv.find(value => value.startsWith('--base-path=') ? value : null);
-  if (basePath) {
-    dumpCryptor.pathToBase = basePath.replace('--base-path=', '');
+  if (argv['base-path']) {
+    dumpCryptor.pathToBase = argv['base-path'];
+    dumpCryptor.buildPaths();
   }
 
-  const command = process.argv.find(value => value.startsWith('--command=') ? value : null);
-  if (command) {
-    let data = process.argv.find(value => value.startsWith('--data=') ? value : null);
-    if (data) {
-      data = data.replace('--data=', '');
-    }
-    executor(command.replace('--command=', ''), data);
-  } else {
+  if (!argv.command) {
     dumpCryptor.help();
+    return;
+  }
+  if (!dumpCryptor[argv.command]) {
+    console.log(`> Command ${argv.command} not found!`);
+    dumpCryptor.help();
+    return;
+  }
+
+  switch (argv.command) {
+    case 'encrypt':
+      if (!argv.data) {
+        console.log(`> Command ${argv.command} requires missing parameter!`);
+        dumpCryptor.help();
+        break;
+      }
+      dumpCryptor.encrypt(argv.data, argv['output-file']);
+      break;
+    case 'decrypt':
+      if (!argv['input-file']) {
+        console.log(`> Command ${argv.command} requires missing parameter!`);
+        dumpCryptor.help();
+        break;
+      }
+      dumpCryptor.decrypt(argv['input-file'], argv['output-file']);
+      break;
+    default:
+      throw new Error(`No command handling specified for ${argv.command}`);
   }
 }
