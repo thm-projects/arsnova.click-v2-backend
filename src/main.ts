@@ -1,5 +1,4 @@
 import * as child_process from 'child_process';
-import * as debug from 'debug';
 import * as http from 'http';
 import { Server } from 'http';
 import * as path from 'path';
@@ -14,8 +13,6 @@ import { MathjaxDAO } from './db/MathjaxDAO';
 import { QuizManagerDAO } from './db/QuizManagerDAO';
 import { WebSocketRouter } from './routes/websocket';
 import { staticStatistics } from './statistics';
-
-debug('arsnova.click: ts-express:server');
 
 declare global {
   interface NodeModule {
@@ -36,6 +33,12 @@ declare global {
       createDump: Function;
     }
   }
+}
+
+declare interface IInetAddress {
+  port: number;
+  family: string;
+  address: string;
 }
 
 function censor(data) {
@@ -124,12 +127,6 @@ function onError(error: NodeJS.ErrnoException): void {
     default:
       throw error;
   }
-}
-
-declare interface IInetAddress {
-  port: number;
-  family: string;
-  address: string;
 }
 
 function onListening(): void {
