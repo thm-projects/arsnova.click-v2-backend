@@ -39,9 +39,9 @@ CDP(async function (client) {
   await Emulation.setVisibleSize({width: viewportWidth, height: viewportHeight});
 
   const host = /localhost/.test(urls[0]) ?
-    'localhost' : /staging.arsnova.click/.test(url) ?
-      'staging.arsnova.click' : /beta.arsnova.click/.test(url) ?
-        'beta.arsnova.click' : /arsnova.click/.test(url) ?
+    'localhost' : /staging.arsnova.click/.test(urls[0]) ?
+      'staging.arsnova.click' : /beta.arsnova.click/.test(urls[0]) ?
+        'beta.arsnova.click' : /arsnova.click/.test(urls[0]) ?
           'arsnova.click' : '';
 
   Network.setCookie({
