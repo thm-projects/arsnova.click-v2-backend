@@ -1,14 +1,19 @@
-import App from './App';
-
+import * as child_process from 'child_process';
 import * as debug from 'debug';
-import * as WebSocket from 'ws';
 import * as http from 'http';
-import {WebSocketRouter} from './routes/websocket';
-import {Server} from 'http';
+import { Server } from 'http';
+import * as path from 'path';
 import * as process from 'process';
-import {DbDAO} from './db/DbDAO';
-import {staticStatistics} from './statistics';
-import {createDefaultPaths} from './app_bootstrap';
+import * as WebSocket from 'ws';
+import App from './App';
+import { createDefaultPaths } from './app_bootstrap';
+import { CasDAO } from './db/CasDAO';
+import { DbDAO } from './db/DbDAO';
+import { I18nDAO } from './db/I18nDAO';
+import { MathjaxDAO } from './db/MathjaxDAO';
+import { QuizManagerDAO } from './db/QuizManagerDAO';
+import { WebSocketRouter } from './routes/websocket';
+import { staticStatistics } from './statistics';
 
 debug('arsnova.click: ts-express:server');
 
@@ -18,7 +23,43 @@ declare global {
       accept: Function
     };
   }
+
+  namespace NodeJS {
+    interface Global {
+      DAO: {
+        CasDAO: {},
+        I18nDAO: {},
+        MathjaxDAO: {},
+        QuizManagerDAO: {},
+        DbDAO: {},
+      };
+      createDump: Function;
+    }
+  }
 }
+
+global.DAO = { CasDAO, I18nDAO, MathjaxDAO, QuizManagerDAO, DbDAO };
+global.createDump = () => {
+  const daoDump = {};
+
+  Object.keys(global.DAO).forEach((dao, index) => {
+    daoDump[dao] = global.DAO[dao].createDump();
+  });
+
+  const params = [
+    path.join(staticStatistics.pathToJobs, 'DumpCryptor.js'),
+    `--base-path=${__dirname}`,
+    '--command=encrypt',
+    `--data=${JSON.stringify(daoDump)}`,
+  ];
+  const instance = child_process.spawn(`node`, params);
+  instance.stderr.on('data', (data) => {
+    console.log(`DumpCryptor (stderr): ${data.toString().replace('\n', '')}`);
+  });
+  instance.on('exit', () => {
+    console.log(`DumpCryptor (exit): Dump generated`);
+  });
+};
 
 createDefaultPaths();
 
@@ -82,7 +123,9 @@ function onListening(): void {
   const bind: string = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
   console.log(`Listening on ${bind}`);
 
-  WebSocketRouter.wss = new WebSocket.Server({server});
+  WebSocketRouter.wss = new WebSocket.Server({ server });
+
+  I18nDAO.reloadCache();
 }
 
 function onClose(): void {

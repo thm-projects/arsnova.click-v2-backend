@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { i18nDAO, I18nDAO } from '../db/I18nDAO';
+import { I18nDAO } from '../db/I18nDAO';
 import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectBaseLocation, projectGitLocation } from '../statistics';
 
 export class I18nApiRouter {
@@ -47,7 +47,7 @@ export class I18nApiRouter {
     if (!I18nDAO.cache[req.projectCache].langData) {
       const langData = [];
       availableLangs.forEach((langRef, index) => {
-        i18nDAO.buildKeys({
+        I18nDAO.buildKeys({
           root: '',
           dataNode: JSON.parse(fs.readFileSync(path.join(req.i18nFileBaseLocation, `${langRef}.json`)).toString('UTF-8')),
           langRef,
@@ -59,12 +59,12 @@ export class I18nApiRouter {
     payload.langData = I18nDAO.cache[req.projectCache].langData;
 
     if (!I18nDAO.cache[req.projectCache].unused) {
-      I18nDAO.cache[req.projectCache].unused = i18nDAO.getUnusedKeys(req);
+      I18nDAO.cache[req.projectCache].unused = I18nDAO.getUnusedKeys(req);
     }
     payload.unused = I18nDAO.cache[req.projectCache].unused;
 
     if (!I18nDAO.cache[req.projectCache].branch) {
-      I18nDAO.cache[req.projectCache].branch = i18nDAO.getBranch(req);
+      I18nDAO.cache[req.projectCache].branch = I18nDAO.getBranch(req);
     }
     payload.branch = I18nDAO.cache[req.projectCache].branch;
 
@@ -79,7 +79,7 @@ export class I18nApiRouter {
 
     const result = { en: {}, de: {}, es: {}, fr: {}, it: {} };
     const langKeys = Object.keys(result);
-    i18nDAO.createObjectFromKeys({ data: req.body.data, result });
+    I18nDAO.createObjectFromKeys({ data: req.body.data, result });
 
     I18nDAO.cache[req.projectCache].langData = req.body.data;
 

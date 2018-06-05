@@ -1,25 +1,15 @@
-import {parseCachedAssetQuiz} from '../cache/assets';
-import {DatabaseTypes, DbDAO} from './DbDAO';
-import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
-import {ActiveQuizItem, ActiveQuizItemPlaceholder, MemberGroup} from '../quiz-manager/quiz-manager';
-import {settings} from '../statistics';
+import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
+import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { parseCachedAssetQuiz } from '../cache/assets';
+import { ActiveQuizItem, ActiveQuizItemPlaceholder, MemberGroup } from '../quiz-manager/quiz-manager';
+import { settings } from '../statistics';
+import { DatabaseTypes, DbDAO } from './DbDAO';
 
 export class QuizManagerDAO {
-  private static activeQuizzes = {};
+  private static readonly activeQuizzes = {};
 
-  private static checkABCDOrdering(hashtag: string): boolean {
-    let ordered = true;
-    if (!hashtag || hashtag.length < 2 || hashtag.charAt(0) !== 'a') {
-      return false;
-    }
-    for (let i = 1; i < hashtag.length; i++) {
-      if (hashtag.charCodeAt(i) !== hashtag.charCodeAt(i - 1) + 1) {
-        ordered = false;
-        break;
-      }
-    }
-    return ordered;
+  public static createDump(): {} {
+    return QuizManagerDAO.activeQuizzes;
   }
 
   public static normalizeQuizName(quizName: string): string {
@@ -67,7 +57,7 @@ export class QuizManagerDAO {
       parseCachedAssetQuiz(quiz.questionList);
     }
     const memberGroups = quiz.sessionConfig.nicks.memberGroups.map(groupName => new MemberGroup(groupName));
-    this.activeQuizzes[name] = new ActiveQuizItem({memberGroups, originalObject: quiz});
+    this.activeQuizzes[name] = new ActiveQuizItem({ memberGroups, originalObject: quiz });
     return this.activeQuizzes[name];
   }
 
@@ -97,8 +87,7 @@ export class QuizManagerDAO {
   }
 
   public static getAllActiveQuizNames(): Array<string> {
-    return Object.keys(this.activeQuizzes)
-      .filter(name => !this.isInactiveQuiz(name));
+    return Object.keys(this.activeQuizzes).filter(name => !this.isInactiveQuiz(name));
   }
 
   public static getAllPersistedQuizzes(): Object {
@@ -139,7 +128,7 @@ export class QuizManagerDAO {
 
   public static getLastPersistedNumberForData(data): number {
     let maxNumber = 0;
-    data.forEach((demoQuizName  => {
+    data.forEach((demoQuizName => {
       const currentNumber = parseInt(demoQuizName.substring(demoQuizName.lastIndexOf(' '), demoQuizName.length), 10);
       if (currentNumber > maxNumber) {
         maxNumber = currentNumber;
@@ -178,6 +167,58 @@ export class QuizManagerDAO {
     });
   }
 
+  public static convertLegacyQuiz(legacyQuiz: any): void {
+    QuizManagerDAO.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
+    if (legacyQuiz.hasOwnProperty('configuration')) {
+      // Detected old v1 arsnova.click quiz
+      legacyQuiz.sessionConfig = {
+        music: {
+          titleConfig: {
+            lobby: legacyQuiz.configuration.music.lobbyTitle,
+            countdownRunning: legacyQuiz.configuration.music.countdownRunningTitle,
+            countdownEnd: legacyQuiz.configuration.music.countdownEndTitle,
+          },
+          volumeConfig: {
+            global: legacyQuiz.configuration.music.lobbyVolume,
+            lobby: legacyQuiz.configuration.music.lobbyVolume,
+            countdownRunning: legacyQuiz.configuration.music.countdownRunningVolume,
+            countdownEnd: legacyQuiz.configuration.music.countdownEndVolume,
+            useGlobalVolume: legacyQuiz.configuration.music.isUsingGlobalVolume,
+          },
+          enabled: {
+            lobby: legacyQuiz.configuration.music.lobbyEnabled,
+            countdownRunning: legacyQuiz.configuration.music.countdownRunningEnabled,
+            countdownEnd: legacyQuiz.configuration.music.countdownEndEnabled,
+          },
+        },
+        nicks: {
+          selectedNicks: legacyQuiz.configuration.nicks.selectedValues,
+          blockIllegalNicks: legacyQuiz.configuration.nicks.blockIllegal,
+          restrictToCasLogin: legacyQuiz.configuration.nicks.restrictToCASLogin,
+        },
+        theme: legacyQuiz.configuration.theme,
+        readingConfirmationEnabled: legacyQuiz.configuration.readingConfirmationEnabled,
+        showResponseProgress: legacyQuiz.configuration.showResponseProgress,
+        confidenceSliderEnabled: legacyQuiz.configuration.confidenceSliderEnabled,
+      };
+      delete legacyQuiz.configuration;
+    }
+  }
+
+  private static checkABCDOrdering(hashtag: string): boolean {
+    let ordered = true;
+    if (!hashtag || hashtag.length < 2 || hashtag.charAt(0) !== 'a') {
+      return false;
+    }
+    for (let i = 1; i < hashtag.length; i++) {
+      if (hashtag.charCodeAt(i) !== hashtag.charCodeAt(i - 1) + 1) {
+        ordered = false;
+        break;
+      }
+    }
+    return ordered;
+  }
+
   private static replaceTypeInformationOnLegacyQuiz(obj): void {
     if (obj.hasOwnProperty('type')) {
       obj.TYPE = obj.type;
@@ -191,44 +232,6 @@ export class QuizManagerDAO {
           this.replaceTypeInformationOnLegacyQuiz(obj[key]);
         }
       });
-    }
-  }
-
-  public static convertLegacyQuiz(legacyQuiz: any): void {
-    QuizManagerDAO.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
-    if (legacyQuiz.hasOwnProperty('configuration')) {
-      // Detected old v1 arsnova.click quiz
-      legacyQuiz.sessionConfig = {
-        music: {
-          titleConfig: {
-            lobby: legacyQuiz.configuration.music.lobbyTitle,
-            countdownRunning: legacyQuiz.configuration.music.countdownRunningTitle,
-            countdownEnd: legacyQuiz.configuration.music.countdownEndTitle
-          },
-          volumeConfig: {
-            global: legacyQuiz.configuration.music.lobbyVolume,
-            lobby: legacyQuiz.configuration.music.lobbyVolume,
-            countdownRunning: legacyQuiz.configuration.music.countdownRunningVolume,
-            countdownEnd: legacyQuiz.configuration.music.countdownEndVolume,
-            useGlobalVolume: legacyQuiz.configuration.music.isUsingGlobalVolume,
-          },
-          enabled: {
-            lobby: legacyQuiz.configuration.music.lobbyEnabled,
-            countdownRunning: legacyQuiz.configuration.music.countdownRunningEnabled,
-            countdownEnd: legacyQuiz.configuration.music.countdownEndEnabled,
-          }
-        },
-        nicks: {
-          selectedNicks: legacyQuiz.configuration.nicks.selectedValues,
-          blockIllegalNicks: legacyQuiz.configuration.nicks.blockIllegal,
-          restrictToCasLogin: legacyQuiz.configuration.nicks.restrictToCASLogin
-        },
-        theme: legacyQuiz.configuration.theme,
-        readingConfirmationEnabled: legacyQuiz.configuration.readingConfirmationEnabled,
-        showResponseProgress: legacyQuiz.configuration.showResponseProgress,
-        confidenceSliderEnabled: legacyQuiz.configuration.confidenceSliderEnabled
-      };
-      delete legacyQuiz.configuration;
     }
   }
 }

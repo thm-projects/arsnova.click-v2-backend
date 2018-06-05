@@ -7,11 +7,11 @@ export class I18nDAO {
 
   public static readonly cache = { 'arsnova-click-v2-backend': {} };
 
-  constructor() {
-    this.reloadCache();
+  public static createDump(): {} {
+    return I18nDAO.cache;
   }
 
-  public reloadCache() {
+  public static reloadCache() {
     Object.keys(I18nDAO.cache).forEach(projectName => {
       console.log(``);
       console.log(`------- Building cache for '${projectName}' -------`);
@@ -20,7 +20,7 @@ export class I18nDAO {
       const langDataStart = new Date().getTime();
       const langData = [];
       availableLangs.forEach((langRef, index) => {
-        this.buildKeys({
+        I18nDAO.buildKeys({
           root: '',
           dataNode: JSON.parse(fs.readFileSync(path.join(i18nFileBaseLocation[projectName], `${langRef}.json`)).toString('UTF-8')),
           langRef,
@@ -33,7 +33,7 @@ export class I18nDAO {
 
       console.log(`* Fetching unused keys`);
       const unusedKeysStart = new Date().getTime();
-      I18nDAO.cache[projectName].unused = this.getUnusedKeys({
+      I18nDAO.cache[projectName].unused = I18nDAO.getUnusedKeys({
         params: {},
         projectAppLocation: projectAppLocation[projectName],
         i18nFileBaseLocation: i18nFileBaseLocation[projectName],
@@ -43,7 +43,7 @@ export class I18nDAO {
 
       console.log(`* Fetching active git branch`);
       const gitBranchStart = new Date().getTime();
-      I18nDAO.cache[projectName].branch = this.getBranch({
+      I18nDAO.cache[projectName].branch = I18nDAO.getBranch({
         projectGitLocation: projectGitLocation[projectName],
       });
       const gitBranchEnd = new Date().getTime();
@@ -54,13 +54,13 @@ export class I18nDAO {
     console.log(`Cache built successfully`);
   }
 
-  public buildKeys({ root, dataNode, langRef, langData }) {
+  public static buildKeys({ root, dataNode, langRef, langData }) {
 
     if (!dataNode) {
       return;
     }
 
-    if (this.isString(dataNode)) {
+    if (I18nDAO.isString(dataNode)) {
 
       const existingKey = langData.find(elem => elem.key === root);
 
@@ -75,20 +75,20 @@ export class I18nDAO {
     } else {
       Object.keys(dataNode).forEach(key => {
         const rootKey = root ? `${root}.` : '';
-        this.buildKeys({ root: `${rootKey}${key}`, dataNode: dataNode[key], langRef, langData });
+        I18nDAO.buildKeys({ root: `${rootKey}${key}`, dataNode: dataNode[key], langRef, langData });
       });
     }
   }
 
-  public getUnusedKeys(req) {
+  public static getUnusedKeys(req) {
     const result = {};
-    const fileNames = this.fromDir(req.projectAppLocation, /\.(ts|html|js)$/);
+    const fileNames = I18nDAO.fromDir(req.projectAppLocation, /\.(ts|html|js)$/);
     const langRefs = req.params.langRef ? [req.params.langRef] : availableLangs;
 
     for (let i = 0; i < langRefs.length; i++) {
       result[langRefs[i]] = [];
       const i18nFileContent = JSON.parse(fs.readFileSync(path.join(req.i18nFileBaseLocation, `${langRefs[i]}.json`)).toString('UTF-8'));
-      const objectPaths = this.objectPath(i18nFileContent);
+      const objectPaths = I18nDAO.objectPath(i18nFileContent);
 
       objectPaths.forEach((i18nPath => {
         let matched = false;
@@ -108,13 +108,13 @@ export class I18nDAO {
     return result;
   }
 
-  public getBranch(req) {
+  public static getBranch(req) {
     const command = `git branch 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \\(.*\\)/\\1/"`;
     const child = spawnSync('/bin/sh', [`-c`, command], { cwd: req.projectGitLocation });
     return child.stdout.toString().replace('\n', '');
   }
 
-  public createObjectFromKeys({ data, result }) {
+  public static createObjectFromKeys({ data, result }) {
 
     for (const langRef in result) {
       if (result.hasOwnProperty(langRef)) {
@@ -139,7 +139,7 @@ export class I18nDAO {
     }
   }
 
-  private fromDir(startPath, filter) {
+  private static fromDir(startPath, filter) {
     if (!fs.existsSync(startPath)) {
       console.log('no dir ', startPath);
       return;
@@ -152,7 +152,7 @@ export class I18nDAO {
       const filename = path.join(startPath, files[i]);
       const stat = fs.lstatSync(filename);
       if (stat.isDirectory()) {
-        result = result.concat(this.fromDir(filename, filter));
+        result = result.concat(I18nDAO.fromDir(filename, filter));
       } else if (filter.test(filename)) {
         result.push(filename);
       }
@@ -160,7 +160,7 @@ export class I18nDAO {
     return result;
   }
 
-  private objectPath(obj, currentPath = '') {
+  private static objectPath(obj, currentPath = '') {
     let localCurrentPath = currentPath;
     let result = [];
 
@@ -170,7 +170,7 @@ export class I18nDAO {
     for (const prop in obj) {
       if (obj.hasOwnProperty(prop)) {
         if (typeof obj[prop] === 'object') {
-          result = result.concat(this.objectPath(obj[prop], localCurrentPath + prop));
+          result = result.concat(I18nDAO.objectPath(obj[prop], localCurrentPath + prop));
         } else {
           result.push(localCurrentPath + prop);
         }
@@ -179,10 +179,7 @@ export class I18nDAO {
     return result;
   }
 
-  private isString(data) {
+  private static isString(data) {
     return typeof data === 'string';
   }
 }
-
-const i18nDAO = new I18nDAO();
-export { i18nDAO };

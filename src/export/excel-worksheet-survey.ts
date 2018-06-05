@@ -1,13 +1,22 @@
-import {INickname} from 'arsnova-click-v2-types/src/common';
-import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {calculateNumberOfAnswers} from './lib/excel_function_library';
-import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
-import {ExcelWorksheet} from './excel-worksheet';
+import { INickname } from 'arsnova-click-v2-types/src/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { ExcelWorksheet } from './excel-worksheet';
+import { calculateNumberOfAnswers } from './lib/excel_function_library';
 
 export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
   private _question: IQuestion;
   private _questionIndex: number;
+
+  constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
+    super({ theme, translation, quiz, mf, questionIndex });
+    this._ws = wb.addWorksheet(`${this.mf('export.question')} ${questionIndex + 1}`, this._options);
+    this._questionIndex = questionIndex;
+    this._question = this.quiz.originalObject.questionList[questionIndex];
+    this.formatSheet();
+    this.addSheetData();
+  }
 
   public formatSheet(): void {
     const defaultStyles = this._theme.getStyles();
@@ -25,8 +34,8 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       alignment: {
         wrapText: true,
         horizontal: 'center',
-        vertical: 'center'
-      }
+        vertical: 'center',
+      },
     };
 
     this.ws.row(1).setHeight(20);
@@ -39,8 +48,8 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(2, 1, 2, columnsToFormat).style(defaultStyles.exportedAtRowStyle);
     this.ws.cell(2, 2, 2, columnsToFormat).style({
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     });
 
     this.ws.cell(4, 1).style(defaultStyles.questionCellStyle);
@@ -49,21 +58,21 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(6, 1, this.responsesWithConfidenceValue.length > 0 ? 7 : 6, columnsToFormat).style(defaultStyles.statisticsRowStyle);
     this.ws.cell(6, 2, this.responsesWithConfidenceValue.length > 0 ? 7 : 6, columnsToFormat).style({
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     });
     this.ws.cell(9, 1, 9, columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
     this.ws.cell(9, 1).style({
       alignment: {
-        horizontal: 'left'
-      }
+        horizontal: 'left',
+      },
     });
 
     this.ws.row(9).filter({
       firstRow: 9,
       firstColumn: 1,
       lastRow: 9,
-      lastColumn: minColums
+      lastColumn: minColums,
     });
 
     const hasEntries = this.quiz.memberGroups[0].members.length > 0;
@@ -72,8 +81,8 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
                                   defaultStyles.attendeeEntryRowStyle :
                                   Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
                                     alignment: {
-                                      horizontal: 'center'
-                                    }
+                                      horizontal: 'center',
+                                    },
                                   });
     this.ws.cell(10, 1, attendeeEntryRows + 9, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
@@ -86,15 +95,15 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
-            horizontal: 'center'
-          }
+            horizontal: 'center',
+          },
         });
       }
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
-          horizontal: 'center'
+          horizontal: 'center',
         },
-        numberFormat: '#,##0;'
+        numberFormat: '#,##0;',
       });
     });
   }
@@ -102,6 +111,17 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
   public addSheetData(): void {
     const answerList = this._question.answerOptionList;
 
+    /*
+     * Will translate the questions type name
+     * - export.type.SurveyQuestion,
+     * - export.type.TrueFalseSingleChoiceQuestion,
+     * - export.type.YesNoSingleChoiceQuestion,
+     * - export.type.ABCDSingleChoiceQuestion,
+     * - export.type.SingleChoiceQuestion,
+     * - export.type.RangedQuestion,
+     * - export.type.FreeTextQuestion,
+     * - export.type.MultipleChoiceQuestion,
+     */
     this.ws.cell(1, 1).string(`${this.mf('export.question_type')}: ${this.mf(`export.type.${this._question.TYPE}`)}`);
     this.ws.cell(2, 1).string(this.mf('export.question'));
 
@@ -161,14 +181,5 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     if (nextStartRow === 9) {
       this.ws.cell(10, 1).string(this.mf('export.attendee_complete_correct_none_available'));
     }
-  }
-
-  constructor({wb, theme, translation, quiz, mf, questionIndex}) {
-    super({theme, translation, quiz, mf, questionIndex});
-    this._ws = wb.addWorksheet(`${this.mf('export.question')} ${questionIndex + 1}`, this._options);
-    this._questionIndex = questionIndex;
-    this._question = this.quiz.originalObject.questionList[questionIndex];
-    this.formatSheet();
-    this.addSheetData();
   }
 }

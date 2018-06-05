@@ -1,8 +1,8 @@
-import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {IFreetextAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
-import {ExcelWorksheet} from './excel-worksheet';
-import {INickname} from 'arsnova-click-v2-types/src/common';
+import { IFreetextAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import { INickname } from 'arsnova-click-v2-types/src/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { ExcelWorksheet } from './excel-worksheet';
 
 export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
@@ -13,6 +13,15 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       return !!response.value && response.value !== -1 ? response.value : null;
     })[0];
   });
+
+  constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
+    super({ theme, translation, quiz, mf, questionIndex });
+    this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
+    this._questionIndex = questionIndex;
+    this._question = this.quiz.originalObject.questionList[questionIndex];
+    this.formatSheet();
+    this.addSheetData();
+  }
 
   public formatSheet(): void {
     const defaultStyles = this._theme.getStyles();
@@ -35,46 +44,46 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     this.ws.cell(2, 1, 2, columnsToFormat).style(defaultStyles.exportedAtRowStyle);
     this.ws.cell(2, 2, 2, columnsToFormat).style({
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     });
 
     this.ws.cell(4, 1).style({
       alignment: {
         wrapText: true,
-        vertical: 'top'
-      }
+        vertical: 'top',
+      },
     });
     this.ws.cell(4, 2).style({
       alignment: {
         wrapText: true,
         horizontal: 'center',
-        vertical: 'center'
+        vertical: 'center',
       },
       font: {
-        color: 'FF000000'
-      }
+        color: 'FF000000',
+      },
     });
 
     this.ws.cell(6, 1, this.responsesWithConfidenceValue.length > 0 ? 8 : 7, columnsToFormat).style(defaultStyles.statisticsRowStyle);
     this.ws.cell(6, 2, this.responsesWithConfidenceValue.length > 0 ? 8 : 7, 2).style({
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     });
 
     this.ws.cell(10, 1, 10, columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
     this.ws.cell(10, 1).style({
       alignment: {
-        horizontal: 'left'
-      }
+        horizontal: 'left',
+      },
     });
 
     this.ws.row(10).filter({
       firstRow: 10,
       firstColumn: 1,
       lastRow: 10,
-      lastColumn: minColums
+      lastColumn: minColums,
     });
 
     const hasEntries = this.quiz.memberGroups[0].members.length > 0;
@@ -83,8 +92,8 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
                                   defaultStyles.attendeeEntryRowStyle :
                                   Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
                                     alignment: {
-                                      horizontal: 'center'
-                                    }
+                                      horizontal: 'center',
+                                    },
                                   });
     this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
@@ -97,26 +106,26 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       }
       this.ws.cell(targetRow, nextColumnIndex++).style({
         font: {
-          color: 'FFFFFFFF'
+          color: 'FFFFFFFF',
         },
         fill: {
           type: 'pattern',
           patternType: 'solid',
-          fgColor: leaderboardItem && leaderboardItem.correctQuestions.indexOf(this._questionIndex) > -1 ? 'FF008000' : 'FFB22222'
-        }
+          fgColor: leaderboardItem && leaderboardItem.correctQuestions.indexOf(this._questionIndex) > -1 ? 'FF008000' : 'FFB22222',
+        },
       });
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
-            horizontal: 'center'
-          }
+            horizontal: 'center',
+          },
         });
       }
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
-          horizontal: 'center'
+          horizontal: 'center',
         },
-        numberFormat: '#,##0;'
+        numberFormat: '#,##0;',
       });
     });
   }
@@ -133,18 +142,24 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
 
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
     this.ws.cell(6, 2).number(this.allResponses.length);
-    this.ws.cell(6, 3).string(this.mf('view.answeroptions.free_text_question.config_case_sensitive') + ': ' +
-                              this.mf('global.' + (answerOption.configCaseSensitive ? 'yes' : 'no')));
-    this.ws.cell(6, 4).string(this.mf('view.answeroptions.free_text_question.config_trim_whitespaces') + ': ' +
-                              this.mf('global.' + (answerOption.configTrimWhitespaces ? 'yes' : 'no')));
+
+    this.ws.cell(6, 3).string(`
+      ${this.mf('view.answeroptions.free_text_question.config_case_sensitive')}:
+       ${this.mf(answerOption.configCaseSensitive ? 'global.yes' : 'global.no')}`);
+    this.ws.cell(6, 4).string(`
+      ${this.mf('view.answeroptions.free_text_question.config_trim_whitespaces')}:
+       ${this.mf(answerOption.configTrimWhitespaces ? 'global.yes' : 'global.no')}`);
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
-    this.ws.cell(7, 3).string(this.mf('view.answeroptions.free_text_question.config_use_keywords') + ': ' +
-                              this.mf('global.' + (answerOption.configUseKeywords ? 'yes' : 'no')));
-    this.ws.cell(7, 4).string(this.mf('view.answeroptions.free_text_question.config_use_punctuation') + ': ' +
-                              this.mf('global.' + (answerOption.configUsePunctuation ? 'yes' : 'no')));
+
+    this.ws.cell(7, 3).string(`
+      ${this.mf('view.answeroptions.free_text_question.config_use_keywords')}:
+       ${this.mf(answerOption.configUseKeywords ? 'global.yes' : 'global.no')}`);
+    this.ws.cell(7, 4).string(`
+      ${this.mf('view.answeroptions.free_text_question.config_use_punctuation')}:
+       ${this.mf(answerOption.configUsePunctuation ? 'global.yes' : 'global.no')}`);
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
@@ -186,14 +201,5 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     if (nextStartRow === 10) {
       this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));
     }
-  }
-
-  constructor({wb, theme, translation, quiz, mf, questionIndex}) {
-    super({theme, translation, quiz, mf, questionIndex});
-    this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
-    this._questionIndex = questionIndex;
-    this._question = this.quiz.originalObject.questionList[questionIndex];
-    this.formatSheet();
-    this.addSheetData();
   }
 }

@@ -22,6 +22,7 @@ export const staticStatistics = {
   rewriteAssetCacheUrl: rewriteAssetCacheUrl,
   pathToAssets: path.join(__dirname, process.env.NODE_ENV === 'production' ? '' : '..', 'assets'),
   pathToCache: path.join(__dirname, process.env.NODE_ENV === 'production' ? '' : '..', 'cache'),
+  pathToJobs: path.join(__dirname, process.env.NODE_ENV === 'production' ? '' : '..', 'jobs'),
   cpuCores: cpus().length,
 };
 

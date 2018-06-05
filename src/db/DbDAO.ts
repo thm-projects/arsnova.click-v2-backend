@@ -15,6 +15,10 @@ export class DbDAO {
   private static db: lowdb;
   private static instance: DbDAO;
 
+  public static createDump(): {} {
+    return DbDAO.db;
+  }
+
   public static create(database: DatabaseTypes, data: Object, ref?: string): void {
     if (ref) {
       DbDAO.db.set(`${database}.${ref}`, data).write();
@@ -25,29 +29,21 @@ export class DbDAO {
 
   public static read(database: DatabaseTypes, query?: Object): Object {
     if (query) {
-      return DbDAO.db.get(database)
-                  .find(query)
-                  .value();
+      return DbDAO.db.get(database).find(query).value();
     }
-    return DbDAO.db.get(database)
-                .value();
+    return DbDAO.db.get(database).value();
   }
 
   public static update(database: DatabaseTypes, query: Object, update: Object): void {
-    DbDAO.db.get(database)
-         .find(query)
-         .assign(update)
-         .write();
+    DbDAO.db.get(database).find(query).assign(update).write();
   }
 
-  public static delete(database: DatabaseTypes, query: {quizName: string, privateKey: string}): boolean {
+  public static delete(database: DatabaseTypes, query: { quizName: string, privateKey: string }): boolean {
     const dbContent: any = DbDAO.read(database, query);
     if (!dbContent || dbContent.privateKey !== query.privateKey) {
       return false;
     }
-    DbDAO.db.get(database)
-         .remove(query)
-         .write();
+    DbDAO.db.get(database).remove(query).write();
     return true;
   }
 
