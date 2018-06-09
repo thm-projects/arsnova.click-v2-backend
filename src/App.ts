@@ -10,7 +10,6 @@ import * as path from 'path';
 import options from './cors.config';
 
 import { apiRouter } from './routes/api';
-import { debugRouter } from './routes/debug';
 import { i18nApiRouter } from './routes/i18n-api';
 import { legacyApiRouter } from './routes/legacy-api';
 import { libRouter } from './routes/lib';
@@ -123,7 +122,10 @@ class App {
     this._express.use(`${staticStatistics.routePrefix}/api/v1/themes`, themesRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/plugin/i18nator`, i18nApiRouter);
 
-    this._express.use(`${staticStatistics.routePrefix}/debug`, debugRouter);
+    this._express.use(function (err, req, res, next) {
+      global.createDump(err);
+      next();
+    });
   }
 }
 

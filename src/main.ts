@@ -1,3 +1,5 @@
+declare function require(name: string);
+
 import * as child_process from 'child_process';
 import * as http from 'http';
 import { Server } from 'http';
@@ -13,6 +15,8 @@ import { MathjaxDAO } from './db/MathjaxDAO';
 import { QuizManagerDAO } from './db/QuizManagerDAO';
 import { WebSocketRouter } from './routes/websocket';
 import { staticStatistics } from './statistics';
+
+require('source-map-support').install();
 
 declare global {
   interface NodeModule {
@@ -55,9 +59,35 @@ function censor(data) {
   };
 }
 
+function rejectionToCreateDump(reason) {
+  global.createDump(reason);
+}
+
+function isObject(obj) {
+  return obj === Object(obj);
+}
+
+process.on('unhandledRejection', rejectionToCreateDump);
+
 global.DAO = { CasDAO, I18nDAO, MathjaxDAO, QuizManagerDAO, DbDAO };
-global.createDump = () => {
-  const daoDump = {};
+global.createDump = (plainError) => {
+  const error = { type: '', code: '', message: '', stack: '' };
+
+  if (plainError) {
+    if (typeof plainError === 'string') {
+      try {
+        throw new Error(plainError);
+      } catch (e) {
+        plainError = e;
+      }
+    }
+    error.type = plainError.constructor.name;
+    error.code = plainError.code;
+    error.message = plainError.message;
+    error.stack = plainError.stack;
+  }
+
+  const daoDump = { error };
 
   Object.keys(global.DAO).forEach((dao, index) => {
     daoDump[dao] = global.DAO[dao].createDump();
