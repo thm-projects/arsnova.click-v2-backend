@@ -1,5 +1,6 @@
 declare function require(name: string);
 
+import * as fs from 'fs';
 import * as lowdb from 'lowdb';
 import * as FileSync from 'lowdb/adapters/FileSync';
 import * as path from 'path';
@@ -14,6 +15,12 @@ const homedir = require('os').homedir();
 const pathToDb = path.join(homedir, '.arsnova-click-v2-backend', 'arsnova-click-v2-db-v1.json');
 if (createHomePath) {
   createHomePath();
+} else {
+  // Reimplement the createHomePath function because it is not defined in mocha
+  const pathToOutput = path.join(homedir, '.arsnova-click-v2-backend');
+  if (!fs.existsSync(pathToOutput)) {
+    fs.mkdirSync(pathToOutput);
+  }
 }
 
 // DB Lib: https://github.com/typicode/lowdb
