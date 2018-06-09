@@ -12,6 +12,7 @@ export enum DatabaseTypes {
 
 const homedir = require('os').homedir();
 const pathToDb = path.join(homedir, '.arsnova-click-v2-backend', 'arsnova-click-v2-db-v1.json');
+console.log('DbDAO debug:', createHomePath);
 createHomePath();
 
 // DB Lib: https://github.com/typicode/lowdb

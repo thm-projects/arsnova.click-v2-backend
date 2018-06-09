@@ -9,7 +9,7 @@ const homedir = require('os').homedir();
 function createPath(basePath, pathRelativeToBase) {
   const exists = fs.existsSync(path.join(basePath, pathRelativeToBase));
   if (!exists) {
-    fs.mkdir(path.join(basePath, pathRelativeToBase), (err) => console.log(err));
+    fs.mkdir(path.join(basePath, pathRelativeToBase), (err) => console.log('app_bootstrap:createPathError', err));
   }
 }
 
