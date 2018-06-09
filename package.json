@@ -10,7 +10,7 @@
     "prebuild:DEV": "npm run clean",
     "prebuild:PROD": "npm run clean",
     "build:DEV": "webpack --config webpack.dev.config.js --mode development --colors",
-    "build:PROD": "webpack --config webpack.prod.config.js --mode production --colors"
+    "build:PROD": "webpack --config webpack.dev.config.js --mode development --colors"
   },
   "dependencies": {
     "body-parser": "^1.18.2",
