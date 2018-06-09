@@ -2,6 +2,9 @@ import { cpus, freemem, hostname, loadavg, networkInterfaces, totalmem } from 'o
 import * as path from 'path';
 import { QuizManagerDAO } from './db/QuizManagerDAO';
 
+declare function require(name: string);
+
+const homedir = require('os').homedir();
 const interfaces = networkInterfaces();
 const localAddress = interfaces[Object.keys(interfaces).filter(netIface => {
   const singleInterface = interfaces[netIface][0];
@@ -21,7 +24,7 @@ export const staticStatistics = {
   localIpv4Address: localIpv4Address,
   rewriteAssetCacheUrl: rewriteAssetCacheUrl,
   pathToAssets: path.join(__dirname, process.env.NODE_ENV === 'production' ? '' : '..', 'assets'),
-  pathToCache: path.join(__dirname, process.env.NODE_ENV === 'production' ? '' : '..', 'cache'),
+  pathToCache: path.join(homedir, '.arsnova-click-v2-backend', 'asset_cache'),
   pathToJobs: path.join(__dirname, process.env.NODE_ENV === 'production' ? '' : '..', 'jobs'),
   cpuCores: cpus().length,
 };

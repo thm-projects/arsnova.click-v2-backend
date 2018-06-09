@@ -63,10 +63,6 @@ function rejectionToCreateDump(reason) {
   global.createDump(reason);
 }
 
-function isObject(obj) {
-  return obj === Object(obj);
-}
-
 process.on('unhandledRejection', rejectionToCreateDump);
 
 global.DAO = { CasDAO, I18nDAO, MathjaxDAO, QuizManagerDAO, DbDAO };

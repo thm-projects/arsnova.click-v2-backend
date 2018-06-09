@@ -1,14 +1,21 @@
-// DB Lib: https://github.com/typicode/lowdb
+declare function require(name: string);
 
 import * as lowdb from 'lowdb';
 import * as FileSync from 'lowdb/adapters/FileSync';
+import * as path from 'path';
+import { createHomePath } from '../app_bootstrap';
 
 export enum DatabaseTypes {
   quiz = 'quiz',
   assets = 'assets'
 }
 
-const adapter: FileSync = new FileSync('arsnova-click-v2-db-v1.json');
+const homedir = require('os').homedir();
+const pathToDb = path.join(homedir, '.arsnova-click-v2-backend', 'arsnova-click-v2-db-v1.json');
+createHomePath();
+
+// DB Lib: https://github.com/typicode/lowdb
+const adapter: FileSync = new FileSync(pathToDb);
 
 export class DbDAO {
 

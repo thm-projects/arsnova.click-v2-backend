@@ -2,11 +2,14 @@ const CryptoJS = require('crypto-js');
 const fs = require('fs');
 const path = require('path');
 const argv = require('minimist')(process.argv.slice(2));
+const homedir = require('os').homedir();
 
 class DumpCryptor {
 
   constructor() {
     this.pathToBase = path.join(__dirname, '..');
+    this.pathToOutput = path.join(homedir, '.arsnova-click-v2-backend');
+    this.pathToSalt = path.join(this.pathToOutput, 'dump_cryptor_salt');
     this.buildPaths();
   }
 
@@ -14,6 +17,10 @@ class DumpCryptor {
     this.pathToAssets = path.join(this.pathToBase, 'assets');
     this.cert = fs.readFileSync(`${path.join(this.pathToAssets, 'dump_cert.pem')}`, 'ascii');
     this.skey = this.getKeyAndIV(this.cert);
+
+    if (!fs.existsSync(this.pathToOutput)) {
+      fs.mkdirSync(this.pathToOutput);
+    }
   }
 
   help() {
@@ -31,10 +38,14 @@ class DumpCryptor {
     const ivBitLength = 128;
     const iterations = 234;
 
-    // TODO: Think about storing the salt securely
-    // const bytesInSalt = 128 / 8;
-    // const salt = CryptoJS.lib.WordArray.random(bytesInSalt);
-    const salt = '';
+    let salt = null;
+    if (fs.existsSync(this.pathToSalt)) {
+      salt = JSON.parse(fs.readFileSync(this.pathToSalt));
+    } else {
+      const bytesInSalt = 128 / 8;
+      salt = CryptoJS.lib.WordArray.random(bytesInSalt);
+      fs.writeFileSync(this.pathToSalt, JSON.stringify(salt));
+    }
 
     const iv128Bits = CryptoJS.PBKDF2(password, salt, {keySize: ivBitLength / 32, iterations: iterations});
     const key256Bits = CryptoJS.PBKDF2(password, salt, {keySize: keyBitLength / 32, iterations: iterations});
@@ -55,7 +66,7 @@ class DumpCryptor {
       outputFile = `dump_${dateFormatted}`;
     }
 
-    const fd = fs.openSync(`${path.join(this.pathToBase, outputFile)}`, 'w');
+    const fd = fs.openSync(`${path.join(this.pathToOutput, outputFile)}`, 'w');
     const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(plainData), this.skey.key, {iv: this.skey.iv});
 
     fs.writeSync(fd, encryptedData.ciphertext.toString(CryptoJS.enc.Base64));
@@ -72,15 +83,16 @@ class DumpCryptor {
       outputFile = inputFile.replace('dump', 'decrypted_dump');
     }
 
-    const inputFileContent = fs.readFileSync(`${path.join(this.pathToBase, inputFile)}`);
+    const inputFileContent = fs.readFileSync(`${path.join(this.pathToOutput, inputFile)}`);
     const parsedStr = inputFileContent.toString('UTF-8');
     const base64 = CryptoJS.enc.Base64.parse(parsedStr);
+    const salt = JSON.parse(fs.readFileSync(this.pathToSalt));
     const clearText = CryptoJS.AES.decrypt({
       ciphertext: base64,
-      salt: '',
+      salt: salt,
     }, this.skey.key, {iv: this.skey.iv});
 
-    const fd = fs.openSync(`${path.join(this.pathToBase, outputFile)}`, 'w');
+    const fd = fs.openSync(`${path.join(this.pathToOutput, outputFile)}`, 'w');
     fs.writeSync(fd, JSON.parse(clearText.toString(CryptoJS.enc.Utf8)));
     fs.closeSync(fd);
 
