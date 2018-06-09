@@ -21,7 +21,7 @@ function createCachePath(pathRelativeToBase) {
   createPath(staticStatistics.pathToCache, pathRelativeToBase);
 }
 
-export function createHomePath() {
+export function createHomePath(): void {
   const pathToOutput = path.join(homedir, '.arsnova-click-v2-backend');
   if (!fs.existsSync(pathToOutput)) {
     fs.mkdirSync(pathToOutput);
