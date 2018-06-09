@@ -360,7 +360,7 @@ export class LibRouter {
   }
 
   public getCache(req: Request, res: Response, next: NextFunction): void {
-    if (!req.params.digest || !fs.existsSync(path.join(__dirname, '..', '..', 'cache', req.params.digest))) {
+    if (!req.params.digest || !fs.existsSync(path.join(staticStatistics.pathToCache, req.params.digest))) {
       res.writeHead(500);
       res.end(`Malformed request received -> ${req.body}, ${req.params}`);
       return;
