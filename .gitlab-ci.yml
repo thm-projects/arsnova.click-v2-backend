@@ -34,7 +34,7 @@ deploy:
     - master
     - fixPipeline
   tags:
-    - ssh
+    - rsync
   dependencies:
     - build
   script:
@@ -43,5 +43,5 @@ deploy:
     - mkdir ~/.ssh
     - ssh-keyscan "$STAGING_BACKEND_URL" >> ~/.ssh/known_hosts    
     - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY")
-    - scp -r dist/* "$STAGING_BACKEND_SSH_URL"
+    - rsync -rltgoDqv --delete -e "ssh" dist/* "$STAGING_BACKEND_SSH_URL"
 
