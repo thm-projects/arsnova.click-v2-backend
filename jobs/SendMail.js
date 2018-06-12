@@ -7,7 +7,7 @@ class SendMail {
     const host = process.env.ARSNOVA_CLICK_BACKEND_SMTP_HOST;
     const user = process.env.ARSNOVA_CLICK_BACKEND_SMTP_USERNAME;
     const pass = process.env.ARSNOVA_CLICK_BACKEND_SMTP_PASSWORD;
-    const port = process.env.ARSNOVA_CLICK_BACKEND_SMTP_PORT || 587;
+    const port = +process.env.ARSNOVA_CLICK_BACKEND_SMTP_PORT || 587;
 
     const from = process.env.ARSNOVA_CLICK_BACKEND_MAIL_FROM;
     const to = process.env.ARSNOVA_CLICK_BACKEND_MAIL_TO;
