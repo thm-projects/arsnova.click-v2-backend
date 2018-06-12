@@ -38,25 +38,17 @@ export class LibRouter {
     mjAPI.start();
     mjAPI.config({
       // determines whether Message.Set() calls are logged
-      displayMessages: false,
-      // determines whether error messages are shown on the console
-      displayErrors: false,
-      // determines whether "unknown characters" (i.e., no glyph in the configured fonts) are saved in the error array
-      undefinedCharError: false,
-      // a convenience option to add MathJax extensions
-      extensions: '',
-      // for webfont urls in the CSS for HTML output
-      fontURL: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS',
-      // default MathJax config
+      displayMessages: false, // determines whether error messages are shown on the console
+      displayErrors: false, // determines whether "unknown characters" (i.e., no glyph in the configured fonts) are saved in the error array
+      undefinedCharError: false, // a convenience option to add MathJax extensions
+      extensions: '', // for webfont urls in the CSS for HTML output
+      fontURL: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS', // default MathJax config
       MathJax: {
-        jax: ['input/TeX', 'input/MathML', 'input/AsciiMath', 'output/CommonHTML'],
-        extensions: [
+        jax: ['input/TeX', 'input/MathML', 'input/AsciiMath', 'output/CommonHTML'], extensions: [
           'tex2jax.js', 'mml2jax.js', 'asciimath2jax.js', 'AssistiveMML.js',
-        ],
-        TeX: {
+        ], TeX: {
           extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js', 'autoload-all.js', 'color.js'],
-        },
-        tex2jax: {
+        }, tex2jax: {
           processEscapes: true,
           processEnvironments: true,
           inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -86,44 +78,34 @@ export class LibRouter {
 
     const result: Array<ILinkImage> = [
       {
-        tagName: 'link',
-        className: 'theme-meta-data',
-        rel: 'manifest',
-        id: 'link-manifest',
-        href: `${manifestPath}`,
-        type: 'image/png',
-      },
-      {
+        tagName: 'link', className: 'theme-meta-data', rel: 'manifest', id: 'link-manifest', href: `${manifestPath}`, type: 'image/png',
+      }, {
         tagName: 'link',
         className: 'theme-meta-data',
         rel: 'apple-touch-icon',
         id: 'link-apple-touch-default',
         href: `${basePath}/logo_s32x32.png`,
         type: 'image/png',
-      },
-      {
+      }, {
         tagName: 'link',
         className: 'theme-meta-data',
         rel: 'apple-touch-icon-precomposed',
         id: 'link-apple-touch-precomposed-default',
         href: `${basePath}/logo_s32x32.png`,
         type: 'image/png',
-      },
-      {
+      }, {
         tagName: 'meta',
         className: 'theme-meta-data',
         name: 'theme-color',
         id: 'meta-theme-color',
         content: `${themeData[theme].exportedAtRowStyle.bg}`,
-      },
-      {
+      }, {
         tagName: 'meta',
         className: 'theme-meta-data',
         name: 'msapplication-TileColor',
         id: 'meta-tile-color',
         content: `${themeData[theme].exportedAtRowStyle.bg}`,
-      },
-      {
+      }, {
         tagName: 'meta',
         className: 'theme-meta-data',
         name: 'msapplication-TileImage',
@@ -134,39 +116,34 @@ export class LibRouter {
     ];
 
     derivates.forEach(derivate => {
-      result.push(
-        {
-          tagName: 'link',
-          className: 'theme-meta-data',
-          rel: 'icon',
-          href: `${basePath}/logo_s${derivate}.png`,
-          id: `link-icon-${derivate}`,
-          sizes: derivate,
-          type: 'image/png',
-        },
-        {
-          tagName: 'link',
-          className: 'theme-meta-data',
-          rel: 'apple-touch-icon-precomposed',
-          href: `${basePath}/logo_s${derivate}.png`,
-          id: `link-apple-touch-precomposed-${derivate}`,
-          sizes: derivate,
-          type: 'image/png',
-        },
-      );
-    });
-
-    result.push(
-      {
+      result.push({
         tagName: 'link',
         className: 'theme-meta-data',
-        rel: 'shortcut icon',
-        sizes: '64x64',
-        id: 'link-favicon',
-        href: `${basePath}/logo_s64x64.png`,
+        rel: 'icon',
+        href: `${basePath}/logo_s${derivate}.png`,
+        id: `link-icon-${derivate}`,
+        sizes: derivate,
         type: 'image/png',
-      },
-    );
+      }, {
+        tagName: 'link',
+        className: 'theme-meta-data',
+        rel: 'apple-touch-icon-precomposed',
+        href: `${basePath}/logo_s${derivate}.png`,
+        id: `link-apple-touch-precomposed-${derivate}`,
+        sizes: derivate,
+        type: 'image/png',
+      });
+    });
+
+    result.push({
+      tagName: 'link',
+      className: 'theme-meta-data',
+      rel: 'shortcut icon',
+      sizes: '64x64',
+      id: 'link-favicon',
+      href: `${basePath}/logo_s64x64.png`,
+      type: 'image/png',
+    });
 
     res.json(result);
   }
@@ -209,9 +186,7 @@ export class LibRouter {
 
     derivates.forEach((derivate) => {
       manifest.icons.push({
-        src: `${basePath}/assets/images/theme/${theme}/logo_s${derivate}.png`,
-        sizes: derivate,
-        type: 'image/png',
+        src: `${basePath}/assets/images/theme/${theme}/logo_s${derivate}.png`, sizes: derivate, type: 'image/png',
       });
     });
 
@@ -261,10 +236,9 @@ export class LibRouter {
     <mi>d</mi>
     <mi>z</mi>
   </mrow>
-</math>`,
-      format: 'MathML', // 'inline-TeX', 'MathML'
+</math>`, format: 'MathML', // 'inline-TeX', 'MathML'
       svg: true, //  svg:true, mml: true
-    }, function (data) {
+    }, data => {
       if (!data.errors) {
         res.send(data);
       }
@@ -273,10 +247,9 @@ export class LibRouter {
 
   public getSecondMathjaxExample(req: Request, res: Response, next: NextFunction): void {
     mjAPI.typeset({
-      math: `\\begin{align} a_1& =b_1+c_1\\\\ a_2& =b_2+c_2-d_2+e_2 \\end{align}`,
-      format: 'TeX', // 'inline-TeX', 'MathML'
+      math: `\\begin{align} a_1& =b_1+c_1\\\\ a_2& =b_2+c_2-d_2+e_2 \\end{align}`, format: 'TeX', // 'inline-TeX', 'MathML'
       mml: true, //  svg:true, mml: true
-    }, function (data) {
+    }, data => {
       if (!data.errors) {
         res.send(data);
       }
@@ -299,13 +272,8 @@ export class LibRouter {
     const result = [];
     if (!mathjaxArray.length) {
       res.send(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'renderMathjax',
-        payload: {
-          mathjax: req.body.mathjax,
-          format: req.body.format,
-          mathjaxArray,
-          output: req.body.output,
+        status: 'STATUS:FAILED', step: 'renderMathjax', payload: {
+          mathjax: req.body.mathjax, format: req.body.format, mathjaxArray, output: req.body.output,
         },
       }));
 
@@ -353,9 +321,7 @@ export class LibRouter {
       });
     });
     res.json({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'CACHE:QUIZ_ASSETS',
-      payload: {},
+      status: 'STATUS:SUCCESSFUL', step: 'CACHE:QUIZ_ASSETS', payload: {},
     });
   }
 
@@ -399,23 +365,17 @@ export class LibRouter {
             console.log('received response from cas server', err, result);
             if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
               res.send({
-                status: 'STATUS:FAILED',
-                step: 'AUTHENTICATE',
-                payload: { err, result },
+                status: 'STATUS:FAILED', step: 'AUTHENTICATE', payload: { err, result },
               });
               return;
             } else {
               const resultData = result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:attributes'][0];
               const casDataElement: ICasData = {
-                username: resultData['cas:username'],
-                displayName: resultData['cas:displayNmae'],
-                mail: resultData['cas:mail'],
+                username: resultData['cas:username'], displayName: resultData['cas:displayNmae'], mail: resultData['cas:mail'],
               };
               CasDAO.add(ticket, casDataElement);
               res.send({
-                status: 'STATUS:SUCCESSFUL',
-                step: 'AUTHENTICATE',
-                payload: { ticket },
+                status: 'STATUS:SUCCESSFUL', step: 'AUTHENTICATE', payload: { ticket },
               });
             }
           });
@@ -426,9 +386,7 @@ export class LibRouter {
         console.log('error at requesting cas url', error);
         casRequest.abort();
         res.send({
-          status: 'STATUS:FAILED',
-          step: 'AUTHENTICATE',
-          payload: { error },
+          status: 'STATUS:FAILED', step: 'AUTHENTICATE', payload: { error },
         });
         return;
       });
@@ -441,8 +399,10 @@ export class LibRouter {
     }
   }
 
-  private randomValueHex(len: number = 40) {
-    return crypto.randomBytes(Math.ceil((len) / 2)).toString('hex') // convert to hexadecimal format
+  private randomValueHex(len: number = 40): string {
+    return crypto.randomBytes(Math.ceil((
+                                          len
+                                        ) / 2)).toString('hex') // convert to hexadecimal format
     .slice(0, len);   // return required number of characters
   }
 

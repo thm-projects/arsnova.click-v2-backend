@@ -1,16 +1,16 @@
-import {Router, Request, Response, NextFunction} from 'express';
-import {IQuestion, IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {IActiveQuiz, IMemberGroupSerialized} from 'arsnova-click-v2-types/src/common';
-import {DatabaseTypes, DbDAO} from '../db/DbDAO';
-import {MatchTextToAssetsDb} from '../cache/assets';
-import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import {ISessionConfiguration} from 'arsnova-click-v2-types/src/session_configuration/interfaces';
-import {ExcelWorkbook} from '../export/excel-workbook';
-import {Leaderboard} from '../leaderboard/leaderboard';
+import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import { IActiveQuiz, IMemberGroupSerialized } from 'arsnova-click-v2-types/src/common';
+import { IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { ISessionConfiguration } from 'arsnova-click-v2-types/src/session_configuration/interfaces';
+import { NextFunction, Request, Response, Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import {QuizManagerDAO} from '../db/QuizManagerDAO';
-import {staticStatistics, settings} from '../statistics';
+import { MatchTextToAssetsDb } from '../cache/assets';
+import { DatabaseTypes, DbDAO } from '../db/DbDAO';
+import { QuizManagerDAO } from '../db/QuizManagerDAO';
+import { ExcelWorkbook } from '../export/excel-workbook';
+import { Leaderboard } from '../leaderboard/leaderboard';
+import { settings, staticStatistics } from '../statistics';
 
 export class QuizRouter {
   get router(): Router {
@@ -28,21 +28,18 @@ export class QuizRouter {
     this.init();
   }
 
-  private getAll(req: Request, res: Response, next: NextFunction): void {
-    res.json({});
-  }
-
-
   public getIsAvailableQuiz(req: Request, res: Response): void {
+    interface IisAvailableQuizPayload {
+      available?: boolean;
+      provideNickSelection?: boolean;
+      authorizeViaCas?: boolean;
+      memberGroups?: Array<IMemberGroupSerialized>;
+      maxMembersPerGroup?: number;
+      autoJoinToGroup?: boolean;
+    }
+
     const quiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
-    const payload: {
-      available?: boolean,
-      provideNickSelection?: boolean,
-      authorizeViaCas?: boolean,
-      memberGroups?: Array<IMemberGroupSerialized>,
-      maxMembersPerGroup?: number,
-      autoJoinToGroup?: boolean
-    } = {};
+    const payload: IisAvailableQuizPayload = {};
 
     const isInactive: boolean = QuizManagerDAO.isInactiveQuiz(req.params.quizName);
     let isInProgress = false;
@@ -66,7 +63,7 @@ export class QuizRouter {
     const result: Object = {
       status: `STATUS:SUCCESSFUL`,
       step: `QUIZ:${quiz && !isInProgress ? 'AVAILABLE' : isInactive || isInProgress ? 'EXISTS' : 'UNDEFINED'}`,
-      payload
+      payload,
     };
     res.send(result);
   }
@@ -79,7 +76,9 @@ export class QuizRouter {
         demoQuizPath = path.join(basePath, 'en.demo_quiz.json');
       }
       const result: IQuestionGroup = JSON.parse(fs.readFileSync(demoQuizPath).toString());
-      result.hashtag = 'Demo Quiz ' + (QuizManagerDAO.getLastPersistedDemoQuizNumber() + 1);
+      result.hashtag = 'Demo Quiz ' + (
+                       QuizManagerDAO.getLastPersistedDemoQuizNumber() + 1
+      );
       QuizManagerDAO.convertLegacyQuiz(result);
       res.setHeader('Response-Type', 'application/json');
       res.send(result);
@@ -98,10 +97,12 @@ export class QuizRouter {
       }
       const result: IQuestionGroup = JSON.parse(fs.readFileSync(abcdQuizPath).toString());
       let abcdName = '';
-      for (let i  = 0; i < answerLength; i++) {
+      for (let i = 0; i < answerLength; i++) {
         abcdName += String.fromCharCode(65 + i);
       }
-      result.hashtag = `${abcdName} ${(QuizManagerDAO.getLastPersistedAbcdQuizNumberByLength(answerLength) + 1)}`;
+      result.hashtag = `${abcdName} ${(
+        QuizManagerDAO.getLastPersistedAbcdQuizNumberByLength(answerLength) + 1
+      )}`;
       QuizManagerDAO.convertLegacyQuiz(result);
       res.setHeader('Response-Type', 'application/json');
       res.send(result);
@@ -110,13 +111,13 @@ export class QuizRouter {
     }
   }
 
-  public uploadQuiz(req: UploadRequest, res: Response): void {
+  public uploadQuiz(req: IUploadRequest, res: Response): void {
     const duplicateQuizzes = [];
     const quizData = [];
     let privateKey = '';
     if (req.busboy) {
       const promise = new Promise((resolve) => {
-        req.busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
+        req.busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
           if (fieldname === 'uploadFiles[]') {
             let quiz = '';
             file.on('data', (buffer) => {
@@ -124,33 +125,32 @@ export class QuizRouter {
             });
             file.on('end', () => {
               quizData.push({
-                fileName: filename,
-                quiz: JSON.parse(quiz)
+                fileName: filename, quiz: JSON.parse(quiz),
               });
             });
           }
         });
-        req.busboy.on('field', function(key, value) {
+        req.busboy.on('field', (key, value) => {
           if (key === 'privateKey') {
             privateKey = value;
           }
         });
-        req.busboy.on('finish', function() {
+        req.busboy.on('finish', () => {
           resolve();
         });
         req.pipe(req.busboy);
       });
       promise.then(() => {
-        quizData.forEach((data: {fileName: string, quiz: IQuestionGroup}) => {
-          const dbResult = DbDAO.read(DatabaseTypes.quiz, {quizName: data.quiz.hashtag});
+        quizData.forEach((data: { fileName: string, quiz: IQuestionGroup }) => {
+          const dbResult = DbDAO.read(DatabaseTypes.quiz, { quizName: data.quiz.hashtag });
           if (dbResult) {
             duplicateQuizzes.push({
               quizName: data.quiz.hashtag,
               fileName: data.fileName,
-              renameRecommendation: QuizManagerDAO.getRenameRecommendations(data.quiz.hashtag)
+              renameRecommendation: QuizManagerDAO.getRenameRecommendations(data.quiz.hashtag),
             });
           } else {
-            DbDAO.create(DatabaseTypes.quiz, {quizName: data.quiz.hashtag, privateKey});
+            DbDAO.create(DatabaseTypes.quiz, { quizName: data.quiz.hashtag, privateKey });
             QuizManagerDAO.initInactiveQuiz(data.quiz.hashtag);
             if (settings.public.cacheQuizAssets) {
               const quiz: IQuestionGroup = data.quiz;
@@ -163,10 +163,10 @@ export class QuizRouter {
             }
           }
         });
-        res.send({status: 'STATUS:SUCCESSFUL', step: 'QUIZ:UPLOAD_FILE', payload: {duplicateQuizzes}});
+        res.send({ status: 'STATUS:SUCCESSFUL', step: 'QUIZ:UPLOAD_FILE', payload: { duplicateQuizzes } });
       });
     } else {
-      res.send({status: 'STATUS:FAILED', step: 'QUIZ:UPLOAD_FILE', payload: {message: 'busboy not found'}});
+      res.send({ status: 'STATUS:FAILED', step: 'QUIZ:UPLOAD_FILE', payload: { message: 'busboy not found' } });
     }
   }
 
@@ -175,9 +175,7 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:START:QUIZ_INACTIVE',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:START:QUIZ_INACTIVE', payload: {},
       }));
       return;
     }
@@ -185,26 +183,21 @@ export class QuizRouter {
       res.send({
         status: 'STATUS:FAILED',
         step: 'QUIZ:ALREADY_STARTED',
-        payload: {startTimestamp: activeQuiz.currentStartTimestamp, nextQuestionIndex: activeQuiz.currentQuestionIndex}
+        payload: { startTimestamp: activeQuiz.currentStartTimestamp, nextQuestionIndex: activeQuiz.currentQuestionIndex },
       });
     } else {
-      const nextQuestionIndex = activeQuiz.originalObject.sessionConfig.readingConfirmationEnabled ?
-        activeQuiz.currentQuestionIndex :
-        activeQuiz.nextQuestion();
+      const nextQuestionIndex = activeQuiz.originalObject.sessionConfig.readingConfirmationEnabled ? activeQuiz.currentQuestionIndex
+                                                                                                   : activeQuiz.nextQuestion();
 
       if (nextQuestionIndex === -1) {
         res.send({
-          status: 'STATUS:FAILED',
-          step: 'QUIZ:END_OF_QUESTIONS',
-          payload: {}
+          status: 'STATUS:FAILED', step: 'QUIZ:END_OF_QUESTIONS', payload: {},
         });
       } else {
         const startTimestamp: number = new Date().getTime();
         activeQuiz.setTimestamp(startTimestamp);
         res.send({
-          status: 'STATUS:SUCCESSFUL',
-          step: 'QUIZ:START',
-          payload: {startTimestamp, nextQuestionIndex}
+          status: 'STATUS:SUCCESSFUL', step: 'QUIZ:START', payload: { startTimestamp, nextQuestionIndex },
         });
       }
     }
@@ -215,17 +208,13 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:STOP:QUIZ_INACTIVE',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:STOP:QUIZ_INACTIVE', payload: {},
       }));
       return;
     }
     activeQuiz.stop();
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:STOP',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:STOP', payload: {},
     });
   }
 
@@ -234,22 +223,18 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:CURRENT_STATE:QUIZ_INACTIVE',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:CURRENT_STATE:QUIZ_INACTIVE', payload: {},
       }));
       return;
     }
     const index = activeQuiz.currentQuestionIndex < 0 ? 0 : activeQuiz.currentQuestionIndex;
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:CURRENT_STATE',
-      payload: {
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:CURRENT_STATE', payload: {
         questions: activeQuiz.originalObject.questionList.slice(0, index + 1),
         questionIndex: index,
         startTimestamp: activeQuiz.currentStartTimestamp,
-        numberOfQuestions: activeQuiz.originalObject.questionList.length
-      }
+        numberOfQuestions: activeQuiz.originalObject.questionList.length,
+      },
     });
   }
 
@@ -258,18 +243,14 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:READING_CONFIRMATION_REQUESTED:QUIZ_INACTIVE',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:READING_CONFIRMATION_REQUESTED:QUIZ_INACTIVE', payload: {},
       }));
       return;
     }
     activeQuiz.nextQuestion();
     activeQuiz.requestReadingConfirmation();
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:READING_CONFIRMATION_REQUESTED',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:READING_CONFIRMATION_REQUESTED', payload: {},
     });
   }
 
@@ -278,16 +259,12 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:GET_STARTTIME:QUIZ_INACTIVE',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:GET_STARTTIME:QUIZ_INACTIVE', payload: {},
       }));
       return;
     }
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:GET_STARTTIME',
-      payload: {startTimestamp: activeQuiz.currentStartTimestamp}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:GET_STARTTIME', payload: { startTimestamp: activeQuiz.currentStartTimestamp },
     });
   }
 
@@ -296,16 +273,12 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:SETTINGS:QUIZ_INACTIVE',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:SETTINGS:QUIZ_INACTIVE', payload: {},
       }));
       return;
     }
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:SETTINGS',
-      payload: {settings: activeQuiz.originalObject.sessionConfig}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:SETTINGS', payload: { settings: activeQuiz.originalObject.sessionConfig },
     });
   }
 
@@ -314,65 +287,48 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:UPDATED_SETTINGS:QUIZ_INACTIVE',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:UPDATED_SETTINGS:QUIZ_INACTIVE', payload: {},
       }));
       return;
     }
     activeQuiz.updateQuizSettings(req.body.target, req.body.state);
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:UPDATED_SETTINGS',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:UPDATED_SETTINGS', payload: {},
     });
   }
 
   public reserveQuiz(req: Request, res: Response): void {
     if (!req.body.quizName || !req.body.privateKey) {
       res.send(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INVALID_DATA',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:INVALID_DATA', payload: {},
       }));
       return;
     }
     const activeQuizzesAmount = QuizManagerDAO.getAllActiveQuizNames();
     if (activeQuizzesAmount.length >= settings.public.limitActiveQuizzes) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:TOO_MUCH_ACTIVE_QUIZZES',
-        payload: {
-          activeQuizzes: activeQuizzesAmount,
-          limitActiveQuizzes: settings.public.limitActiveQuizzes
-        }
+        status: 'STATUS:FAILED', step: 'QUIZ:TOO_MUCH_ACTIVE_QUIZZES', payload: {
+          activeQuizzes: activeQuizzesAmount, limitActiveQuizzes: settings.public.limitActiveQuizzes,
+        },
       });
       return;
     }
     if (settings.public.createQuizPasswordRequired && !req.body.serverPassword) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:SERVER_PASSWORD_REQUIRED',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:SERVER_PASSWORD_REQUIRED', payload: {},
       });
       return;
     }
     if (req.body.serverPassword !== settings.createQuizPassword) {
-      res.send(JSON.stringify(
-        {
-          status: 'STATUS:FAILED',
-          step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
-          payload: {}
-        }
-      ));
+      res.send(JSON.stringify({
+        status: 'STATUS:FAILED', step: 'QUIZ:INSUFFICIENT_PERMISSIONS', payload: {},
+      }));
       return;
     }
     QuizManagerDAO.initInactiveQuiz(req.body.quizName);
-    DbDAO.create(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
+    DbDAO.create(DatabaseTypes.quiz, { quizName: req.body.quizName, privateKey: req.body.privateKey });
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:RESERVED',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:RESERVED', payload: {},
     });
   }
 
@@ -380,18 +336,14 @@ export class QuizRouter {
     if (!req.body.quizName || !req.body.privateKey) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INVALID_DATA',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:INVALID_DATA', payload: {},
       }));
       return;
     }
     QuizManagerDAO.initInactiveQuiz(req.body.quizName);
-    DbDAO.create(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
+    DbDAO.create(DatabaseTypes.quiz, { quizName: req.body.quizName, privateKey: req.body.privateKey });
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:RESERVED',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:RESERVED', payload: {},
     });
   }
 
@@ -399,26 +351,20 @@ export class QuizRouter {
     if (!req.body.quizName || !req.body.privateKey) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INVALID_DATA',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:INVALID_DATA', payload: {},
       }));
       return;
     }
-    const dbResult: boolean = DbDAO.delete(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
+    const dbResult: boolean = DbDAO.delete(DatabaseTypes.quiz, { quizName: req.body.quizName, privateKey: req.body.privateKey });
     if (dbResult) {
       QuizManagerDAO.removeQuiz(req.body.quizName);
       res.send({
-        status: 'STATUS:SUCCESSFUL',
-        step: 'QUIZ:REMOVED',
-        payload: {}
+        status: 'STATUS:SUCCESSFUL', step: 'QUIZ:REMOVED', payload: {},
       });
     } else {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:INSUFFICIENT_PERMISSIONS', payload: {},
       }));
     }
   }
@@ -426,20 +372,16 @@ export class QuizRouter {
   public deleteActiveQuiz(req: Request, res: Response): void {
     if (!req.body.quizName || !req.body.privateKey) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INVALID_DATA',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:INVALID_DATA', payload: {},
       });
       return;
     }
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
-    const dbResult: Object = DbDAO.read(DatabaseTypes.quiz, {quizName: req.body.quizName, privateKey: req.body.privateKey});
+    const dbResult: Object = DbDAO.read(DatabaseTypes.quiz, { quizName: req.body.quizName, privateKey: req.body.privateKey });
 
     if (!dbResult) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:INSUFFICIENT_PERMISSIONS', payload: {},
       });
       return;
     }
@@ -448,9 +390,7 @@ export class QuizRouter {
       activeQuiz.onDestroy();
       QuizManagerDAO.setQuizAsInactive(req.body.quizName);
       res.send({
-        status: 'STATUS:SUCCESSFUL',
-        step: 'QUIZ:CLOSED',
-        payload: {}
+        status: 'STATUS:SUCCESSFUL', step: 'QUIZ:CLOSED', payload: {},
       });
       return;
     }
@@ -461,39 +401,31 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:RESET:QUIZ_INACTIVE',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'QUIZ:RESET:QUIZ_INACTIVE', payload: {},
       }));
       return;
     }
     activeQuiz.reset();
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:RESET',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:RESET', payload: {},
     });
   }
 
   public getExportFile(req: Request, res: I18nResponse): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
-    const dbResult: Object = DbDAO.read(DatabaseTypes.quiz, {quizName: req.params.quizName, privateKey: req.params.privateKey});
+    const dbResult: Object = DbDAO.read(DatabaseTypes.quiz, { quizName: req.params.quizName, privateKey: req.params.privateKey });
 
     if (!dbResult) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'EXPORT:QUIZ_NOT_FOUND',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'EXPORT:QUIZ_NOT_FOUND', payload: {},
       }));
       return;
     }
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'EXPORT:QUIZ_INACTIVE',
-        payload: {}
+        status: 'STATUS:FAILED', step: 'EXPORT:QUIZ_INACTIVE', payload: {},
       }));
       return;
     }
@@ -501,107 +433,11 @@ export class QuizRouter {
     // TODO: The quiz contains the rewritten cached asset urls. Restore them to the original value!
 
     const wb = new ExcelWorkbook({
-      themeName: req.params.theme,
-      translation: req.params.language,
-      quiz: activeQuiz,
-      mf: res.__mf
+      themeName: req.params.theme, translation: req.params.language, quiz: activeQuiz, mf: res.__mf,
     });
     const date: Date = new Date();
     const dateFormatted = `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}-${date.getHours()}_${date.getMinutes()}`;
     wb.write(`Export-${req.params.quizName}-${dateFormatted}.xlsx`, res);
-  }
-
-  private getLeaderBoardData(req: Request, res: Response, next: NextFunction): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
-    if (!activeQuiz) {
-      res.sendStatus(500);
-      res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'GET_LEADERBOARD_DATA:QUIZ_INACTIVE',
-        payload: {}
-      }));
-      return;
-    }
-
-    const index: number = +req.params.questionIndex;
-    const questionAmount: number = activeQuiz.originalObject.questionList.length;
-    const questionIndex: number = isNaN(index) ? 0 : index;
-    const endIndex: number = isNaN(index) || index < 0 || index > questionAmount ? questionAmount : index + 1;
-    const correctResponses: any = {};
-    const partiallyCorrectResponses: any = {};
-
-    const orderByGroups = activeQuiz.memberGroups.length > 1;
-    const memberGroupResults = {};
-
-    activeQuiz.memberGroups.forEach((memberGroup) => {
-      memberGroupResults[memberGroup.name] = {
-        correctQuestions: [],
-        responseTime: 0,
-        score: 0,
-        memberAmount: memberGroup.members.length
-      };
-
-      memberGroup.members.forEach(attendee => {
-        for (let i: number = questionIndex; i < endIndex; i++) {
-          const question: IQuestion = activeQuiz.originalObject.questionList[i];
-          if (['SurveyQuestion', 'ABCDSingleChoiceQuestion'].indexOf(question.TYPE) > -1) {
-            continue;
-          }
-          const isCorrect = this._leaderboard.isCorrectResponse(attendee.responses[i], question);
-          if (isCorrect === 1) {
-            if (!correctResponses[attendee.name]) {
-              correctResponses[attendee.name] = {responseTime: 0, correctQuestions: [], confidenceValue: 0};
-            }
-            correctResponses[attendee.name].correctQuestions.push(i);
-            correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-            correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-
-            memberGroupResults[memberGroup.name].correctQuestions.push(i);
-            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
-
-          } else if (isCorrect === 0) {
-
-            if (!partiallyCorrectResponses[attendee.name]) {
-              partiallyCorrectResponses[attendee.name] = {responseTime: 0, correctQuestions: [], confidenceValue: 0};
-            }
-
-            partiallyCorrectResponses[attendee.name].correctQuestions.push(i);
-            partiallyCorrectResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-            partiallyCorrectResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-
-          } else {
-
-            delete correctResponses[attendee.name];
-            delete partiallyCorrectResponses[attendee.name];
-            break;
-          }
-        }
-      });
-    });
-
-    if (orderByGroups) {
-      Object.keys(memberGroupResults).forEach(groupName => {
-        const memberGroup = memberGroupResults[groupName];
-        const maxMembersPerGroup = activeQuiz.originalObject.sessionConfig.nicks.maxMembersPerGroup;
-        // (10 / 1) * (1 / 1) * (1.815 / 1)
-        memberGroupResults[groupName].score = Math.round(
-          (maxMembersPerGroup / memberGroup.memberAmount) *
-          (memberGroup.correctQuestions.length / activeQuiz.originalObject.questionList.length) *
-          (memberGroup.responseTime / memberGroup.memberAmount) *
-          100
-        );
-      });
-    }
-
-    res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:GET_LEADERBOARD_DATA',
-      payload: {
-        correctResponses: this._leaderboard.objectToArray(correctResponses),
-        partiallyCorrectResponses: this._leaderboard.objectToArray(partiallyCorrectResponses),
-        memberGroupResults: this._leaderboard.objectToArray(memberGroupResults)
-      }
-    });
   }
 
   public init(): void {
@@ -628,6 +464,98 @@ export class QuizRouter {
 
     this._router.delete('/', this.deleteQuiz);
     this._router.delete('/active', this.deleteActiveQuiz);
+  }
+
+  private getAll(req: Request, res: Response, next: NextFunction): void {
+    res.json({});
+  }
+
+  private getLeaderBoardData(req: Request, res: Response, next: NextFunction): void {
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
+    if (!activeQuiz) {
+      res.sendStatus(500);
+      res.end(JSON.stringify({
+        status: 'STATUS:FAILED', step: 'GET_LEADERBOARD_DATA:QUIZ_INACTIVE', payload: {},
+      }));
+      return;
+    }
+
+    const index: number = +req.params.questionIndex;
+    const questionAmount: number = activeQuiz.originalObject.questionList.length;
+    const questionIndex: number = isNaN(index) ? 0 : index;
+    const endIndex: number = isNaN(index) || index < 0 || index > questionAmount ? questionAmount : index + 1;
+    const correctResponses: any = {};
+    const partiallyCorrectResponses: any = {};
+
+    const orderByGroups = activeQuiz.memberGroups.length > 1;
+    const memberGroupResults = {};
+
+    activeQuiz.memberGroups.forEach((memberGroup) => {
+      memberGroupResults[memberGroup.name] = {
+        correctQuestions: [], responseTime: 0, score: 0, memberAmount: memberGroup.members.length,
+      };
+
+      memberGroup.members.forEach(attendee => {
+        for (let i: number = questionIndex; i < endIndex; i++) {
+          const question: IQuestion = activeQuiz.originalObject.questionList[i];
+          if (['SurveyQuestion', 'ABCDSingleChoiceQuestion'].indexOf(question.TYPE) > -1) {
+            continue;
+          }
+          const isCorrect = this._leaderboard.isCorrectResponse(attendee.responses[i], question);
+          if (isCorrect === 1) {
+            if (!correctResponses[attendee.name]) {
+              correctResponses[attendee.name] = { responseTime: 0, correctQuestions: [], confidenceValue: 0 };
+            }
+            correctResponses[attendee.name].correctQuestions.push(i);
+            correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
+            correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
+
+            memberGroupResults[memberGroup.name].correctQuestions.push(i);
+            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
+
+          } else if (isCorrect === 0) {
+
+            if (!partiallyCorrectResponses[attendee.name]) {
+              partiallyCorrectResponses[attendee.name] = { responseTime: 0, correctQuestions: [], confidenceValue: 0 };
+            }
+
+            partiallyCorrectResponses[attendee.name].correctQuestions.push(i);
+            partiallyCorrectResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
+            partiallyCorrectResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
+
+          } else {
+
+            delete correctResponses[attendee.name];
+            delete partiallyCorrectResponses[attendee.name];
+            break;
+          }
+        }
+      });
+    });
+
+    if (orderByGroups) {
+      Object.keys(memberGroupResults).forEach(groupName => {
+        const memberGroup = memberGroupResults[groupName];
+        const maxMembersPerGroup = activeQuiz.originalObject.sessionConfig.nicks.maxMembersPerGroup;
+        // (10 / 1) * (1 / 1) * (1.815 / 1)
+        memberGroupResults[groupName].score = Math.round((
+                                                           maxMembersPerGroup / memberGroup.memberAmount
+                                                         ) * (
+                                                           memberGroup.correctQuestions.length
+                                                           / activeQuiz.originalObject.questionList.length
+                                                         ) * (
+                                                           memberGroup.responseTime / memberGroup.memberAmount
+                                                         ) * 100);
+      });
+    }
+
+    res.send({
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:GET_LEADERBOARD_DATA', payload: {
+        correctResponses: this._leaderboard.objectToArray(correctResponses),
+        partiallyCorrectResponses: this._leaderboard.objectToArray(partiallyCorrectResponses),
+        memberGroupResults: this._leaderboard.objectToArray(memberGroupResults),
+      },
+    });
   }
 }
 

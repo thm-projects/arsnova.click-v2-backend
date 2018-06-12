@@ -628,7 +628,7 @@ const illegalNicks: Array<string> = [
   'BALCONAR',
   'MUIE',
   'PULA',
-  'TARFA'
+  'TARFA',
 ];
 
 export default illegalNicks;

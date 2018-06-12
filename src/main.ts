@@ -1,4 +1,4 @@
-declare function require(name: string);
+declare function require(name: string): any;
 
 import * as child_process from 'child_process';
 import * as http from 'http';
@@ -18,25 +18,17 @@ import { staticStatistics } from './statistics';
 
 require('source-map-support').install();
 
-declare global {
-  interface NodeModule {
-    hot: {
-      accept: Function
-    };
-  }
+interface IHotModule extends NodeModule {
+  hot: {
+    accept: Function
+  };
+}
 
-  namespace NodeJS {
-    interface Global {
-      DAO: {
-        CasDAO: {},
-        I18nDAO: {},
-        MathjaxDAO: {},
-        QuizManagerDAO: {},
-        DbDAO: {},
-      };
-      createDump: Function;
-    }
-  }
+interface IGlobal extends NodeJS.Global {
+  DAO: {
+    CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizManagerDAO: {}, DbDAO: {},
+  };
+  createDump: Function;
 }
 
 declare interface IInetAddress {
@@ -45,11 +37,15 @@ declare interface IInetAddress {
   address: string;
 }
 
-function censor(data) {
+function censor(data): any {
   let i = 0;
 
-  return function (key, value) {
-    if (i !== 0 && typeof(data) === 'object' && typeof(value) === 'object' && data === value) {
+  return function (key, value): string | object {
+    if (i !== 0 && typeof(
+      data
+    ) === 'object' && typeof(
+      value
+    ) === 'object' && data === value) {
       return '[Circular]';
     }
 
@@ -59,14 +55,20 @@ function censor(data) {
   };
 }
 
-function rejectionToCreateDump(reason) {
-  global.createDump(reason);
+function rejectionToCreateDump(reason): void {
+  (
+    <IGlobal>global
+  ).createDump(reason);
 }
 
 process.on('unhandledRejection', rejectionToCreateDump);
 
-global.DAO = { CasDAO, I18nDAO, MathjaxDAO, QuizManagerDAO, DbDAO };
-global.createDump = (plainError) => {
+(
+  <IGlobal>global
+).DAO = { CasDAO, I18nDAO, MathjaxDAO, QuizManagerDAO, DbDAO };
+(
+  <IGlobal>global
+).createDump = (plainError) => {
   const error = { type: '', code: '', message: '', stack: '' };
 
   if (plainError) {
@@ -85,8 +87,12 @@ global.createDump = (plainError) => {
 
   const daoDump = { error };
 
-  Object.keys(global.DAO).forEach((dao, index) => {
-    daoDump[dao] = global.DAO[dao].createDump();
+  Object.keys((
+    <IGlobal>global
+  ).DAO).forEach((dao) => {
+    daoDump[dao] = (
+      <IGlobal>global
+    ).DAO[dao].createDump();
   });
 
   const insecureDumpAsJson = JSON.stringify(daoDump, censor(daoDump));
@@ -137,8 +143,12 @@ server.on('close', onClose);
 
 let currentApp = App;
 
-if (module.hot) {
-  module.hot.accept('./main', () => {
+if ((
+  <IHotModule>module
+).hot) {
+  (
+    <IHotModule>module
+  ).hot.accept('./main', () => {
     server.removeListener('request', currentApp);
     currentApp = require('./main');
     server.on('request', currentApp);
@@ -146,7 +156,9 @@ if (module.hot) {
 }
 
 function normalizePort(val: number | string): number | string | boolean {
-  const portCheck: number = (typeof val === 'string') ? parseInt(val, 10) : val;
+  const portCheck: number = (
+                              typeof val === 'string'
+                            ) ? parseInt(val, 10) : val;
   if (isNaN(portCheck)) {
     return val;
   } else if (portCheck >= 0) {
@@ -160,7 +172,9 @@ function onError(error: NodeJS.ErrnoException): void {
   if (error.syscall !== 'listen') {
     throw error;
   }
-  const bind: string = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port;
+  const bind: string = (
+                         typeof port === 'string'
+                       ) ? 'Pipe ' + port : 'Port ' + port;
   switch (error.code) {
     case 'EACCES':
       console.error(`${bind} requires elevated privileges`);
@@ -177,7 +191,9 @@ function onError(error: NodeJS.ErrnoException): void {
 
 function onListening(): void {
   const addr: IInetAddress | string = server.address();
-  const bind: string = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
+  const bind: string = (
+                         typeof addr === 'string'
+                       ) ? `pipe ${addr}` : `port ${addr.port}`;
   console.log(`Listening on ${bind}`);
 
   WebSocketRouter.wss = new WebSocket.Server({ server });

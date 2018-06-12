@@ -1,9 +1,11 @@
+import { IActiveQuiz, INickname } from 'arsnova-click-v2-types/src/common';
 import * as WebSocket from 'ws';
-import {IActiveQuiz, INickname} from 'arsnova-click-v2-types/src/common';
-import {DatabaseTypes, DbDAO} from '../db/DbDAO';
-import {QuizManagerDAO} from '../db/QuizManagerDAO';
+import { DatabaseTypes, DbDAO } from '../db/DbDAO';
+import { QuizManagerDAO } from '../db/QuizManagerDAO';
 
 export class WebSocketRouter {
+  private static _wss: WebSocket.Server;
+
   static get wss(): WebSocket.Server {
     return this._wss;
   }
@@ -12,7 +14,6 @@ export class WebSocketRouter {
     this._wss = value;
     WebSocketRouter.init();
   }
-  private static _wss: WebSocket.Server;
 
   private static init(): void {
     WebSocketRouter._wss.on('connection', (ws: WebSocket) => {
@@ -22,7 +23,7 @@ export class WebSocketRouter {
 
           if (message.step === 'WEBSOCKET:AUTHORIZE') {
             const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(message.payload.quizName);
-            const res = {status: '', step: ''};
+            const res = { status: '', step: '' };
 
             if (!activeQuiz) {
               res.status = 'STATUS:SUCCESSFUL';
@@ -33,7 +34,7 @@ export class WebSocketRouter {
                 memberGroup.members.forEach(nickname => {
                   if (nickname.webSocketAuthorization === parseFloat(message.payload.webSocketAuthorization)) {
                     nickname.webSocket = ws;
-                    ws.send(JSON.stringify({status: 'STATUS:SUCCESSFUL', step: 'WEBSOCKET:AUTHORIZED'}));
+                    ws.send(JSON.stringify({ status: 'STATUS:SUCCESSFUL', step: 'WEBSOCKET:AUTHORIZED' }));
                   }
                 });
               });
@@ -42,7 +43,7 @@ export class WebSocketRouter {
 
           if (message.step === 'WEBSOCKET:AUTHORIZE_AS_OWNER') {
             const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(message.payload.quizName);
-            const res = {status: '', step: ''};
+            const res = { status: '', step: '' };
 
             if (!activeQuiz) {
               res.status = 'STATUS:SUCCESSFUL';
@@ -50,8 +51,7 @@ export class WebSocketRouter {
               ws.send(JSON.stringify(res));
             } else {
               const isOwner: Object = DbDAO.read(DatabaseTypes.quiz, {
-                quizName: message.payload.quizName,
-                privateKey: message.payload.webSocketAuthorization
+                quizName: message.payload.quizName, privateKey: message.payload.webSocketAuthorization,
               });
               if (Object.keys(isOwner).length > 0) {
                 activeQuiz.ownerSocket = ws;
@@ -68,7 +68,7 @@ export class WebSocketRouter {
 
           if (message.step === 'LOBBY:GET_PLAYERS') {
             const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(message.payload.quizName);
-            const res: any = {status: 'STATUS:SUCCESSFUL'};
+            const res: any = { status: 'STATUS:SUCCESSFUL' };
             if (!activeQuiz) {
               res.step = 'LOBBY:INACTIVE';
             } else {
@@ -80,7 +80,7 @@ export class WebSocketRouter {
                   });
                 }).reduce((previousValue, currentValue) => {
                   return previousValue.concat(...currentValue);
-                })
+                }),
               };
             }
             ws.send(JSON.stringify(res));
@@ -89,9 +89,7 @@ export class WebSocketRouter {
         } catch (ex) {
           console.log('error while receiving ws message', ex);
           ws.send(JSON.stringify({
-            status: `Exception raised`,
-            message,
-            exception: `${ex.message}`
+            status: `Exception raised`, message, exception: `${ex.message}`,
           }));
         }
       });
@@ -102,9 +100,11 @@ export class WebSocketRouter {
         console.log('ws error', err);
       });
 
-      ws.send(JSON.stringify({status: 'STATUS:SUCCESSFUL', step: 'CONNECTED', payload: {
-        activeQuizzes: QuizManagerDAO.getAllActiveQuizNames()
-      }}));
+      ws.send(JSON.stringify({
+        status: 'STATUS:SUCCESSFUL', step: 'CONNECTED', payload: {
+          activeQuizzes: QuizManagerDAO.getAllActiveQuizNames(),
+        },
+      }));
     });
   }
 }

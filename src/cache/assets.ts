@@ -1,15 +1,15 @@
-import * as sha256 from 'crypto-js/sha256';
+import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as Hex from 'crypto-js/enc-hex';
+import * as sha256 from 'crypto-js/sha256';
 import * as fs from 'fs';
 import * as request from 'request';
-import {DatabaseTypes, DbDAO} from '../db/DbDAO';
-import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {staticStatistics} from '../statistics';
-import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import { DatabaseTypes, DbDAO } from '../db/DbDAO';
+import { staticStatistics } from '../statistics';
 
 export const assetsUrlRegex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
 
-export function MatchTextToAssetsDb(value: string) {
+export function MatchTextToAssetsDb(value: string): void {
   const acceptedFileTypes = [/image\/*/];
   const matchedValue = value.match(assetsUrlRegex);
   if (matchedValue) {
@@ -17,7 +17,7 @@ export function MatchTextToAssetsDb(value: string) {
       const digest = Hex.stringify(sha256(matchedValueElement));
       const cachePath = `${staticStatistics.pathToCache}/${digest}`;
       if (fs.existsSync(cachePath)) {
-        DbDAO.create(DatabaseTypes.assets, {url: matchedValueElement, digest, path: cachePath}, matchedValueElement.replace(/\./g, '_'));
+        DbDAO.create(DatabaseTypes.assets, { url: matchedValueElement, digest, path: cachePath }, matchedValueElement.replace(/\./g, '_'));
         return;
       }
       if (!matchedValueElement.startsWith('http')) {
@@ -28,7 +28,9 @@ export function MatchTextToAssetsDb(value: string) {
         const contentType = response.headers['content-type'];
         const hasContentTypeMatched = acceptedFileTypes.some((contentTypeRegex) => contentType.match(contentTypeRegex));
         if (hasContentTypeMatched) {
-          DbDAO.create(DatabaseTypes.assets, {url: matchedValueElement, digest, path: cachePath}, matchedValueElement.replace(/\./g, '_'));
+          DbDAO.create(DatabaseTypes.assets, {
+            url: matchedValueElement, digest, path: cachePath,
+          }, matchedValueElement.replace(/\./g, '_'));
         } else {
           req.abort();
           fs.exists(cachePath, (exists: boolean) => {
@@ -45,7 +47,7 @@ export function MatchTextToAssetsDb(value: string) {
   }
 }
 
-export function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>) {
+export function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>): void {
   const assetsCache = DbDAO.read(DatabaseTypes.assets);
   const assetsBasePath = `${staticStatistics.rewriteAssetCacheUrl}/lib/cache/quiz/assets`;
   cacheAwareQuestions.forEach((question: IQuestion) => {

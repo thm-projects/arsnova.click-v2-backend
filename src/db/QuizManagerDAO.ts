@@ -48,7 +48,9 @@ export class QuizManagerDAO {
 
   public static initActiveQuiz(quiz: IQuestionGroup): IActiveQuiz {
     const name: string = QuizManagerDAO.normalizeQuizName(quiz.hashtag);
-    if (!this.activeQuizzes[name] || !(this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder)) {
+    if (!this.activeQuizzes[name] || !(
+      this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder
+    )) {
       console.log('trying to init an active quiz which is not inactive');
       return;
     }
@@ -128,12 +130,14 @@ export class QuizManagerDAO {
 
   public static getLastPersistedNumberForData(data): number {
     let maxNumber = 0;
-    data.forEach((demoQuizName => {
-      const currentNumber = parseInt(demoQuizName.substring(demoQuizName.lastIndexOf(' '), demoQuizName.length), 10);
-      if (currentNumber > maxNumber) {
-        maxNumber = currentNumber;
+    data.forEach((
+      demoQuizName => {
+        const currentNumber = parseInt(demoQuizName.substring(demoQuizName.lastIndexOf(' '), demoQuizName.length), 10);
+        if (currentNumber > maxNumber) {
+          maxNumber = currentNumber;
+        }
       }
-    }));
+    ));
     return maxNumber;
   }
 
@@ -162,8 +166,8 @@ export class QuizManagerDAO {
   public static getAllPersistedAbcdQuizzesByLength(length: number): String[] {
     return Object.keys(this.activeQuizzes).filter((value: string) => {
       const name: string = QuizManagerDAO.normalizeQuizName(value);
-      return QuizManagerDAO.checkABCDOrdering(this.activeQuizzes[name].name) &&
-        this.activeQuizzes[name].originalObject.questionList[0].answerOptionList.length === length;
+      return QuizManagerDAO.checkABCDOrdering(this.activeQuizzes[name].name)
+             && this.activeQuizzes[name].originalObject.questionList[0].answerOptionList.length === length;
     });
   }
 
@@ -177,15 +181,13 @@ export class QuizManagerDAO {
             lobby: legacyQuiz.configuration.music.lobbyTitle,
             countdownRunning: legacyQuiz.configuration.music.countdownRunningTitle,
             countdownEnd: legacyQuiz.configuration.music.countdownEndTitle,
-          },
-          volumeConfig: {
+          }, volumeConfig: {
             global: legacyQuiz.configuration.music.lobbyVolume,
             lobby: legacyQuiz.configuration.music.lobbyVolume,
             countdownRunning: legacyQuiz.configuration.music.countdownRunningVolume,
             countdownEnd: legacyQuiz.configuration.music.countdownEndVolume,
             useGlobalVolume: legacyQuiz.configuration.music.isUsingGlobalVolume,
-          },
-          enabled: {
+          }, enabled: {
             lobby: legacyQuiz.configuration.music.lobbyEnabled,
             countdownRunning: legacyQuiz.configuration.music.countdownRunningEnabled,
             countdownEnd: legacyQuiz.configuration.music.countdownEndEnabled,

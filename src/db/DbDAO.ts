@@ -1,4 +1,4 @@
-declare function require(name: string);
+declare function require(name: string): any;
 
 import * as fs from 'fs';
 import * as lowdb from 'lowdb';
@@ -7,8 +7,7 @@ import * as path from 'path';
 import { createHomePath } from '../app_bootstrap';
 
 export enum DatabaseTypes {
-  quiz = 'quiz',
-  assets = 'assets'
+  quiz = 'quiz', assets = 'assets'
 }
 
 const homedir = require('os').homedir();
@@ -90,7 +89,7 @@ export class DbDAO {
     return DbDAO.instance;
   }
 
-  private static initDb(type: DatabaseTypes, initialValue: any) {
+  private static initDb(type: DatabaseTypes, initialValue: any): void {
     DbDAO.db.set(type, initialValue).write();
   }
 }

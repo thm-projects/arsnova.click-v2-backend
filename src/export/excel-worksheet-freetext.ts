@@ -7,7 +7,7 @@ import { ExcelWorksheet } from './excel-worksheet';
 export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
   private _question: IQuestion;
-  private _questionIndex: number;
+  private readonly _questionIndex: number;
   private allResponses: Array<INickname> = this.quiz.memberGroups[0].members.filter(nickname => {
     return nickname.responses.filter(response => {
       return !!response.value && response.value !== -1 ? response.value : null;
@@ -50,17 +50,13 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
 
     this.ws.cell(4, 1).style({
       alignment: {
-        wrapText: true,
-        vertical: 'top',
+        wrapText: true, vertical: 'top',
       },
     });
     this.ws.cell(4, 2).style({
       alignment: {
-        wrapText: true,
-        horizontal: 'center',
-        vertical: 'center',
-      },
-      font: {
+        wrapText: true, horizontal: 'center', vertical: 'center',
+      }, font: {
         color: 'FF000000',
       },
     });
@@ -80,21 +76,19 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     });
 
     this.ws.row(10).filter({
-      firstRow: 10,
-      firstColumn: 1,
-      lastRow: 10,
-      lastColumn: minColums,
+      firstRow: 10, firstColumn: 1, lastRow: 10, lastColumn: minColums,
     });
 
     const hasEntries = this.quiz.memberGroups[0].members.length > 0;
-    const attendeeEntryRows = hasEntries ? (this.quiz.memberGroups[0].members.length) : 1;
-    const attendeeEntryRowStyle = hasEntries ?
-                                  defaultStyles.attendeeEntryRowStyle :
-                                  Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
-                                    alignment: {
-                                      horizontal: 'center',
-                                    },
-                                  });
+    const attendeeEntryRows = hasEntries ? (
+      this.quiz.memberGroups[0].members.length
+    ) : 1;
+    const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle,
+      {
+        alignment: {
+          horizontal: 'center',
+        },
+      });
     this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
     this.allResponses.forEach((responseItem, indexInList) => {
@@ -107,8 +101,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       this.ws.cell(targetRow, nextColumnIndex++).style({
         font: {
           color: 'FFFFFFFF',
-        },
-        fill: {
+        }, fill: {
           type: 'pattern',
           patternType: 'solid',
           fgColor: leaderboardItem && leaderboardItem.correctQuestions.indexOf(this._questionIndex) > -1 ? 'FF008000' : 'FFB22222',
@@ -124,8 +117,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
-        },
-        numberFormat: '#,##0;',
+        }, numberFormat: '#,##0;',
       });
     });
   }
@@ -152,7 +144,9 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
-    this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
+    this.ws.cell(7, 2).number((
+      isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)
+    ));
 
     this.ws.cell(7, 3).string(`
       ${this.mf('view.answeroptions.free_text_question.config_use_keywords')}:

@@ -1,8 +1,44 @@
-import {IFreetextAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import {IQuizResponse, ILeaderBoardItem} from 'arsnova-click-v2-types/src/common';
-import {IQuestionChoice, IQuestionRanged, IQuestionFreetext, IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IFreetextAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import { ILeaderBoardItem, IQuizResponse } from 'arsnova-click-v2-types/src/common';
+import { IQuestion, IQuestionChoice, IQuestionFreetext, IQuestionRanged } from 'arsnova-click-v2-types/src/questions/interfaces';
 
 export class Leaderboard {
+  public isCorrectResponse(response: IQuizResponse, question: IQuestion): number {
+    switch (question.TYPE) {
+      case 'SingleChoiceQuestion':
+      case 'YesNoSingleChoiceQuestion':
+      case 'TrueFalseSingleChoiceQuestion':
+        return this.isCorrectSingleChoiceQuestion(<number>response.value, <IQuestionChoice>question) ? 1 : -1;
+      case 'MultipleChoiceQuestion':
+        return this.isCorrectMultipleChoiceQuestion(<Array<number>>response.value, <IQuestionChoice>question);
+      case 'ABCDSingleChoiceQuestion':
+      case 'SurveyQuestion':
+        return 1;
+      case 'RangedQuestion':
+        return this.isCorrectRangedQuestion(<number>response.value, <IQuestionRanged>question);
+      case 'FreeTextQuestion':
+        return this.isCorrectFreeTextQuestion(<string>response.value, <IQuestionFreetext>question) ? 1 : -1;
+      default:
+        throw new Error(`Unsupported question type while checking correct response. Received type ${question.TYPE}`);
+    }
+  }
+
+  public objectToArray(obj: Object): Array<ILeaderBoardItem> {
+    const keyList: Array<string> = Object.keys(obj);
+    if (!keyList.length) {
+      return [];
+    }
+    return keyList.map((value, index) => {
+      return {
+        name: keyList[index],
+        responseTime: obj[value].responseTime || -1,
+        correctQuestions: obj[value].correctQuestions,
+        confidenceValue: obj[value].confidenceValue / obj[value].correctQuestions.length,
+        score: obj[value].score,
+      };
+    });
+  }
+
   private isCorrectSingleChoiceQuestion(response: number, question: IQuestionChoice): boolean {
     return question.answerOptionList[response].isCorrect;
   }
@@ -49,7 +85,7 @@ export class Leaderboard {
         response = response.replace(/[,:\(\)\[\]\.\*\?]/g, '');
       }
       if (!answerOption.configUseKeywords) {
-        result = refValue.split(' ').filter(function (elem) {
+        result = refValue.split(' ').filter((elem) => {
           return response.indexOf(elem) === -1;
         }).length === 0;
       } else {
@@ -57,41 +93,5 @@ export class Leaderboard {
       }
     }
     return result;
-  }
-
-  public isCorrectResponse(response: IQuizResponse, question: IQuestion): number {
-    switch (question.TYPE) {
-      case 'SingleChoiceQuestion':
-      case 'YesNoSingleChoiceQuestion':
-      case 'TrueFalseSingleChoiceQuestion':
-        return this.isCorrectSingleChoiceQuestion(<number>response.value, <IQuestionChoice>question) ? 1 : -1;
-      case 'MultipleChoiceQuestion':
-        return this.isCorrectMultipleChoiceQuestion(<Array<number>>response.value, <IQuestionChoice>question);
-      case 'ABCDSingleChoiceQuestion':
-      case 'SurveyQuestion':
-        return 1;
-      case 'RangedQuestion':
-        return this.isCorrectRangedQuestion(<number>response.value, <IQuestionRanged>question);
-      case 'FreeTextQuestion':
-        return this.isCorrectFreeTextQuestion(<string>response.value, <IQuestionFreetext>question) ? 1 : -1;
-      default:
-        throw new Error(`Unsupported question type while checking correct response. Received type ${question.TYPE}`);
-    }
-  }
-
-  public objectToArray(obj: Object): Array<ILeaderBoardItem> {
-    const keyList: Array<string> = Object.keys(obj);
-    if (!keyList.length) {
-      return [];
-    }
-    return keyList.map((value, index) => {
-      return {
-        name: keyList[index],
-        responseTime: obj[value].responseTime || -1,
-        correctQuestions: obj[value].correctQuestions,
-        confidenceValue: obj[value].confidenceValue / obj[value].correctQuestions.length,
-        score: obj[value].score
-      };
-    });
   }
 }

@@ -1,49 +1,55 @@
+import { IActiveQuiz, ILeaderBoardItem, INickname } from 'arsnova-click-v2-types/src/common';
+import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as xlsx from 'excel4node';
 import * as MessageFormat from 'messageformat';
+import { Leaderboard } from '../leaderboard/leaderboard';
+import { excelDefaultWorksheetOptions } from './lib/excel_default_options';
 
-import {ExcelTheme} from './lib/excel_default_styles';
-import {excelDefaultWorksheetOptions} from './lib/excel_default_options';
-import {IActiveQuiz, ILeaderBoardItem, INickname} from 'arsnova-click-v2-types/src/common';
-import {Leaderboard} from '../leaderboard/leaderboard';
-import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
+import { ExcelTheme } from './lib/excel_default_styles';
 
 export abstract class ExcelWorksheet {
   get responsesWithConfidenceValue(): Array<INickname> {
     return this._responsesWithConfidenceValue;
   }
-  get leaderBoardData(): Array<ILeaderBoardItem> {
-    return this._leaderBoardData;
-  }
+
   get columnsToFormat(): number {
     return this._columnsToFormat;
   }
+
   get quiz(): IActiveQuiz {
     return this._quiz;
   }
+
   get createdAt(): string {
     return this._createdAt;
   }
+
   get mf(): MessageFormat {
     return this._mf;
   }
+
+  protected _leaderBoardData: Array<ILeaderBoardItem>;
+
+  get leaderBoardData(): Array<ILeaderBoardItem> {
+    return this._leaderBoardData;
+  }
+
+  protected _ws: xlsx.Worksheet;
+
   get ws(): xlsx.Worksheet {
     return this._ws;
   }
+
+  protected _options: Object;
+  protected _theme: ExcelTheme;
+  protected _translation: string;
   private readonly _mf: MessageFormat;
   private readonly _createdAt: string;
   private readonly _quiz: IActiveQuiz;
   private readonly _columnsToFormat: number;
   private readonly _responsesWithConfidenceValue: Array<INickname>;
 
-  protected _leaderBoardData: Array<ILeaderBoardItem>;
-  protected _ws: xlsx.Worksheet;
-  protected _options: Object;
-  protected _theme: ExcelTheme;
-  protected _translation: string;
-
-  protected constructor(
-    {theme, translation, quiz, mf, questionIndex}:
-      {theme: ExcelTheme, translation: string, quiz: IActiveQuiz, mf: MessageFormat, questionIndex?: number}) {
+  protected constructor({ theme, translation, quiz, mf, questionIndex }) {
     this._theme = theme;
     this._translation = translation;
     this._quiz = quiz;
@@ -51,15 +57,15 @@ export abstract class ExcelWorksheet {
     this._createdAt = this.generateCreatedAtString();
     this._options = Object.assign({}, excelDefaultWorksheetOptions, {
       headerFooter: {
-        firstHeader: mf('export.page_header', {createdAt: this._createdAt}),
+        firstHeader: mf('export.page_header', { createdAt: this._createdAt }),
         firstFooter: mf('export.page_footer'),
-        evenHeader: mf('export.page_header', {createdAt: this._createdAt}),
+        evenHeader: mf('export.page_header', { createdAt: this._createdAt }),
         evenFooter: mf('export.page_footer'),
-        oddHeader: mf('export.page_header', {createdAt: this._createdAt}),
+        oddHeader: mf('export.page_header', { createdAt: this._createdAt }),
         oddFooter: mf('export.page_footer'),
         alignWithMargins: true,
-        scaleWithDoc: false
-      }
+        scaleWithDoc: false,
+      },
     });
 
     this._columnsToFormat = 4;
@@ -82,10 +88,6 @@ export abstract class ExcelWorksheet {
     this._leaderBoardData = this.getLeaderboardData(questionIndex);
   }
 
-  private prefixNumberWithZero(num: number): string {
-    return `${num < 10 ? '0' : ''}${num}`;
-  }
-
   protected generateCreatedAtString(): string {
     const date = new Date();
     const dateYMD = `${this.prefixNumberWithZero(date.getDate())}.${this.prefixNumberWithZero(date.getMonth() + 1)}.${date.getFullYear()}`;
@@ -101,7 +103,7 @@ export abstract class ExcelWorksheet {
     this.quiz.memberGroups[0].members.forEach(attendee => {
       if (leaderBoard.isCorrectResponse(attendee.responses[questionIndex], question) === 1) {
         if (!correctResponses[attendee.name]) {
-          correctResponses[attendee.name] = {responseTime: 0, correctQuestions: [], confidenceValue: 0};
+          correctResponses[attendee.name] = { responseTime: 0, correctQuestions: [], confidenceValue: 0 };
         }
         correctResponses[attendee.name].responseTime += <number>attendee.responses[questionIndex].responseTime;
         correctResponses[attendee.name].correctQuestions.push(questionIndex);
@@ -112,5 +114,9 @@ export abstract class ExcelWorksheet {
     });
 
     return leaderBoard.objectToArray(correctResponses);
+  }
+
+  private prefixNumberWithZero(num: number): string {
+    return `${num < 10 ? '0' : ''}${num}`;
   }
 }

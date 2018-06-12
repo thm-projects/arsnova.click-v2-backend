@@ -1,11 +1,13 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import {suite, test} from 'mocha-typescript';
-import {createDefaultPaths} from '../../app_bootstrap';
+import { suite, test } from 'mocha-typescript';
+import { createDefaultPaths } from '../../app_bootstrap';
 
-@suite class AppBootstrapRouterTestSuite {
+@suite
+class AppBootstrapRouterTestSuite {
 
-  @test async ensureDefaultPathsExist() {
+  @test
+  public async ensureDefaultPathsExist(): Promise<void> {
     createDefaultPaths();
   }
 }

@@ -3,7 +3,7 @@ import * as compress from 'compression';
 import * as busboy from 'connect-busboy';
 import * as cors from 'cors';
 import * as express from 'express';
-import { NextFunction, Request, Response, Router } from 'express';
+import { Request, Response, Router } from 'express';
 import * as i18n from 'i18n';
 import * as logger from 'morgan';
 import * as path from 'path';
@@ -56,12 +56,12 @@ i18n.configure({
   logDebugFn: require('debug')('i18n:debug'),
 
   // setting of log level WARN - default to require('debug')('i18n:warn')
-  logWarnFn: function (msg) {
+  logWarnFn: msg => {
     console.log('warn', msg);
   },
 
   // setting of log level ERROR - default to require('debug')('i18n:error')
-  logErrorFn: function (msg) {
+  logErrorFn: msg => {
     console.log('error', msg);
   },
 
@@ -108,10 +108,10 @@ class App {
   // Configure API endpoints.
   private routes(): void {
     const router: Router = express.Router();
-    router.get(`/`, (req: Request, res: Response, next: NextFunction) => {
+    router.get(`/`, (req: Request, res: Response) => {
       res.send(Object.assign({}, staticStatistics, dynamicStatistics()));
     });
-    router.get(`/err`, (req: Request, res: Response, next: NextFunction) => {
+    router.get(`/err`, () => {
       throw new Error('testerror');
     });
     this._express.use(`${staticStatistics.routePrefix}/`, router);
@@ -125,7 +125,7 @@ class App {
     this._express.use(`${staticStatistics.routePrefix}/api/v1/themes`, themesRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/plugin/i18nator`, i18nApiRouter);
 
-    this._express.use(function (err, req, res, next) {
+    this._express.use((err, req, res, next) => {
       global.createDump(err);
       next();
     });

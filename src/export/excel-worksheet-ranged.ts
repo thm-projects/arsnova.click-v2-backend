@@ -1,29 +1,33 @@
-import {INickname} from 'arsnova-click-v2-types/src/common';
-import {IQuestion, IQuestionRanged} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {calculateNumberOfRangedAnswers} from './lib/excel_function_library';
-import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
-import {ExcelWorksheet} from './excel-worksheet';
+import { INickname } from 'arsnova-click-v2-types/src/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
+import { IQuestion, IQuestionRanged } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { ExcelWorksheet } from './excel-worksheet';
+import { calculateNumberOfRangedAnswers } from './lib/excel_function_library';
 
 export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
-  private _question: IQuestion;
-  private _questionIndex: number;
+  private readonly _question: IQuestion;
+  private readonly _questionIndex: number;
+
+  constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
+    super({ theme, translation, quiz, mf, questionIndex });
+    this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
+    this._questionIndex = questionIndex;
+    this._question = this.quiz.originalObject.questionList[questionIndex];
+    this.formatSheet();
+    this.addSheetData();
+  }
 
   public formatSheet(): void {
     const defaultStyles = this._theme.getStyles();
     const answerCellStyle = {
       alignment: {
-        vertical: 'center',
-        horizontal: 'center'
+        vertical: 'center', horizontal: 'center',
+      }, font: {
+        color: 'FF000000',
+      }, fill: {
+        type: 'pattern', patternType: 'solid', fgColor: 'FFFFE200',
       },
-      font: {
-        color: 'FF000000'
-      },
-      fill: {
-        type: 'pattern',
-        patternType: 'solid',
-        fgColor: 'FFFFE200'
-      }
     };
     let minColums = 3;
     if (this.responsesWithConfidenceValue.length > 0) {
@@ -44,92 +48,84 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(2, 1, 2, columnsToFormat).style(defaultStyles.exportedAtRowStyle);
     this.ws.cell(2, 2, 2, columnsToFormat).style({
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     });
 
     this.ws.cell(4, 1).style(defaultStyles.questionCellStyle);
     this.ws.cell(4, 2).style(Object.assign({}, answerCellStyle, {
       border: {
         right: {
-          style: 'thin',
-          color: 'black'
-        }
-      }
+          style: 'thin', color: 'black',
+        },
+      },
     }));
     this.ws.cell(4, 3).style(Object.assign({}, answerCellStyle, {
       border: {
         right: {
-          style: 'thin',
-          color: 'black'
-        }
+          style: 'thin', color: 'black',
+        },
+      }, font: {
+        color: 'FFFFFFFF',
+      }, fill: {
+        type: 'pattern', patternType: 'solid', fgColor: 'FF008000',
       },
-      font: {
-        color: 'FFFFFFFF'
-      },
-      fill: {
-        type: 'pattern',
-        patternType: 'solid',
-        fgColor: 'FF008000'
-      }
     }));
     this.ws.cell(4, 4).style(answerCellStyle);
 
     this.ws.cell(6, 1, this.responsesWithConfidenceValue.length > 0 ? 8 : 7, columnsToFormat).style(defaultStyles.statisticsRowStyle);
     this.ws.cell(6, 2).style(Object.assign({}, defaultStyles.statisticsRowInnerStyle, {
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     }));
     this.ws.cell(6, 3).style(Object.assign({}, defaultStyles.statisticsRowInnerStyle, {
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     }));
     this.ws.cell(6, 4).style(Object.assign({}, defaultStyles.statisticsRowInnerStyle, {
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     }));
 
     this.ws.cell(7, 1).style(defaultStyles.statisticsRowInnerStyle);
     this.ws.cell(7, 2).style(Object.assign({}, defaultStyles.statisticsRowInnerStyle, {
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     }));
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).style(defaultStyles.statisticsRowInnerStyle);
       this.ws.cell(8, 2).style(Object.assign({}, defaultStyles.statisticsRowInnerStyle, {
         alignment: {
-          horizontal: 'center'
-        }
+          horizontal: 'center',
+        },
       }));
     }
 
     this.ws.cell(10, 1, 10, columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
     this.ws.cell(10, 1).style({
       alignment: {
-        horizontal: 'left'
-      }
+        horizontal: 'left',
+      },
     });
 
     this.ws.row(10).filter({
-      firstRow: 10,
-      firstColumn: 1,
-      lastRow: 10,
-      lastColumn: minColums
+      firstRow: 10, firstColumn: 1, lastRow: 10, lastColumn: minColums,
     });
 
     const hasEntries = this.leaderBoardData.length > 0;
-    const attendeeEntryRows = hasEntries ? (this.leaderBoardData.length) : 1;
-    const attendeeEntryRowStyle = hasEntries ?
-                                  defaultStyles.attendeeEntryRowStyle :
-                                  Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
-                                    alignment: {
-                                      horizontal: 'center'
-                                    }
-                                  });
+    const attendeeEntryRows = hasEntries ? (
+      this.leaderBoardData.length
+    ) : 1;
+    const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle,
+      {
+        alignment: {
+          horizontal: 'center',
+        },
+      });
     this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
     this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
@@ -144,46 +140,38 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       const castedQuestion = <IQuestionRanged>this._question;
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
-          horizontal: 'center'
-        },
-        font: {
-          color: responseItem.value === castedQuestion.correctValue ||
-                 responseItem.value < castedQuestion.rangeMin ||
-                 responseItem.value > castedQuestion.rangeMax ? 'FFFFFFFF' : 'FF000000'
-        },
-        fill: {
+          horizontal: 'center',
+        }, font: {
+          color: responseItem.value === castedQuestion.correctValue || responseItem.value < castedQuestion.rangeMin || responseItem.value
+                                                                                                                       > castedQuestion.rangeMax
+                 ? 'FFFFFFFF' : 'FF000000',
+        }, fill: {
           type: 'pattern',
           patternType: 'solid',
-          fgColor: responseItem.value === castedQuestion.correctValue ? 'FF008000'
-            : responseItem.value < castedQuestion.rangeMin ||
-              responseItem.value > castedQuestion.rangeMax ? 'FFB22222' : 'FFFFE200'
-        }
+          fgColor: responseItem.value === castedQuestion.correctValue ? 'FF008000' : responseItem.value < castedQuestion.rangeMin
+                                                                                     || responseItem.value > castedQuestion.rangeMax
+                                                                                     ? 'FFB22222' : 'FFFFE200',
+        },
       });
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
-            horizontal: 'center'
-          }
+            horizontal: 'center',
+          },
         });
       }
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
-          horizontal: 'center'
-        },
-        numberFormat: '#,##0;'
+          horizontal: 'center',
+        }, numberFormat: '#,##0;',
       });
     });
   }
 
   public addSheetData(): void {
     const castedQuestion = <IQuestionRanged>this._question;
-    const numberOfInputValuesPerGroup = calculateNumberOfRangedAnswers(
-      this.quiz,
-      this._questionIndex,
-      castedQuestion.rangeMin,
-      castedQuestion.correctValue,
-      castedQuestion.rangeMax
-    );
+    const numberOfInputValuesPerGroup = calculateNumberOfRangedAnswers(this.quiz, this._questionIndex, castedQuestion.rangeMin,
+      castedQuestion.correctValue, castedQuestion.rangeMax);
 
     this.ws.cell(1, 1).string(`${this.mf('export.question_type')}: ${this.mf(`export.type.${this._question.TYPE}`)}`);
     this.ws.cell(2, 1).string(this.mf('export.question'));
@@ -204,7 +192,9 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
-    this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
+    this.ws.cell(7, 2).number((
+      isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)
+    ));
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
@@ -252,14 +242,5 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     if (nextStartRow === 10) {
       this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));
     }
-  }
-
-  constructor({wb, theme, translation, quiz, mf, questionIndex}) {
-    super({theme, translation, quiz, mf, questionIndex});
-    this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
-    this._questionIndex = questionIndex;
-    this._question = this.quiz.originalObject.questionList[questionIndex];
-    this.formatSheet();
-    this.addSheetData();
   }
 }

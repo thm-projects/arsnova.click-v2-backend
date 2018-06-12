@@ -1,11 +1,11 @@
-import {Request, Response, Router} from 'express';
+import { Request, Response, Router } from 'express';
+import * as fileType from 'file-type';
 import * as fs from 'fs';
 import * as path from 'path';
-import {staticStatistics, settings} from '../statistics';
-import * as fileType from 'file-type';
+import { settings, staticStatistics } from '../statistics';
 
 declare global {
-  interface UploadRequest extends Request {
+  interface IUploadRequest extends Request {
     busboy: any;
   }
 
@@ -31,7 +31,7 @@ export class ApiRouter {
 
   public getAll(req: Request, res: Response): void {
     res.send({
-      serverConfig: settings.public
+      serverConfig: settings.public,
     });
   }
 
@@ -55,9 +55,7 @@ export class ApiRouter {
   }
 
   public getThemeImageFileByName(req: Request, res: Response): void {
-    const pathToFiles = path.join(
-      staticStatistics.pathToAssets, 'images', 'theme', `${req.params.themeName}`, `${req.params.fileName}`
-    );
+    const pathToFiles = path.join(staticStatistics.pathToAssets, 'images', 'theme', `${req.params.themeName}`, `${req.params.fileName}`);
     if (fs.existsSync(pathToFiles)) {
       fs.readFile(pathToFiles, (err, data: Buffer) => {
         res.contentType(fileType(data).mime);

@@ -1,15 +1,15 @@
-import {Router, Request, Response, NextFunction} from 'express';
+import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as crypto from 'crypto';
-import {DatabaseTypes, DbDAO} from '../db/DbDAO';
-import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {QuizManagerDAO} from '../db/QuizManagerDAO';
+import { NextFunction, Request, Response, Router } from 'express';
+import { DatabaseTypes, DbDAO } from '../db/DbDAO';
+import { QuizManagerDAO } from '../db/QuizManagerDAO';
 
 export class LegacyApiRouter {
+  private _router: Router;
+
   get router(): Router {
     return this._router;
   }
-
-  private _router: Router;
 
   /**
    * Initialize the LegacyApiRouter
@@ -17,6 +17,18 @@ export class LegacyApiRouter {
   constructor() {
     this._router = Router();
     this.init();
+  }
+
+  public init(): void {
+    this._router.get('/', this.getAll);
+    this._router.post('/keepalive', this.setKeepalive);
+    this._router.post('/addHashtag', this.addHashtag);
+    this._router.get('/createPrivateKey', this.createPrivateKey);
+    this._router.post('/removeLocalData', this.removeLocalData);
+    this._router.post('/showReadingConfirmation', this.showReadingConfirmation);
+    this._router.post('/openSession', this.openSession);
+    this._router.post('/startNextQuestion', this.startNextQuestion);
+    this._router.post('/updateQuestionGroup', this.updateQuestionGroup);
   }
 
   private getAll(req: Request, res: Response, next: NextFunction): void {
@@ -35,18 +47,22 @@ export class LegacyApiRouter {
       return;
     }
     QuizManagerDAO.initInactiveQuiz(sessionConfiguration.hashtag);
-    DbDAO.create(DatabaseTypes.quiz, {quizName: sessionConfiguration.hashtag, privateKey: sessionConfiguration.privateKey});
+    DbDAO.create(DatabaseTypes.quiz, { quizName: sessionConfiguration.hashtag, privateKey: sessionConfiguration.privateKey });
     res.send('Hashtag successfully created');
   }
 
-  private dec2hex(dec) {
-    return ('0' + dec.toString(16)).substr(-2);
+  private dec2hex(dec): string {
+    return (
+      '0' + dec.toString(16)
+    ).substr(-2);
   }
 
   private createPrivateKey(req: Request, res: Response, next: NextFunction): void {
-    const privateKey = crypto.randomBytes(Math.ceil((40) / 2))
-                      .toString('hex')
-                      .slice(0, 40);
+    const privateKey = crypto.randomBytes(Math.ceil((
+                                                      40
+                                                    ) / 2))
+    .toString('hex')
+    .slice(0, 40);
     res.send(privateKey);
   }
 
@@ -103,18 +119,6 @@ export class LegacyApiRouter {
     }
     QuizManagerDAO.initActiveQuiz(questionGroup);
     res.send(`Session with hashtag ${questionGroup.hashtag} successfully updated`);
-  }
-
-  public init(): void {
-    this._router.get('/', this.getAll);
-    this._router.post('/keepalive', this.setKeepalive);
-    this._router.post('/addHashtag', this.addHashtag);
-    this._router.get('/createPrivateKey', this.createPrivateKey);
-    this._router.post('/removeLocalData', this.removeLocalData);
-    this._router.post('/showReadingConfirmation', this.showReadingConfirmation);
-    this._router.post('/openSession', this.openSession);
-    this._router.post('/startNextQuestion', this.startNextQuestion);
-    this._router.post('/updateQuestionGroup', this.updateQuestionGroup);
   }
 }
 

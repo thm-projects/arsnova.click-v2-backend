@@ -1,11 +1,11 @@
 export class MathjaxDAO {
-  private static readonly mathjaxCache: Object = {};
+  private static readonly mathjaxCache: object = {};
 
   public static createDump(): {} {
     return MathjaxDAO.mathjaxCache;
   }
 
-  public static getAllPreviouslyRenderedData(plainData: string): Object {
+  public static getAllPreviouslyRenderedData(plainData: string): object {
     return MathjaxDAO.mathjaxCache[plainData];
   }
 

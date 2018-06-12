@@ -4,7 +4,7 @@ export class CasDAO {
 
   private static readonly casData = {};
 
-  public static add(ticket: string, data: ICasData) {
+  public static add(ticket: string, data: ICasData): void {
     this.casData[ticket] = data;
   }
 
@@ -12,7 +12,7 @@ export class CasDAO {
     return this.casData[ticket];
   }
 
-  public static remove(ticket: string) {
+  public static remove(ticket: string): void {
     delete this.casData[ticket];
   }
 

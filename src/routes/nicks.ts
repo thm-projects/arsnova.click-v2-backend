@@ -1,13 +1,13 @@
-import {Router, Request, Response, NextFunction} from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import availableNicks from '../nicknames/availableNicks';
 import illegalNicks from '../nicknames/illegalNicks';
 
 export class NicksRouter {
+  private _router: Router;
+
   get router(): Router {
     return this._router;
   }
-
-  private _router: Router;
 
   /**
    * Initialize the NicksRouter
@@ -15,10 +15,6 @@ export class NicksRouter {
   constructor() {
     this._router = Router();
     this.init();
-  }
-
-  private getAll(req: Request, res: Response, next: NextFunction): void {
-    res.json({});
   }
 
   public getAllAvailableNicks(req: Request, res: Response): void {
@@ -34,6 +30,10 @@ export class NicksRouter {
 
     this._router.get('/predefined', this.getAllAvailableNicks);
     this._router.get('/blocked', this.getAllBlockedNicks);
+  }
+
+  private getAll(req: Request, res: Response, next: NextFunction): void {
+    res.json({});
   }
 }
 

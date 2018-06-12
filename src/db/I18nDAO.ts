@@ -11,7 +11,7 @@ export class I18nDAO {
     return I18nDAO.cache;
   }
 
-  public static reloadCache() {
+  public static reloadCache(): void {
     Object.keys(I18nDAO.cache).forEach(projectName => {
       console.log(``);
       console.log(`------- Building cache for '${projectName}' -------`);
@@ -34,9 +34,7 @@ export class I18nDAO {
       console.log(`* Fetching unused keys`);
       const unusedKeysStart = new Date().getTime();
       I18nDAO.cache[projectName].unused = I18nDAO.getUnusedKeys({
-        params: {},
-        projectAppLocation: projectAppLocation[projectName],
-        i18nFileBaseLocation: i18nFileBaseLocation[projectName],
+        params: {}, projectAppLocation: projectAppLocation[projectName], i18nFileBaseLocation: i18nFileBaseLocation[projectName],
       });
       const unusedKeysEnd = new Date().getTime();
       console.log(`-- Done. Took ${unusedKeysEnd - unusedKeysStart}ms`);
@@ -54,7 +52,7 @@ export class I18nDAO {
     console.log(`Cache built successfully`);
   }
 
-  public static buildKeys({ root, dataNode, langRef, langData }) {
+  public static buildKeys({ root, dataNode, langRef, langData }): void {
 
     if (!dataNode) {
       return;
@@ -80,7 +78,7 @@ export class I18nDAO {
     }
   }
 
-  public static getUnusedKeys(req) {
+  public static getUnusedKeys(req): object {
     const result = {};
     const fileNames = I18nDAO.fromDir(req.projectAppLocation, /\.(ts|html|js)$/);
     const langRefs = req.params.langRef ? [req.params.langRef] : availableLangs;
@@ -90,31 +88,33 @@ export class I18nDAO {
       const i18nFileContent = JSON.parse(fs.readFileSync(path.join(req.i18nFileBaseLocation, `${langRefs[i]}.json`)).toString('UTF-8'));
       const objectPaths = I18nDAO.objectPath(i18nFileContent);
 
-      objectPaths.forEach((i18nPath => {
-        let matched = false;
-        fileNames.forEach(filename => {
-          if (matched) {
-            return;
+      objectPaths.forEach((
+        i18nPath => {
+          let matched = false;
+          fileNames.forEach(filename => {
+            if (matched) {
+              return;
+            }
+            const fileContent = fs.readFileSync(filename).toString('UTF-8');
+            matched = fileContent.indexOf(i18nPath) > -1;
+          });
+          if (!matched) {
+            result[langRefs[i]].push(i18nPath);
           }
-          const fileContent = fs.readFileSync(filename).toString('UTF-8');
-          matched = fileContent.indexOf(i18nPath) > -1;
-        });
-        if (!matched) {
-          result[langRefs[i]].push(i18nPath);
         }
-      }));
+      ));
     }
 
     return result;
   }
 
-  public static getBranch(req) {
+  public static getBranch(req): string {
     const command = `git branch 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \\(.*\\)/\\1/"`;
     const child = spawnSync('/bin/sh', [`-c`, command], { cwd: req.projectGitLocation });
     return child.stdout.toString().replace('\n', '');
   }
 
-  public static createObjectFromKeys({ data, result }) {
+  public static createObjectFromKeys({ data, result }): void {
 
     for (const langRef in result) {
       if (result.hasOwnProperty(langRef)) {
@@ -139,7 +139,7 @@ export class I18nDAO {
     }
   }
 
-  private static fromDir(startPath, filter) {
+  private static fromDir(startPath, filter): Array<string> {
     if (!fs.existsSync(startPath)) {
       console.log('no dir ', startPath);
       return;
@@ -160,7 +160,7 @@ export class I18nDAO {
     return result;
   }
 
-  private static objectPath(obj, currentPath = '') {
+  private static objectPath(obj, currentPath = ''): Array<string> {
     let localCurrentPath = currentPath;
     let result = [];
 
@@ -179,7 +179,7 @@ export class I18nDAO {
     return result;
   }
 
-  private static isString(data) {
+  private static isString(data): boolean {
     return typeof data === 'string';
   }
 }

@@ -1,38 +1,55 @@
 stages:
-  - build
+  - install
   - test
+  - build
   - deploy
+
+cache:
+  paths:
+    - node_modules
+
+npm_install:
+  stage: install
+  tags:
+    - nodejs
+  script:
+    - npm install
+
+ts_lint:
+  stage: test
+  tags:
+    - nodejs
+  script:
+    - node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json
+
+npm_test:
+  stage: test
+  only:
+    - master
+  tags:
+    - nodejs
+  script:
+    - npm test
 
 build:
   stage: build
   only:
     - master
-    - fixPipeline
   tags:
     - nodejs
   script:
-    - npm install
+    - export NODE_ENV='production'
+    - export ARSNOVA_CLICK_BACKEND_PORT_INTERNAL='3000'
+    - export ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX='/backend'
     - npm run build:PROD
   artifacts:
     paths:
       - dist
 
-test:
-  stage: test
-  only:
-    - master
-    - fixPipeline
-  tags:
-    - nodejs
-  script:
-    - npm install
-    - npm test
-
 deploy:
   stage: deploy
   only:
     - master
-    - fixPipeline
   tags:
     - rsync
   dependencies:

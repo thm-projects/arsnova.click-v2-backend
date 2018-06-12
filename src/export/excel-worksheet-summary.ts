@@ -1,28 +1,19 @@
-import {ILeaderBoardItem, INickname} from 'arsnova-click-v2-types/src/common';
-import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
-import {ExcelWorksheet} from './excel-worksheet';
-import {Leaderboard} from '../leaderboard/leaderboard';
-import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {staticStatistics} from '../statistics';
+import { ILeaderBoardItem, INickname } from 'arsnova-click-v2-types/src/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as path from 'path';
+import { Leaderboard } from '../leaderboard/leaderboard';
+import { staticStatistics } from '../statistics';
+import { ExcelWorksheet } from './excel-worksheet';
 
 export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
 
-  private addLogoImage(): void {
-    this.ws.addImage({
-      path: path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png'),
-      type: 'picture',
-      position: {
-        type: 'oneCellAnchor',
-        from: {
-          col: 1,
-          colOff: '1.5mm',
-          row: 1,
-          rowOff: 0
-        }
-      }
-    });
+  constructor({ wb, theme, translation, quiz, mf }) {
+    super({ theme, translation, quiz, mf });
+    this._ws = wb.addWorksheet(mf('export.summary'), this._options);
+    this.formatSheet();
+    this.addSheetData();
   }
 
   public formatSheet(): void {
@@ -37,47 +28,43 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     this.ws.cell(1, 1, 1, this.columnsToFormat).style(Object.assign({}, defaultStyles.quizNameRowStyle, {
       alignment: {
-        vertical: 'center'
-      }
+        vertical: 'center',
+      },
     }));
     this.ws.cell(1, this.columnsToFormat - 1).style({
       alignment: {
-        horizontal: 'left',
-        vertical: 'center'
-      }
+        horizontal: 'left', vertical: 'center',
+      },
     });
 
     this.ws.cell(2, 1, 2, this.columnsToFormat).style(defaultStyles.exportedAtRowStyle);
 
     this.ws.cell(1, 1, 2, 1).style({
       alignment: {
-        indent: 7
-      }
+        indent: 7,
+      },
     });
 
     this.ws.cell(4, 1, 8, this.columnsToFormat).style(defaultStyles.statisticsRowStyle);
     this.ws.cell(4, 3, 8, 3).style({
       alignment: {
-        horizontal: 'left'
-      }
+        horizontal: 'left',
+      },
     });
     this.ws.cell(8, 3).style({
-      numberFormat: '#,##0'
+      numberFormat: '#,##0',
     });
 
     this.ws.cell(10, 1, 11, this.columnsToFormat).style(defaultStyles.attendeeHeaderGroupRowStyle);
     this.ws.cell(12, 1, 12, this.columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
     this.ws.cell(12, 1).style({
       alignment: {
-        horizontal: 'left'
-      }
+        horizontal: 'left',
+      },
     });
 
     this.ws.row(12).filter({
-      firstRow: 12,
-      firstColumn: 1,
-      lastRow: 12,
-      lastColumn: this.columnsToFormat
+      firstRow: 12, firstColumn: 1, lastRow: 12, lastColumn: this.columnsToFormat,
     });
 
     let nextStartRow = 18;
@@ -85,8 +72,11 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
       let hasNotAllQuestionsCorrect = false;
       this.quiz.originalObject.questionList.forEach((item, index) => {
-        if (['SurveyQuestion', 'ABCDSingleChoiceQuestion'].indexOf(item.TYPE) === -1 &&
-            leaderboardItem.correctQuestions.indexOf((index)) === -1) {
+        if ([
+              'SurveyQuestion', 'ABCDSingleChoiceQuestion',
+            ].indexOf(item.TYPE) === -1 && leaderboardItem.correctQuestions.indexOf((
+          index
+        )) === -1) {
           hasNotAllQuestionsCorrect = true;
         }
       });
@@ -100,33 +90,33 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
-            horizontal: 'center'
-          }
+            horizontal: 'center',
+          },
         });
       }
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
-          horizontal: 'center'
-        },
-        numberFormat: '#,##0;'
+          horizontal: 'center',
+        }, numberFormat: '#,##0;',
       });
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
-          horizontal: 'center'
-        },
-        numberFormat: '#,##0;'
+          horizontal: 'center',
+        }, numberFormat: '#,##0;',
       });
     });
     if (nextStartRow === 18) {
       this.ws.cell(13, 1, 13, this.columnsToFormat, true).style(Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
         alignment: {
-          horizontal: 'center'
-        }
+          horizontal: 'center',
+        },
       }));
       nextStartRow++;
     } else {
-      this.ws.cell(13, 1, (this.leaderBoardData.length + 12 - dataWithoutCompleteCorrectQuestions), this.columnsToFormat)
-          .style(defaultStyles.attendeeEntryRowStyle);
+      this.ws.cell(13, 1, (
+        this.leaderBoardData.length + 12 - dataWithoutCompleteCorrectQuestions
+      ), this.columnsToFormat)
+      .style(defaultStyles.attendeeEntryRowStyle);
     }
 
     this.ws.cell(nextStartRow++, 1, nextStartRow++, this.columnsToFormat).style(defaultStyles.attendeeHeaderGroupRowStyle);
@@ -134,15 +124,17 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.ws.cell(nextStartRow, 1, nextStartRow, this.columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
     this.ws.cell(nextStartRow, 1).style({
       alignment: {
-        horizontal: 'left'
-      }
+        horizontal: 'left',
+      },
     });
     nextStartRow++;
 
     this.ws.cell(nextStartRow, 1, (
-      this.leaderBoardData.length + (nextStartRow - 1)),
-      this.columnsToFormat).style(defaultStyles.attendeeEntryRowStyle
-    );
+      this.leaderBoardData.length + (
+        nextStartRow - 1
+      )
+    ), this.columnsToFormat)
+    .style(defaultStyles.attendeeEntryRowStyle);
 
     this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
       let nextColumnIndex = 3;
@@ -150,21 +142,19 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
-            horizontal: 'center'
-          }
+            horizontal: 'center',
+          },
         });
       }
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
-          horizontal: 'center'
-        },
-        numberFormat: '#,##0;'
+          horizontal: 'center',
+        }, numberFormat: '#,##0;',
       });
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
-          horizontal: 'center'
-        },
-        numberFormat: '#,##0;'
+          horizontal: 'center',
+        }, numberFormat: '#,##0;',
       });
     });
   }
@@ -184,17 +174,14 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     const numberOfAttendees = this.quiz.memberGroups[0].members.length;
     const numberOfQuestions = this.quiz.originalObject.questionList.length;
 
-    this.ws.cell(currentRowIndex, 1)
-        .string(`${this.mf('export.quiz_name')}: ${this.quiz.originalObject.hashtag}`);
+    this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.quiz_name')}: ${this.quiz.originalObject.hashtag}`);
 
-    this.ws.cell(currentRowIndex, this.columnsToFormat - 1).string(
-      `${this.mf('export.session_content')}`
-    );
+    this.ws.cell(currentRowIndex, this.columnsToFormat - 1).string(`${this.mf('export.session_content')}`);
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(this.createdAt);
     this.ws.cell(currentRowIndex, this.columnsToFormat - 1, currentRowIndex, this.columnsToFormat, true)
-        .string(JSON.stringify(this.quiz.originalObject));
+    .string(JSON.stringify(this.quiz.originalObject));
     currentRowIndex += 2;
 
     this.addLogoImage();
@@ -204,7 +191,9 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_number_attendees_participated')}:`);
-    this.ws.cell(currentRowIndex, 3).number(Math.round((numberOfResponses / numberOfAttendees / numberOfQuestions) * 100));
+    this.ws.cell(currentRowIndex, 3).number(Math.round((
+                                                         numberOfResponses / numberOfAttendees / numberOfQuestions
+                                                       ) * 100));
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_correct_answered_questions')}:`);
@@ -216,22 +205,30 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_confidence')}:`);
-    const averageConfidencePercentage = (this.leaderBoardData.filter((x) => {
-      return x.confidenceValue > -1;
-    }).map((x) => {
-      return x.confidenceValue;
-    }).reduce((a, b) => {
-      return a + b;
-    }, 0) / numberOfAttendees);
-    this.ws.cell(currentRowIndex, 3).number((isNaN(averageConfidencePercentage) ? 0 : Math.round(averageConfidencePercentage)));
+    const averageConfidencePercentage = (
+      this.leaderBoardData.filter((x) => {
+        return x.confidenceValue > -1;
+      }).map((x) => {
+        return x.confidenceValue;
+      }).reduce((a, b) => {
+        return a + b;
+      }, 0) / numberOfAttendees
+    );
+    this.ws.cell(currentRowIndex, 3).number((
+      isNaN(averageConfidencePercentage) ? 0 : Math.round(averageConfidencePercentage)
+    ));
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_response_time')}:`);
-    this.ws.cell(currentRowIndex, 3).number(Math.round(Number(((this.leaderBoardData.map((x) => {
-      return x.responseTime;
-    }).reduce((a, b) => {
-      return a + b;
-    }, 0) / numberOfAttendees) / this.quiz.originalObject.questionList.length))));
+    this.ws.cell(currentRowIndex, 3).number(Math.round(Number((
+      (
+      this.leaderBoardData.map((x) => {
+        return x.responseTime;
+      }).reduce((a, b) => {
+        return a + b;
+      }, 0) / numberOfAttendees
+      ) / this.quiz.originalObject.questionList.length
+    ))));
     currentRowIndex += 2;
 
     let nextColumnIndex = 1;
@@ -255,7 +252,9 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
       let hasNotAllQuestionsCorrect = false;
       this.quiz.originalObject.questionList.forEach((item, index) => {
-        if (item.TYPE !== 'SurveyQuestion' && leaderboardItem.correctQuestions.indexOf((index)) === -1) {
+        if (item.TYPE !== 'SurveyQuestion' && leaderboardItem.correctQuestions.indexOf((
+          index
+        )) === -1) {
           hasNotAllQuestionsCorrect = true;
         }
       });
@@ -279,7 +278,9 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
       }
       this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime));
-      this.ws.cell(targetRow, nextColumnIndex++).number(Math.round((leaderboardItem.responseTime / this.leaderBoardData.length)));
+      this.ws.cell(targetRow, nextColumnIndex++).number(Math.round((
+        leaderboardItem.responseTime / this.leaderBoardData.length
+      )));
     });
 
     if (nextStartRow === currentRowIndex + 5) {
@@ -324,9 +325,8 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
           this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(this._leaderBoardData[indexInList].confidenceValue));
         }
         this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(this._leaderBoardData[indexInList].responseTime));
-        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(
-          this._leaderBoardData[indexInList].responseTime /
-          this._leaderBoardData[indexInList].correctQuestions.length));
+        this.ws.cell(targetRow, nextColumnIndex++)
+        .number(Math.round(this._leaderBoardData[indexInList].responseTime / this._leaderBoardData[indexInList].correctQuestions.length));
       } else {
         this.ws.cell(targetRow, nextColumnIndex++).string(this.mf('export.correct_questions_none_available'));
       }
@@ -342,7 +342,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         const question: IQuestion = this.quiz.originalObject.questionList[i];
         if (leaderBoard.isCorrectResponse(attendee.responses[i], question) === 1) {
           if (!correctResponses[attendee.name]) {
-            correctResponses[attendee.name] = {responseTime: 0, correctQuestions: [], confidenceValue: 0};
+            correctResponses[attendee.name] = { responseTime: 0, correctQuestions: [], confidenceValue: 0 };
           }
           correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
           correctResponses[attendee.name].correctQuestions.push(i);
@@ -354,10 +354,13 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     return leaderBoard.objectToArray(correctResponses);
   }
 
-  constructor({wb, theme, translation, quiz, mf}) {
-    super({theme, translation, quiz, mf});
-    this._ws = wb.addWorksheet(mf('export.summary'), this._options);
-    this.formatSheet();
-    this.addSheetData();
+  private addLogoImage(): void {
+    this.ws.addImage({
+      path: path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png'), type: 'picture', position: {
+        type: 'oneCellAnchor', from: {
+          col: 1, colOff: '1.5mm', row: 1, rowOff: 0,
+        },
+      },
+    });
   }
 }

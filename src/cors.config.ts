@@ -5,7 +5,7 @@ const options: cors.CorsOptions = {
   credentials: true,
   methods: 'GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE',
   origin: true,
-  preflightContinue: false
+  preflightContinue: false,
 };
 
 export default options;

@@ -1,7 +1,7 @@
+import { IAvailableNicks } from 'arsnova-click-v2-types/src/common';
 import * as fs from 'fs';
 import * as path from 'path';
-import {IAvailableNicks} from 'arsnova-click-v2-types/src/common';
-import {staticStatistics} from '../statistics';
+import { staticStatistics } from '../statistics';
 
 const availableNicks: IAvailableNicks = {
   'disney': [
@@ -24,9 +24,8 @@ const availableNicks: IAvailableNicks = {
     'Peter Pan',
     'Cinderella',
     'Dagobert Duck',
-    'Goofy'
-  ],
-  'science': [
+    'Goofy',
+  ], 'science': [
     'Edsger Dijkstra',
     'Konrad Zuse',
     'Alan Turing',
@@ -46,9 +45,8 @@ const availableNicks: IAvailableNicks = {
     'Leonardo Da Vinci',
     'Charles Darwin',
     'Albert Einstein',
-    'Euklid'
-  ],
-  'fantasy': [
+    'Euklid',
+  ], 'fantasy': [
     'Harry Potter',
     'Hermione Granger',
     'Ron Weasly',
@@ -68,9 +66,8 @@ const availableNicks: IAvailableNicks = {
     'Jar-Jar Binks',
     'Ganon',
     'Zelda',
-    'Link'
-  ],
-  'literature': [
+    'Link',
+  ], 'literature': [
     'George Lucas',
     'J.R.R. Tolkien',
     'Joanne K. Rowling',
@@ -90,9 +87,8 @@ const availableNicks: IAvailableNicks = {
     'George Orwell',
     'Bertolt Brecht',
     'Michael Ende',
-    'Enid Blyton'
-  ],
-  'mythology': [
+    'Enid Blyton',
+  ], 'mythology': [
     'Zeus',
     'Jupiter',
     'Apollo',
@@ -112,9 +108,8 @@ const availableNicks: IAvailableNicks = {
     'Ahas',
     'Philippus',
     'Uriel',
-    'Onesimus'
-  ],
-  'actor': [
+    'Onesimus',
+  ], 'actor': [
     'Edward Norton',
     'Alan Rickman',
     'Bud Spencer',
@@ -134,9 +129,8 @@ const availableNicks: IAvailableNicks = {
     'Bruce Willis',
     'Ewan McGregor',
     'Brad Pitt',
-    'Patrick Steward'
-  ],
-  'politics': [
+    'Patrick Steward',
+  ], 'politics': [
     'Barack Obama',
     'Angela Merkel',
     'Kofi Annan',
@@ -156,9 +150,8 @@ const availableNicks: IAvailableNicks = {
     'Charles de Gaulle',
     'Willy Brandt',
     'Erich Honecker',
-    'Ban Ki-moon'
-  ],
-  'turing_award': [
+    'Ban Ki-moon',
+  ], 'turing_award': [
     'Martin E. Hellman',
     'Whitfield Diffie',
     'Michael Stonebraker',
@@ -221,9 +214,9 @@ const availableNicks: IAvailableNicks = {
     'Marvin Minsky',
     'Richard Hamming',
     'Maurice V. Wilkes',
-    'Alan J. Perlis'
-  ],
-  'emojis': fs.readdirSync(path.join(staticStatistics.pathToAssets, 'images', 'emojis')).map(fileName => `:${fileName.substring(0, fileName.length - 4)}:`)
+    'Alan J. Perlis',
+  ], 'emojis': fs.readdirSync(path.join(staticStatistics.pathToAssets, 'images', 'emojis'))
+  .map(fileName => `:${fileName.substring(0, fileName.length - 4)}:`),
 };
 
 export default availableNicks;

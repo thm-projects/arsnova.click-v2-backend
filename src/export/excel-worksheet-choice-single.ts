@@ -1,26 +1,32 @@
-import {INickname, IQuizResponse} from 'arsnova-click-v2-types/src/common';
-import {IQuestion} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {calculateNumberOfAnswers} from './lib/excel_function_library';
-import {IAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import {IExcelWorksheet} from 'arsnova-click-v2-types/src/excel.interfaces';
-import {ExcelWorksheet} from './excel-worksheet';
+import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import { INickname } from 'arsnova-click-v2-types/src/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { ExcelWorksheet } from './excel-worksheet';
+import { calculateNumberOfAnswers } from './lib/excel_function_library';
 
 export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
   private _question: IQuestion;
   private readonly _questionIndex: number;
 
+  constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
+    super({ theme, translation, quiz, mf, questionIndex });
+    this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
+    this._questionIndex = questionIndex;
+    this._question = this.quiz.originalObject.questionList[questionIndex];
+    this.formatSheet();
+    this.addSheetData();
+  }
+
   public formatSheet(): void {
     const defaultStyles = this._theme.getStyles();
     const answerCellStyle: any = {
       alignment: {
-        wrapText: true,
-        horizontal: 'center',
-        vertical: 'center'
+        wrapText: true, horizontal: 'center', vertical: 'center',
+      }, font: {
+        color: 'FFFFFFFF',
       },
-      font: {
-        color: 'FFFFFFFF'
-      }
     };
     let minColums = 3;
     if (this.responsesWithConfidenceValue.length > 0) {
@@ -42,8 +48,8 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     this.ws.cell(2, 1, 2, columnsToFormat).style(defaultStyles.exportedAtRowStyle);
     this.ws.cell(2, 2, 2, columnsToFormat).style({
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     });
 
     this.ws.cell(4, 1).style(defaultStyles.questionCellStyle);
@@ -52,49 +58,45 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       this.ws.cell(4, targetColumn).style(Object.assign({}, answerCellStyle, {
         border: {
           right: {
-            style: (targetColumn <= answerList.length) ? 'thin' : 'none',
-            color: 'black'
-          }
+            style: (
+                     targetColumn <= answerList.length
+                   ) ? 'thin' : 'none', color: 'black',
+          },
+        }, fill: {
+          type: 'pattern', patternType: 'solid', fgColor: answerList[j].isCorrect ? 'FF008000' : 'FFB22222',
         },
-        fill: {
-          type: 'pattern',
-          patternType: 'solid',
-          fgColor: answerList[j].isCorrect ? 'FF008000' : 'FFB22222'
-        }
       }));
     }
 
     this.ws.cell(6, 1, this.responsesWithConfidenceValue.length > 0 ? 8 : 7, columnsToFormat).style(defaultStyles.statisticsRowStyle);
     this.ws.cell(6, 2, this.responsesWithConfidenceValue.length > 0 ? 8 : 7, columnsToFormat).style({
       alignment: {
-        horizontal: 'center'
-      }
+        horizontal: 'center',
+      },
     });
 
     this.ws.cell(10, 1, 10, columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
     this.ws.cell(10, 1).style({
       alignment: {
-        horizontal: 'left'
-      }
+        horizontal: 'left',
+      },
     });
 
     this.ws.row(10).filter({
-      firstRow: 10,
-      firstColumn: 1,
-      lastRow: 10,
-      lastColumn: minColums
+      firstRow: 10, firstColumn: 1, lastRow: 10, lastColumn: minColums,
     });
 
     const responses = this.quiz.memberGroups[0].members.map(nickname => nickname.responses[this._questionIndex]);
     const hasEntries: boolean = responses.length > 0;
-    const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
-    const attendeeEntryRowStyle: any = hasEntries ?
-                                       defaultStyles.attendeeEntryRowStyle :
-                                       Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
-                                         alignment: {
-                                           horizontal: 'center'
-                                         }
-                                       });
+    const attendeeEntryRows: number = hasEntries ? (
+      responses.length
+    ) : 1;
+    const attendeeEntryRowStyle: any = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({},
+      defaultStyles.attendeeEntryRowStyle, {
+        alignment: {
+          horizontal: 'center',
+        },
+      });
     this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
     responses.forEach((responseItem, indexInList): void => {
@@ -109,26 +111,22 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       const isAnswerCorrect = responseValue > -1 && responseValue === correctIndex;
       this.ws.cell(targetRow, nextColumnIndex++).style({
         font: {
-          color: 'FFFFFFFF'
+          color: 'FFFFFFFF',
+        }, fill: {
+          type: 'pattern', patternType: 'solid', fgColor: isAnswerCorrect ? 'FF008000' : 'FFB22222',
         },
-        fill: {
-          type: 'pattern',
-          patternType: 'solid',
-          fgColor: isAnswerCorrect ? 'FF008000' : 'FFB22222'
-        }
       });
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
-            horizontal: 'center'
-          }
+            horizontal: 'center',
+          },
         });
       }
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
-          horizontal: 'center'
-        },
-        numberFormat: '#,##0;'
+          horizontal: 'center',
+        }, numberFormat: '#,##0;',
       });
     });
   }
@@ -146,15 +144,25 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
 
     this.ws.cell(4, 1).string(this._question.questionText.replace(/[#]*[*]*/g, ''));
     for (let j = 0; j < answerList.length; j++) {
-      this.ws.cell(2, (j + 2)).string(this.mf('export.answer') + ' ' + (j + 1));
-      this.ws.cell(4, (j + 2)).string(answerList[j].answerText);
-      this.ws.cell(6, (j + 2)).number(calculateNumberOfAnswers(this.quiz, this._questionIndex , j));
+      this.ws.cell(2, (
+        j + 2
+      )).string(this.mf('export.answer') + ' ' + (
+                j + 1
+      ));
+      this.ws.cell(4, (
+        j + 2
+      )).string(answerList[j].answerText);
+      this.ws.cell(6, (
+        j + 2
+      )).number(calculateNumberOfAnswers(this.quiz, this._questionIndex, j));
     }
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
-    this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
+    this.ws.cell(7, 2).number((
+      isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)
+    ));
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
@@ -197,14 +205,5 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     if (nextStartRow === 10) {
       this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));
     }
-  }
-
-  constructor({wb, theme, translation, quiz, mf, questionIndex}) {
-    super({theme, translation, quiz, mf, questionIndex});
-    this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
-    this._questionIndex = questionIndex;
-    this._question = this.quiz.originalObject.questionList[questionIndex];
-    this.formatSheet();
-    this.addSheetData();
   }
 }

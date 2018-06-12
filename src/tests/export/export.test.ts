@@ -1,18 +1,19 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import {suite, test, slow} from 'mocha-typescript';
+import { IFreetextAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
+import { IQuestionFreetext, IQuestionGroup, IQuestionRanged, IQuestionSurvey } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as assert from 'assert';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as i18n from 'i18n';
-import {Member} from '../../quiz-manager/quiz-manager';
-import {IQuestionFreetext, IQuestionGroup, IQuestionRanged, IQuestionSurvey} from 'arsnova-click-v2-types/src/questions/interfaces';
-import {ExcelWorkbook} from '../../export/excel-workbook';
-import {IFreetextAnswerOption} from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import {QuizManagerDAO} from '../../db/QuizManagerDAO';
-import {staticStatistics} from '../../statistics';
+import { slow, suite, test } from 'mocha-typescript';
+import * as path from 'path';
+import { QuizManagerDAO } from '../../db/QuizManagerDAO';
+import { ExcelWorkbook } from '../../export/excel-workbook';
+import { Member } from '../../quiz-manager/quiz-manager';
+import { staticStatistics } from '../../statistics';
 
-@suite class ExcelExportTestSuite {
+@suite
+class ExcelExportTestSuite {
   private _hashtag = 'mocha-export-test';
   private _memberCount = 20;
   private _theme = 'theme-Material';
@@ -20,15 +21,12 @@ import {staticStatistics} from '../../statistics';
   private _date: Date = new Date();
   private _dateDay = `${this._date.getDate()}_${this._date.getMonth() + 1}_${this._date.getFullYear()}`;
   private _dateFormatted = `${this._dateDay}-${this._date.getHours()}_${this._date.getMinutes()}`;
-  private _exportLocation = path.join(
-    __dirname, '..', '..', '..', 'test-generated', `Export-${this._hashtag}-${this._dateFormatted}.xlsx`
-  );
+  private _exportLocation = path.join(__dirname, '..', '..', '..', 'test-generated', `Export-${this._hashtag}-${this._dateFormatted}.xlsx`);
 
-  static before() {
+  public static before(): void {
     i18n.configure({
       // setup some locales - other locales default to en silently
-      locales: ['en'],
-      defaultLocale: 'en',
+      locales: ['en'], defaultLocale: 'en',
 
       // where to store json files - defaults to './locales' relative to modules directory
       directory: path.join(staticStatistics.pathToAssets, 'i18n'),
@@ -53,7 +51,7 @@ import {staticStatistics} from '../../statistics';
       logWarnFn: require('debug')('i18n:warn'),
 
       // setting of log level ERROR - default to require('debug')('i18n:error')
-      logErrorFn: function (msg) {
+      logErrorFn: msg => {
         console.log('error', msg);
       },
 
@@ -64,8 +62,8 @@ import {staticStatistics} from '../../statistics';
       // note that this will *not* overwrite existing properties with the same name
       api: {
         '__': 't',  // now req.__ becomes req.t
-        '__n': 'tn' // and req.__n can be called as req.tn
-      }
+        '__n': 'tn', // and req.__n can be called as req.tn
+      },
     });
     i18n.init({});
     const basedir = path.join(__dirname, '..', '..', '..', 'test-generated');
@@ -74,45 +72,42 @@ import {staticStatistics} from '../../statistics';
     }
   }
 
-  static after() {
+  public static after(): void {
     QuizManagerDAO.removeQuiz('mocha-export-test');
   }
 
-  randomIntFromInterval(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1) + min);
+  public randomIntFromInterval(min: number, max: number): number {
+    return Math.floor(Math.random() * (
+                      max - min + 1
+    ) + min);
   }
 
-  @test async initQuiz() {
+  @test
+  public async initQuiz(): Promise<void> {
     QuizManagerDAO.initInactiveQuiz(this._hashtag);
     await assert.equal(QuizManagerDAO.isInactiveQuiz(this._hashtag), true, 'Expected to find an inactive quiz item');
 
-    const quiz: IQuestionGroup = JSON.parse(fs.readFileSync(
-      path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')
-    ).toString('UTF-8'));
+    const quiz: IQuestionGroup = JSON.parse(
+      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
     quiz.hashtag = this._hashtag;
     QuizManagerDAO.initActiveQuiz(quiz);
 
     await assert.equal(QuizManagerDAO.isActiveQuiz(this._hashtag), true, 'Expected to find an active quiz item');
   }
 
-  @test async addMembers() {
+  @test
+  public async addMembers(): Promise<void> {
     const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
     for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
-      quiz.memberGroups[0].members.push(
-        new Member({
-          id: memberIndex,
-          name: `testnick${memberIndex + 1}`,
-          groupName: 'Default',
-          webSocketAuthorization: 0,
-          responses: [],
-          ticket: null
-        }),
-      );
+      quiz.memberGroups[0].members.push(new Member({
+        id: memberIndex, name: `testnick${memberIndex + 1}`, groupName: 'Default', webSocketAuthorization: 0, responses: [], ticket: null,
+      }));
     }
     await assert.equal(quiz.memberGroups[0].members.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
   }
 
-  @test async addResponses() {
+  @test
+  public async addResponses(): Promise<void> {
     const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
     for (let questionIndex = 0; questionIndex < quiz.originalObject.questionList.length; questionIndex++) {
       const question = quiz.originalObject.questionList[questionIndex];
@@ -126,7 +121,9 @@ import {staticStatistics} from '../../statistics';
             value = [this.randomIntFromInterval(0, 1)];
             break;
           case 'SurveyQuestion':
-            parsedQuestion = (<IQuestionSurvey>question);
+            parsedQuestion = (
+              <IQuestionSurvey>question
+            );
             if (parsedQuestion.multipleSelectionEnabled) {
               value = [];
               for (let i = 0; i < 3; i++) {
@@ -155,7 +152,9 @@ import {staticStatistics} from '../../statistics';
             }
             break;
           case 'RangedQuestion':
-            parsedQuestion = (<IQuestionRanged>question);
+            parsedQuestion = (
+              <IQuestionRanged>question
+            );
             useCorrect = Math.random() > 0.5;
             if (useCorrect) {
               value = parsedQuestion.correctValue;
@@ -164,7 +163,9 @@ import {staticStatistics} from '../../statistics';
             }
             break;
           case 'FreeTextQuestion':
-            const parsedAnswer: IFreetextAnswerOption = <IFreetextAnswerOption>(<IQuestionFreetext>question).answerOptionList[0];
+            const parsedAnswer: IFreetextAnswerOption = <IFreetextAnswerOption>(
+              <IQuestionFreetext>question
+            ).answerOptionList[0];
             useCorrect = Math.random() > 0.5;
             if (useCorrect) {
               value = parsedAnswer.answerText;
@@ -179,19 +180,17 @@ import {staticStatistics} from '../../statistics';
           value: value,
           responseTime: this.randomIntFromInterval(0, quiz.originalObject.questionList[questionIndex].timer),
           confidence: this.randomIntFromInterval(0, 100),
-          readingConfirmation: true
+          readingConfirmation: true,
         });
       }
     }
   }
 
-  @test(slow(500)) async generateExcelWorkbook() {
+  @test(slow(500))
+  public async generateExcelWorkbook(): Promise<void> {
     const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
     const wb = new ExcelWorkbook({
-      themeName: this._theme,
-      translation: this._language,
-      quiz: quiz,
-      mf: i18n.__mf
+      themeName: this._theme, translation: this._language, quiz: quiz, mf: i18n.__mf,
     });
 
     const buffer = await wb.writeToBuffer();
@@ -209,10 +208,8 @@ import {staticStatistics} from '../../statistics';
     });
   }
 
-  @test async checkWorkbookExisting() {
-    await assert.ok(
-      fs.readFileSync(this._exportLocation),
-      'Expected Excel workbook to exist'
-    );
+  @test
+  public async checkWorkbookExisting(): Promise<void> {
+    await assert.ok(fs.readFileSync(this._exportLocation), 'Expected Excel workbook to exist');
   }
 }

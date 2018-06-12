@@ -1,16 +1,17 @@
-import * as WebSocket from 'ws';
-import {IQuestionGroup} from 'arsnova-click-v2-types/src/questions/interfaces';
-import illegalNicks from '../nicknames/illegalNicks';
 import {
-  IActiveQuiz, IActiveQuizSerialized, ICasData, INickname, IQuizResponse, INicknameSerialized, IMemberGroup, IMemberGroupSerialized
+  IActiveQuiz, IActiveQuizSerialized, ICasData, IMemberGroup, IMemberGroupSerialized, INickname, INicknameSerialized, IQuizResponse,
 } from 'arsnova-click-v2-types/src/common';
-import {CasDAO} from '../db/CasDAO';
-import {WebSocketRouter} from '../routes/websocket';
+import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import * as WebSocket from 'ws';
+import { CasDAO } from '../db/CasDAO';
+import illegalNicks from '../nicknames/illegalNicks';
+import { WebSocketRouter } from '../routes/websocket';
 
 export class MemberGroup implements IMemberGroup {
   get members(): Array<INickname> {
     return this._members;
   }
+
   get name(): string {
     return this._name;
   }
@@ -25,8 +26,7 @@ export class MemberGroup implements IMemberGroup {
 
   public serialize(): IMemberGroupSerialized {
     return {
-      name: this.name,
-      members: this.members.map(nick => nick.serialize())
+      name: this.name, members: this.members.map(nick => nick.serialize()),
     };
   }
 }
@@ -35,21 +35,13 @@ export class Member implements INickname {
   get groupName(): string {
     return this._groupName;
   }
+
   get casProfile(): ICasData {
     return this._casProfile;
   }
-  set webSocketAuthorization(value: number) {
-    this._webSocketAuthorization = value;
-  }
-  get webSocketAuthorization(): number {
-    return this._webSocketAuthorization;
-  }
+
   get responses(): Array<IQuizResponse> {
     return this._responses;
-  }
-
-  set webSocket(value: WebSocket) {
-    this._webSocket = value;
   }
 
   get id(): number {
@@ -64,8 +56,24 @@ export class Member implements INickname {
     return this._colorCode;
   }
 
+  private _webSocket: WebSocket;
+
   get webSocket(): WebSocket {
     return this._webSocket;
+  }
+
+  set webSocket(value: WebSocket) {
+    this._webSocket = value;
+  }
+
+  private _webSocketAuthorization: number;
+
+  get webSocketAuthorization(): number {
+    return this._webSocketAuthorization;
+  }
+
+  set webSocketAuthorization(value: number) {
+    this._webSocketAuthorization = value;
   }
 
   private readonly _id: number;
@@ -75,20 +83,9 @@ export class Member implements INickname {
   private readonly _responses: Array<IQuizResponse>;
   private readonly _casProfile: ICasData;
 
-  private _webSocket: WebSocket;
-  private _webSocketAuthorization: number;
-
-  constructor(
-    {id, name, colorCode, responses, groupName, webSocketAuthorization, ticket}:
-      { id: number,
-        name: string,
-        colorCode?: string,
-        responses?: Array<IQuizResponse>,
-        groupName: string,
-        webSocketAuthorization: number,
-        ticket: string
-      }
-      ) {
+  constructor({ id, name, colorCode, responses, groupName, webSocketAuthorization, ticket }: {
+    id: number, name: string, colorCode?: string, responses?: Array<IQuizResponse>, groupName: string, webSocketAuthorization: number, ticket: string
+  }) {
     this._id = id;
     this._name = name;
     this._groupName = groupName;
@@ -99,18 +96,30 @@ export class Member implements INickname {
     CasDAO.remove(ticket);
   }
 
+  public serialize(): INicknameSerialized {
+    return {
+      id: this.id, name: this.name, groupName: this.groupName, colorCode: this.colorCode, responses: this.responses,
+    };
+  }
+
   private hashCode(str: string): number { // java String#hashCode
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      hash = str.charCodeAt(i) + (
+        (
+          hash << 5
+        ) - hash
+      );
     }
     return hash;
   }
 
   private intToRGB(i: number): string {
-    const c: string = (i & 0x00FFFFFF)
-      .toString(16)
-      .toUpperCase();
+    const c: string = (
+      i & 0x00FFFFFF
+    )
+    .toString(16)
+    .toUpperCase();
 
     return '00000'.substring(0, 6 - c.length) + c;
   }
@@ -118,22 +127,39 @@ export class Member implements INickname {
   private generateRandomColorCode(): string {
     return this.intToRGB(this.hashCode(this.name));
   }
-
-  public serialize(): INicknameSerialized {
-    return {
-      id: this.id,
-      name: this.name,
-      groupName: this.groupName,
-      colorCode: this.colorCode,
-      responses: this.responses
-    };
-  }
 }
 
 export class ActiveQuizItem implements IActiveQuiz {
   get memberGroups(): Array<IMemberGroup> {
     return this._memberGroups;
   }
+
+  get originalObject(): IQuestionGroup {
+    return this._originalObject;
+  }
+
+  get name(): string {
+    return this._name;
+  }
+
+  private _currentQuestionIndex: number;
+
+  get currentQuestionIndex(): number {
+    return this._currentQuestionIndex;
+  }
+
+  set currentQuestionIndex(value: number) {
+    this._currentQuestionIndex = value;
+  }
+
+  private _currentStartTimestamp = 0;
+
+  get currentStartTimestamp(): number {
+    return this._currentStartTimestamp;
+  }
+
+  private _ownerSocket: WebSocket;
+
   get ownerSocket(): WebSocket {
     return this._ownerSocket;
   }
@@ -141,38 +167,13 @@ export class ActiveQuizItem implements IActiveQuiz {
   set ownerSocket(value: WebSocket) {
     this._ownerSocket = value;
   }
-  get currentStartTimestamp(): number {
-    return this._currentStartTimestamp;
-  }
-  set currentQuestionIndex(value: number) {
-    this._currentQuestionIndex = value;
-  }
-
-  get originalObject(): IQuestionGroup {
-    return this._originalObject;
-  }
-
-  get currentQuestionIndex(): number {
-    return this._currentQuestionIndex;
-  }
-
-  get name(): string {
-    return this._name;
-  }
 
   private readonly _name: string;
   private readonly _memberGroups: Array<IMemberGroup>;
   private readonly _originalObject: IQuestionGroup;
-
-  private _currentQuestionIndex: number;
-  private _currentStartTimestamp = 0;
-  private _ownerSocket: WebSocket;
   private _countdownInterval: any;
 
-  constructor(
-    {memberGroups, originalObject, currentQuestionIndex}:
-    { memberGroups: Array<IMemberGroup>, originalObject: IQuestionGroup, currentQuestionIndex?: number }
-    ) {
+  constructor({ memberGroups, originalObject, currentQuestionIndex }) {
     this._name = originalObject.hashtag;
     this._memberGroups = memberGroups;
     this._originalObject = originalObject;
@@ -183,47 +184,26 @@ export class ActiveQuizItem implements IActiveQuiz {
     return {
       memberGroups: this.memberGroups.map(memberGroup => {
         return memberGroup.serialize();
-      }),
-      originalObject: this._originalObject,
-      currentQuestionIndex: this._currentQuestionIndex
+      }), originalObject: this._originalObject, currentQuestionIndex: this._currentQuestionIndex,
     };
   }
 
   public onDestroy(): void {
     const messageToAllWSSClients = JSON.stringify({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:SET_INACTIVE',
-      payload: {
-        quizName: this.name
-      }
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:SET_INACTIVE', payload: {
+        quizName: this.name,
+      },
     });
     WebSocketRouter.wss.clients.forEach(client => client.send(messageToAllWSSClients));
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'LOBBY:CLOSED',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'LOBBY:CLOSED', payload: {},
     });
-  }
-
-  private pushMessageToClients(message: any): void {
-    this.memberGroups.forEach(memberGroup => {
-      memberGroup.members.forEach(value => {
-        if (value.webSocket && value.webSocket.readyState === WebSocket.OPEN) {
-          value.webSocket.send(JSON.stringify(message));
-        } else if (value.webSocket) {} else {}
-      });
-    });
-    if (this._ownerSocket && this._ownerSocket.readyState === WebSocket.OPEN) {
-      this._ownerSocket.send(JSON.stringify(message));
-    } else if (this._ownerSocket) {} else {}
   }
 
   public requestReadingConfirmation(): void {
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:READING_CONFIRMATION_REQUESTED',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:READING_CONFIRMATION_REQUESTED', payload: {},
     });
   }
 
@@ -236,9 +216,7 @@ export class ActiveQuizItem implements IActiveQuiz {
       });
     });
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:RESET',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:RESET', payload: {},
     });
   }
 
@@ -247,18 +225,15 @@ export class ActiveQuizItem implements IActiveQuiz {
 
     let timer = this.originalObject.questionList[this.currentQuestionIndex].timer;
     this._countdownInterval = setInterval(() => {
-      if (
-        !timer ||
-        this.memberGroups.forEach(memberGroup => {
-          return memberGroup.members.filter(nick => {
-            if (!nick.responses[this.currentQuestionIndex]) {
-              return false;
-            }
-            const value = nick.responses[this.currentQuestionIndex].value;
-            return typeof value === 'number' ? !isNaN(value) : value.length;
-          }).length === memberGroup.members.length;
-        })
-      ) {
+      if (!timer || this.memberGroups.forEach(memberGroup => {
+        return memberGroup.members.filter(nick => {
+          if (!nick.responses[this.currentQuestionIndex]) {
+            return false;
+          }
+          const value = nick.responses[this.currentQuestionIndex].value;
+          return typeof value === 'number' ? !isNaN(value) : value.length;
+        }).length === memberGroup.members.length;
+      })) {
         clearInterval(this._countdownInterval);
         this._currentStartTimestamp = 0;
       } else {
@@ -267,9 +242,7 @@ export class ActiveQuizItem implements IActiveQuiz {
     }, 1000);
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:START',
-      payload: { startTimestamp }
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:START', payload: { startTimestamp },
     });
   }
 
@@ -278,9 +251,7 @@ export class ActiveQuizItem implements IActiveQuiz {
     this._currentStartTimestamp = 0;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:STOP',
-      payload: {}
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:STOP', payload: {},
     });
   }
 
@@ -288,14 +259,12 @@ export class ActiveQuizItem implements IActiveQuiz {
     if (this.currentQuestionIndex < this.originalObject.questionList.length - 1) {
       this.currentQuestionIndex++;
       this.memberGroups.forEach(memberGroup => memberGroup.members.forEach(member => {
-        member.responses.push({value: [], responseTime: 0, confidence: 0, readingConfirmation: false});
+        member.responses.push({ value: [], responseTime: 0, confidence: 0, readingConfirmation: false });
       }));
       this.pushMessageToClients({
-        status: 'STATUS:SUCCESSFUL',
-        step: 'QUIZ:NEXT_QUESTION',
-        payload: {
-          questionIndex: this.currentQuestionIndex
-        }
+        status: 'STATUS:SUCCESSFUL', step: 'QUIZ:NEXT_QUESTION', payload: {
+          questionIndex: this.currentQuestionIndex,
+        },
       });
       return this.currentQuestionIndex;
     } else {
@@ -327,17 +296,11 @@ export class ActiveQuizItem implements IActiveQuiz {
     }
 
     const addedMember: INickname = new Member({
-      id: group.members.length,
-      name,
-      groupName,
-      webSocketAuthorization,
-      ticket
+      id: group.members.length, name, groupName, webSocketAuthorization, ticket,
     });
     this.memberGroups.find(memberGroup => memberGroup.name === groupName).members.push(addedMember);
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:ADDED',
-      payload: {member: addedMember.serialize()}
+      status: 'STATUS:SUCCESSFUL', step: 'MEMBER:ADDED', payload: { member: addedMember.serialize() },
     });
     return true;
   }
@@ -350,11 +313,9 @@ export class ActiveQuizItem implements IActiveQuiz {
     }
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:REMOVED',
-      payload: {
-        name: name
-      }
+      status: 'STATUS:SUCCESSFUL', step: 'MEMBER:REMOVED', payload: {
+        name: name,
+      },
     });
 
     /* Must be beneath the pushMessageToClients call so that the target member will receive the kick notification */
@@ -368,16 +329,16 @@ export class ActiveQuizItem implements IActiveQuiz {
 
   public addResponseValue(nickname: string, data: Array<number>): void {
     this.findMemberByName(nickname).responses[this.currentQuestionIndex].responseTime = (
-      (new Date().getTime() - this._currentStartTimestamp) / 1000
+      (
+        new Date().getTime() - this._currentStartTimestamp
+      ) / 1000
     );
     this.findMemberByName(nickname).responses[this.currentQuestionIndex].value = data;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:UPDATED_RESPONSE',
-      payload: {
-        nickname: this.findMemberByName(nickname).serialize()
-      }
+      status: 'STATUS:SUCCESSFUL', step: 'MEMBER:UPDATED_RESPONSE', payload: {
+        nickname: this.findMemberByName(nickname).serialize(),
+      },
     });
   }
 
@@ -385,11 +346,9 @@ export class ActiveQuizItem implements IActiveQuiz {
     this.findMemberByName(nickname).responses[this.currentQuestionIndex].confidence = confidenceValue;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:UPDATED_RESPONSE',
-      payload: {
-        nickname: this.findMemberByName(nickname).serialize()
-      }
+      status: 'STATUS:SUCCESSFUL', step: 'MEMBER:UPDATED_RESPONSE', payload: {
+        nickname: this.findMemberByName(nickname).serialize(),
+      },
     });
   }
 
@@ -397,11 +356,9 @@ export class ActiveQuizItem implements IActiveQuiz {
     this.findMemberByName(nickname).responses[this.currentQuestionIndex].readingConfirmation = true;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:UPDATED_RESPONSE',
-      payload: {
-        nickname: this.findMemberByName(nickname).serialize()
-      }
+      status: 'STATUS:SUCCESSFUL', step: 'MEMBER:UPDATED_RESPONSE', payload: {
+        nickname: this.findMemberByName(nickname).serialize(),
+      },
     });
   }
 
@@ -409,12 +366,27 @@ export class ActiveQuizItem implements IActiveQuiz {
     this.originalObject.sessionConfig[target] = state;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:UPDATED_SETTINGS',
-      payload: {
-        target, state
-      }
+      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:UPDATED_SETTINGS', payload: {
+        target, state,
+      },
     });
+  }
+
+  private pushMessageToClients(message: any): void {
+    this.memberGroups.forEach(memberGroup => {
+      memberGroup.members.forEach(value => {
+        if (value.webSocket && value.webSocket.readyState === WebSocket.OPEN) {
+          value.webSocket.send(JSON.stringify(message));
+        } else if (value.webSocket) {
+        } else {
+        }
+      });
+    });
+    if (this._ownerSocket && this._ownerSocket.readyState === WebSocket.OPEN) {
+      this._ownerSocket.send(JSON.stringify(message));
+    } else if (this._ownerSocket) {
+    } else {
+    }
   }
 }
 

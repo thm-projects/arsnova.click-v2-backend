@@ -1,18 +1,15 @@
-import {Router, Request, Response} from 'express';
+import { Request, Response, Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import {staticStatistics} from '../statistics';
-import {ChildProcess, spawn} from 'child_process';
-import {themes} from '../themes/availableThemes';
-import {ITheme} from 'arsnova-click-v2-types/src/common';
-import * as process from 'process';
+import { staticStatistics } from '../statistics';
+import { themes } from '../themes/availableThemes';
 
 export class ThemesRouter {
+  private _router: Router;
+
   get router(): Router {
     return this._router;
   }
-
-  private _router: Router;
 
   /**
    * Initialize the ThemesRouter
@@ -24,14 +21,13 @@ export class ThemesRouter {
 
   public getThemes(req: Request, res: Response): void {
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'GET_THEMES',
-      payload: themes
+      status: 'STATUS:SUCCESSFUL', step: 'GET_THEMES', payload: themes,
     });
   }
 
   public getTheme(req: Request, res: Response): void {
-    const filePath = path.join(staticStatistics.pathToAssets, 'images', 'theme', req.params.themeId, `preview_${req.params.languageId}.png`);
+    const filePath = path.join(staticStatistics.pathToAssets, 'images', 'theme', req.params.themeId,
+      `preview_${req.params.languageId}.png`);
     const exists = fs.existsSync(filePath);
 
     if (exists) {

@@ -1,6 +1,6 @@
-import {IActiveQuiz} from 'arsnova-click-v2-types/src/common';
+import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
 
-export function calculateNumberOfAnswers(quiz: IActiveQuiz, questionIndex: number, answerNumber: number) {
+export function calculateNumberOfAnswers(quiz: IActiveQuiz, questionIndex: number, answerNumber: number): number {
   let numberOfAnswers = 0;
   quiz.memberGroups[0].members.forEach(nickname => {
     const response = nickname.responses[questionIndex].value;
@@ -13,22 +13,23 @@ export function calculateNumberOfAnswers(quiz: IActiveQuiz, questionIndex: numbe
   return numberOfAnswers;
 }
 
-export function calculateNumberOfRangedAnswers(quiz: IActiveQuiz, questionIndex: number, minRange, correctValue, maxRange) {
+export function calculateNumberOfRangedAnswers(quiz: IActiveQuiz, questionIndex: number, minRange, correctValue,
+                                               maxRange,
+): { minRange: number, correctValue: number, maxRange: number } {
+
   let numberOfAnswersInMinRange = 0;
   let numberOfAnswersInMaxRange = 0;
   let numberOfCorrectAnswers = 0;
   quiz.memberGroups[0].members.forEach((nickname) => {
-      if (nickname.responses[questionIndex].value <= maxRange && nickname.responses[questionIndex].value > correctValue) {
-        numberOfAnswersInMaxRange++;
-      } else if (nickname.responses[questionIndex].value === correctValue) {
-        numberOfCorrectAnswers++;
-      } else if (nickname.responses[questionIndex].value >= minRange) {
-        numberOfAnswersInMinRange++;
-      }
+    if (nickname.responses[questionIndex].value <= maxRange && nickname.responses[questionIndex].value > correctValue) {
+      numberOfAnswersInMaxRange++;
+    } else if (nickname.responses[questionIndex].value === correctValue) {
+      numberOfCorrectAnswers++;
+    } else if (nickname.responses[questionIndex].value >= minRange) {
+      numberOfAnswersInMinRange++;
+    }
   });
   return {
-    minRange: numberOfAnswersInMinRange,
-    correctValue: numberOfCorrectAnswers,
-    maxRange: numberOfAnswersInMaxRange
+    minRange: numberOfAnswersInMinRange, correctValue: numberOfCorrectAnswers, maxRange: numberOfAnswersInMaxRange,
   };
 }
