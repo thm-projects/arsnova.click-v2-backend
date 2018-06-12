@@ -111,6 +111,9 @@ class App {
     router.get(`/`, (req: Request, res: Response, next: NextFunction) => {
       res.send(Object.assign({}, staticStatistics, dynamicStatistics()));
     });
+    router.get(`/err`, (req: Request, res: Response, next: NextFunction) => {
+      throw new Error('testerror');
+    });
     this._express.use(`${staticStatistics.routePrefix}/`, router);
     this._express.use(`${staticStatistics.routePrefix}/lib`, libRouter);
     this._express.use(`${staticStatistics.routePrefix}/api`, legacyApiRouter);

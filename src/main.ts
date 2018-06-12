@@ -89,18 +89,38 @@ global.createDump = (plainError) => {
     daoDump[dao] = global.DAO[dao].createDump();
   });
 
-  const params = [
+  const insecureDumpAsJson = JSON.stringify(daoDump, censor(daoDump));
+
+  const dumpCryptorParams = [
     path.join(staticStatistics.pathToJobs, 'DumpCryptor.js'),
     `--base-path=${__dirname}`,
     '--command=encrypt',
-    `--data=${JSON.stringify(daoDump, censor(daoDump))}`,
+    `--data=${insecureDumpAsJson}`,
   ];
-  const instance = child_process.spawn(`node`, params);
-  instance.stderr.on('data', (data) => {
+  const dumpCryptorInstance = child_process.spawn(`node`, dumpCryptorParams);
+  dumpCryptorInstance.stderr.on('data', (data) => {
     console.log(`DumpCryptor (stderr): ${data.toString().replace('\n', '')}`);
   });
-  instance.on('exit', () => {
+  dumpCryptorInstance.on('exit', () => {
     console.log(`DumpCryptor (exit): Dump generated`);
+  });
+
+  const mailParams = [
+    path.join(staticStatistics.pathToJobs, 'SendMail.js'),
+    '--command=buildServerInfoMail',
+    `--attachment=${insecureDumpAsJson}`,
+    `--header=Arsnova.click Server Error Report (${error.type}: ${error.message})`,
+    `--text=${error.stack}`,
+  ];
+  const mailInstance = child_process.spawn(`node`, mailParams);
+  mailInstance.stderr.on('data', (data) => {
+    console.log(`SendMail (stderr): ${data.toString().replace('\n', '')}`);
+  });
+  mailInstance.stdout.on('data', (data) => {
+    console.log(`SendMail (stdout): ${data.toString().replace('\n', '')}`);
+  });
+  mailInstance.on('exit', () => {
+    console.log(`SendMail (exit): Done`);
   });
 };
 
