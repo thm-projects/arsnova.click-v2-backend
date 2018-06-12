@@ -32,7 +32,7 @@ Thus, the server gets started up during the test so the specified port must be a
 Currently the routing and the quiz export is covered by the tests. 
 The export unit test will generate a random filled Excel export file in the `${rootDir}/test-generated` folder.
 
-###### Run (DEV)
+###### Build (DEV)
 Enter `npm run build:DEV` in the root directory to run the dev build.
 
 Using IntelliJ IDEA it is possible to create a `Node.js Run Configuration`. 
