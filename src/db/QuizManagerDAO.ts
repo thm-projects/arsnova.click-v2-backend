@@ -59,7 +59,7 @@ export class QuizManagerDAO {
       parseCachedAssetQuiz(quiz.questionList);
     }
     const memberGroups = quiz.sessionConfig.nicks.memberGroups.map(groupName => new MemberGroup(groupName));
-    this.activeQuizzes[name] = new ActiveQuizItem({ memberGroups, originalObject: quiz });
+    this.activeQuizzes[name] = new ActiveQuizItem({ memberGroups, originalObject: quiz, currentQuestionIndex: -1 });
     return this.activeQuizzes[name];
   }
 

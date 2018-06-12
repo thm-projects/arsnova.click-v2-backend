@@ -24,8 +24,6 @@ ts_lint:
 
 npm_test:
   stage: test
-  only:
-    - master
   tags:
     - nodejs
   script:

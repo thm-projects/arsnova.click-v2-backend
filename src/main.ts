@@ -24,7 +24,7 @@ interface IHotModule extends NodeModule {
   };
 }
 
-interface IGlobal extends NodeJS.Global {
+export declare interface IGlobal extends NodeJS.Global {
   DAO: {
     CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizManagerDAO: {}, DbDAO: {},
   };
@@ -98,10 +98,7 @@ process.on('unhandledRejection', rejectionToCreateDump);
   const insecureDumpAsJson = JSON.stringify(daoDump, censor(daoDump));
 
   const dumpCryptorParams = [
-    path.join(staticStatistics.pathToJobs, 'DumpCryptor.js'),
-    `--base-path=${__dirname}`,
-    '--command=encrypt',
-    `--data=${insecureDumpAsJson}`,
+    path.join(staticStatistics.pathToJobs, 'DumpCryptor.js'), `--base-path=${__dirname}`, '--command=encrypt', `--data=${insecureDumpAsJson}`,
   ];
   const dumpCryptorInstance = child_process.spawn(`node`, dumpCryptorParams);
   dumpCryptorInstance.stderr.on('data', (data) => {

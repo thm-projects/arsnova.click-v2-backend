@@ -10,7 +10,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
 
   constructor({ wb, theme, translation, quiz, mf }) {
-    super({ theme, translation, quiz, mf });
+    super({ theme, translation, quiz, mf, questionIndex: null });
     this._ws = wb.addWorksheet(mf('export.summary'), this._options);
     this.formatSheet();
     this.addSheetData();
