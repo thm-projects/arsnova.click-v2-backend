@@ -1,16 +1,21 @@
-export class MathjaxDAO {
-  private static readonly mathjaxCache: object = {};
+import { AbstractDAO } from './AbstractDAO';
 
-  public static createDump(): {} {
-    return MathjaxDAO.mathjaxCache;
+class MathjaxDAO extends AbstractDAO<object> {
+
+  public static getInstance(): MathjaxDAO {
+    if (!this.instance) {
+      this.instance = new MathjaxDAO({});
+    }
+    return this.instance;
   }
 
-  public static getAllPreviouslyRenderedData(plainData: string): object {
-    return MathjaxDAO.mathjaxCache[plainData];
+  public getAllPreviouslyRenderedData(plainData: string): object {
+    return this.storage[plainData];
   }
 
-  public static updateRenderedData(renderedData, plainData): void {
-    MathjaxDAO.mathjaxCache[plainData] = renderedData;
+  public updateRenderedData(renderedData, plainData): void {
+    this.storage[plainData] = renderedData;
   }
-
 }
+
+export default MathjaxDAO.getInstance();

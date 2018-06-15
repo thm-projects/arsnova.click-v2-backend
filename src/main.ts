@@ -8,11 +8,11 @@ import * as process from 'process';
 import * as WebSocket from 'ws';
 import App from './App';
 import { createDefaultPaths } from './app_bootstrap';
-import { CasDAO } from './db/CasDAO';
-import { DbDAO } from './db/DbDAO';
-import { I18nDAO } from './db/I18nDAO';
-import { MathjaxDAO } from './db/MathjaxDAO';
-import { QuizManagerDAO } from './db/QuizManagerDAO';
+import CasDAO from './db/CasDAO';
+import DbDAO from './db/DbDAO';
+import I18nDAO from './db/I18nDAO';
+import MathjaxDAO from './db/MathjaxDAO';
+import QuizManagerDAO from './db/QuizManagerDAO';
 import { WebSocketRouter } from './routes/websocket';
 import { staticStatistics } from './statistics';
 
@@ -62,14 +62,26 @@ function rejectionToCreateDump(reason): void {
 }
 
 process.on('unhandledRejection', rejectionToCreateDump);
+process.on('uncaughtException', rejectionToCreateDump);
 
 (
   <IGlobal>global
-).DAO = { CasDAO, I18nDAO, MathjaxDAO, QuizManagerDAO, DbDAO };
+).DAO = {
+  CasDAO,
+  I18nDAO,
+  MathjaxDAO,
+  QuizManagerDAO,
+  DbDAO,
+};
 (
   <IGlobal>global
 ).createDump = (plainError) => {
-  const error = { type: '', code: '', message: '', stack: '' };
+  const error = {
+    type: '',
+    code: '',
+    message: '',
+    stack: '',
+  };
 
   if (plainError) {
     if (typeof plainError === 'string') {
@@ -113,7 +125,7 @@ process.on('unhandledRejection', rejectionToCreateDump);
     '--command=buildServerInfoMail',
     `--attachment=${insecureDumpAsJson}`,
     `--header=Arsnova.click Server Error Report (${error.type}: ${error.message})`,
-    `--text=${error.stack}`,
+    `--text=${error.stack || JSON.stringify('<unknown> - no stack provided')}`,
   ];
   const mailInstance = child_process.spawn(`node`, mailParams);
   mailInstance.stderr.on('data', (data) => {
@@ -199,7 +211,5 @@ function onListening(): void {
 }
 
 function onClose(): void {
-  DbDAO.closeConnections();
-
   WebSocketRouter.wss.close();
 }

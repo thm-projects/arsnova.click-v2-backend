@@ -2,9 +2,11 @@ declare function require(name: string): any;
 
 import * as fs from 'fs';
 import * as lowdb from 'lowdb';
+import { AdapterSync } from 'lowdb';
 import * as FileSync from 'lowdb/adapters/FileSync';
 import * as path from 'path';
 import { createHomePath } from '../app_bootstrap';
+import { AbstractDAO } from './AbstractDAO';
 
 export enum DatabaseTypes {
   quiz = 'quiz', assets = 'assets'
@@ -23,74 +25,71 @@ if (createHomePath) {
 }
 
 // DB Lib: https://github.com/typicode/lowdb
-const adapter: FileSync = new FileSync(pathToDb);
+const adapter: AdapterSync = new FileSync(pathToDb);
+const db = lowdb(adapter);
 
-export class DbDAO {
+class DbDAO extends AbstractDAO<typeof db> {
 
-  private static db: lowdb;
-  private static instance: DbDAO;
-
-  public static createDump(): {} {
-    return DbDAO.db;
-  }
-
-  public static create(database: DatabaseTypes, data: Object, ref?: string): void {
-    if (ref) {
-      DbDAO.db.set(`${database}.${ref}`, data).write();
-    } else {
-      DbDAO.db.get(database).push(data).write();
+  constructor() {
+    super(db);
+    const state = this.getState();
+    if (!state[DatabaseTypes.quiz]) {
+      this.initDb(DatabaseTypes.quiz, []);
     }
-  }
-
-  public static read(database: DatabaseTypes, query?: Object): Object {
-    if (query) {
-      return DbDAO.db.get(database).find(query).value();
+    if (!state[DatabaseTypes.assets]) {
+      this.initDb(DatabaseTypes.assets, {});
     }
-    return DbDAO.db.get(database).value();
-  }
-
-  public static update(database: DatabaseTypes, query: Object, update: Object): void {
-    DbDAO.db.get(database).find(query).assign(update).write();
-  }
-
-  public static delete(database: DatabaseTypes, query: { quizName: string, privateKey: string }): boolean {
-    const dbContent: any = DbDAO.read(database, query);
-    if (!dbContent || dbContent.privateKey !== query.privateKey) {
-      return false;
-    }
-    DbDAO.db.get(database).remove(query).write();
-    return true;
-  }
-
-  public static closeConnection(database: DatabaseTypes): void {
-    DbDAO.db.get(database).close();
-  }
-
-  public static closeConnections(): void {
-    Object.keys(DatabaseTypes).forEach((type) => DbDAO.closeConnection(DatabaseTypes[type]));
-  }
-
-  public static getState(): lowdb {
-    return DbDAO.db.getState();
   }
 
   public static getInstance(): DbDAO {
-    if (!DbDAO.instance) {
-      DbDAO.instance = new DbDAO();
-      DbDAO.db = lowdb(adapter);
-      const state = DbDAO.getState();
-      if (!state[DatabaseTypes.quiz]) {
-        DbDAO.initDb(DatabaseTypes.quiz, []);
-      }
-      if (!state[DatabaseTypes.assets]) {
-        DbDAO.initDb(DatabaseTypes.assets, {});
-      }
+    if (!this.instance) {
+      this.instance = new DbDAO();
     }
-    return DbDAO.instance;
+    return this.instance;
   }
 
-  private static initDb(type: DatabaseTypes, initialValue: any): void {
-    DbDAO.db.set(type, initialValue).write();
+  public create(database: DatabaseTypes, data: object, ref?: string): void {
+    if (ref) {
+      this.storage.set(`${database}.${ref}`, data).write();
+    } else {
+      this.storage.get(database).push(data).write();
+    }
+  }
+
+  public read(database: DatabaseTypes, query?: object): object {
+    if (query) {
+      return this.storage.get(database).find(query).value();
+    }
+    return this.storage.get(database).value();
+  }
+
+  public update(database: DatabaseTypes, query: object, update: object): void {
+    this.storage.get(database).find(query).assign(update).write();
+  }
+
+  public delete(database: DatabaseTypes, query: { quizName: string, privateKey: string }): boolean {
+    const dbContent: any = this.read(database, query);
+    if (!dbContent || dbContent.privateKey !== query.privateKey) {
+      return false;
+    }
+    this.storage.get(database).remove(query).write();
+    return true;
+  }
+
+  public closeConnections(): void {
+    Object.keys(DatabaseTypes).forEach((type) => this.closeConnection(DatabaseTypes[type]));
+  }
+
+  public getState(): typeof lowdb {
+    return this.storage.getState();
+  }
+
+  private closeConnection(database: DatabaseTypes): void {
+    this.storage.get(database);
+  }
+
+  private initDb(type: DatabaseTypes, initialValue: any): void {
+    this.storage.set(type, initialValue).write();
   }
 }
 

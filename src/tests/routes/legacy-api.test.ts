@@ -1,6 +1,5 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-
 import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as chai from 'chai';
 import * as fs from 'fs';
@@ -8,8 +7,8 @@ import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
 
 import app from '../../App';
-import { DatabaseTypes, DbDAO } from '../../db/DbDAO';
-import { QuizManagerDAO } from '../../db/QuizManagerDAO';
+import { DatabaseTypes, default as DbDAO } from '../../db/DbDAO';
+import QuizManagerDAO from '../../db/QuizManagerDAO';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');
@@ -28,7 +27,10 @@ class LegacyApiRouterTestSuite {
 
   public static after(): void {
     QuizManagerDAO.removeQuiz(hashtag);
-    DbDAO.delete(DatabaseTypes.quiz, { quizName: hashtag, privateKey: privateKey });
+    DbDAO.delete(DatabaseTypes.quiz, {
+      quizName: hashtag,
+      privateKey: privateKey,
+    });
   }
 
   @test
@@ -48,7 +50,10 @@ class LegacyApiRouterTestSuite {
   @test
   public async addHashtag(): Promise<void> {
     const res = await chai.request(app).post(`${this._baseApiRoute}/addHashtag`).send({
-      sessionConfiguration: { hashtag: this._hashtag, privateKey: this._privateKey },
+      sessionConfiguration: {
+        hashtag: this._hashtag,
+        privateKey: this._privateKey,
+      },
     });
     await expect(res.status).to.equal(200);
     await expect(res['text']).to.equal('Hashtag successfully created');
@@ -65,7 +70,10 @@ class LegacyApiRouterTestSuite {
   @test
   public async openSession(): Promise<void> {
     const res = await chai.request(app).post(`${this._baseApiRoute}/openSession`).send({
-      sessionConfiguration: { hashtag: this._hashtag, privateKey: this._privateKey },
+      sessionConfiguration: {
+        hashtag: this._hashtag,
+        privateKey: this._privateKey,
+      },
     });
     await expect(res.status).to.equal(200);
   }
@@ -86,7 +94,10 @@ class LegacyApiRouterTestSuite {
   @test
   public async showReadingConfirmation(): Promise<void> {
     const res = await chai.request(app).post(`${this._baseApiRoute}/showReadingConfirmation`).send({
-      sessionConfiguration: { hashtag: this._hashtag, privateKey: this._privateKey },
+      sessionConfiguration: {
+        hashtag: this._hashtag,
+        privateKey: this._privateKey,
+      },
     });
     await expect(res.status).to.equal(200);
   }
@@ -94,7 +105,10 @@ class LegacyApiRouterTestSuite {
   @test
   public async startNextQuestion(): Promise<void> {
     const res = await chai.request(app).post(`${this._baseApiRoute}/startNextQuestion`).send({
-      sessionConfiguration: { hashtag: this._hashtag, questionIndex: 0 },
+      sessionConfiguration: {
+        hashtag: this._hashtag,
+        questionIndex: 0,
+      },
     });
     await expect(res.status).to.equal(200);
     await expect(res['text']).to.equal(`Next Question with index 0 started.`);
@@ -104,7 +118,10 @@ class LegacyApiRouterTestSuite {
   @test
   public async removeLocalData(): Promise<void> {
     const res = await chai.request(app).post(`${this._baseApiRoute}/removeLocalData`).send({
-      sessionConfiguration: { hashtag: this._hashtag, privateKey: this._privateKey },
+      sessionConfiguration: {
+        hashtag: this._hashtag,
+        privateKey: this._privateKey,
+      },
     });
     await expect(res.status).to.equal(200);
     await expect(res['text']).to.equal('Session successfully removed');

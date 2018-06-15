@@ -4,7 +4,7 @@ import * as Hex from 'crypto-js/enc-hex';
 import * as sha256 from 'crypto-js/sha256';
 import * as fs from 'fs';
 import * as request from 'request';
-import { DatabaseTypes, DbDAO } from '../db/DbDAO';
+import { DatabaseTypes, default as DbDAO } from '../db/DbDAO';
 import { staticStatistics } from '../statistics';
 
 export const assetsUrlRegex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
@@ -17,7 +17,11 @@ export function MatchTextToAssetsDb(value: string): void {
       const digest = Hex.stringify(sha256(matchedValueElement));
       const cachePath = `${staticStatistics.pathToCache}/${digest}`;
       if (fs.existsSync(cachePath)) {
-        DbDAO.create(DatabaseTypes.assets, { url: matchedValueElement, digest, path: cachePath }, matchedValueElement.replace(/\./g, '_'));
+        DbDAO.create(DatabaseTypes.assets, {
+          url: matchedValueElement,
+          digest,
+          path: cachePath,
+        }, matchedValueElement.replace(/\./g, '_'));
         return;
       }
       if (!matchedValueElement.startsWith('http')) {
@@ -29,7 +33,9 @@ export function MatchTextToAssetsDb(value: string): void {
         const hasContentTypeMatched = acceptedFileTypes.some((contentTypeRegex) => contentType.match(contentTypeRegex));
         if (hasContentTypeMatched) {
           DbDAO.create(DatabaseTypes.assets, {
-            url: matchedValueElement, digest, path: cachePath,
+            url: matchedValueElement,
+            digest,
+            path: cachePath,
           }, matchedValueElement.replace(/\./g, '_'));
         } else {
           req.abort();

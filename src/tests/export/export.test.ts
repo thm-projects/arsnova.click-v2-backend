@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as i18n from 'i18n';
 import { slow, suite, test } from 'mocha-typescript';
 import * as path from 'path';
-import { QuizManagerDAO } from '../../db/QuizManagerDAO';
+import QuizManagerDAO from '../../db/QuizManagerDAO';
 import { ExcelWorkbook } from '../../export/excel-workbook';
 import { Member } from '../../quiz-manager/quiz-manager';
 import { staticStatistics } from '../../statistics';
@@ -26,7 +26,8 @@ class ExcelExportTestSuite {
   public static before(): void {
     i18n.configure({
       // setup some locales - other locales default to en silently
-      locales: ['en'], defaultLocale: 'en',
+      locales: ['en'],
+      defaultLocale: 'en',
 
       // where to store json files - defaults to './locales' relative to modules directory
       directory: path.join(staticStatistics.pathToAssets, 'i18n'),
@@ -100,7 +101,12 @@ class ExcelExportTestSuite {
     const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
     for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
       quiz.memberGroups[0].members.push(new Member({
-        id: memberIndex, name: `testnick${memberIndex + 1}`, groupName: 'Default', webSocketAuthorization: 0, responses: [], ticket: null,
+        id: memberIndex,
+        name: `testnick${memberIndex + 1}`,
+        groupName: 'Default',
+        webSocketAuthorization: 0,
+        responses: [],
+        ticket: null,
       }));
     }
     await assert.equal(quiz.memberGroups[0].members.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
@@ -190,7 +196,10 @@ class ExcelExportTestSuite {
   public async generateExcelWorkbook(): Promise<void> {
     const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
     const wb = new ExcelWorkbook({
-      themeName: this._theme, translation: this._language, quiz: quiz, mf: i18n.__mf,
+      themeName: this._theme,
+      translation: this._language,
+      quiz: quiz,
+      mf: i18n.__mf,
     });
 
     const buffer = await wb.writeToBuffer();

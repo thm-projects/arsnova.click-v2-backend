@@ -8,7 +8,7 @@ import * as path from 'path';
 import * as WebSocket from 'ws';
 
 import app from '../../App';
-import { QuizManagerDAO } from '../../db/QuizManagerDAO';
+import QuizManagerDAO from '../../db/QuizManagerDAO';
 import { WebSocketRouter } from '../../routes/websocket';
 import { staticStatistics } from '../../statistics';
 

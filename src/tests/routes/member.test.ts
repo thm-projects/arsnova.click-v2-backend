@@ -7,7 +7,7 @@ import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
 
 import app from '../../App';
-import { QuizManagerDAO } from '../../db/QuizManagerDAO';
+import QuizManagerDAO from '../../db/QuizManagerDAO';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');
@@ -64,7 +64,9 @@ class MemberApiRouterTestSuite {
   @test
   public async addMember(): Promise<void> {
     const res = await chai.request(app).put(`${this._baseApiRoute}/`).send({
-      quizName: this._hashtag, nickname: this._nickname, groupName: 'Default',
+      quizName: this._hashtag,
+      nickname: this._nickname,
+      groupName: 'Default',
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
@@ -74,7 +76,8 @@ class MemberApiRouterTestSuite {
   @test
   public async addReadingConfirmation(): Promise<void> {
     const res = await chai.request(app).put(`${this._baseApiRoute}/reading-confirmation`).send({
-      quizName: this._hashtag, nickname: this._nickname,
+      quizName: this._hashtag,
+      nickname: this._nickname,
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
@@ -83,7 +86,9 @@ class MemberApiRouterTestSuite {
   @test
   public async addConfidenceValue(): Promise<void> {
     const res = await chai.request(app).put(`${this._baseApiRoute}/confidence-value`).send({
-      quizName: this._hashtag, nickname: this._nickname, confidenceValue: 100,
+      quizName: this._hashtag,
+      nickname: this._nickname,
+      confidenceValue: 100,
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
@@ -92,7 +97,9 @@ class MemberApiRouterTestSuite {
   @test
   public async addResponse(): Promise<void> {
     const res = await chai.request(app).put(`${this._baseApiRoute}/response`).send({
-      quizName: this._hashtag, nickname: this._nickname, value: [0],
+      quizName: this._hashtag,
+      nickname: this._nickname,
+      value: [0],
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');

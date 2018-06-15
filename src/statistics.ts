@@ -1,6 +1,6 @@
 import { cpus, freemem, hostname, loadavg, networkInterfaces, totalmem } from 'os';
 import * as path from 'path';
-import { QuizManagerDAO } from './db/QuizManagerDAO';
+import QuizManagerDAO from './db/QuizManagerDAO';
 
 declare function require(name: string): any;
 
@@ -14,8 +14,7 @@ const localIpv4Address = localAddress ? localAddress[0].address : '127.0.0.1';
 const portInternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_INTERNAL || 3000;
 const portExternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL || portInternal;
 const routePrefix = process.env.ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX || '';
-const rewriteAssetCacheUrl = process.env.ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL
-                             || `http://${hostname()}:${portExternal}${routePrefix}`;
+const rewriteAssetCacheUrl = process.env.ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL || `http://${hostname()}:${portExternal}${routePrefix}`;
 
 export const staticStatistics = {
   hostname: hostname(),
@@ -43,8 +42,12 @@ export const dynamicStatistics = () => {
 
 export const settings = {
   public: {
-    cacheQuizAssets: true, createQuizPasswordRequired: true, limitActiveQuizzes: Infinity,
-  }, limitQuizCreationToCasAccounts: [], createQuizPassword: 'abc',
+    cacheQuizAssets: true,
+    createQuizPasswordRequired: true,
+    limitActiveQuizzes: Infinity,
+  },
+  limitQuizCreationToCasAccounts: [],
+  createQuizPassword: 'abc',
 };
 
 export const cache = { 'arsnova-click-v2-backend': {} };

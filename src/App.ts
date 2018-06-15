@@ -99,7 +99,10 @@ class App {
     this._express.use(logger('dev'));
     this._express.use(busboy());
     this._express.use(bodyParser.json({ limit: '50mb' }));
-    this._express.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+    this._express.use(bodyParser.urlencoded({
+      limit: '50mb',
+      extended: true,
+    }));
     this._express.use(i18n.init);
     this._express.use(cors(options));
     this._express.use(compress());

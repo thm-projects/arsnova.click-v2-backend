@@ -12,8 +12,8 @@ import * as MessageFormat from 'messageformat';
 import * as path from 'path';
 import * as xml2js from 'xml2js';
 import { MatchTextToAssetsDb } from '../cache/assets';
-import { CasDAO } from '../db/CasDAO';
-import { MathjaxDAO } from '../db/MathjaxDAO';
+import CasDAO from '../db/CasDAO';
+import MathjaxDAO from '../db/MathjaxDAO';
 import { staticStatistics } from '../statistics';
 
 const derivates: Array<string> = require('../../assets/imageDerivates');
@@ -44,11 +44,14 @@ export class LibRouter {
       extensions: '', // for webfont urls in the CSS for HTML output
       fontURL: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS', // default MathJax config
       MathJax: {
-        jax: ['input/TeX', 'input/MathML', 'input/AsciiMath', 'output/CommonHTML'], extensions: [
+        jax: ['input/TeX', 'input/MathML', 'input/AsciiMath', 'output/CommonHTML'],
+        extensions: [
           'tex2jax.js', 'mml2jax.js', 'asciimath2jax.js', 'AssistiveMML.js',
-        ], TeX: {
+        ],
+        TeX: {
           extensions: ['AMSmath.js', 'AMSsymbols.js', 'noErrors.js', 'noUndefined.js', 'autoload-all.js', 'color.js'],
-        }, tex2jax: {
+        },
+        tex2jax: {
           processEscapes: true,
           processEnvironments: true,
           inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -61,12 +64,25 @@ export class LibRouter {
   public getAll(req: Request, res: Response, next: NextFunction): void {
     res.send({
       paths: [
-        { name: '/mathjax', description: 'Returns the rendered output of a given mathjax string' },
-        { name: '/mathjax/example/first', description: 'Returns the rendered output of an example mathjax MathMl string as svg' },
-        { name: '/mathjax/example/second', description: 'Returns the rendered output of an example mathjax TeX string as svg' },
-        { name: '/mathjax/example/third', description: 'Returns the rendered output of an example mathjax TeX string as svg' },
-        { name: '/cache/quiz/assets', description: 'Parses the quiz content and caches all external resources' },
-        { name: '/authorize', description: 'Handles authentication via CAS' },
+        {
+          name: '/mathjax',
+          description: 'Returns the rendered output of a given mathjax string',
+        }, {
+          name: '/mathjax/example/first',
+          description: 'Returns the rendered output of an example mathjax MathMl string as svg',
+        }, {
+          name: '/mathjax/example/second',
+          description: 'Returns the rendered output of an example mathjax TeX string as svg',
+        }, {
+          name: '/mathjax/example/third',
+          description: 'Returns the rendered output of an example mathjax TeX string as svg',
+        }, {
+          name: '/storage/quiz/assets',
+          description: 'Parses the quiz content and caches all external resources',
+        }, {
+          name: '/authorize',
+          description: 'Handles authentication via CAS',
+        },
       ],
     });
   }
@@ -78,7 +94,12 @@ export class LibRouter {
 
     const result: Array<ILinkImage> = [
       {
-        tagName: 'link', className: 'theme-meta-data', rel: 'manifest', id: 'link-manifest', href: `${manifestPath}`, type: 'image/png',
+        tagName: 'link',
+        className: 'theme-meta-data',
+        rel: 'manifest',
+        id: 'link-manifest',
+        href: `${manifestPath}`,
+        type: 'image/png',
       }, {
         tagName: 'link',
         className: 'theme-meta-data',
@@ -186,7 +207,9 @@ export class LibRouter {
 
     derivates.forEach((derivate) => {
       manifest.icons.push({
-        src: `${basePath}/assets/images/theme/${theme}/logo_s${derivate}.png`, sizes: derivate, type: 'image/png',
+        src: `${basePath}/assets/images/theme/${theme}/logo_s${derivate}.png`,
+        sizes: derivate,
+        type: 'image/png',
       });
     });
 
@@ -236,7 +259,8 @@ export class LibRouter {
     <mi>d</mi>
     <mi>z</mi>
   </mrow>
-</math>`, format: 'MathML', // 'inline-TeX', 'MathML'
+</math>`,
+      format: 'MathML', // 'inline-TeX', 'MathML'
       svg: true, //  svg:true, mml: true
     }, data => {
       if (!data.errors) {
@@ -247,7 +271,8 @@ export class LibRouter {
 
   public getSecondMathjaxExample(req: Request, res: Response, next: NextFunction): void {
     mjAPI.typeset({
-      math: `\\begin{align} a_1& =b_1+c_1\\\\ a_2& =b_2+c_2-d_2+e_2 \\end{align}`, format: 'TeX', // 'inline-TeX', 'MathML'
+      math: `\\begin{align} a_1& =b_1+c_1\\\\ a_2& =b_2+c_2-d_2+e_2 \\end{align}`,
+      format: 'TeX', // 'inline-TeX', 'MathML'
       mml: true, //  svg:true, mml: true
     }, data => {
       if (!data.errors) {
@@ -272,8 +297,13 @@ export class LibRouter {
     const result = [];
     if (!mathjaxArray.length) {
       res.send(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'renderMathjax', payload: {
-          mathjax: req.body.mathjax, format: req.body.format, mathjaxArray, output: req.body.output,
+        status: 'STATUS:FAILED',
+        step: 'renderMathjax',
+        payload: {
+          mathjax: req.body.mathjax,
+          format: req.body.format,
+          mathjaxArray,
+          output: req.body.output,
         },
       }));
 
@@ -321,7 +351,9 @@ export class LibRouter {
       });
     });
     res.json({
-      status: 'STATUS:SUCCESSFUL', step: 'CACHE:QUIZ_ASSETS', payload: {},
+      status: 'STATUS:SUCCESSFUL',
+      step: 'CACHE:QUIZ_ASSETS',
+      payload: {},
     });
   }
 
@@ -365,17 +397,26 @@ export class LibRouter {
             console.log('received response from cas server', err, result);
             if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
               res.send({
-                status: 'STATUS:FAILED', step: 'AUTHENTICATE', payload: { err, result },
+                status: 'STATUS:FAILED',
+                step: 'AUTHENTICATE',
+                payload: {
+                  err,
+                  result,
+                },
               });
               return;
             } else {
               const resultData = result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:attributes'][0];
               const casDataElement: ICasData = {
-                username: resultData['cas:username'], displayName: resultData['cas:displayNmae'], mail: resultData['cas:mail'],
+                username: resultData['cas:username'],
+                displayName: resultData['cas:displayNmae'],
+                mail: resultData['cas:mail'],
               };
               CasDAO.add(ticket, casDataElement);
               res.send({
-                status: 'STATUS:SUCCESSFUL', step: 'AUTHENTICATE', payload: { ticket },
+                status: 'STATUS:SUCCESSFUL',
+                step: 'AUTHENTICATE',
+                payload: { ticket },
               });
             }
           });
@@ -386,7 +427,9 @@ export class LibRouter {
         console.log('error at requesting cas url', error);
         casRequest.abort();
         res.send({
-          status: 'STATUS:FAILED', step: 'AUTHENTICATE', payload: { error },
+          status: 'STATUS:FAILED',
+          step: 'AUTHENTICATE',
+          payload: { error },
         });
         return;
       });

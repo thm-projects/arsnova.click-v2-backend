@@ -1,8 +1,8 @@
 import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response, Router } from 'express';
-import { DatabaseTypes, DbDAO } from '../db/DbDAO';
-import { QuizManagerDAO } from '../db/QuizManagerDAO';
+import { DatabaseTypes, default as DbDAO } from '../db/DbDAO';
+import QuizManagerDAO from '../db/QuizManagerDAO';
 
 export class LegacyApiRouter {
   private _router: Router;
@@ -19,7 +19,7 @@ export class LegacyApiRouter {
     this.init();
   }
 
-  public init(): void {
+  private init(): void {
     this._router.get('/', this.getAll);
     this._router.post('/keepalive', this.setKeepalive);
     this._router.post('/addHashtag', this.addHashtag);
@@ -47,7 +47,10 @@ export class LegacyApiRouter {
       return;
     }
     QuizManagerDAO.initInactiveQuiz(sessionConfiguration.hashtag);
-    DbDAO.create(DatabaseTypes.quiz, { quizName: sessionConfiguration.hashtag, privateKey: sessionConfiguration.privateKey });
+    DbDAO.create(DatabaseTypes.quiz, {
+      quizName: sessionConfiguration.hashtag,
+      privateKey: sessionConfiguration.privateKey,
+    });
     res.send('Hashtag successfully created');
   }
 

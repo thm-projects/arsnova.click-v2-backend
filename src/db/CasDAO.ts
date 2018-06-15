@@ -1,22 +1,26 @@
 import { ICasData } from 'arsnova-click-v2-types/src/common';
+import { AbstractDAO } from './AbstractDAO';
 
-export class CasDAO {
+class CasDAO extends AbstractDAO<object> {
 
-  private static readonly casData = {};
-
-  public static add(ticket: string, data: ICasData): void {
-    this.casData[ticket] = data;
+  public static getInstance(): CasDAO {
+    if (!this.instance) {
+      this.instance = new CasDAO({});
+    }
+    return this.instance;
   }
 
-  public static match(ticket: string): ICasData {
-    return this.casData[ticket];
+  public add(ticket: string, data: ICasData): void {
+    this.storage[ticket] = data;
   }
 
-  public static remove(ticket: string): void {
-    delete this.casData[ticket];
+  public match(ticket: string): ICasData {
+    return this.storage[ticket];
   }
 
-  public static createDump(): {} {
-    return CasDAO.casData;
+  public remove(ticket: string): void {
+    delete this.storage[ticket];
   }
 }
+
+export default CasDAO.getInstance();

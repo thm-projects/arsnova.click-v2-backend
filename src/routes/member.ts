@@ -1,6 +1,6 @@
 import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
 import { NextFunction, Request, Response, Router } from 'express';
-import { QuizManagerDAO } from '../db/QuizManagerDAO';
+import QuizManagerDAO from '../db/QuizManagerDAO';
 import { ActiveQuizItem } from '../quiz-manager/quiz-manager';
 
 export class MemberRouter {
@@ -24,7 +24,9 @@ export class MemberRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'QUIZ:ADD_MEMBER:QUIZ_INACTIVE', payload: {},
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:ADD_MEMBER:QUIZ_INACTIVE',
+        payload: {},
       }));
       return;
     }
@@ -34,7 +36,9 @@ export class MemberRouter {
     )) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'QUIZ:ADD_MEMBER:INVALID_PARAMETERS', payload: {},
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:ADD_MEMBER:INVALID_PARAMETERS',
+        payload: {},
       }));
       return;
     }
@@ -52,17 +56,24 @@ export class MemberRouter {
       activeQuiz.addMember(req.body.nickname, webSocketAuthorization, req.body.groupName, req.body.ticket);
 
       res.send({
-        status: 'STATUS:SUCCESSFUL', step: 'LOBBY:MEMBER_ADDED', payload: {
-          member: members[members.length - 1].serialize(), memberGroups: activeQuiz.memberGroups.map(memberGroup => {
+        status: 'STATUS:SUCCESSFUL',
+        step: 'LOBBY:MEMBER_ADDED',
+        payload: {
+          member: members[members.length - 1].serialize(),
+          memberGroups: activeQuiz.memberGroups.map(memberGroup => {
             return memberGroup.serialize();
-          }), sessionConfiguration: activeQuiz.originalObject.sessionConfig, webSocketAuthorization: webSocketAuthorization,
+          }),
+          sessionConfiguration: activeQuiz.originalObject.sessionConfig,
+          webSocketAuthorization: webSocketAuthorization,
         },
       });
 
     } catch (ex) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'LOBBY:MEMBER_ADDED', payload: { message: ex.message },
+        status: 'STATUS:FAILED',
+        step: 'LOBBY:MEMBER_ADDED',
+        payload: { message: ex.message },
       }));
     }
   }
@@ -72,13 +83,17 @@ export class MemberRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'QUIZ:ADD_READING_CONFIRMATION:QUIZ_INACTIVE', payload: {},
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:ADD_READING_CONFIRMATION:QUIZ_INACTIVE',
+        payload: {},
       }));
       return;
     }
     activeQuiz.setReadingConfirmation(req.body.nickname);
     res.send({
-      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:ADD_READING_CONFIRMATION', payload: {},
+      status: 'STATUS:SUCCESSFUL',
+      step: 'QUIZ:ADD_READING_CONFIRMATION',
+      payload: {},
     });
   }
 
@@ -87,13 +102,17 @@ export class MemberRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'QUIZ:ADD_CONFIDENCE_VALUE:QUIZ_INACTIVE', payload: {},
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:ADD_CONFIDENCE_VALUE:QUIZ_INACTIVE',
+        payload: {},
       }));
       return;
     }
     activeQuiz.setConfidenceValue(req.body.nickname, req.body.confidenceValue);
     res.send({
-      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:ADD_CONFIDENCE_VALUE', payload: {},
+      status: 'STATUS:SUCCESSFUL',
+      step: 'QUIZ:ADD_CONFIDENCE_VALUE',
+      payload: {},
     });
   }
 
@@ -102,7 +121,9 @@ export class MemberRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'QUIZ:REMOVE_MEMBER:QUIZ_INACTIVE', payload: {},
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:REMOVE_MEMBER:QUIZ_INACTIVE',
+        payload: {},
       }));
       return;
     }
@@ -110,7 +131,8 @@ export class MemberRouter {
     const response: Object = { status: `STATUS:${result ? 'SUCCESSFUL' : 'FAILED'}` };
     if (result) {
       Object.assign(response, {
-        step: 'LOBBY:MEMBER_REMOVED', payload: {},
+        step: 'LOBBY:MEMBER_REMOVED',
+        payload: {},
       });
     }
     res.send(response);
@@ -121,13 +143,17 @@ export class MemberRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'QUIZ:GET_MEMBERS:QUIZ_INACTIVE', payload: {},
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:GET_MEMBERS:QUIZ_INACTIVE',
+        payload: {},
       }));
       return;
     }
 
     res.send({
-      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:GET_MEMBERS', payload: {
+      status: 'STATUS:SUCCESSFUL',
+      step: 'QUIZ:GET_MEMBERS',
+      payload: {
         memberGroups: activeQuiz.memberGroups.map(memberGroup => memberGroup.serialize()),
       },
     });
@@ -138,7 +164,9 @@ export class MemberRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'QUIZ:GET_REMAINING_NICKS:QUIZ_INACTIVE', payload: {},
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:GET_REMAINING_NICKS:QUIZ_INACTIVE',
+        payload: {},
       }));
       return;
     }
@@ -148,7 +176,9 @@ export class MemberRouter {
       });
     });
     res.send({
-      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:GET_REMAINING_NICKS', payload: { nicknames: names },
+      status: 'STATUS:SUCCESSFUL',
+      step: 'QUIZ:GET_REMAINING_NICKS',
+      payload: { nicknames: names },
     });
   }
 
@@ -157,7 +187,9 @@ export class MemberRouter {
     if (!activeQuiz) {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'QUIZ:ADD_MEMBER_RESPONSE:QUIZ_INACTIVE', payload: {},
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:ADD_MEMBER_RESPONSE:QUIZ_INACTIVE',
+        payload: {},
       }));
       return;
     }
@@ -169,7 +201,9 @@ export class MemberRouter {
 
         res.sendStatus(500);
         res.end(JSON.stringify({
-          status: 'STATUS:FAILED', step: 'QUIZ:DUPLICATE_MEMBER_RESPONSE', payload: {},
+          status: 'STATUS:FAILED',
+          step: 'QUIZ:DUPLICATE_MEMBER_RESPONSE',
+          payload: {},
         }));
         return;
       }
@@ -178,7 +212,9 @@ export class MemberRouter {
     if (typeof req.body.value === 'undefined') {
       res.sendStatus(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED', step: 'QUIZ:INVALID_MEMBER_RESPONSE', payload: {},
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:INVALID_MEMBER_RESPONSE',
+        payload: {},
       }));
       return;
     }
@@ -186,7 +222,9 @@ export class MemberRouter {
     activeQuiz.addResponseValue(req.body.nickname, req.body.value);
 
     res.send({
-      status: 'STATUS:SUCCESSFUL', step: 'QUIZ:ADD_MEMBER_RESPONSE', payload: {},
+      status: 'STATUS:SUCCESSFUL',
+      step: 'QUIZ:ADD_MEMBER_RESPONSE',
+      payload: {},
     });
   }
 

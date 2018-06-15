@@ -3,23 +3,26 @@ import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces'
 import { parseCachedAssetQuiz } from '../cache/assets';
 import { ActiveQuizItem, ActiveQuizItemPlaceholder, MemberGroup } from '../quiz-manager/quiz-manager';
 import { settings } from '../statistics';
-import { DatabaseTypes, DbDAO } from './DbDAO';
+import { AbstractDAO } from './AbstractDAO';
+import { DatabaseTypes, default as DbDAO } from './DbDAO';
 
-export class QuizManagerDAO {
-  private static readonly activeQuizzes = {};
+class QuizManagerDAO extends AbstractDAO<object> {
 
-  public static createDump(): {} {
-    return QuizManagerDAO.activeQuizzes;
+  public static getInstance(): QuizManagerDAO {
+    if (!this.instance) {
+      this.instance = new QuizManagerDAO({});
+    }
+    return this.instance;
   }
 
-  public static normalizeQuizName(quizName: string): string {
+  public normalizeQuizName(quizName: string): string {
     return quizName ? quizName.toLowerCase() : '';
   }
 
-  public static getRenameRecommendations(quizName: string): Array<string> {
+  public getRenameRecommendations(quizName: string): Array<string> {
     const result = [];
-    const count = Object.keys(this.activeQuizzes).filter((value: string) => {
-      const name: string = QuizManagerDAO.normalizeQuizName(value);
+    const count = Object.keys(this.storage).filter((value: string) => {
+      const name: string = this.normalizeQuizName(value);
       return name.startsWith(quizName.toLowerCase());
     }).length;
     const date = new Date();
@@ -31,96 +34,100 @@ export class QuizManagerDAO {
     return result;
   }
 
-  public static setQuizAsInactive(quizName: string): void {
-    const name: string = QuizManagerDAO.normalizeQuizName(quizName);
-    if (this.activeQuizzes[name]) {
-      this.activeQuizzes[name] = new ActiveQuizItemPlaceholder(name);
+  public setQuizAsInactive(quizName: string): void {
+    const name: string = this.normalizeQuizName(quizName);
+    if (this.storage[name]) {
+      this.storage[name] = new ActiveQuizItemPlaceholder(name);
     }
   }
 
-  public static initInactiveQuiz(quizName: string): void {
-    const name: string = QuizManagerDAO.normalizeQuizName(quizName);
-    if (this.activeQuizzes[name]) {
+  public initInactiveQuiz(quizName: string): void {
+    const name: string = this.normalizeQuizName(quizName);
+    if (this.storage[name]) {
       return;
     }
-    this.activeQuizzes[name] = new ActiveQuizItemPlaceholder(name);
+    this.storage[name] = new ActiveQuizItemPlaceholder(name);
   }
 
-  public static initActiveQuiz(quiz: IQuestionGroup): IActiveQuiz {
-    const name: string = QuizManagerDAO.normalizeQuizName(quiz.hashtag);
-    if (!this.activeQuizzes[name] || !(
-      this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder
+  public initActiveQuiz(quiz: IQuestionGroup): IActiveQuiz {
+    const name: string = this.normalizeQuizName(quiz.hashtag);
+    if (!this.storage[name] || !(
+      this.storage[name] instanceof ActiveQuizItemPlaceholder
     )) {
       console.log('trying to init an active quiz which is not inactive');
       return;
     }
-    QuizManagerDAO.convertLegacyQuiz(quiz);
+    this.convertLegacyQuiz(quiz);
     if (settings.public.cacheQuizAssets) {
       parseCachedAssetQuiz(quiz.questionList);
     }
     const memberGroups = quiz.sessionConfig.nicks.memberGroups.map(groupName => new MemberGroup(groupName));
-    this.activeQuizzes[name] = new ActiveQuizItem({ memberGroups, originalObject: quiz, currentQuestionIndex: -1 });
-    return this.activeQuizzes[name];
+    this.storage[name] = new ActiveQuizItem({
+      memberGroups,
+      originalObject: quiz,
+      currentQuestionIndex: -1,
+    });
+    return this.storage[name];
   }
 
-  public static removeQuiz(originalName: string): boolean {
-    const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    if (!this.activeQuizzes[name]) {
+  public removeQuiz(originalName: string): boolean {
+    const name: string = this.normalizeQuizName(originalName);
+    if (!this.storage[name]) {
       return;
     }
-    delete this.activeQuizzes[name];
+    delete this.storage[name];
     return true;
   }
 
-  public static getActiveQuizByName(originalName: string): IActiveQuiz {
-    const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    if (this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
+  public getActiveQuizByName(originalName: string): IActiveQuiz {
+    const name: string = this.normalizeQuizName(originalName);
+    if (this.storage[name] instanceof ActiveQuizItemPlaceholder) {
       return;
     }
-    return this.activeQuizzes[name];
+    return this.storage[name];
   }
 
-  public static updateActiveQuiz(data: IActiveQuiz): void {
-    const name: string = QuizManagerDAO.normalizeQuizName(data.originalObject.hashtag);
-    if (this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
+  public updateActiveQuiz(data: IActiveQuiz): void {
+    const name: string = this.normalizeQuizName(data.originalObject.hashtag);
+    if (this.storage[name] instanceof ActiveQuizItemPlaceholder) {
       return;
     }
-    this.activeQuizzes[name] = data;
+    this.storage[name] = data;
   }
 
-  public static getAllActiveQuizNames(): Array<string> {
-    return Object.keys(this.activeQuizzes).filter(name => !this.isInactiveQuiz(name));
+  public getAllActiveQuizNames(): Array<string> {
+    return Object.keys(this.storage).filter(name => !this.isInactiveQuiz(name));
   }
 
-  public static getAllPersistedQuizzes(): Object {
-    return this.activeQuizzes;
+  public getAllPersistedQuizzes(): Object {
+    return this.storage;
   }
 
-  public static getPersistedQuizByName(originalName: string): IActiveQuiz {
-    const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    return this.activeQuizzes[name];
+  public getPersistedQuizByName(originalName: string): IActiveQuiz {
+    const name: string = this.normalizeQuizName(originalName);
+    return this.storage[name];
   }
 
-  public static isActiveQuiz(originalName: string): boolean {
-    const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    return this.activeQuizzes[name] && this.activeQuizzes[name] instanceof ActiveQuizItem;
+  public isActiveQuiz(originalName: string): boolean {
+    const name: string = this.normalizeQuizName(originalName);
+    return this.storage[name] && this.storage[name] instanceof ActiveQuizItem;
   }
 
-  public static isInactiveQuiz(originalName: string): boolean {
-    const name: string = QuizManagerDAO.normalizeQuizName(originalName);
-    return this.activeQuizzes[name] && this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder;
+  public isInactiveQuiz(originalName: string): boolean {
+    const name: string = this.normalizeQuizName(originalName);
+    return this.storage[name] && this.storage[name] instanceof ActiveQuizItemPlaceholder;
   }
 
-  public static getAllActiveMembers(): number {
+  public getAllActiveMembers(): number {
     let memberCount = 0;
 
-    Object.keys(this.activeQuizzes).forEach(quiz => {
-      const name: string = QuizManagerDAO.normalizeQuizName(quiz);
-      if (this.activeQuizzes[name] instanceof ActiveQuizItemPlaceholder) {
+    Object.keys(this.storage).forEach(quiz => {
+      const name: string = this.normalizeQuizName(quiz);
+      if (this.storage[name] instanceof ActiveQuizItemPlaceholder) {
         return;
       }
 
-      this.activeQuizzes[name].memberGroups.forEach(memberGroup => {
+      this.storage[name].memberGroups.forEach(memberGroup => {
         memberCount += memberGroup.members.length;
       });
     });
@@ -128,7 +135,7 @@ export class QuizManagerDAO {
     return memberCount;
   }
 
-  public static getLastPersistedNumberForData(data): number {
+  public getLastPersistedNumberForData(data): number {
     let maxNumber = 0;
     data.forEach((
       demoQuizName => {
@@ -141,38 +148,37 @@ export class QuizManagerDAO {
     return maxNumber;
   }
 
-  public static getLastPersistedDemoQuizNumber(): number {
-    return QuizManagerDAO.getLastPersistedNumberForData(QuizManagerDAO.getAllPersistedDemoQuizzes());
+  public getLastPersistedDemoQuizNumber(): number {
+    return this.getLastPersistedNumberForData(this.getAllPersistedDemoQuizzes());
   }
 
-  public static getLastPersistedAbcdQuizNumberByLength(length: number): number {
-    return QuizManagerDAO.getLastPersistedNumberForData(QuizManagerDAO.getAllPersistedAbcdQuizzesByLength(length));
+  public getLastPersistedAbcdQuizNumberByLength(length: number): number {
+    return this.getLastPersistedNumberForData(this.getAllPersistedAbcdQuizzesByLength(length));
   }
 
-  public static getAllPersistedDemoQuizzes(): String[] {
-    return Object.keys(this.activeQuizzes).filter((value: string) => {
-      const name: string = QuizManagerDAO.normalizeQuizName(value);
-      return this.activeQuizzes[name].name.toLowerCase().startsWith('demo quiz');
+  public getAllPersistedDemoQuizzes(): String[] {
+    return Object.keys(this.storage).filter((value: string) => {
+      const name: string = this.normalizeQuizName(value);
+      return this.storage[name].name.toLowerCase().startsWith('demo quiz');
     });
   }
 
-  public static getAllPersistedAbcdQuizzes(): String[] {
-    return Object.keys(this.activeQuizzes).filter((value: string) => {
-      const name: string = QuizManagerDAO.normalizeQuizName(value);
-      return QuizManagerDAO.checkABCDOrdering(this.activeQuizzes[name].name);
+  public getAllPersistedAbcdQuizzes(): String[] {
+    return Object.keys(this.storage).filter((value: string) => {
+      const name: string = this.normalizeQuizName(value);
+      return this.checkABCDOrdering(this.storage[name].name);
     });
   }
 
-  public static getAllPersistedAbcdQuizzesByLength(length: number): String[] {
-    return Object.keys(this.activeQuizzes).filter((value: string) => {
-      const name: string = QuizManagerDAO.normalizeQuizName(value);
-      return QuizManagerDAO.checkABCDOrdering(this.activeQuizzes[name].name)
-             && this.activeQuizzes[name].originalObject.questionList[0].answerOptionList.length === length;
+  public getAllPersistedAbcdQuizzesByLength(length: number): String[] {
+    return Object.keys(this.storage).filter((value: string) => {
+      const name: string = this.normalizeQuizName(value);
+      return this.checkABCDOrdering(this.storage[name].name) && this.storage[name].originalObject.questionList[0].answerOptionList.length === length;
     });
   }
 
-  public static convertLegacyQuiz(legacyQuiz: any): void {
-    QuizManagerDAO.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
+  public convertLegacyQuiz(legacyQuiz: any): void {
+    this.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
     if (legacyQuiz.hasOwnProperty('configuration')) {
       // Detected old v1 arsnova.click quiz
       legacyQuiz.sessionConfig = {
@@ -181,13 +187,15 @@ export class QuizManagerDAO {
             lobby: legacyQuiz.configuration.music.lobbyTitle,
             countdownRunning: legacyQuiz.configuration.music.countdownRunningTitle,
             countdownEnd: legacyQuiz.configuration.music.countdownEndTitle,
-          }, volumeConfig: {
+          },
+          volumeConfig: {
             global: legacyQuiz.configuration.music.lobbyVolume,
             lobby: legacyQuiz.configuration.music.lobbyVolume,
             countdownRunning: legacyQuiz.configuration.music.countdownRunningVolume,
             countdownEnd: legacyQuiz.configuration.music.countdownEndVolume,
             useGlobalVolume: legacyQuiz.configuration.music.isUsingGlobalVolume,
-          }, enabled: {
+          },
+          enabled: {
             lobby: legacyQuiz.configuration.music.lobbyEnabled,
             countdownRunning: legacyQuiz.configuration.music.countdownRunningEnabled,
             countdownEnd: legacyQuiz.configuration.music.countdownEndEnabled,
@@ -207,7 +215,7 @@ export class QuizManagerDAO {
     }
   }
 
-  private static checkABCDOrdering(hashtag: string): boolean {
+  private checkABCDOrdering(hashtag: string): boolean {
     let ordered = true;
     if (!hashtag || hashtag.length < 2 || hashtag.charAt(0) !== 'a') {
       return false;
@@ -221,7 +229,7 @@ export class QuizManagerDAO {
     return ordered;
   }
 
-  private static replaceTypeInformationOnLegacyQuiz(obj): void {
+  private replaceTypeInformationOnLegacyQuiz(obj): void {
     if (obj.hasOwnProperty('type')) {
       obj.TYPE = obj.type;
       delete obj.type;
@@ -239,5 +247,7 @@ export class QuizManagerDAO {
 }
 
 DbDAO.getState()[DatabaseTypes.quiz].forEach((value) => {
-  QuizManagerDAO.initInactiveQuiz(value.quizName);
+  QuizManagerDAO.getInstance().initInactiveQuiz(value.quizName);
 });
+
+export default QuizManagerDAO.getInstance();

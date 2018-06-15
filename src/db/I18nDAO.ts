@@ -2,17 +2,19 @@ import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectGitLocation } from '../statistics';
+import { AbstractDAO } from './AbstractDAO';
 
-export class I18nDAO {
+class I18nDAO extends AbstractDAO<object> {
 
-  public static readonly cache = { 'arsnova-click-v2-backend': {} };
-
-  public static createDump(): {} {
-    return I18nDAO.cache;
+  public static getInstance(): I18nDAO {
+    if (!this.instance) {
+      this.instance = new I18nDAO({ 'arsnova-click-v2-backend': {} });
+    }
+    return this.instance;
   }
 
-  public static reloadCache(): void {
-    Object.keys(I18nDAO.cache).forEach(projectName => {
+  public reloadCache(): void {
+    Object.keys(this.storage).forEach(projectName => {
       console.log(``);
       console.log(`------- Building cache for '${projectName}' -------`);
 
@@ -20,28 +22,30 @@ export class I18nDAO {
       const langDataStart = new Date().getTime();
       const langData = [];
       availableLangs.forEach((langRef, index) => {
-        I18nDAO.buildKeys({
+        this.buildKeys({
           root: '',
           dataNode: JSON.parse(fs.readFileSync(path.join(i18nFileBaseLocation[projectName], `${langRef}.json`)).toString('UTF-8')),
           langRef,
           langData,
         });
       });
-      I18nDAO.cache[projectName].langData = langData;
+      this.storage[projectName].langData = langData;
       const langDataEnd = new Date().getTime();
       console.log(`-- Done. Took ${langDataEnd - langDataStart}ms`);
 
       console.log(`* Fetching unused keys`);
       const unusedKeysStart = new Date().getTime();
-      I18nDAO.cache[projectName].unused = I18nDAO.getUnusedKeys({
-        params: {}, projectAppLocation: projectAppLocation[projectName], i18nFileBaseLocation: i18nFileBaseLocation[projectName],
+      this.storage[projectName].unused = this.getUnusedKeys({
+        params: {},
+        projectAppLocation: projectAppLocation[projectName],
+        i18nFileBaseLocation: i18nFileBaseLocation[projectName],
       });
       const unusedKeysEnd = new Date().getTime();
       console.log(`-- Done. Took ${unusedKeysEnd - unusedKeysStart}ms`);
 
       console.log(`* Fetching active git branch`);
       const gitBranchStart = new Date().getTime();
-      I18nDAO.cache[projectName].branch = I18nDAO.getBranch({
+      this.storage[projectName].branch = this.getBranch({
         projectGitLocation: projectGitLocation[projectName],
       });
       const gitBranchEnd = new Date().getTime();
@@ -52,13 +56,13 @@ export class I18nDAO {
     console.log(`Cache built successfully`);
   }
 
-  public static buildKeys({ root, dataNode, langRef, langData }): void {
+  public buildKeys({ root, dataNode, langRef, langData }): void {
 
     if (!dataNode) {
       return;
     }
 
-    if (I18nDAO.isString(dataNode)) {
+    if (this.isString(dataNode)) {
 
       const existingKey = langData.find(elem => elem.key === root);
 
@@ -67,26 +71,34 @@ export class I18nDAO {
       } else {
         const value = {};
         value[langRef] = dataNode;
-        langData.push({ key: root, value });
+        langData.push({
+          key: root,
+          value,
+        });
       }
 
     } else {
       Object.keys(dataNode).forEach(key => {
         const rootKey = root ? `${root}.` : '';
-        I18nDAO.buildKeys({ root: `${rootKey}${key}`, dataNode: dataNode[key], langRef, langData });
+        this.buildKeys({
+          root: `${rootKey}${key}`,
+          dataNode: dataNode[key],
+          langRef,
+          langData,
+        });
       });
     }
   }
 
-  public static getUnusedKeys(req): object {
+  public getUnusedKeys(req): object {
     const result = {};
-    const fileNames = I18nDAO.fromDir(req.projectAppLocation, /\.(ts|html|js)$/);
+    const fileNames = this.fromDir(req.projectAppLocation, /\.(ts|html|js)$/);
     const langRefs = req.params.langRef ? [req.params.langRef] : availableLangs;
 
     for (let i = 0; i < langRefs.length; i++) {
       result[langRefs[i]] = [];
       const i18nFileContent = JSON.parse(fs.readFileSync(path.join(req.i18nFileBaseLocation, `${langRefs[i]}.json`)).toString('UTF-8'));
-      const objectPaths = I18nDAO.objectPath(i18nFileContent);
+      const objectPaths = this.objectPath(i18nFileContent);
 
       objectPaths.forEach((
         i18nPath => {
@@ -108,13 +120,13 @@ export class I18nDAO {
     return result;
   }
 
-  public static getBranch(req): string {
+  public getBranch(req): string {
     const command = `git branch 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \\(.*\\)/\\1/"`;
     const child = spawnSync('/bin/sh', [`-c`, command], { cwd: req.projectGitLocation });
     return child.stdout.toString().replace('\n', '');
   }
 
-  public static createObjectFromKeys({ data, result }): void {
+  public createObjectFromKeys({ data, result }): void {
 
     for (const langRef in result) {
       if (result.hasOwnProperty(langRef)) {
@@ -139,7 +151,7 @@ export class I18nDAO {
     }
   }
 
-  private static fromDir(startPath, filter): Array<string> {
+  private fromDir(startPath, filter): Array<string> {
     if (!fs.existsSync(startPath)) {
       console.log('no dir ', startPath);
       return;
@@ -152,7 +164,7 @@ export class I18nDAO {
       const filename = path.join(startPath, files[i]);
       const stat = fs.lstatSync(filename);
       if (stat.isDirectory()) {
-        result = result.concat(I18nDAO.fromDir(filename, filter));
+        result = result.concat(this.fromDir(filename, filter));
       } else if (filter.test(filename)) {
         result.push(filename);
       }
@@ -160,7 +172,7 @@ export class I18nDAO {
     return result;
   }
 
-  private static objectPath(obj, currentPath = ''): Array<string> {
+  private objectPath(obj, currentPath = ''): Array<string> {
     let localCurrentPath = currentPath;
     let result = [];
 
@@ -170,7 +182,7 @@ export class I18nDAO {
     for (const prop in obj) {
       if (obj.hasOwnProperty(prop)) {
         if (typeof obj[prop] === 'object') {
-          result = result.concat(I18nDAO.objectPath(obj[prop], localCurrentPath + prop));
+          result = result.concat(this.objectPath(obj[prop], localCurrentPath + prop));
         } else {
           result.push(localCurrentPath + prop);
         }
@@ -179,7 +191,9 @@ export class I18nDAO {
     return result;
   }
 
-  private static isString(data): boolean {
+  private isString(data): boolean {
     return typeof data === 'string';
   }
 }
+
+export default I18nDAO.getInstance();

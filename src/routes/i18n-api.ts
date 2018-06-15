@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { I18nDAO } from '../db/I18nDAO';
+import I18nDAO from '../db/I18nDAO';
 import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectBaseLocation, projectGitLocation } from '../statistics';
 
 export class I18nApiRouter {
@@ -19,10 +19,14 @@ export class I18nApiRouter {
     this.init();
   }
 
-  public init(): void {
+  private init(): void {
     this._router.param('project', (req: any, res, next, project) => {
       if (!project || !i18nFileBaseLocation[project]) {
-        res.status(500).send({ status: 'STATUS:FAILED', data: 'Invalid Project specified', payload: { project } });
+        res.status(500).send({
+          status: 'STATUS:FAILED',
+          data: 'Invalid Project specified',
+          payload: { project },
+        });
       } else {
         req.i18nFileBaseLocation = i18nFileBaseLocation[project];
         req.projectBaseLocation = projectBaseLocation[project];
@@ -42,9 +46,13 @@ export class I18nApiRouter {
   }
 
   private getLangFile(req: any, res: Response, next: NextFunction): void {
-    const payload = { langData: {}, unused: {}, branch: {} };
+    const payload = {
+      langData: {},
+      unused: {},
+      branch: {},
+    };
 
-    if (!I18nDAO.cache[req.projectCache].langData) {
+    if (!I18nDAO.storage[req.projectCache].langData) {
       const langData = [];
       availableLangs.forEach((langRef, index) => {
         I18nDAO.buildKeys({
@@ -54,41 +62,61 @@ export class I18nApiRouter {
           langData,
         });
       });
-      I18nDAO.cache[req.projectCache].langData = langData;
+      I18nDAO.storage[req.projectCache].langData = langData;
     }
-    payload.langData = I18nDAO.cache[req.projectCache].langData;
+    payload.langData = I18nDAO.storage[req.projectCache].langData;
 
-    if (!I18nDAO.cache[req.projectCache].unused) {
-      I18nDAO.cache[req.projectCache].unused = I18nDAO.getUnusedKeys(req);
+    if (!I18nDAO.storage[req.projectCache].unused) {
+      I18nDAO.storage[req.projectCache].unused = I18nDAO.getUnusedKeys(req);
     }
-    payload.unused = I18nDAO.cache[req.projectCache].unused;
+    payload.unused = I18nDAO.storage[req.projectCache].unused;
 
-    if (!I18nDAO.cache[req.projectCache].branch) {
-      I18nDAO.cache[req.projectCache].branch = I18nDAO.getBranch(req);
+    if (!I18nDAO.storage[req.projectCache].branch) {
+      I18nDAO.storage[req.projectCache].branch = I18nDAO.getBranch(req);
     }
-    payload.branch = I18nDAO.cache[req.projectCache].branch;
+    payload.branch = I18nDAO.storage[req.projectCache].branch;
 
-    res.send({ status: 'STATUS:SUCCESSFUL', payload });
+    res.send({
+      status: 'STATUS:SUCCESSFUL',
+      payload,
+    });
   }
 
   private updateLang(req: any, res: Response, next: NextFunction): void {
     if (!req.body.data) {
-      res.status(500).send({ status: 'STATUS:FAILED', data: 'Invalid Data', payload: { body: req.body } });
+      res.status(500).send({
+        status: 'STATUS:FAILED',
+        data: 'Invalid Data',
+        payload: { body: req.body },
+      });
       return;
     }
 
-    const result = { en: {}, de: {}, es: {}, fr: {}, it: {} };
+    const result = {
+      en: {},
+      de: {},
+      es: {},
+      fr: {},
+      it: {},
+    };
     const langKeys = Object.keys(result);
-    I18nDAO.createObjectFromKeys({ data: req.body.data, result });
+    I18nDAO.createObjectFromKeys({
+      data: req.body.data,
+      result,
+    });
 
-    I18nDAO.cache[req.projectCache].langData = req.body.data;
+    I18nDAO.storage[req.projectCache].langData = req.body.data;
 
     langKeys.forEach((langRef, index) => {
       const fileContent = result[langRef];
       const fileLocation = path.join(req.i18nFileBaseLocation, `${langRef}.json`);
       const exists = fs.existsSync(fileLocation);
       if (!exists) {
-        res.status(404).send({ status: 'STATUS:FAILED', data: 'File not found', payload: { fileLocation } });
+        res.status(404).send({
+          status: 'STATUS:FAILED',
+          data: 'File not found',
+          payload: { fileLocation },
+        });
         return;
       }
       fs.writeFileSync(fileLocation, JSON.stringify(fileContent));

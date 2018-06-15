@@ -7,7 +7,7 @@ import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
 
 import router from '../../App';
-import { QuizManagerDAO } from '../../db/QuizManagerDAO';
+import QuizManagerDAO from '../../db/QuizManagerDAO';
 import { staticStatistics } from '../../statistics';
 
 chai.use(require('chai-http'));
@@ -42,7 +42,9 @@ class MathjaxLibRouterTestSuite {
   @test
   public async mathjaxExists(): Promise<void> {
     const res = await chai.request(router).post(`${this._baseApiRoute}`).send({
-      mathjax: JSON.stringify('\\begin a_1 = b_1 + c_1 a_2 = b_2 + c_2 - d_2 + e_2 \\end'), format: 'TeX', output: 'svg',
+      mathjax: JSON.stringify('\\begin a_1 = b_1 + c_1 a_2 = b_2 + c_2 - d_2 + e_2 \\end'),
+      format: 'TeX',
+      output: 'svg',
     });
     expect(res.type).to.eql('text/html');
   }
@@ -94,7 +96,7 @@ class CacheQuizAssetsLibRouterTestSuite {
     const parsedQuiz: IQuestionGroup = QuizManagerDAO.initActiveQuiz(this._quiz).originalObject;
     expect(parsedQuiz.questionList.map(question => question.questionText)
     .filter(questionText => questionText.indexOf(staticStatistics.rewriteAssetCacheUrl) > -1).length).to.be
-    .greaterThan(0, 'Expect to find the rewritten assets cache url');
+    .greaterThan(0, 'Expect to find the rewritten assets storage url');
   }
 
   @test
