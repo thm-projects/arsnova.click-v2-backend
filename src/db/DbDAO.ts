@@ -9,7 +9,7 @@ import { createHomePath } from '../app_bootstrap';
 import { AbstractDAO } from './AbstractDAO';
 
 export enum DatabaseTypes {
-  quiz = 'quiz', assets = 'assets'
+  quiz = 'quiz', assets = 'assets', users = 'users'
 }
 
 const homedir = require('os').homedir();
@@ -38,6 +38,9 @@ class DbDAO extends AbstractDAO<typeof db> {
     }
     if (!state[DatabaseTypes.assets]) {
       this.initDb(DatabaseTypes.assets, {});
+    }
+    if (!state[DatabaseTypes.users]) {
+      this.initDb(DatabaseTypes.users, {});
     }
   }
 

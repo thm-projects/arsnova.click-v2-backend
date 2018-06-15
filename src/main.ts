@@ -11,6 +11,7 @@ import { createDefaultPaths } from './app_bootstrap';
 import CasDAO from './db/CasDAO';
 import DbDAO from './db/DbDAO';
 import I18nDAO from './db/I18nDAO';
+import LoginDAO from './db/LoginDAO';
 import MathjaxDAO from './db/MathjaxDAO';
 import QuizManagerDAO from './db/QuizManagerDAO';
 import { WebSocketRouter } from './routes/websocket';
@@ -26,7 +27,7 @@ interface IHotModule extends NodeModule {
 
 export declare interface IGlobal extends NodeJS.Global {
   DAO: {
-    CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizManagerDAO: {}, DbDAO: {},
+    CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizManagerDAO: {}, DbDAO: {}, LoginDAO: {}
   };
   createDump: Function;
 }
@@ -72,6 +73,7 @@ process.on('uncaughtException', rejectionToCreateDump);
   MathjaxDAO,
   QuizManagerDAO,
   DbDAO,
+  LoginDAO,
 };
 (
   <IGlobal>global

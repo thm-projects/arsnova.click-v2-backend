@@ -1,7 +1,7 @@
 import { ICasData } from 'arsnova-click-v2-types/src/common';
 import { AbstractDAO } from './AbstractDAO';
 
-class CasDAO extends AbstractDAO<object> {
+class CasDAO extends AbstractDAO<{ [key: string]: ICasData }> {
 
   public static getInstance(): CasDAO {
     if (!this.instance) {

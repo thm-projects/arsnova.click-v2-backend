@@ -117,4 +117,21 @@ class AuthorizeLibRouterTestSuite {
     .set('referer', staticStatistics.rewriteAssetCacheUrl);
     expect(res.type).to.eql('text/html');
   }
+
+  @test
+  public async authorizeStaticExists(): Promise<void> {
+    const res = await chai.request(router)
+    .post(`${this._baseApiRoute}/static`).send({
+      username: 'testuser',
+      passwordHash: 'testpasshash',
+    });
+    expect(res.type).to.eql('application/json');
+  }
+
+  @test
+  public async validateTokenExists(): Promise<void> {
+    const res = await chai.request(router)
+    .get(`${this._baseApiRoute}/validate/testuser/testToken`);
+    expect(res.type).to.eql('application/json');
+  }
 }

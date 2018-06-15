@@ -6,7 +6,7 @@ import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 import { DatabaseTypes, default as DbDAO } from './DbDAO';
 
-class QuizManagerDAO extends AbstractDAO<object> {
+class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
 
   public static getInstance(): QuizManagerDAO {
     if (!this.instance) {

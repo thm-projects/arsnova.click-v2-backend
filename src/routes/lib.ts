@@ -13,6 +13,7 @@ import * as path from 'path';
 import * as xml2js from 'xml2js';
 import { MatchTextToAssetsDb } from '../cache/assets';
 import CasDAO from '../db/CasDAO';
+import LoginDAO from '../db/LoginDAO';
 import MathjaxDAO from '../db/MathjaxDAO';
 import { staticStatistics } from '../statistics';
 
@@ -382,64 +383,119 @@ export class LibRouter {
     }
     serviceUrl = encodeURIComponent(serviceUrl.replace(`?ticket=${ticket}`, ''));
 
-    if (ticket) {
-
-      const casRequest = https.get(`${casSettings.base_url}/serviceValidate?ticket=${ticket}&service=${serviceUrl}`, (casResponse) => {
-
-        let data = '';
-
-        casResponse.on('data', (chunk) => {
-          data += chunk;
-        });
-
-        casResponse.on('end', () => {
-          xml2js.parseString(data, (err, result) => {
-            console.log('received response from cas server', err, result);
-            if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
-              res.send({
-                status: 'STATUS:FAILED',
-                step: 'AUTHENTICATE',
-                payload: {
-                  err,
-                  result,
-                },
-              });
-              return;
-            } else {
-              const resultData = result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:attributes'][0];
-              const casDataElement: ICasData = {
-                username: resultData['cas:username'],
-                displayName: resultData['cas:displayNmae'],
-                mail: resultData['cas:mail'],
-              };
-              CasDAO.add(ticket, casDataElement);
-              res.send({
-                status: 'STATUS:SUCCESSFUL',
-                step: 'AUTHENTICATE',
-                payload: { ticket },
-              });
-            }
-          });
-        });
-      });
-
-      casRequest.on('error', (error) => {
-        console.log('error at requesting cas url', error);
-        casRequest.abort();
-        res.send({
-          status: 'STATUS:FAILED',
-          step: 'AUTHENTICATE',
-          payload: { error },
-        });
-        return;
-      });
-
-    } else {
+    if (!ticket) {
 
       const loginUrl = `${casSettings.base_url}/login?service=${serviceUrl}`;
       res.redirect(loginUrl);
-
+      return;
     }
+
+    const casRequest = https.get(`${casSettings.base_url}/serviceValidate?ticket=${ticket}&service=${serviceUrl}`, (casResponse) => {
+
+      let data = '';
+
+      casResponse.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      casResponse.on('end', () => {
+        xml2js.parseString(data, (err, result) => {
+          console.log('received response from cas server', err, result);
+          if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
+            res.send({
+              status: 'STATUS:FAILED',
+              step: 'AUTHENTICATE',
+              payload: {
+                err,
+                result,
+              },
+            });
+            return;
+          } else {
+            const resultData = result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:attributes'][0];
+            const casDataElement: ICasData = {
+              username: resultData['cas:username'],
+              displayName: resultData['cas:displayNmae'],
+              mail: resultData['cas:mail'],
+            };
+            CasDAO.add(ticket, casDataElement);
+            res.send({
+              status: 'STATUS:SUCCESSFUL',
+              step: 'AUTHENTICATE',
+              payload: { ticket },
+            });
+          }
+        });
+      });
+    });
+
+    casRequest.on('error', (error) => {
+      console.log('error at requesting cas url', error);
+      casRequest.abort();
+      res.send({
+        status: 'STATUS:FAILED',
+        step: 'AUTHENTICATE',
+        payload: { error },
+      });
+      return;
+    });
+
+  }
+
+  private authorizeStatic(req: Request, res: Response): void {
+    const username = req.body.username;
+    const passwordHash = req.body.passwordHash;
+    let token = req.body.token;
+
+    if (!username || !passwordHash || !LoginDAO.validateUser(username, passwordHash)) {
+      res.send({
+        status: 'STATUS:FAILED',
+        step: 'AUTHENTICATE_STATIC',
+        payload: { reason: 'UNKOWN_LOGIN' },
+      });
+      return;
+    }
+
+    if (!token || typeof token !== 'string' || token.length === 0) {
+      token = this.randomValueHex();
+      LoginDAO.setTokenForUser(username, token);
+
+      res.send({
+        status: 'STATUS:SUCCESSFUL',
+        step: 'AUTHENTICATE_STATIC',
+        payload: { token },
+      });
+      return;
+    }
+
+    const isTokenValid = LoginDAO.validateTokenForUser(username, token);
+
+    res.send({
+      status: `STATUS:${isTokenValid ? 'SUCCESSFUL' : 'FAILED'}`,
+      step: 'AUTHENTICATE_STATIC',
+      payload: { isTokenValid },
+    });
+    return;
+  }
+
+  private validateToken(req: Request, res: Response): void {
+    const username = req.params.username;
+    const token = req.params.token;
+
+    if (!LoginDAO.validateTokenForUser(username, token)) {
+      res.send({
+        status: 'STATUS:FAILED',
+        step: 'AUTHENTICATE_STATIC',
+        payload: { reason: 'UNKOWN_LOGIN' },
+      });
+      return;
+    }
+
+    res.send({
+      status: 'STATUS:SUCCESSFUL',
+      step: 'AUTHENTICATE_STATIC',
+    });
+    return;
   }
 
   private randomValueHex(len: number = 40): string {
@@ -468,7 +524,10 @@ export class LibRouter {
     this._router.post('/cache/quiz/assets', this.cacheQuizAssets.bind(this));
     this._router.get('/cache/quiz/assets/:digest', this.getCache.bind(this));
 
+    this._router.post('/authorize/static', this.authorizeStatic.bind(this));
     this._router.get('/authorize/:ticket?', this.authorize.bind(this));
+
+    this._router.get('/authorize/validate/:username/:token', this.validateToken.bind(this));
   }
 
 }
