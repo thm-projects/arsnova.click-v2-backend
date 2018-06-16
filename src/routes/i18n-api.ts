@@ -2,6 +2,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import I18nDAO from '../db/I18nDAO';
+import LoginDAO from '../db/LoginDAO';
 import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectBaseLocation, projectGitLocation } from '../statistics';
 
 export class I18nApiRouter {
@@ -83,10 +84,22 @@ export class I18nApiRouter {
   }
 
   private updateLang(req: any, res: Response, next: NextFunction): void {
+    const username = req.body.username;
+    const token = req.body.token;
+
+    if (!LoginDAO.validateTokenForUser(username, token)) {
+      res.send({
+        status: 'STATUS:FAILED',
+        step: 'AUTHENTICATE_STATIC',
+        payload: { reason: 'UNKOWN_LOGIN' },
+      });
+      return;
+    }
+
     if (!req.body.data) {
       res.status(500).send({
         status: 'STATUS:FAILED',
-        data: 'Invalid Data',
+        step: 'INVALID_DATA',
         payload: { body: req.body },
       });
       return;
@@ -114,7 +127,7 @@ export class I18nApiRouter {
       if (!exists) {
         res.status(404).send({
           status: 'STATUS:FAILED',
-          data: 'File not found',
+          step: 'FILE_NOT_FOUND',
           payload: { fileLocation },
         });
         return;
