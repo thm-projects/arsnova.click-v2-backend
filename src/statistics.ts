@@ -1,5 +1,6 @@
 import { cpus, freemem, hostname, loadavg, networkInterfaces, totalmem } from 'os';
 import * as path from 'path';
+import * as process from 'process';
 import QuizManagerDAO from './db/QuizManagerDAO';
 
 declare function require(name: string): any;

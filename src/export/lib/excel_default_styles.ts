@@ -12,50 +12,82 @@ export class ExcelTheme {
   }
 
   public getStyles(): any {
+    // noinspection TypeScriptUnresolvedVariable
     return {
       quizNameRowStyle: {
         alignment: {
           vertical: 'center',
-        }, font: {
-          color: themeData[this._selectedTheme].quizNameRowStyle.fg,
-        }, fill: {
-          type: 'pattern', patternType: 'solid', fgColor: themeData[this._selectedTheme].quizNameRowStyle.bg,
         },
-      }, exportedAtRowStyle: {
+        font: {
+          color: themeData[this._selectedTheme].quizNameRowStyle.fg,
+        },
+        fill: {
+          type: 'pattern',
+          patternType: 'solid',
+          fgColor: themeData[this._selectedTheme].quizNameRowStyle.bg,
+        },
+      },
+      exportedAtRowStyle: {
         font: {
           color: themeData[this._selectedTheme].exportedAtRowStyle.fg,
-        }, fill: {
-          type: 'pattern', patternType: 'solid', fgColor: themeData[this._selectedTheme].exportedAtRowStyle.bg,
         },
-      }, questionCellStyle: {
+        fill: {
+          type: 'pattern',
+          patternType: 'solid',
+          fgColor: themeData[this._selectedTheme].exportedAtRowStyle.bg,
+        },
+      },
+      questionCellStyle: {
         alignment: {
-          wrapText: true, vertical: 'top',
+          wrapText: true,
+          vertical: 'top',
         },
-      }, statisticsRowStyle: {
+      },
+      statisticsRowStyle: {
         font: {
           color: themeData[this._selectedTheme].statisticsRowStyle.fg,
-        }, fill: {
-          type: 'pattern', patternType: 'solid', fgColor: themeData[this._selectedTheme].statisticsRowStyle.bg,
         },
-      }, statisticsRowInnerStyle: {}, attendeeHeaderGroupRowStyle: {
+        fill: {
+          type: 'pattern',
+          patternType: 'solid',
+          fgColor: themeData[this._selectedTheme].statisticsRowStyle.bg,
+        },
+      },
+      statisticsRowInnerStyle: {},
+      attendeeHeaderGroupRowStyle: {
         font: {
-          bold: true, color: themeData[this._selectedTheme].attendeeHeaderGroupRowStyle.fg,
-        }, fill: {
-          type: 'pattern', patternType: 'solid', fgColor: themeData[this._selectedTheme].attendeeHeaderGroupRowStyle.bg,
+          bold: true,
+          color: themeData[this._selectedTheme].attendeeHeaderGroupRowStyle.fg,
         },
-      }, attendeeHeaderRowStyle: {
+        fill: {
+          type: 'pattern',
+          patternType: 'solid',
+          fgColor: themeData[this._selectedTheme].attendeeHeaderGroupRowStyle.bg,
+        },
+      },
+      attendeeHeaderRowStyle: {
         alignment: {
-          wrapText: true, horizontal: 'center', vertical: 'center',
-        }, font: {
-          color: themeData[this._selectedTheme].attendeeHeaderRowStyle.fg,
-        }, fill: {
-          type: 'pattern', patternType: 'solid', fgColor: themeData[this._selectedTheme].attendeeHeaderRowStyle.bg,
+          wrapText: true,
+          horizontal: 'center',
+          vertical: 'center',
         },
-      }, attendeeEntryRowStyle: {
+        font: {
+          color: themeData[this._selectedTheme].attendeeHeaderRowStyle.fg,
+        },
+        fill: {
+          type: 'pattern',
+          patternType: 'solid',
+          fgColor: themeData[this._selectedTheme].attendeeHeaderRowStyle.bg,
+        },
+      },
+      attendeeEntryRowStyle: {
         font: {
           color: themeData[this._selectedTheme].attendeeEntryRowStyle.fg,
-        }, fill: {
-          type: 'pattern', patternType: 'solid', fgColor: themeData[this._selectedTheme].attendeeEntryRowStyle.bg,
+        },
+        fill: {
+          type: 'pattern',
+          patternType: 'solid',
+          fgColor: themeData[this._selectedTheme].attendeeEntryRowStyle.bg,
         },
       },
     };

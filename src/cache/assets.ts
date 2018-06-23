@@ -1,11 +1,12 @@
 import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as Hex from 'crypto-js/enc-hex';
-import * as sha256 from 'crypto-js/sha256';
 import * as fs from 'fs';
 import * as request from 'request';
 import { DatabaseTypes, default as DbDAO } from '../db/DbDAO';
 import { staticStatistics } from '../statistics';
+
+const sha256 = require('crypto-js/sha256');
 
 export const assetsUrlRegex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
 
@@ -30,7 +31,7 @@ export function MatchTextToAssetsDb(value: string): void {
       const req = request(matchedValueElement);
       req.on('response', (response) => {
         const contentType = response.headers['content-type'];
-        const hasContentTypeMatched = acceptedFileTypes.some((contentTypeRegex) => contentType.match(contentTypeRegex));
+        const hasContentTypeMatched = acceptedFileTypes.some((contentTypeRegex) => contentType.match(contentTypeRegex) !== null);
         if (hasContentTypeMatched) {
           DbDAO.create(DatabaseTypes.assets, {
             url: matchedValueElement,

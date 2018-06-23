@@ -4,7 +4,10 @@ import * as fs from 'fs';
 import * as lowdb from 'lowdb';
 import { AdapterSync } from 'lowdb';
 import * as FileSync from 'lowdb/adapters/FileSync';
+import * as MemoryDb from 'lowdb/adapters/Memory';
+import * as Minimist from 'minimist';
 import * as path from 'path';
+import * as process from 'process';
 import { createHomePath } from '../app_bootstrap';
 import { AbstractDAO } from './AbstractDAO';
 
@@ -12,8 +15,8 @@ export enum DatabaseTypes {
   quiz = 'quiz', assets = 'assets', users = 'users'
 }
 
+const argv = Minimist(process.argv.slice(2));
 const homedir = require('os').homedir();
-const pathToDb = path.join(homedir, '.arsnova-click-v2-backend', 'arsnova-click-v2-db-v1.json');
 if (createHomePath) {
   createHomePath();
 } else {
@@ -25,7 +28,18 @@ if (createHomePath) {
 }
 
 // DB Lib: https://github.com/typicode/lowdb
-const adapter: AdapterSync = new FileSync(pathToDb);
+let adapter: AdapterSync;
+if (typeof argv.db !== 'undefined' && !argv.db) {
+  adapter = new MemoryDb('');
+} else {
+  let pathToDb: string;
+  if (typeof argv.db === 'string') {
+    pathToDb = path.join(homedir, '.arsnova-click-v2-backend', argv.db);
+  } else {
+    pathToDb = path.join(homedir, '.arsnova-click-v2-backend', 'arsnova-click-v2-db-v1.json');
+  }
+  adapter = new FileSync(pathToDb);
+}
 const db = lowdb(adapter);
 
 class DbDAO extends AbstractDAO<typeof db> {
@@ -84,7 +98,9 @@ class DbDAO extends AbstractDAO<typeof db> {
   }
 
   public getState(): typeof lowdb {
-    return this.storage.getState();
+    return (
+      <lowdb.LowdbBase<any>>this.storage
+    ).getState();
   }
 
   private closeConnection(database: DatabaseTypes): void {

@@ -9,4 +9,12 @@ export abstract class AbstractDAO<T> {
   public createDump(): any {
     return this.storage;
   }
+
+  protected isNotEmtpyVars(...variables): boolean {
+    return variables.filter(variable => !this.isNotEmptyVar(variable)).length === 0;
+  }
+
+  private isNotEmptyVar(variable: any): boolean {
+    return typeof variable !== 'undefined' && String(variable).length > 0;
+  }
 }

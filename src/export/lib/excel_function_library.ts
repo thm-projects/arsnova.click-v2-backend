@@ -4,6 +4,7 @@ export function calculateNumberOfAnswers(quiz: IActiveQuiz, questionIndex: numbe
   let numberOfAnswers = 0;
   quiz.memberGroups[0].members.forEach(nickname => {
     const response = nickname.responses[questionIndex].value;
+    // noinspection SuspiciousInstanceOfGuard
     if (response instanceof Array) {
       numberOfAnswers += response.indexOf(answerNumber) > -1 ? 1 : 0;
     } else if (typeof response === 'number') {
@@ -13,7 +14,10 @@ export function calculateNumberOfAnswers(quiz: IActiveQuiz, questionIndex: numbe
   return numberOfAnswers;
 }
 
-export function calculateNumberOfRangedAnswers(quiz: IActiveQuiz, questionIndex: number, minRange, correctValue,
+export function calculateNumberOfRangedAnswers(quiz: IActiveQuiz,
+                                               questionIndex: number,
+                                               minRange,
+                                               correctValue,
                                                maxRange,
 ): { minRange: number, correctValue: number, maxRange: number } {
 
@@ -30,6 +34,8 @@ export function calculateNumberOfRangedAnswers(quiz: IActiveQuiz, questionIndex:
     }
   });
   return {
-    minRange: numberOfAnswersInMinRange, correctValue: numberOfCorrectAnswers, maxRange: numberOfAnswersInMaxRange,
+    minRange: numberOfAnswersInMinRange,
+    correctValue: numberOfCorrectAnswers,
+    maxRange: numberOfAnswersInMaxRange,
   };
 }

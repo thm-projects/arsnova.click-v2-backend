@@ -7,9 +7,14 @@ export const excelDefaultWorksheetOptions = {
     bottom: 0.79, // 2cm
     footer: 0.4,  // 1cm
     header: 0.4,   // 1cm
-  }, printOptions: {
-    centerHorizontal: false, centerVertical: false, printGridLines: false, printHeadings: false,
-  }, pageSetup: {
+  },
+  printOptions: {
+    centerHorizontal: false,
+    centerVertical: false,
+    printGridLines: false,
+    printHeadings: false,
+  },
+  pageSetup: {
     errors: 'displayed',
     fitToHeight: 1,
     fitToWidth: 1,
@@ -21,8 +26,14 @@ export const excelDefaultWorksheetOptions = {
   },
 };
 
+// noinspection JSUnusedGlobalSymbols
 export const excelDefaultWorksheetValidationData = {
-  type: 'list', allowBlank: 1, showInputMessage: 1, showErrorMessage: 1, sqref: 'X2:X10', formulas: [
+  type: 'list',
+  allowBlank: 1,
+  showInputMessage: 1,
+  showErrorMessage: 1,
+  sqref: 'X2:X10',
+  formulas: [
     'value1,value2',
   ],
 };

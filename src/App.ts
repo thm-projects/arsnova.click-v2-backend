@@ -18,8 +18,10 @@ import { lobbyRouter } from './routes/lobby';
 import { memberRouter } from './routes/member';
 import { nicksRouter } from './routes/nicks';
 import { quizRouter } from './routes/quiz';
-import { themesRouter } from './routes/themes';
 import { dynamicStatistics, staticStatistics } from './statistics';
+
+declare var require: any;
+declare var global: any;
 
 i18n.configure({
   // setup some locales - other locales default to en silently
@@ -126,7 +128,6 @@ class App {
     this._express.use(`${staticStatistics.routePrefix}/api/v1/member`, memberRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/lobby`, lobbyRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/nicks`, nicksRouter);
-    this._express.use(`${staticStatistics.routePrefix}/api/v1/themes`, themesRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/plugin/i18nator`, i18nApiRouter);
 
     this._express.use((err, req, res, next) => {

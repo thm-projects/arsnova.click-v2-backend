@@ -19,6 +19,9 @@ import { staticStatistics } from './statistics';
 
 require('source-map-support').install();
 
+declare var global: any;
+declare var module: any;
+
 interface IHotModule extends NodeModule {
   hot: {
     accept: Function
@@ -38,16 +41,20 @@ declare interface IInetAddress {
   address: string;
 }
 
-function censor(data): any {
+function censor(data: any): any {
   let i = 0;
 
-  return function (key, value): string | object {
+  return (key, value) => {
     if (i !== 0 && typeof(
       data
     ) === 'object' && typeof(
       value
     ) === 'object' && data === value) {
       return '[Circular]';
+    }
+
+    if (i >= 29) {// seems to be a harded maximum of 30 serialized objects?
+      return '[Unknown]';
     }
 
     ++i; // so we know we aren't using the original object anymore
@@ -111,7 +118,7 @@ process.on('uncaughtException', rejectionToCreateDump);
 
   const insecureDumpAsJson = JSON.stringify(daoDump, censor(daoDump));
 
-  const dumpCryptorParams = [
+  const dumpCryptorParams: ReadonlyArray<string> = [
     path.join(staticStatistics.pathToJobs, 'DumpCryptor.js'), `--base-path=${__dirname}`, '--command=encrypt', `--data=${insecureDumpAsJson}`,
   ];
   const dumpCryptorInstance = child_process.spawn(`node`, dumpCryptorParams);
@@ -122,7 +129,7 @@ process.on('uncaughtException', rejectionToCreateDump);
     console.log(`DumpCryptor (exit): Dump generated`);
   });
 
-  const mailParams = [
+  const mailParams: ReadonlyArray<string> = [
     path.join(staticStatistics.pathToJobs, 'SendMail.js'),
     '--command=buildServerInfoMail',
     `--attachment=${insecureDumpAsJson}`,

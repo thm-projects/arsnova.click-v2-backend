@@ -66,7 +66,7 @@ class ExcelExportTestSuite {
         '__n': 'tn', // and req.__n can be called as req.tn
       },
     });
-    i18n.init({});
+    i18n.init(<any>{}, <any>{});
     const basedir = path.join(__dirname, '..', '..', '..', 'test-generated');
     if (!fs.existsSync(basedir)) {
       fs.mkdirSync(basedir);

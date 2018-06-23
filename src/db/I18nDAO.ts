@@ -21,7 +21,7 @@ class I18nDAO extends AbstractDAO<object> {
       console.log(`* Fetching language data`);
       const langDataStart = new Date().getTime();
       const langData = [];
-      availableLangs.forEach((langRef, index) => {
+      availableLangs.forEach(langRef => {
         this.buildKeys({
           root: '',
           dataNode: JSON.parse(fs.readFileSync(path.join(i18nFileBaseLocation[projectName], `${langRef}.json`)).toString('UTF-8')),

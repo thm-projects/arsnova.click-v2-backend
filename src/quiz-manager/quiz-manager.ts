@@ -436,10 +436,13 @@ export class ActiveQuizItem implements IActiveQuiz {
 export class ActiveQuizItemPlaceholder implements IActiveQuiz {
   public name: string;
   public memberGroups: Array<IMemberGroup>;
+  // noinspection JSUnusedGlobalSymbols
   public currentQuestionIndex: number;
   public originalObject: IQuestionGroup;
+  // noinspection JSUnusedGlobalSymbols
   public currentStartTimestamp: number;
   public webSocketAuthorization: number;
+  // noinspection JSUnusedGlobalSymbols
   public ownerSocket: WebSocket;
 
   constructor(name: string) {

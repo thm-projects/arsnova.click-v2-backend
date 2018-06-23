@@ -54,8 +54,7 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
     if (!this.storage[name] || !(
       this.storage[name] instanceof ActiveQuizItemPlaceholder
     )) {
-      console.log('trying to init an active quiz which is not inactive');
-      return;
+      throw new Error('trying to init an active quiz which is not inactive');
     }
     this.convertLegacyQuiz(quiz);
     if (settings.public.cacheQuizAssets) {
@@ -87,6 +86,7 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
     return this.storage[name];
   }
 
+  // noinspection JSUnusedGlobalSymbols
   public updateActiveQuiz(data: IActiveQuiz): void {
     const name: string = this.normalizeQuizName(data.originalObject.hashtag);
     if (this.storage[name] instanceof ActiveQuizItemPlaceholder) {
@@ -163,6 +163,7 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
     });
   }
 
+  // noinspection JSUnusedGlobalSymbols
   public getAllPersistedAbcdQuizzes(): String[] {
     return Object.keys(this.storage).filter((value: string) => {
       const name: string = this.normalizeQuizName(value);
@@ -181,6 +182,7 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
     this.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
     if (legacyQuiz.hasOwnProperty('configuration')) {
       // Detected old v1 arsnova.click quiz
+      // noinspection TypeScriptUnresolvedVariable
       legacyQuiz.sessionConfig = {
         music: {
           titleConfig: {

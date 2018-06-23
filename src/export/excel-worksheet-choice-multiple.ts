@@ -11,7 +11,13 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
   private readonly _questionIndex: number;
 
   constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
-    super({ theme, translation, quiz, mf, questionIndex });
+    super({
+      theme,
+      translation,
+      quiz,
+      mf,
+      questionIndex,
+    });
     this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
     this._question = this.quiz.originalObject.questionList[questionIndex];
@@ -32,8 +38,11 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     const columnsToFormat: number = answerList.length + 1 < minColums ? minColums : answerList.length + 1;
     const answerCellStyle: Object = {
       alignment: {
-        wrapText: true, horizontal: 'center', vertical: 'center',
-      }, font: {
+        wrapText: true,
+        horizontal: 'center',
+        vertical: 'center',
+      },
+      font: {
         color: 'FFFFFFFF',
       },
     };
@@ -60,10 +69,14 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
           right: {
             style: (
                      targetColumn <= answerList.length
-                   ) ? 'thin' : 'none', color: 'black',
+                   ) ? 'thin' : 'none',
+            color: 'black',
           },
-        }, fill: {
-          type: 'pattern', patternType: 'solid', fgColor: answerList[j].isCorrect ? 'FF008000' : 'FFB22222',
+        },
+        fill: {
+          type: 'pattern',
+          patternType: 'solid',
+          fgColor: answerList[j].isCorrect ? 'FF008000' : 'FFB22222',
         },
       }));
     }
@@ -83,7 +96,10 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     });
 
     this.ws.row(10).filter({
-      firstRow: 10, firstColumn: 1, lastRow: 10, lastColumn: minColums,
+      firstRow: 10,
+      firstColumn: 1,
+      lastRow: 10,
+      lastColumn: minColums,
     });
 
     this.quiz.memberGroups.forEach((memberGroup) => {
@@ -92,8 +108,8 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       const attendeeEntryRows: number = hasEntries ? (
         responses.length
       ) : 1;
-      const attendeeEntryRowStyle: Object = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({},
-        defaultStyles.attendeeEntryRowStyle, {
+      const attendeeEntryRowStyle: Object = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle,
+        {
           alignment: {
             horizontal: 'center',
           },
@@ -116,7 +132,8 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
         this.ws.cell(targetRow, nextColumnIndex).style({
           alignment: {
             horizontal: 'center',
-          }, numberFormat: '#,##0;',
+          },
+          numberFormat: '#,##0;',
         });
       });
     });
@@ -187,6 +204,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       const nickItem = this.quiz.memberGroups[0].members.filter(nick => nick.name === responseItem.name)[0];
       const chosenAnswer = this._question.answerOptionList.filter((answer, index) => {
         const responseValue = nickItem.responses[this._questionIndex].value;
+        // noinspection SuspiciousInstanceOfGuard
         if (responseValue instanceof Array) {
           return responseValue.indexOf(index) > -1;
         }

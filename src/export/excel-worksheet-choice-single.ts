@@ -11,7 +11,13 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
   private readonly _questionIndex: number;
 
   constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
-    super({ theme, translation, quiz, mf, questionIndex });
+    super({
+      theme,
+      translation,
+      quiz,
+      mf,
+      questionIndex,
+    });
     this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
     this._question = this.quiz.originalObject.questionList[questionIndex];
@@ -23,8 +29,11 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     const defaultStyles = this._theme.getStyles();
     const answerCellStyle: any = {
       alignment: {
-        wrapText: true, horizontal: 'center', vertical: 'center',
-      }, font: {
+        wrapText: true,
+        horizontal: 'center',
+        vertical: 'center',
+      },
+      font: {
         color: 'FFFFFFFF',
       },
     };
@@ -60,10 +69,14 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
           right: {
             style: (
                      targetColumn <= answerList.length
-                   ) ? 'thin' : 'none', color: 'black',
+                   ) ? 'thin' : 'none',
+            color: 'black',
           },
-        }, fill: {
-          type: 'pattern', patternType: 'solid', fgColor: answerList[j].isCorrect ? 'FF008000' : 'FFB22222',
+        },
+        fill: {
+          type: 'pattern',
+          patternType: 'solid',
+          fgColor: answerList[j].isCorrect ? 'FF008000' : 'FFB22222',
         },
       }));
     }
@@ -83,7 +96,10 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     });
 
     this.ws.row(10).filter({
-      firstRow: 10, firstColumn: 1, lastRow: 10, lastColumn: minColums,
+      firstRow: 10,
+      firstColumn: 1,
+      lastRow: 10,
+      lastColumn: minColums,
     });
 
     const responses = this.quiz.memberGroups[0].members.map(nickname => nickname.responses[this._questionIndex]);
@@ -91,12 +107,11 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     const attendeeEntryRows: number = hasEntries ? (
       responses.length
     ) : 1;
-    const attendeeEntryRowStyle: any = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({},
-      defaultStyles.attendeeEntryRowStyle, {
-        alignment: {
-          horizontal: 'center',
-        },
-      });
+    const attendeeEntryRowStyle: any = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
+      alignment: {
+        horizontal: 'center',
+      },
+    });
     this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
     responses.forEach((responseItem, indexInList): void => {
@@ -112,8 +127,11 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       this.ws.cell(targetRow, nextColumnIndex++).style({
         font: {
           color: 'FFFFFFFF',
-        }, fill: {
-          type: 'pattern', patternType: 'solid', fgColor: isAnswerCorrect ? 'FF008000' : 'FFB22222',
+        },
+        fill: {
+          type: 'pattern',
+          patternType: 'solid',
+          fgColor: isAnswerCorrect ? 'FF008000' : 'FFB22222',
         },
       });
       if (this.responsesWithConfidenceValue.length > 0) {
@@ -126,7 +144,8 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
-        }, numberFormat: '#,##0;',
+        },
+        numberFormat: '#,##0;',
       });
     });
   }
@@ -193,6 +212,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       if (this._isCasRequired) {
         const profile: any = this.quiz.memberGroups[0].members.filter(nickname => nickname.name === responseItem.name)[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
+        // noinspection SuspiciousInstanceOfGuard
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail instanceof Array ? profile.mail.slice(-1)[0] : profile.mail);
       }
       const chosenAnswer: IAnswerOption = this._question.answerOptionList[responseItem.responses[this._questionIndex].value[0]];
