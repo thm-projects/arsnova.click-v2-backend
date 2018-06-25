@@ -55,7 +55,11 @@ class LoginDAO extends AbstractDAO<{ [key: string]: ILogin }> {
   }
 
   public validateUser(username: string, passwordHash: string): boolean {
-    return this.isNotEmtpyVars([username, passwordHash, this.storage[username]]) && this.storage[username].passwordHash === passwordHash;
+    if (this.isEmptyVars([username, passwordHash, this.storage[username]])) {
+      return false;
+    }
+
+    return this.storage[username].passwordHash === passwordHash;
   }
 
   public createDump(): Array<ILoginSerialized> {
@@ -69,7 +73,11 @@ class LoginDAO extends AbstractDAO<{ [key: string]: ILogin }> {
   }
 
   public validateTokenForUser(username: string, token: string): boolean {
-    return this.isNotEmtpyVars([username, token, this.storage[username]]) && this.storage[username].token === token;
+    if (this.isEmptyVars([username, token, this.storage[username]])) {
+      return false;
+    }
+
+    return this.storage[username].token === token;
   }
 }
 

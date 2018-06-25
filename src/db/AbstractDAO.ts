@@ -10,7 +10,7 @@ export abstract class AbstractDAO<T> {
     return this.storage;
   }
 
-  protected isNotEmtpyVars(...variables): boolean {
+  protected isEmptyVars(...variables): boolean {
     return variables.filter(variable => !this.isNotEmptyVar(variable)).length === 0;
   }
 
