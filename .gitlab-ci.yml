@@ -1,25 +1,22 @@
 stages:
-  - install
   - test
   - build
   - deploy
 
 cache:
+  key: ${CI_COMMIT_REF_SLUG}
   paths:
-    - node_modules
+    - node_modules/
 
-npm_install:
-  stage: install
-  tags:
-    - nodejs
-  script:
-    - npm install
+before_script:
+  - npm install
 
 ts_lint:
   stage: test
   tags:
     - nodejs
   script:
+    - npm install
     - node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json
 
 npm_test:
@@ -36,6 +33,7 @@ build:
   tags:
     - nodejs
   script:
+    - npm install
     - export NODE_ENV='production'
     - export ARSNOVA_CLICK_BACKEND_PORT_INTERNAL='3000'
     - export ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX='/backend'
