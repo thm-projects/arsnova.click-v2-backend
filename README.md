@@ -2,6 +2,7 @@
 
 ###### Environment Variables
 These are the basic variables required to run the server
+- `ARSNOVA_CLICK_BACKEND_BASE_PATH`: Sets the path relative to the working directory which contains the app 
 - `ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL [number]`: This is the external port used for rewriting the urls of cached quizzes (defaults to $ARSNOVA_CLICK_BACKEND_PORT_INTERNAL if unset)
 - `ARSNOVA_CLICK_BACKEND_PORT_INTERNAL [number]`: This is the internal port used during the startup of the server (defaults to 3000 if unset)
 - `ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX [string]`: The routePrefix is used to prefix the access of the Express routes. E.g if set to 'backend' the access to '/api/v1/myPath' will become '/backend/api/v1/myPath'  (defaults to `/` if unset)
