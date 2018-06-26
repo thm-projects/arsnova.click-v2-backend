@@ -35,23 +35,29 @@ export class ApiRouter {
     });
   }
 
-  public randomFile(dir: string): Promise<string> {
-    return new Promise((resolve) => {
-      fs.readdir(dir, (err, items) => {
-        resolve(items[Math.floor(Math.random() * items.length)]);
-      });
-    });
+  public randomFile(dir: string): string {
+    const items = fs.readdirSync(dir);
+    return items[Math.floor(Math.random() * items.length)];
   }
 
   public getFileByName(req: Request, res: Response): void {
     const pathToFiles: string = path.join(staticStatistics.pathToAssets, `${req.params.directory}`, `${req.params.subdirectory}`);
+    let file = '';
+
     if (req.params.fileName.indexOf('Random') > -1) {
-      this.randomFile(pathToFiles).then((file: string) => {
-        res.send(fs.readFileSync(path.join(`${pathToFiles}`, file)));
-      });
+      file = this.randomFile(pathToFiles);
+
     } else {
-      res.send(fs.readFileSync(path.join(`${pathToFiles}`, `${req.params.fileName}`)));
+      if (!fs.existsSync(path.join(`${pathToFiles}`, `${req.params.fileName}`))) {
+        res.sendStatus(404);
+        res.end();
+        return;
+      }
+
+      file = req.params.fileName;
     }
+
+    res.send(fs.readFileSync(path.join(`${pathToFiles}`, file)));
   }
 
   public getThemeImageFileByName(req: Request, res: Response): void {
