@@ -12,7 +12,7 @@ const localAddress = interfaces[Object.keys(interfaces).filter(netIface => {
   return singleInterface.family === 'IPv4' && singleInterface.internal === false;
 })[0]];
 const localIpv4Address = localAddress ? localAddress[0].address : '127.0.0.1';
-const basePath = +process.env.ARSNOVA_CLICK_BACKEND_BASE_PATH || '';
+const basePath = process.env.ARSNOVA_CLICK_BACKEND_BASE_PATH || '';
 const portInternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_INTERNAL || 3000;
 const portExternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL || portInternal;
 const routePrefix = process.env.ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX || '';
