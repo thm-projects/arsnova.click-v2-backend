@@ -27,6 +27,7 @@ const config = {
     new webpack.DefinePlugin({
       "process.env": {
         NODE_ENV: JSON.stringify(process.env.NODE_ENV),
+        CHROME_BIN: JSON.stringify(process.env.CHROME_BIN),
         BASE_PATH: JSON.stringify(process.env.ARSNOVA_CLICK_BACKEND_BASE_PATH),
         ARSNOVA_CLICK_BACKEND_PORT_INTERNAL: JSON.stringify(process.env.ARSNOVA_CLICK_BACKEND_PORT_INTERNAL),
         ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL: JSON.stringify(process.env.ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL),
