@@ -11,7 +11,7 @@ export abstract class AbstractDAO<T> {
   }
 
   protected isEmptyVars(...variables): boolean {
-    return variables.filter(variable => this.isEmptyVar(variable)).length === variables.length;
+    return variables.length > 0 && variables.filter(variable => this.isEmptyVar(variable)).length > 0;
   }
 
   private isEmptyVar(variable: any): boolean {
