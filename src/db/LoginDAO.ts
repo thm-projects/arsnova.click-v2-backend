@@ -55,7 +55,7 @@ class LoginDAO extends AbstractDAO<{ [key: string]: ILogin }> {
   }
 
   public validateUser(username: string, passwordHash: string): boolean {
-    if (this.isEmptyVars([username, passwordHash, this.storage[username]])) {
+    if (this.isEmptyVars(username, passwordHash, this.storage[username])) {
       return false;
     }
 
@@ -73,7 +73,7 @@ class LoginDAO extends AbstractDAO<{ [key: string]: ILogin }> {
   }
 
   public validateTokenForUser(username: string, token: string): boolean {
-    if (this.isEmptyVars([username, token, this.storage[username]])) {
+    if (this.isEmptyVars(username, token, this.storage[username])) {
       return false;
     }
 

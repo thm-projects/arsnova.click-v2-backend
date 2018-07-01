@@ -11,10 +11,24 @@ export abstract class AbstractDAO<T> {
   }
 
   protected isEmptyVars(...variables): boolean {
-    return variables.filter(variable => !this.isNotEmptyVar(variable)).length === 0;
+    return variables.filter(variable => this.isEmptyVar(variable)).length === variables.length;
   }
 
-  private isNotEmptyVar(variable: any): boolean {
-    return typeof variable !== 'undefined' && String(variable).length > 0;
+  private isEmptyVar(variable: any): boolean {
+    return typeof variable === 'undefined' || this.getLengthOfVar(variable) === 0;
+  }
+
+  private getLengthOfVar(variable: any): number {
+    switch (typeof variable) {
+      case 'string':
+        return variable.length;
+      case 'object':
+        if (variable instanceof Array) {
+          return variable.length;
+        }
+        return Object.keys(variable).length;
+      default:
+        return String(variable).length;
+    }
   }
 }

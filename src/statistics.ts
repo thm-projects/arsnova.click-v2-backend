@@ -53,7 +53,7 @@ export const settings = {
 };
 
 export const cache = { 'arsnova-click-v2-backend': {} };
-export const availableLangs = ['en', 'de', 'fr', 'es', 'it'];
+export const availableLangs = ['EN', 'DE', 'FR', 'ES', 'IT'];
 export const projectGitLocation = {
   'arsnova-click-v2-backend': path.join(__dirname),
 };
