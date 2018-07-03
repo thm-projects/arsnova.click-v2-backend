@@ -1,10 +1,26 @@
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
+import Gitlab from 'gitlab';
 import * as path from 'path';
+import { GITLAB } from '../Enums';
 import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectGitLocation } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 
 class I18nDAO extends AbstractDAO<object> {
+
+  private gitlabService: typeof Gitlab;
+  private readonly mergeRequestTitle = 'Update i18n keys';
+  private readonly commitMessage = 'Updates i18n keys';
+
+  constructor(storage: object) {
+    super(storage);
+
+    this.gitlabService = new Gitlab({
+      url: 'https://git.thm.de', // Defaults to http://gitlab.com
+      // token: 'UXq6arEAfmC5-YXFvG24', // Can be created in your profile.
+      token: 'L2TGBHx3Pm6gGs8Sdkyp',
+    });
+  }
 
   public static getInstance(): I18nDAO {
     if (!this.instance) {
@@ -126,6 +142,16 @@ class I18nDAO extends AbstractDAO<object> {
     return child.stdout.toString().replace('\n', '');
   }
 
+  public async pushChanges(): Promise<any[]> {
+    const NEW_BRANCH_NAME = this.generateBranchName();
+
+    return Promise.all([
+      this.gitlabService.Branches.create(GITLAB.PROJECT_ID, NEW_BRANCH_NAME, GITLAB.TARGET_BRANCH), //
+      this.gitlabService.Commits.create(GITLAB.PROJECT_ID, NEW_BRANCH_NAME, this.commitMessage), //
+      this.gitlabService.MergeRequests.create(GITLAB.PROJECT_ID, NEW_BRANCH_NAME, GITLAB.TARGET_BRANCH, this.mergeRequestTitle), //
+    ]);
+  }
+
   public createObjectFromKeys({ data, result }): void {
 
     for (const langRef in result) {
@@ -149,6 +175,10 @@ class I18nDAO extends AbstractDAO<object> {
 
       }
     }
+  }
+
+  private generateBranchName(): string {
+    return `i18n-change_${Math.random()}`;
   }
 
   private fromDir(startPath, filter): Array<string> {

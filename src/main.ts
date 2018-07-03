@@ -70,7 +70,7 @@ function rejectionToCreateDump(reason): void {
 }
 
 process.on('unhandledRejection', rejectionToCreateDump);
-process.on('uncaughtException', rejectionToCreateDump);
+// process.on('uncaughtException', rejectionToCreateDump); // Throws exceptions when debugging with IntelliJ
 
 (
   <IGlobal>global
