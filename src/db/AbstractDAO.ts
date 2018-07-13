@@ -1,4 +1,6 @@
-export abstract class AbstractDAO<T> {
+import { IStorageDAO } from 'arsnova-click-v2-types/src/common';
+
+export abstract class AbstractDAO<T> implements IStorageDAO<T> {
   protected static instance;
   public readonly storage: T;
 
