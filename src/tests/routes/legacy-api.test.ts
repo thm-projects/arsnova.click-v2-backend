@@ -7,8 +7,9 @@ import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
 
 import app from '../../App';
-import { DatabaseTypes, default as DbDAO } from '../../db/DbDAO';
+import { default as DbDAO } from '../../db/DbDAO';
 import QuizManagerDAO from '../../db/QuizManagerDAO';
+import { DATABASE_TYPE } from '../../Enums';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');
@@ -27,7 +28,7 @@ class LegacyApiRouterTestSuite {
 
   public static after(): void {
     QuizManagerDAO.removeQuiz(hashtag);
-    DbDAO.delete(DatabaseTypes.quiz, {
+    DbDAO.delete(DATABASE_TYPE.QUIZ, {
       quizName: hashtag,
       privateKey: privateKey,
     });

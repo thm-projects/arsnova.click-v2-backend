@@ -6,8 +6,9 @@ import { NextFunction, Request, Response, Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import { MatchTextToAssetsDb } from '../cache/assets';
-import { DatabaseTypes, default as DbDAO } from '../db/DbDAO';
+import { default as DbDAO } from '../db/DbDAO';
 import QuizManagerDAO from '../db/QuizManagerDAO';
+import { DATABASE_TYPE } from '../Enums';
 import { ExcelWorkbook } from '../export/excel-workbook';
 import { Leaderboard } from '../leaderboard/leaderboard';
 import { settings, staticStatistics } from '../statistics';
@@ -143,7 +144,7 @@ export class QuizRouter {
       });
       promise.then(() => {
         quizData.forEach((data: { fileName: string, quiz: IQuestionGroup }) => {
-          const dbResult = DbDAO.read(DatabaseTypes.quiz, { quizName: data.quiz.hashtag });
+          const dbResult = DbDAO.read(DATABASE_TYPE.QUIZ, { quizName: data.quiz.hashtag });
           if (dbResult) {
             duplicateQuizzes.push({
               quizName: data.quiz.hashtag,
@@ -151,7 +152,7 @@ export class QuizRouter {
               renameRecommendation: QuizManagerDAO.getRenameRecommendations(data.quiz.hashtag),
             });
           } else {
-            DbDAO.create(DatabaseTypes.quiz, {
+            DbDAO.create(DATABASE_TYPE.QUIZ, {
               quizName: data.quiz.hashtag,
               privateKey,
             });
@@ -383,7 +384,7 @@ export class QuizRouter {
       return;
     }
     QuizManagerDAO.initInactiveQuiz(req.body.quizName);
-    DbDAO.create(DatabaseTypes.quiz, {
+    DbDAO.create(DATABASE_TYPE.QUIZ, {
       quizName: req.body.quizName,
       privateKey: req.body.privateKey,
     });
@@ -405,7 +406,7 @@ export class QuizRouter {
       return;
     }
     QuizManagerDAO.initInactiveQuiz(req.body.quizName);
-    DbDAO.create(DatabaseTypes.quiz, {
+    DbDAO.create(DATABASE_TYPE.QUIZ, {
       quizName: req.body.quizName,
       privateKey: req.body.privateKey,
     });
@@ -426,7 +427,7 @@ export class QuizRouter {
       }));
       return;
     }
-    const dbResult: boolean = DbDAO.delete(DatabaseTypes.quiz, {
+    const dbResult: boolean = DbDAO.delete(DATABASE_TYPE.QUIZ, {
       quizName: req.body.quizName,
       privateKey: req.body.privateKey,
     });
@@ -457,7 +458,7 @@ export class QuizRouter {
       return;
     }
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
-    const dbResult: Object = DbDAO.read(DatabaseTypes.quiz, {
+    const dbResult: Object = DbDAO.read(DATABASE_TYPE.QUIZ, {
       quizName: req.body.quizName,
       privateKey: req.body.privateKey,
     });
@@ -504,7 +505,7 @@ export class QuizRouter {
 
   public getExportFile(req: Request, res: I18nResponse): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
-    const dbResult: Object = DbDAO.read(DatabaseTypes.quiz, {
+    const dbResult: Object = DbDAO.read(DATABASE_TYPE.QUIZ, {
       quizName: req.params.quizName,
       privateKey: req.params.privateKey,
     });

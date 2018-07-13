@@ -1,8 +1,9 @@
 import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response, Router } from 'express';
-import { DatabaseTypes, default as DbDAO } from '../db/DbDAO';
+import { default as DbDAO } from '../db/DbDAO';
 import QuizManagerDAO from '../db/QuizManagerDAO';
+import { DATABASE_TYPE } from '../Enums';
 
 export class LegacyApiRouter {
   private _router: Router;
@@ -47,7 +48,7 @@ export class LegacyApiRouter {
       return;
     }
     QuizManagerDAO.initInactiveQuiz(sessionConfiguration.hashtag);
-    DbDAO.create(DatabaseTypes.quiz, {
+    DbDAO.create(DATABASE_TYPE.QUIZ, {
       quizName: sessionConfiguration.hashtag,
       privateKey: sessionConfiguration.privateKey,
     });

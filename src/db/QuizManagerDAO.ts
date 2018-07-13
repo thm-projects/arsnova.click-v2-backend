@@ -1,10 +1,11 @@
 import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
 import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import { parseCachedAssetQuiz } from '../cache/assets';
+import { DATABASE_TYPE } from '../Enums';
 import { ActiveQuizItem, ActiveQuizItemPlaceholder, MemberGroup } from '../quiz-manager/quiz-manager';
 import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
-import { DatabaseTypes, default as DbDAO } from './DbDAO';
+import { default as DbDAO } from './DbDAO';
 
 class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
 
@@ -248,7 +249,7 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
   }
 }
 
-DbDAO.getState()[DatabaseTypes.quiz].forEach((value) => {
+DbDAO.getState()[DATABASE_TYPE.QUIZ].forEach((value) => {
   QuizManagerDAO.getInstance().initInactiveQuiz(value.quizName);
 });
 

@@ -9,11 +9,8 @@ import * as Minimist from 'minimist';
 import * as path from 'path';
 import * as process from 'process';
 import { createHomePath } from '../app_bootstrap';
+import { DATABASE_TYPE } from '../Enums';
 import { AbstractDAO } from './AbstractDAO';
-
-export enum DatabaseTypes {
-  quiz = 'quiz', assets = 'assets', users = 'users'
-}
 
 const argv = Minimist(process.argv.slice(2));
 const homedir = require('os').homedir();
@@ -47,14 +44,14 @@ class DbDAO extends AbstractDAO<typeof db> {
   constructor() {
     super(db);
     const state = this.getState();
-    if (!state[DatabaseTypes.quiz]) {
-      this.initDb(DatabaseTypes.quiz, []);
+    if (!state[DATABASE_TYPE.QUIZ]) {
+      this.initDb(DATABASE_TYPE.QUIZ, []);
     }
-    if (!state[DatabaseTypes.assets]) {
-      this.initDb(DatabaseTypes.assets, {});
+    if (!state[DATABASE_TYPE.ASSETS]) {
+      this.initDb(DATABASE_TYPE.ASSETS, {});
     }
-    if (!state[DatabaseTypes.users]) {
-      this.initDb(DatabaseTypes.users, {});
+    if (!state[DATABASE_TYPE.USERS]) {
+      this.initDb(DATABASE_TYPE.USERS, {});
     }
   }
 
@@ -65,7 +62,7 @@ class DbDAO extends AbstractDAO<typeof db> {
     return this.instance;
   }
 
-  public create(database: DatabaseTypes, data: object, ref?: string): void {
+  public create(database: DATABASE_TYPE, data: object, ref?: string): void {
     if (ref) {
       this.storage.set(`${database}.${ref}`, data).write();
     } else {
@@ -73,18 +70,18 @@ class DbDAO extends AbstractDAO<typeof db> {
     }
   }
 
-  public read(database: DatabaseTypes, query?: object): object {
+  public read(database: DATABASE_TYPE, query?: object): object {
     if (query) {
       return this.storage.get(database).find(query).value();
     }
     return this.storage.get(database).value();
   }
 
-  public update(database: DatabaseTypes, query: object, update: object): void {
+  public update(database: DATABASE_TYPE, query: object, update: object): void {
     this.storage.get(database).find(query).assign(update).write();
   }
 
-  public delete(database: DatabaseTypes, query: { quizName: string, privateKey: string }): boolean {
+  public delete(database: DATABASE_TYPE, query: { quizName: string, privateKey: string }): boolean {
     const dbContent: any = this.read(database, query);
     if (!dbContent || dbContent.privateKey !== query.privateKey) {
       return false;
@@ -94,7 +91,7 @@ class DbDAO extends AbstractDAO<typeof db> {
   }
 
   public closeConnections(): void {
-    Object.keys(DatabaseTypes).forEach((type) => this.closeConnection(DatabaseTypes[type]));
+    Object.keys(DATABASE_TYPE).forEach((type) => this.closeConnection(DATABASE_TYPE[type]));
   }
 
   public getState(): typeof lowdb {
@@ -103,11 +100,11 @@ class DbDAO extends AbstractDAO<typeof db> {
     ).getState();
   }
 
-  private closeConnection(database: DatabaseTypes): void {
+  private closeConnection(database: DATABASE_TYPE): void {
     this.storage.get(database);
   }
 
-  private initDb(type: DatabaseTypes, initialValue: any): void {
+  private initDb(type: DATABASE_TYPE, initialValue: any): void {
     this.storage.set(type, initialValue).write();
   }
 }

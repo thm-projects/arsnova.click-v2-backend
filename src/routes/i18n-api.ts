@@ -39,11 +39,36 @@ export class I18nApiRouter {
     });
     this._router.get('/', this.getAll);
     this._router.get('/:project/langFile', this.getLangFile);
+
     this._router.post('/:project/updateLang', this.updateLang);
+
+    this._router.put('/:project/pushChanges', this.pushChanges);
   }
 
   private getAll(req: Request, res: Response, next: NextFunction): void {
     res.json({});
+  }
+
+  private pushChanges(req: Request, res: Response, next: NextFunction): void {
+    const username = req.body.username;
+    const token = req.body.token;
+
+    if (!LoginDAO.validateTokenForUser(username, token)) {
+      res.send({
+        status: 'STATUS:FAILED',
+        step: 'AUTHENTICATE_STATIC',
+        payload: { reason: 'UNKOWN_LOGIN' },
+      });
+      return;
+    }
+
+    I18nDAO.pushChanges(username, token).then(gitlabResponse => {
+      res.json(gitlabResponse);
+      res.end();
+    }).catch(reason => {
+      res.json(reason);
+      res.end();
+    });
   }
 
   private getLangFile(req: any, res: Response, next: NextFunction): void {

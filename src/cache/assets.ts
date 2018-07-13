@@ -3,7 +3,8 @@ import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as Hex from 'crypto-js/enc-hex';
 import * as fs from 'fs';
 import * as request from 'request';
-import { DatabaseTypes, default as DbDAO } from '../db/DbDAO';
+import { default as DbDAO } from '../db/DbDAO';
+import { DATABASE_TYPE } from '../Enums';
 import { staticStatistics } from '../statistics';
 
 const sha256 = require('crypto-js/sha256');
@@ -18,7 +19,7 @@ export function MatchTextToAssetsDb(value: string): void {
       const digest = Hex.stringify(sha256(matchedValueElement));
       const cachePath = `${staticStatistics.pathToCache}/${digest}`;
       if (fs.existsSync(cachePath)) {
-        DbDAO.create(DatabaseTypes.assets, {
+        DbDAO.create(DATABASE_TYPE.ASSETS, {
           url: matchedValueElement,
           digest,
           path: cachePath,
@@ -33,7 +34,7 @@ export function MatchTextToAssetsDb(value: string): void {
         const contentType = response.headers['content-type'];
         const hasContentTypeMatched = acceptedFileTypes.some((contentTypeRegex) => contentType.match(contentTypeRegex) !== null);
         if (hasContentTypeMatched) {
-          DbDAO.create(DatabaseTypes.assets, {
+          DbDAO.create(DATABASE_TYPE.ASSETS, {
             url: matchedValueElement,
             digest,
             path: cachePath,
@@ -55,7 +56,7 @@ export function MatchTextToAssetsDb(value: string): void {
 }
 
 export function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>): void {
-  const assetsCache = DbDAO.read(DatabaseTypes.assets);
+  const assetsCache = DbDAO.read(DATABASE_TYPE.ASSETS);
   const assetsBasePath = `${staticStatistics.rewriteAssetCacheUrl}/lib/cache/quiz/assets`;
   cacheAwareQuestions.forEach((question: IQuestion) => {
     const matchedQuestionText = question.questionText.match(assetsUrlRegex);

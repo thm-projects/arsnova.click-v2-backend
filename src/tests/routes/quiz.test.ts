@@ -7,8 +7,9 @@ import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
 import * as WebSocket from 'ws';
 import app from '../../App';
-import { DatabaseTypes, default as DbDAO } from '../../db/DbDAO';
+import { default as DbDAO } from '../../db/DbDAO';
 import QuizManagerDAO from '../../db/QuizManagerDAO';
+import { DATABASE_TYPE } from '../../Enums';
 import { WebSocketRouter } from '../../routes/websocket';
 import { staticStatistics } from '../../statistics';
 
@@ -32,7 +33,7 @@ class QuizApiRouterTestSuite {
 
   public static after(): void {
     QuizManagerDAO.removeQuiz(hashtag);
-    DbDAO.delete(DatabaseTypes.quiz, {
+    DbDAO.delete(DATABASE_TYPE.QUIZ, {
       quizName: hashtag,
       privateKey: privateKey,
     });

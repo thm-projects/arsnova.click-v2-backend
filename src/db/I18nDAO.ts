@@ -1,25 +1,20 @@
+import { ICommitAction, IGitlabCommitAction } from 'arsnova-click-v2-types/src/gitlab/apiv4';
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import Gitlab from 'gitlab';
 import * as path from 'path';
-import { GITLAB } from '../Enums';
-import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectGitLocation } from '../statistics';
+import { COMMIT_ACTION, GITLAB, LANGUAGES } from '../Enums';
+import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectGitLocation, staticStatistics } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
+import LoginDAO from './LoginDAO';
 
 class I18nDAO extends AbstractDAO<object> {
 
-  private gitlabService: typeof Gitlab;
-  private readonly mergeRequestTitle = 'Update i18n keys';
+  private readonly mergeRequestTitle = 'WIP: Update i18n keys';
   private readonly commitMessage = 'Updates i18n keys';
 
   constructor(storage: object) {
     super(storage);
-
-    this.gitlabService = new Gitlab({
-      url: 'https://git.thm.de', // Defaults to http://gitlab.com
-      // token: 'UXq6arEAfmC5-YXFvG24', // Can be created in your profile.
-      token: 'L2TGBHx3Pm6gGs8Sdkyp',
-    });
   }
 
   public static getInstance(): I18nDAO {
@@ -142,14 +137,13 @@ class I18nDAO extends AbstractDAO<object> {
     return child.stdout.toString().replace('\n', '');
   }
 
-  public async pushChanges(): Promise<any[]> {
-    const NEW_BRANCH_NAME = this.generateBranchName();
+  public async pushChanges(username: string, token: string): Promise<void> {
+    const branch = this.generateBranchName();
+    const gitlabService = this.prepareGitlabConnection(username, token);
 
-    return Promise.all([
-      this.gitlabService.Branches.create(GITLAB.PROJECT_ID, NEW_BRANCH_NAME, GITLAB.TARGET_BRANCH), //
-      this.gitlabService.Commits.create(GITLAB.PROJECT_ID, NEW_BRANCH_NAME, this.commitMessage), //
-      this.gitlabService.MergeRequests.create(GITLAB.PROJECT_ID, NEW_BRANCH_NAME, GITLAB.TARGET_BRANCH, this.mergeRequestTitle), //
-    ]);
+    await gitlabService.Branches.create(GITLAB.PROJECT_ID, branch, GITLAB.TARGET_BRANCH);
+    await gitlabService.Commits.create(GITLAB.PROJECT_ID, branch, this.commitMessage, this.generateCommitActions());
+    await gitlabService.MergeRequests.create(GITLAB.PROJECT_ID, branch, GITLAB.TARGET_BRANCH, this.mergeRequestTitle);
   }
 
   public createObjectFromKeys({ data, result }): void {
@@ -175,6 +169,25 @@ class I18nDAO extends AbstractDAO<object> {
 
       }
     }
+  }
+
+  private prepareGitlabConnection(username: string, token: string): typeof Gitlab {
+    return new Gitlab({
+      url: 'https://git.thm.de',
+      token: LoginDAO.getGitlabTokenForUser(username, token),
+    });
+  }
+
+  private generateCommitActions(): Array<IGitlabCommitAction> {
+    return Object.keys(LANGUAGES).map(langKey => this.generateCommitActionForFile(langKey));
+  }
+
+  private generateCommitActionForFile(langKey): IGitlabCommitAction {
+    return {
+      action: <ICommitAction>COMMIT_ACTION.UPDATE,
+      file_path: `assets/i18n/${langKey.toLowerCase()}.json`,
+      content: fs.readFileSync(path.join(staticStatistics.pathToAssets, 'i18n', `${langKey.toLowerCase()}.json`)).toString('UTF-8'),
+    };
   }
 
   private generateBranchName(): string {
