@@ -14,7 +14,7 @@ install_node_modules:
   tags:
     - nodejs
   script:
-  - npm install
+    - npm install
 
 ts_lint:
   stage: test
@@ -29,7 +29,7 @@ npm_test:
   tags:
     - nodejs
   script:
-    - npm test
+    - node_modules/mocha/bin/mocha --opts src/tests/mocha.opts
 
 build:
   stage: build
@@ -60,7 +60,7 @@ deploy:
     - chmod -R a+rX,ug+w .
     - eval $(ssh-agent -s)
     - mkdir ~/.ssh
-    - ssh-keyscan "$STAGING_BACKEND_URL" >> ~/.ssh/known_hosts    
+    - ssh-keyscan "$STAGING_BACKEND_URL" >> ~/.ssh/known_hosts
     - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY")
     - rsync -rltgoDqv --delete -e "ssh" dist/* "$STAGING_BACKEND_SSH_URL"
     - ssh $NEW_PRODUCTION_SSH 'touch /home/arsnova/arsnova.click-v2/backend/deploy.touch'
