@@ -40,6 +40,7 @@ export class I18nApiRouter {
     this._router.get('/', this.getAll);
     this._router.get('/:project/langFile', this.getLangFile);
 
+    this._router.post('/:project/authorized', this.isAuthorized);
     this._router.post('/:project/updateLang', this.updateLang);
 
     this._router.put('/:project/pushChanges', this.pushChanges);
@@ -47,6 +48,27 @@ export class I18nApiRouter {
 
   private getAll(req: Request, res: Response, next: NextFunction): void {
     res.json({});
+  }
+
+  private isAuthorized(req: Request, res: Response): void {
+    const username = req.body.username;
+    const token = req.body.token;
+
+    const isAuthorized = I18nDAO.isAuthorizedForGitlabProject(username, token);
+
+    if (isAuthorized) {
+      res.json({
+        status: 'STATUS_SUCCESSFUL',
+        step: 'AUTHORIZED',
+      });
+    } else {
+      res.sendStatus(500);
+      res.write(JSON.stringify({
+        status: 'STATUS_FAILED',
+        step: 'NOT_AUTHORIZED',
+        payload: { reason: 'UNKOWN_LOGIN' },
+      }));
+    }
   }
 
   private pushChanges(req: Request, res: Response, next: NextFunction): void {
@@ -83,7 +105,7 @@ export class I18nApiRouter {
       availableLangs.forEach((langRef, index) => {
         I18nDAO.buildKeys({
           root: '',
-          dataNode: JSON.parse(fs.readFileSync(path.join(req.i18nFileBaseLocation, `${langRef}.json`)).toString('UTF-8')),
+          dataNode: JSON.parse(fs.readFileSync(path.join(req.i18nFileBaseLocation, `${langRef.toLowerCase()}.json`)).toString('UTF-8')),
           langRef,
           langData,
         });
@@ -147,7 +169,7 @@ export class I18nApiRouter {
 
     langKeys.forEach((langRef, index) => {
       const fileContent = result[langRef];
-      const fileLocation = path.join(req.i18nFileBaseLocation, `${langRef}.json`);
+      const fileLocation = path.join(req.i18nFileBaseLocation, `${langRef.toLowerCase()}.json`);
       const exists = fs.existsSync(fileLocation);
       if (!exists) {
         res.status(404).send({

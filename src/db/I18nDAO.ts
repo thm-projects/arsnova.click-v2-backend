@@ -108,7 +108,7 @@ class I18nDAO extends AbstractDAO<object> {
 
     for (let i = 0; i < langRefs.length; i++) {
       result[langRefs[i]] = [];
-      const i18nFileContent = JSON.parse(fs.readFileSync(path.join(req.i18nFileBaseLocation, `${langRefs[i]}.json`)).toString('UTF-8'));
+      const i18nFileContent = JSON.parse(fs.readFileSync(path.join(req.i18nFileBaseLocation, `${langRefs[i].toLowerCase()}.json`)).toString('UTF-8'));
       const objectPaths = this.objectPath(i18nFileContent);
 
       objectPaths.forEach((
@@ -144,6 +144,17 @@ class I18nDAO extends AbstractDAO<object> {
     await gitlabService.Branches.create(GITLAB.PROJECT_ID, branch, GITLAB.TARGET_BRANCH);
     await gitlabService.Commits.create(GITLAB.PROJECT_ID, branch, this.commitMessage, this.generateCommitActions());
     await gitlabService.MergeRequests.create(GITLAB.PROJECT_ID, branch, GITLAB.TARGET_BRANCH, this.mergeRequestTitle);
+  }
+
+  public async isAuthorizedForGitlabProject(username: string, token: string): Promise<boolean> {
+    const gitlabService = this.prepareGitlabConnection(username, token);
+    const project = await gitlabService.Projects.show(GITLAB.PROJECT_ID);
+
+    if (!project) {
+      return false;
+    }
+
+    return project.permissions.project_access.access_level >= 30;
   }
 
   public createObjectFromKeys({ data, result }): void {
