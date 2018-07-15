@@ -29,6 +29,7 @@ npm_test:
   tags:
     - nodejs
   script:
+    - npm install
     - node_modules/mocha/bin/mocha --opts src/tests/mocha.opts
 
 build:
