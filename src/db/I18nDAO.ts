@@ -35,8 +35,8 @@ class I18nDAO extends AbstractDAO<object> {
       availableLangs.forEach(langRef => {
         this.buildKeys({
           root: '',
-          dataNode: JSON.parse(fs.readFileSync(path.join(i18nFileBaseLocation[projectName], `${langRef}.json`)).toString('UTF-8')),
-          langRef,
+          dataNode: JSON.parse(fs.readFileSync(path.join(i18nFileBaseLocation[projectName], `${langRef.toLowerCase()}.json`)).toString('UTF-8')),
+          langRef: langRef.toLowerCase(),
           langData,
         });
       });
