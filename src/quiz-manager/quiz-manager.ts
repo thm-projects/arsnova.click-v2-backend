@@ -240,7 +240,7 @@ export class ActiveQuizItem implements IActiveQuiz {
 
     let timer = this.originalObject.questionList[this.currentQuestionIndex].timer;
     this._countdownInterval = setInterval(() => {
-      if (!timer || this.memberGroups.forEach(memberGroup => {
+      if (!timer || this.memberGroups.filter(memberGroup => {
         return memberGroup.members.filter(nick => {
           if (!nick.responses[this.currentQuestionIndex]) {
             return false;
@@ -248,7 +248,7 @@ export class ActiveQuizItem implements IActiveQuiz {
           const value = nick.responses[this.currentQuestionIndex].value;
           return typeof value === 'number' ? !isNaN(value) : value.length;
         }).length === memberGroup.members.length;
-      })) {
+      }).length === this.memberGroups.length) {
         clearInterval(this._countdownInterval);
         this._currentStartTimestamp = 0;
       } else {

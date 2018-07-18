@@ -183,6 +183,16 @@ export class MemberRouter {
   }
 
   public addResponse(req: Request, res: Response): void {
+    if (!req.body.quizName || !req.body.nickname || !req.body.value) {
+      res.sendStatus(500);
+      res.end(JSON.stringify({
+        status: 'STATUS:FAILED',
+        step: 'QUIZ:INVALID_DATA',
+        payload: {},
+      }));
+      return;
+    }
+
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
     if (!activeQuiz) {
       res.sendStatus(500);
