@@ -2,10 +2,15 @@ import { IStorageDAO } from 'arsnova-click-v2-types/src/common';
 
 export abstract class AbstractDAO<T> implements IStorageDAO<T> {
   protected static instance;
-  public readonly storage: T;
+
+  protected _storage: T;
+
+  get storage(): T {
+    return this._storage;
+  }
 
   protected constructor(storage: T) {
-    this.storage = storage;
+    this._storage = storage;
   }
 
   public createDump(): any {

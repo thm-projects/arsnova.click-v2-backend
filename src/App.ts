@@ -11,6 +11,7 @@ import options from './cors.config';
 import { IGlobal } from './main';
 
 import { apiRouter } from './routes/api';
+import { router as expiryQuizRouter } from './routes/expiry-quiz';
 import { i18nApiRouter } from './routes/i18n-api';
 import { legacyApiRouter } from './routes/legacy-api';
 import { libRouter } from './routes/lib';
@@ -125,6 +126,7 @@ class App {
     this._express.use(`${staticStatistics.routePrefix}/api`, legacyApiRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1`, apiRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/quiz`, quizRouter);
+    this._express.use(`${staticStatistics.routePrefix}/api/v1/expiry-quiz`, expiryQuizRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/member`, memberRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/lobby`, lobbyRouter);
     this._express.use(`${staticStatistics.routePrefix}/api/v1/nicks`, nicksRouter);
