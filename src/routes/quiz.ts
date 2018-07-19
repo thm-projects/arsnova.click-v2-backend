@@ -367,21 +367,23 @@ export class QuizRouter {
       });
       return;
     }
-    if (settings.public.createQuizPasswordRequired && !req.body.serverPassword) {
-      res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:SERVER_PASSWORD_REQUIRED',
-        payload: {},
-      });
-      return;
-    }
-    if (req.body.serverPassword !== settings.createQuizPassword) {
-      res.send(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
-        payload: {},
-      }));
-      return;
+    if (settings.public.createQuizPasswordRequired) {
+      if (!req.body.serverPassword) {
+        res.send({
+          status: 'STATUS:FAILED',
+          step: 'QUIZ:SERVER_PASSWORD_REQUIRED',
+          payload: {},
+        });
+        return;
+      }
+      if (req.body.serverPassword !== settings.createQuizPassword) {
+        res.send(JSON.stringify({
+          status: 'STATUS:FAILED',
+          step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
+          payload: {},
+        }));
+        return;
+      }
     }
     QuizManagerDAO.initInactiveQuiz(req.body.quizName);
     DbDAO.create(DATABASE_TYPE.QUIZ, {

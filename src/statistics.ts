@@ -45,7 +45,7 @@ export const dynamicStatistics = () => {
 export const settings = {
   public: {
     cacheQuizAssets: true,
-    createQuizPasswordRequired: true,
+    createQuizPasswordRequired: false,
     limitActiveQuizzes: Infinity,
   },
   limitQuizCreationToCasAccounts: [],
