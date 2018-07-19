@@ -1,8 +1,7 @@
-import { IStorageDAO } from 'arsnova-click-v2-types/src/common';
 import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import { AbstractDAO } from './AbstractDAO';
 
-class ExpiryQuizDAO extends AbstractDAO<IQuestionGroup> implements IStorageDAO {
+class ExpiryQuizDAO extends AbstractDAO<IQuestionGroup> {
   private _expiry: Date;
 
   get expiry(): Date {
