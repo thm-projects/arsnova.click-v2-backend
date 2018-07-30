@@ -1,7 +1,5 @@
 import { ILogin, ILoginSerialized } from 'arsnova-click-v2-types/src/common';
-import * as fs from 'fs';
 import * as jwt from 'jsonwebtoken';
-import * as path from 'path';
 import { DATABASE_TYPE, USER_AUTHORIZATION } from '../Enums';
 import { staticStatistics } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
@@ -50,10 +48,10 @@ class Login implements ILogin {
   public generateToken(): string {
     return jwt.sign({
       username: this._username,
-      userAuthorizations: this._userAuthorizations
+      userAuthorizations: this._userAuthorizations,
     }, staticStatistics.jwtSecret, {
       algorithm: 'HS512',
-      expiresIn: 28800 // 8 hours
+      expiresIn: 28800, // 8 hours
     });
   }
 
@@ -111,11 +109,11 @@ class LoginDAO extends AbstractDAO<{ [key: string]: ILogin }> {
     if (this.isEmptyVars(username, token, this.storage[username])) {
       return false;
     }
-    
+
     if (this.storage[username].token !== token) {
       return false;
     }
-    
+
     try {
       jwt.verify(token, staticStatistics.jwtSecret);
       return true;

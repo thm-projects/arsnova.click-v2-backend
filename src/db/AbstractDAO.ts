@@ -25,7 +25,7 @@ export abstract class AbstractDAO<T> implements IStorageDAO<T> {
     return typeof variable === 'undefined' || AbstractDAO.getLengthOfVar(variable) === 0;
   }
 
-	private static getLengthOfVar(variable: any): number {
+  private static getLengthOfVar(variable: any): number {
     switch (typeof variable) {
       case 'string':
         return variable.length;
