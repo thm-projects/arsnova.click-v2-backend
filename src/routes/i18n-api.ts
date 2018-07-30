@@ -62,8 +62,8 @@ export class I18nApiRouter {
         step: 'AUTHORIZED',
       });
     } else {
-      res.sendStatus(500);
-      res.write(JSON.stringify({
+      res.status(500);
+      res.end(JSON.stringify({
         status: 'STATUS_FAILED',
         step: 'NOT_AUTHORIZED',
         payload: { reason: 'UNKOWN_LOGIN' },

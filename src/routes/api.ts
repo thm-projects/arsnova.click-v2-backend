@@ -49,7 +49,7 @@ export class ApiRouter {
 
     } else {
       if (!fs.existsSync(path.join(`${pathToFiles}`, `${req.params.fileName}`))) {
-        res.sendStatus(404);
+        res.status(404);
         res.end();
         return;
       }
@@ -69,8 +69,7 @@ export class ApiRouter {
       });
     } else {
       res.status(404);
-      res.write('File not found');
-      res.end();
+      res.end('File not found');
     }
   }
 

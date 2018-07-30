@@ -22,7 +22,7 @@ const derivates: Array<string> = require('../../assets/imageDerivates');
 const themeData = JSON.parse(fs.readFileSync(path.join(staticStatistics.pathToAssets, 'themeData.json')).toString());
 const casSettings = { base_url: 'https://cas.thm.de/cas' };
 
-export class LibRouter {
+class LibRouter {
   get router(): Router {
     return this._router;
   }
@@ -290,7 +290,7 @@ export class LibRouter {
 
   public renderMathjax(req: Request, res: Response, next: NextFunction): void {
     if (!req.body.mathjax || !req.body.format || !req.body.output) {
-      res.writeHead(500);
+      res.status(500);
       res.end(`Malformed request received -> ${req.body}`);
       return;
     }
@@ -340,7 +340,7 @@ export class LibRouter {
 
   public cacheQuizAssets(req: Request, res: Response, next: NextFunction): void {
     if (!req.body.quiz) {
-      res.writeHead(500);
+      res.status(500);
       res.end(`Malformed request received -> ${req.body}`);
       return;
     }
@@ -360,7 +360,7 @@ export class LibRouter {
 
   public getCache(req: Request, res: Response, next: NextFunction): void {
     if (!req.params.digest || !fs.existsSync(path.join(staticStatistics.pathToCache, req.params.digest))) {
-      res.writeHead(500);
+      res.status(500);
       res.end(`Malformed request received -> ${req.body}, ${req.params}`);
       return;
     }
@@ -446,8 +446,9 @@ export class LibRouter {
     const username = req.body.username;
     const passwordHash = req.body.passwordHash;
     let token = req.body.token;
+    const user = LoginDAO.getUser(username);
 
-    if (!username || !passwordHash || !LoginDAO.validateUser(username, passwordHash)) {
+    if (!username || !passwordHash || !user || !LoginDAO.validateUser(username, passwordHash)) {
       res.send({
         status: 'STATUS:FAILED',
         step: 'AUTHENTICATE_STATIC',
@@ -457,7 +458,7 @@ export class LibRouter {
     }
 
     if (!token || typeof token !== 'string' || token.length === 0) {
-      token = this.randomValueHex();
+      token = user.generateToken();
       LoginDAO.setTokenForUser(username, token);
 
       res.send({

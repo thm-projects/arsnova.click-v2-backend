@@ -1,6 +1,6 @@
 import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import { IActiveQuiz, IMemberGroupSerialized } from 'arsnova-click-v2-types/src/common';
-import { IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
+import { IIsAvailableQuizPayload, IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import { ISessionConfiguration } from 'arsnova-click-v2-types/src/session_configuration/interfaces';
 import { NextFunction, Request, Response, Router } from 'express';
 import * as fs from 'fs';
@@ -19,7 +19,7 @@ export class QuizRouter {
   }
 
   private readonly _router: Router;
-  private _leaderboard: Leaderboard = new Leaderboard();
+  private readonly _leaderboard: Leaderboard = new Leaderboard();
 
   /**
    * Initialize the QuizRouter
@@ -30,17 +30,8 @@ export class QuizRouter {
   }
 
   public getIsAvailableQuiz(req: Request, res: Response): void {
-    interface IisAvailableQuizPayload {
-      available?: boolean;
-      provideNickSelection?: boolean;
-      authorizeViaCas?: boolean;
-      memberGroups?: Array<IMemberGroupSerialized>;
-      maxMembersPerGroup?: number;
-      autoJoinToGroup?: boolean;
-    }
-
     const quiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
-    const payload: IisAvailableQuizPayload = {};
+    const payload: IIsAvailableQuizPayload = {};
 
     const isInactive: boolean = QuizManagerDAO.isInactiveQuiz(req.params.quizName);
     let isInProgress = false;
@@ -186,7 +177,7 @@ export class QuizRouter {
   public startQuiz(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:START:QUIZ_INACTIVE',
@@ -231,7 +222,7 @@ export class QuizRouter {
   public stopQuiz(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:STOP:QUIZ_INACTIVE',
@@ -250,7 +241,7 @@ export class QuizRouter {
   public getCurrentQuizState(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:CURRENT_STATE:QUIZ_INACTIVE',
@@ -274,7 +265,7 @@ export class QuizRouter {
   public showReadingConfirmation(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:READING_CONFIRMATION_REQUESTED:QUIZ_INACTIVE',
@@ -294,7 +285,7 @@ export class QuizRouter {
   public getQuizStartTime(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:GET_STARTTIME:QUIZ_INACTIVE',
@@ -312,7 +303,7 @@ export class QuizRouter {
   public getQuizSettings(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:SETTINGS:QUIZ_INACTIVE',
@@ -330,7 +321,7 @@ export class QuizRouter {
   public updateQuizSettings(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:UPDATED_SETTINGS:QUIZ_INACTIVE',
@@ -399,7 +390,7 @@ export class QuizRouter {
 
   public reserveQuizWithOverride(req: Request, res: Response): void {
     if (!req.body.quizName || !req.body.privateKey) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:INVALID_DATA',
@@ -421,7 +412,7 @@ export class QuizRouter {
 
   public deleteQuiz(req: Request, res: Response): void {
     if (!req.body.quizName || !req.body.privateKey) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:INVALID_DATA',
@@ -441,7 +432,7 @@ export class QuizRouter {
         payload: {},
       });
     } else {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
@@ -489,7 +480,7 @@ export class QuizRouter {
   public resetQuiz(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:RESET:QUIZ_INACTIVE',
@@ -513,7 +504,7 @@ export class QuizRouter {
     });
 
     if (!dbResult) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'EXPORT:QUIZ_NOT_FOUND',
@@ -522,7 +513,7 @@ export class QuizRouter {
       return;
     }
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'EXPORT:QUIZ_INACTIVE',
@@ -577,7 +568,7 @@ export class QuizRouter {
   private getLeaderBoardData(req: Request, res: Response, next: NextFunction): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'GET_LEADERBOARD_DATA:QUIZ_INACTIVE',

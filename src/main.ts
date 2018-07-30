@@ -10,6 +10,7 @@ import App from './App';
 import { createDefaultPaths } from './app_bootstrap';
 import CasDAO from './db/CasDAO';
 import DbDAO from './db/DbDAO';
+import ExpiryQuizDAO from './db/ExpiryQuizDAO';
 import I18nDAO from './db/I18nDAO';
 import LoginDAO from './db/LoginDAO';
 import MathjaxDAO from './db/MathjaxDAO';
@@ -30,7 +31,7 @@ interface IHotModule extends NodeModule {
 
 export declare interface IGlobal extends NodeJS.Global {
   DAO: {
-    CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizManagerDAO: {}, DbDAO: {}, LoginDAO: {}
+    CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizManagerDAO: {}, DbDAO: {}, LoginDAO: {}, ExpiryQuizDAO: {}
   };
   createDump: Function;
 }
@@ -81,6 +82,7 @@ process.on('unhandledRejection', rejectionToCreateDump);
   QuizManagerDAO,
   DbDAO,
   LoginDAO,
+  ExpiryQuizDAO
 };
 (
   <IGlobal>global

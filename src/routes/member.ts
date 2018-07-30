@@ -22,7 +22,7 @@ export class MemberRouter {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
 
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:ADD_MEMBER:QUIZ_INACTIVE',
@@ -34,7 +34,7 @@ export class MemberRouter {
     if (!req.body.nickname || (
       activeQuiz.originalObject.sessionConfig.nicks.restrictToCasLogin && !req.body.ticket
     )) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:ADD_MEMBER:INVALID_PARAMETERS',
@@ -69,7 +69,7 @@ export class MemberRouter {
       });
 
     } catch (ex) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'LOBBY:MEMBER_ADDED',
@@ -81,7 +81,7 @@ export class MemberRouter {
   public addReadingConfirmation(req: Request, res: Response): void {
     const activeQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:ADD_READING_CONFIRMATION:QUIZ_INACTIVE',
@@ -100,7 +100,7 @@ export class MemberRouter {
   public addConfidenceValue(req: Request, res: Response): void {
     const activeQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:ADD_CONFIDENCE_VALUE:QUIZ_INACTIVE',
@@ -119,7 +119,7 @@ export class MemberRouter {
   public deleteMember(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:REMOVE_MEMBER:QUIZ_INACTIVE',
@@ -141,7 +141,7 @@ export class MemberRouter {
   public getAllMembers(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:GET_MEMBERS:QUIZ_INACTIVE',
@@ -162,7 +162,7 @@ export class MemberRouter {
   public getRemainingNicks(req: Request, res: Response): void {
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:GET_REMAINING_NICKS:QUIZ_INACTIVE',
@@ -184,7 +184,7 @@ export class MemberRouter {
 
   public addResponse(req: Request, res: Response): void {
     if (!req.body.quizName || !req.body.nickname || !req.body.value) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:INVALID_DATA',
@@ -195,7 +195,7 @@ export class MemberRouter {
 
     const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:ADD_MEMBER_RESPONSE:QUIZ_INACTIVE',
@@ -209,7 +209,7 @@ export class MemberRouter {
         <ActiveQuizItem>activeQuiz
       ).findMemberByName(req.body.nickname).responses[activeQuiz.currentQuestionIndex].responseTime) {
 
-        res.sendStatus(500);
+        res.status(500);
         res.end(JSON.stringify({
           status: 'STATUS:FAILED',
           step: 'QUIZ:DUPLICATE_MEMBER_RESPONSE',
@@ -220,7 +220,7 @@ export class MemberRouter {
     });
 
     if (typeof req.body.value === 'undefined') {
-      res.sendStatus(500);
+      res.status(500);
       res.end(JSON.stringify({
         status: 'STATUS:FAILED',
         step: 'QUIZ:INVALID_MEMBER_RESPONSE',

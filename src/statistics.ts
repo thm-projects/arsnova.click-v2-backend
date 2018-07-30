@@ -28,6 +28,7 @@ export const staticStatistics = {
   pathToCache: path.join(homedir, '.arsnova-click-v2-backend', 'asset_cache'),
   pathToJobs: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'jobs'),
   cpuCores: cpus().length,
+  jwtSecret: 'arsnova.click-v2'
 };
 
 export const dynamicStatistics = () => {

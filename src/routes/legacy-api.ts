@@ -43,7 +43,7 @@ export class LegacyApiRouter {
   private addHashtag(req: Request, res: Response, next: NextFunction): void {
     const sessionConfiguration = req.body.sessionConfiguration;
     if (QuizManagerDAO.getPersistedQuizByName(sessionConfiguration.hashtag)) {
-      res.sendStatus(500);
+      res.status(500);
       res.end('Hashtag already in use');
       return;
     }
@@ -73,7 +73,7 @@ export class LegacyApiRouter {
   private removeLocalData(req: Request, res: Response, next: NextFunction): void {
     const sessionConfiguration = req.body.sessionConfiguration;
     if (!QuizManagerDAO.isActiveQuiz(sessionConfiguration.hashtag)) {
-      res.sendStatus(500);
+      res.status(500);
       res.end('Missing permissions.');
       return;
     }
@@ -85,19 +85,19 @@ export class LegacyApiRouter {
     const sessionConfiguration = req.body.sessionConfiguration;
     const activeQuiz = QuizManagerDAO.getActiveQuizByName(sessionConfiguration.hashtag);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end('Hashtag not found');
       return;
     }
     activeQuiz.requestReadingConfirmation();
-    res.sendStatus(200);
+    res.status(200);
     res.end();
   }
 
   private openSession(req: Request, res: Response, next: NextFunction): void {
     const sessionConfiguration = req.body.sessionConfiguration;
 
-    res.sendStatus(200);
+    res.status(200);
     res.end();
     // TODO: Figure out how to combine req with /updateQuestionGroup request.
   }
@@ -106,7 +106,7 @@ export class LegacyApiRouter {
     const sessionConfiguration = req.body.sessionConfiguration;
     const activeQuiz = QuizManagerDAO.getActiveQuizByName(sessionConfiguration.hashtag);
     if (!activeQuiz) {
-      res.sendStatus(500);
+      res.status(500);
       res.end('Hashtag not found');
       return;
     }
@@ -117,7 +117,7 @@ export class LegacyApiRouter {
   private updateQuestionGroup(req: Request, res: Response, next: NextFunction): void {
     const questionGroup = <IQuestionGroup>req.body.questionGroupModel;
     if (!QuizManagerDAO.isInactiveQuiz(questionGroup.hashtag)) {
-      res.sendStatus(500);
+      res.status(500);
       res.end('Hashtag not found');
       return;
     }
