@@ -17,6 +17,8 @@ import MathjaxDAO from './db/MathjaxDAO';
 import QuizManagerDAO from './db/QuizManagerDAO';
 import { WebSocketRouter } from './routes/websocket';
 import { staticStatistics } from './statistics';
+import { LoadTester } from './tests/LoadTester';
+import * as Minimist from 'minimist';
 
 require('source-map-support').install();
 
@@ -163,6 +165,11 @@ server.on('close', onClose);
 
 let currentApp = App;
 
+const argv = Minimist(process.argv.slice(2));
+if (argv['load-test']) {
+  runTest();
+}
+
 if ((
   <IHotModule>module
 ).hot) {
@@ -196,7 +203,7 @@ function onError(error: NodeJS.ErrnoException): void {
                          typeof port === 'string'
                        ) ? 'Pipe ' + port : 'Port ' + port;
   switch (error.code) {
-    case 'EACCES':
+    case 'EACCESS':
       console.error(`${bind} requires elevated privileges`);
       process.exit(1);
       break;
@@ -219,6 +226,21 @@ function onListening(): void {
   WebSocketRouter.wss = new WebSocket.Server({ server });
 
   I18nDAO.reloadCache();
+}
+
+function runTest(): void {
+  console.log('----- Running Load Test -----');
+  console.log(`CPU Time Spent Begin: ${process.cpuUsage().user / 1000000}`);
+  const startTime = new Date().getTime();
+  const loadTest = new LoadTester();
+  const interval = setInterval(() => {
+    if (loadTest.done) {
+      clearInterval(interval);
+      console.log(`CPU Time Spent End: ${process.cpuUsage().user / 1000000}`);
+      console.log(`Load Test took ${(new Date().getTime() - startTime) / 1000}`);
+      console.log('----- Load Test Finished -----');
+    }
+  }, 100);
 }
 
 function onClose(): void {

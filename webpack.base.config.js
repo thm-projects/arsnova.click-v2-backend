@@ -6,12 +6,15 @@ const defaults = {
     __dirname: false,
     __filename: false,
   },
+  mode: 'none',
+  // this makes sure we include node_modules and other 3rd party libraries
+  externals: [/node_modules/],
   module: {
     rules: [
       {
         test: /.tsx?$/,
-        use: ["ts-loader"],
-        exclude: /node_modules/
+        loader: 'ts-loader',
+        options: { allowTsInNodeModules: true }
       },
       {
         test: /\.js?$/,
@@ -21,7 +24,7 @@ const defaults = {
     ]
   },
   resolve: {
-    extensions: [ '.tsx', '.ts', '.js', '.json']
+    extensions: [ '.js', '.tsx', '.ts', '.json']
   },
   output: {
     path: path.join(__dirname, 'dist'),

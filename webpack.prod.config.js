@@ -17,7 +17,7 @@ const config = {
     watchContentBase: true
   },
   externals: [nodeExternals({
-    whitelist: ['webpack/hot/poll?1000']
+    whitelist: ['webpack/hot/poll?1000', /^arsnova-click-v2-types/]
   })],
   devtool: 'source-map',
   plugins: [
