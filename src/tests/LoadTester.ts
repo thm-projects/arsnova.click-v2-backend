@@ -101,5 +101,4 @@ export class LoadTester {
       QuizManagerDAO.initActiveQuiz(quiz);
     }
   }
-
 }
