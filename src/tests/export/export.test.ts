@@ -1,7 +1,8 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
 import { IFreetextAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import { IQuestionFreetext, IQuestionGroup, IQuestionRanged, IQuestionSurvey } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { FreeTextQuestion } from 'arsnova-click-v2-types/src/questions';
+import { IQuestionGroup, IQuestionRanged, IQuestionSurvey } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as i18n from 'i18n';
@@ -170,7 +171,7 @@ class ExcelExportTestSuite {
             break;
           case 'FreeTextQuestion':
             const parsedAnswer: IFreetextAnswerOption = <IFreetextAnswerOption>(
-              <IQuestionFreetext>question
+              <FreeTextQuestion>question
             ).answerOptionList[0];
             useCorrect = Math.random() > 0.5;
             if (useCorrect) {

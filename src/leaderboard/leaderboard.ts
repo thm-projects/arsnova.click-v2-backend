@@ -1,6 +1,7 @@
 import { IFreetextAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 import { ILeaderBoardItem, IQuizResponse } from 'arsnova-click-v2-types/src/common';
-import { IQuestion, IQuestionChoice, IQuestionFreetext, IQuestionRanged } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { FreeTextQuestion } from 'arsnova-click-v2-types/src/questions';
+import { IQuestion, IQuestionChoice, IQuestionRanged } from 'arsnova-click-v2-types/src/questions/interfaces';
 
 export class Leaderboard {
   public isCorrectResponse(response: IQuizResponse, question: IQuestion): number {
@@ -17,7 +18,7 @@ export class Leaderboard {
       case 'RangedQuestion':
         return this.isCorrectRangedQuestion(<number>response.value, <IQuestionRanged>question);
       case 'FreeTextQuestion':
-        return this.isCorrectFreeTextQuestion(<string>response.value, <IQuestionFreetext>question) ? 1 : -1;
+        return this.isCorrectFreeTextQuestion(<string>response.value, <FreeTextQuestion>question) ? 1 : -1;
       default:
         throw new Error(`Unsupported question type while checking correct response. Received type ${question.TYPE}`);
     }
@@ -66,7 +67,7 @@ export class Leaderboard {
     return response === question.correctValue ? 1 : response >= question.rangeMin && response <= question.rangeMax ? 0 : -1;
   }
 
-  private isCorrectFreeTextQuestion(response: string, question: IQuestionFreetext): boolean {
+  private isCorrectFreeTextQuestion(response: string, question: FreeTextQuestion): boolean {
     const answerOption: IFreetextAnswerOption = <IFreetextAnswerOption>question.answerOptionList[0];
     let refValue = answerOption.answerText;
     let result = false;
