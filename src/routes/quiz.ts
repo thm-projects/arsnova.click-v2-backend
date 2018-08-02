@@ -1,5 +1,6 @@
 import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/src/communication_protocol';
 import { IIsAvailableQuizPayload, IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import { ISessionConfiguration } from 'arsnova-click-v2-types/src/session_configuration/interfaces';
 import { NextFunction, Request, Response, Router } from 'express';
@@ -52,9 +53,12 @@ export class QuizRouter {
       }
     }
 
+    const step = quiz && !isInProgress ? COMMUNICATION_PROTOCOL.QUIZ.AVAILABLE : isInactive || isInProgress ? COMMUNICATION_PROTOCOL.QUIZ.EXISTS
+                                                                                                            : COMMUNICATION_PROTOCOL.QUIZ.UNDEFINED;
+
     const result: Object = {
-      status: `STATUS:SUCCESSFUL`,
-      step: `QUIZ:${quiz && !isInProgress ? 'AVAILABLE' : isInactive || isInProgress ? 'EXISTS' : 'UNDEFINED'}`,
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step,
       payload,
     };
     res.send(result);
@@ -160,15 +164,15 @@ export class QuizRouter {
           }
         });
         res.send({
-          status: 'STATUS:SUCCESSFUL',
-          step: 'QUIZ:UPLOAD_FILE',
+          status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+          step: COMMUNICATION_PROTOCOL.QUIZ.UPLOAD_FILE,
           payload: { duplicateQuizzes },
         });
       });
     } else {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:UPLOAD_FILE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.UPLOAD_FILE,
         payload: { message: 'busboy not found' },
       });
     }
@@ -179,16 +183,16 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:START:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
     }
     if (activeQuiz.currentStartTimestamp) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:ALREADY_STARTED',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.ALREADY_STARTED,
         payload: {
           startTimestamp: activeQuiz.currentStartTimestamp,
           nextQuestionIndex: activeQuiz.currentQuestionIndex,
@@ -200,16 +204,16 @@ export class QuizRouter {
 
       if (nextQuestionIndex === -1) {
         res.send({
-          status: 'STATUS:FAILED',
-          step: 'QUIZ:END_OF_QUESTIONS',
+          status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+          step: COMMUNICATION_PROTOCOL.QUIZ.END_OF_QUESTIONS,
           payload: {},
         });
       } else {
         const startTimestamp: number = new Date().getTime();
         activeQuiz.setTimestamp(startTimestamp);
         res.send({
-          status: 'STATUS:SUCCESSFUL',
-          step: 'QUIZ:START',
+          status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+          step: COMMUNICATION_PROTOCOL.QUIZ.START,
           payload: {
             startTimestamp,
             nextQuestionIndex,
@@ -224,16 +228,16 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:STOP:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
     }
     activeQuiz.stop();
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:STOP',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.STOP,
       payload: {},
     });
   }
@@ -243,16 +247,16 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:CURRENT_STATE:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
     }
     const index = activeQuiz.currentQuestionIndex < 0 ? 0 : activeQuiz.currentQuestionIndex;
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:CURRENT_STATE',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.CURRENT_STATE,
       payload: {
         questions: activeQuiz.originalObject.questionList.slice(0, index + 1),
         questionIndex: index,
@@ -267,8 +271,8 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:READING_CONFIRMATION_REQUESTED:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
@@ -276,8 +280,8 @@ export class QuizRouter {
     activeQuiz.nextQuestion();
     activeQuiz.requestReadingConfirmation();
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:READING_CONFIRMATION_REQUESTED',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.READING_CONFIRMATION_REQUESTED,
       payload: {},
     });
   }
@@ -287,15 +291,15 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:GET_STARTTIME:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
     }
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:GET_STARTTIME',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.GET_STARTTIME,
       payload: { startTimestamp: activeQuiz.currentStartTimestamp },
     });
   }
@@ -305,15 +309,15 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:SETTINGS:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
     }
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:SETTINGS',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.UPDATED_SETTINGS,
       payload: { settings: activeQuiz.originalObject.sessionConfig },
     });
   }
@@ -323,16 +327,16 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:UPDATED_SETTINGS:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
     }
     activeQuiz.updateQuizSettings(req.body.target, req.body.state);
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:UPDATED_SETTINGS',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.UPDATED_SETTINGS,
       payload: {},
     });
   }
@@ -340,8 +344,8 @@ export class QuizRouter {
   public reserveQuiz(req: Request, res: Response): void {
     if (!req.body.quizName || !req.body.privateKey) {
       res.send(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INVALID_DATA',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.INVALID_PARAMETERS,
         payload: {},
       }));
       return;
@@ -349,8 +353,8 @@ export class QuizRouter {
     const activeQuizzesAmount = QuizManagerDAO.getAllActiveQuizNames();
     if (activeQuizzesAmount.length >= settings.public.limitActiveQuizzes) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:TOO_MUCH_ACTIVE_QUIZZES',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.TOO_MUCH_ACTIVE_QUIZZES,
         payload: {
           activeQuizzes: activeQuizzesAmount,
           limitActiveQuizzes: settings.public.limitActiveQuizzes,
@@ -361,16 +365,16 @@ export class QuizRouter {
     if (settings.public.createQuizPasswordRequired) {
       if (!req.body.serverPassword) {
         res.send({
-          status: 'STATUS:FAILED',
-          step: 'QUIZ:SERVER_PASSWORD_REQUIRED',
+          status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+          step: COMMUNICATION_PROTOCOL.QUIZ.SERVER_PASSWORD_REQUIRED,
           payload: {},
         });
         return;
       }
       if (req.body.serverPassword !== settings.createQuizPassword) {
         res.send(JSON.stringify({
-          status: 'STATUS:FAILED',
-          step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
+          status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+          step: COMMUNICATION_PROTOCOL.AUTHORIZATION.INSUFFICIENT_PERMISSIONS,
           payload: {},
         }));
         return;
@@ -382,8 +386,8 @@ export class QuizRouter {
       privateKey: req.body.privateKey,
     });
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:RESERVED',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.RESERVED,
       payload: {},
     });
   }
@@ -392,8 +396,8 @@ export class QuizRouter {
     if (!req.body.quizName || !req.body.privateKey) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INVALID_DATA',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.INVALID_PARAMETERS,
         payload: {},
       }));
       return;
@@ -404,8 +408,8 @@ export class QuizRouter {
       privateKey: req.body.privateKey,
     });
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:RESERVED',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.RESERVED,
       payload: {},
     });
   }
@@ -414,8 +418,8 @@ export class QuizRouter {
     if (!req.body.quizName || !req.body.privateKey) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INVALID_DATA',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.INVALID_PARAMETERS,
         payload: {},
       }));
       return;
@@ -427,15 +431,15 @@ export class QuizRouter {
     if (dbResult) {
       QuizManagerDAO.removeQuiz(req.body.quizName);
       res.send({
-        status: 'STATUS:SUCCESSFUL',
-        step: 'QUIZ:REMOVED',
+        status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+        step: COMMUNICATION_PROTOCOL.QUIZ.REMOVED,
         payload: {},
       });
     } else {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.INSUFFICIENT_PERMISSIONS,
         payload: {},
       }));
     }
@@ -444,8 +448,8 @@ export class QuizRouter {
   public deleteActiveQuiz(req: Request, res: Response): void {
     if (!req.body.quizName || !req.body.privateKey) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INVALID_DATA',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.INVALID_PARAMETERS,
         payload: {},
       });
       return;
@@ -458,8 +462,8 @@ export class QuizRouter {
 
     if (!dbResult) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:INSUFFICIENT_PERMISSIONS',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.INSUFFICIENT_PERMISSIONS,
         payload: {},
       });
       return;
@@ -469,8 +473,8 @@ export class QuizRouter {
       activeQuiz.onDestroy();
       QuizManagerDAO.setQuizAsInactive(req.body.quizName);
       res.send({
-        status: 'STATUS:SUCCESSFUL',
-        step: 'QUIZ:CLOSED',
+        status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+        step: COMMUNICATION_PROTOCOL.LOBBY.CLOSED,
         payload: {},
       });
       return;
@@ -482,16 +486,16 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'QUIZ:RESET:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
     }
     activeQuiz.reset();
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:RESET',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.RESET,
       payload: {},
     });
   }
@@ -506,8 +510,8 @@ export class QuizRouter {
     if (!dbResult) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'EXPORT:QUIZ_NOT_FOUND',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.EXPORT.QUIZ_NOT_FOUND,
         payload: {},
       }));
       return;
@@ -515,8 +519,8 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'EXPORT:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
@@ -570,8 +574,8 @@ export class QuizRouter {
     if (!activeQuiz) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'GET_LEADERBOARD_DATA:QUIZ_INACTIVE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
       return;
@@ -657,8 +661,8 @@ export class QuizRouter {
     }
 
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:GET_LEADERBOARD_DATA',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.GET_LEADERBOARD_DATA,
       payload: {
         correctResponses: this._leaderboard.objectToArray(correctResponses),
         partiallyCorrectResponses: this._leaderboard.objectToArray(partiallyCorrectResponses),

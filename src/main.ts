@@ -3,6 +3,7 @@ declare function require(name: string): any;
 import * as child_process from 'child_process';
 import * as http from 'http';
 import { Server } from 'http';
+import * as Minimist from 'minimist';
 import * as path from 'path';
 import * as process from 'process';
 import * as WebSocket from 'ws';
@@ -18,7 +19,6 @@ import QuizManagerDAO from './db/QuizManagerDAO';
 import { WebSocketRouter } from './routes/websocket';
 import { staticStatistics } from './statistics';
 import { LoadTester } from './tests/LoadTester';
-import * as Minimist from 'minimist';
 
 require('source-map-support').install();
 
@@ -84,7 +84,7 @@ process.on('unhandledRejection', rejectionToCreateDump);
   QuizManagerDAO,
   DbDAO,
   LoginDAO,
-  ExpiryQuizDAO
+  ExpiryQuizDAO,
 };
 (
   <IGlobal>global
@@ -237,7 +237,9 @@ function runTest(): void {
     if (loadTest.done) {
       clearInterval(interval);
       console.log(`CPU Time Spent End: ${process.cpuUsage().user / 1000000}`);
-      console.log(`Load Test took ${(new Date().getTime() - startTime) / 1000}`);
+      console.log(`Load Test took ${(
+                                      new Date().getTime() - startTime
+                                    ) / 1000}`);
       console.log('----- Load Test Finished -----');
     }
   }, 100);

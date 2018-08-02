@@ -3,11 +3,11 @@ import availableNicks from '../nicknames/availableNicks';
 import illegalNicks from '../nicknames/illegalNicks';
 
 export class NicksRouter {
-  private _router: Router;
-
   get router(): Router {
     return this._router;
   }
+
+  private readonly _router: Router;
 
   /**
    * Initialize the NicksRouter

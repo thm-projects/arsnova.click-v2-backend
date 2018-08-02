@@ -1,13 +1,14 @@
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/src/communication_protocol';
 import { NextFunction, Request, Response, Router } from 'express';
 import QuizManagerDAO from '../db/QuizManagerDAO';
 import { WebSocketRouter } from './websocket';
 
 export class LobbyRouter {
-  private _router: Router;
-
   get router(): Router {
     return this._router;
   }
+
+  private readonly _router: Router;
 
   /**
    * Initialize the LobbyRouter
@@ -19,8 +20,8 @@ export class LobbyRouter {
 
   public putOpenLobby(req: Request, res: Response): void {
     const messageToWSSClients = JSON.stringify({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:SET_ACTIVE',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.SET_ACTIVE,
       payload: {
         quizName: req.body.quiz.hashtag,
       },
@@ -28,8 +29,8 @@ export class LobbyRouter {
     WebSocketRouter.wss.clients.forEach(client => client.send(messageToWSSClients));
 
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'LOBBY:OPENED',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.LOBBY.OPENED,
       payload: {
         quiz: QuizManagerDAO.initActiveQuiz(req.body.quiz).serialize(),
       },
@@ -40,8 +41,8 @@ export class LobbyRouter {
     const isInactive: boolean = QuizManagerDAO.isInactiveQuiz(req.params.quizName);
     const quiz = isInactive ? null : QuizManagerDAO.getActiveQuizByName(req.params.quizName).serialize();
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: `LOBBY:${isInactive ? 'CLOSED' : 'OPENED'}`,
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: isInactive ? COMMUNICATION_PROTOCOL.LOBBY.CLOSED : COMMUNICATION_PROTOCOL.LOBBY.OPENED,
       payload: {
         quiz,
       },
@@ -51,8 +52,8 @@ export class LobbyRouter {
   public deleteLobby(req: Request, res: Response): void {
     QuizManagerDAO.setQuizAsInactive(req.body.quizName);
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'LOBBY:CLOSED',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.LOBBY.CLOSED,
       payload: {},
     });
   }

@@ -1,3 +1,4 @@
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/src/communication_protocol';
 import { NextFunction, Request, Response, Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -24,8 +25,8 @@ export class I18nApiRouter {
     this._router.param('project', (req: any, res, next, project) => {
       if (!project || !i18nFileBaseLocation[project]) {
         res.status(500).send({
-          status: 'STATUS:FAILED',
-          data: 'Invalid Project specified',
+          status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+          data: COMMUNICATION_PROTOCOL.I18N.INVALID_PROJECT_SPECIFIED,
           payload: { project },
         });
       } else {
@@ -58,14 +59,14 @@ export class I18nApiRouter {
 
     if (isAuthorized) {
       res.json({
-        status: 'STATUS_SUCCESSFUL',
-        step: 'AUTHORIZED',
+        status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHORIZED,
       });
     } else {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS_FAILED',
-        step: 'NOT_AUTHORIZED',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.NOT_AUTHORIZED,
         payload: { reason: 'UNKOWN_LOGIN' },
       }));
     }
@@ -77,8 +78,8 @@ export class I18nApiRouter {
 
     if (!LoginDAO.validateTokenForUser(username, token)) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'AUTHENTICATE_STATIC',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
         payload: { reason: 'UNKOWN_LOGIN' },
       });
       return;
@@ -125,7 +126,7 @@ export class I18nApiRouter {
     payload.branch = I18nDAO.storage[req.projectCache].branch;
 
     res.send({
-      status: 'STATUS:SUCCESSFUL',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       payload,
     });
   }
@@ -136,8 +137,8 @@ export class I18nApiRouter {
 
     if (!LoginDAO.validateTokenForUser(username, token)) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'AUTHENTICATE_STATIC',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
         payload: { reason: 'UNKOWN_LOGIN' },
       });
       return;
@@ -145,8 +146,8 @@ export class I18nApiRouter {
 
     if (!req.body.data) {
       res.status(500).send({
-        status: 'STATUS:FAILED',
-        step: 'INVALID_DATA',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.I18N.INVALID_DATA,
         payload: { body: req.body },
       });
       return;
@@ -173,15 +174,15 @@ export class I18nApiRouter {
       const exists = fs.existsSync(fileLocation);
       if (!exists) {
         res.status(404).send({
-          status: 'STATUS:FAILED',
-          step: 'FILE_NOT_FOUND',
+          status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+          step: COMMUNICATION_PROTOCOL.I18N.FILE_NOT_FOUND,
           payload: { fileLocation },
         });
         return;
       }
       fs.writeFileSync(fileLocation, JSON.stringify(fileContent));
       if (index === langKeys.length - 1) {
-        res.send({ status: 'STATUS:SUCCESSFUL' });
+        res.send({ status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL });
       }
     });
   }

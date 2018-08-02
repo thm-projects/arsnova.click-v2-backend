@@ -1,3 +1,4 @@
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/src/communication_protocol';
 import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import { Request, Response, Router } from 'express';
 import { default as DbDAO } from '../db/DbDAO';
@@ -42,24 +43,21 @@ class ExpiryQuizRouter {
     const username = req.body.username;
     const token = req.body.token;
     const privateKey = req.body.privateKey;
-    if (
-      !privateKey ||
-      !token ||
-      !username ||
-      !LoginDAO.validateTokenForUser(username, token) ||
-      !LoginDAO.isUserAuthorizedFor(username, USER_AUTHORIZATION.CREATE_QUIZ_FROM_EXPIRED)
-    ) {
+    if (!privateKey || !token || !username || !LoginDAO.validateTokenForUser(username, token) || !LoginDAO.isUserAuthorizedFor(username,
+      USER_AUTHORIZATION.CREATE_QUIZ_FROM_EXPIRED)) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'UNAUTHORIZED',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.NOT_AUTHORIZED,
       }));
 
       return;
     }
 
     const baseQuiz = JSON.parse(JSON.stringify(ExpiryQuizDAO.storage));
-    baseQuiz.hashtag = baseQuiz.hashtag + (Object.keys(QuizManagerDAO.storage).length + 1);
+    baseQuiz.hashtag = baseQuiz.hashtag + (
+                       Object.keys(QuizManagerDAO.storage).length + 1
+    );
     QuizManagerDAO.initInactiveQuiz(baseQuiz.hashtag);
     const readyQuiz = QuizManagerDAO.initActiveQuiz(baseQuiz);
 
@@ -69,25 +67,21 @@ class ExpiryQuizRouter {
     });
 
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'INIT_QUIZ',
-      payload: {questionGroup: readyQuiz.originalObject}
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.INIT,
+      payload: { questionGroup: readyQuiz.originalObject },
     });
   }
 
   private static postQuiz(req: Request, res: Response): void {
     const username = req.body.username;
     const token = req.body.token;
-    if (
-      !token ||
-      !username ||
-      !LoginDAO.validateTokenForUser(username, token) ||
-      !LoginDAO.isUserAuthorizedFor(username, USER_AUTHORIZATION.CREATE_EXPIRED_QUIZ)
-    ) {
+    if (!token || !username || !LoginDAO.validateTokenForUser(username, token) || !LoginDAO.isUserAuthorizedFor(username,
+      USER_AUTHORIZATION.CREATE_EXPIRED_QUIZ)) {
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'UNAUTHORIZED',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.NOT_AUTHORIZED,
       }));
 
       return;
@@ -97,8 +91,8 @@ class ExpiryQuizRouter {
 
       res.status(500);
       res.end(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'POST_QUIZ',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.QUIZ.POST,
       }));
 
       return;
@@ -107,8 +101,8 @@ class ExpiryQuizRouter {
     ExpiryQuizDAO.setQuestionGroup(req.body.quiz, new Date(req.body.expiry));
 
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'POST_QUIZ',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.POST,
     });
   }
 

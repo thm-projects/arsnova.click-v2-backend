@@ -1,6 +1,7 @@
 import {
   IActiveQuiz, IActiveQuizSerialized, ICasData, IMemberGroup, IMemberGroupSerialized, INickname, INicknameSerialized, IQuizResponse,
 } from 'arsnova-click-v2-types/src/common';
+import { COMMUNICATION_PROTOCOL, COMMUNICATION_PROTOCOL_LOBBY } from 'arsnova-click-v2-types/src/communication_protocol';
 import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as WebSocket from 'ws';
 import CasDAO from '../db/CasDAO';
@@ -197,8 +198,8 @@ export class ActiveQuizItem implements IActiveQuiz {
 
   public onDestroy(): void {
     const messageToAllWSSClients = JSON.stringify({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:SET_INACTIVE',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.SET_INACTIVE,
       payload: {
         quizName: this.name,
       },
@@ -206,16 +207,16 @@ export class ActiveQuizItem implements IActiveQuiz {
     WebSocketRouter.wss.clients.forEach(client => client.send(messageToAllWSSClients));
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'LOBBY:CLOSED',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.LOBBY.CLOSED,
       payload: {},
     });
   }
 
   public requestReadingConfirmation(): void {
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:READING_CONFIRMATION_REQUESTED',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.READING_CONFIRMATION_REQUESTED,
       payload: {},
     });
   }
@@ -229,8 +230,8 @@ export class ActiveQuizItem implements IActiveQuiz {
       });
     });
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:RESET',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.RESET,
       payload: {},
     });
   }
@@ -257,8 +258,8 @@ export class ActiveQuizItem implements IActiveQuiz {
     }, 1000);
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:START',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.START,
       payload: { startTimestamp },
     });
   }
@@ -268,8 +269,8 @@ export class ActiveQuizItem implements IActiveQuiz {
     this._currentStartTimestamp = 0;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:STOP',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.STOP,
       payload: {},
     });
   }
@@ -286,8 +287,8 @@ export class ActiveQuizItem implements IActiveQuiz {
         });
       }));
       this.pushMessageToClients({
-        status: 'STATUS:SUCCESSFUL',
-        step: 'QUIZ:NEXT_QUESTION',
+        status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+        step: COMMUNICATION_PROTOCOL.QUIZ.NEXT_QUESTION,
         payload: {
           questionIndex: this.currentQuestionIndex,
         },
@@ -309,16 +310,16 @@ export class ActiveQuizItem implements IActiveQuiz {
     const group: IMemberGroup = this.memberGroups.find(memberGroup => memberGroup.name === groupName);
 
     if (foundMembers) {
-      throw new Error('LOBBY:DUPLICATE_LOGIN');
+      throw new Error(COMMUNICATION_PROTOCOL_LOBBY[COMMUNICATION_PROTOCOL.LOBBY.DUPLICATE_LOGIN]);
     }
     if (!group) {
-      throw new Error('LOBBY:UNKOWN_GROUP');
+      throw new Error(COMMUNICATION_PROTOCOL_LOBBY[COMMUNICATION_PROTOCOL.LOBBY.UNKOWN_GROUP]);
     }
     if (this.originalObject.sessionConfig.nicks.blockIllegalNicks && illegalNicks.indexOf(name.toUpperCase()) > -1) {
-      throw new Error('LOBBY:ILLEGAL_NAME');
+      throw new Error(COMMUNICATION_PROTOCOL_LOBBY[COMMUNICATION_PROTOCOL.LOBBY.ILLEGAL_NAME]);
     }
     if (this.originalObject.sessionConfig.nicks.restrictToCasLogin && !ticket) {
-      throw new Error('LOBBY:CAS_LOGIN_REQUIRED');
+      throw new Error(COMMUNICATION_PROTOCOL_LOBBY[COMMUNICATION_PROTOCOL.LOBBY.CAS_LOGIN_REQUIRED]);
     }
 
     const addedMember: INickname = new Member({
@@ -330,8 +331,8 @@ export class ActiveQuizItem implements IActiveQuiz {
     });
     this.memberGroups.find(memberGroup => memberGroup.name === groupName).members.push(addedMember);
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:ADDED',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.MEMBER.ADDED,
       payload: { member: addedMember.serialize() },
     });
     return true;
@@ -345,8 +346,8 @@ export class ActiveQuizItem implements IActiveQuiz {
     }
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:REMOVED',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.MEMBER.REMOVED,
       payload: {
         name: name,
       },
@@ -370,8 +371,8 @@ export class ActiveQuizItem implements IActiveQuiz {
     this.findMemberByName(nickname).responses[this.currentQuestionIndex].value = data;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:UPDATED_RESPONSE',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.MEMBER.UPDATED_RESPONSE,
       payload: {
         nickname: this.findMemberByName(nickname).serialize(),
       },
@@ -382,8 +383,8 @@ export class ActiveQuizItem implements IActiveQuiz {
     this.findMemberByName(nickname).responses[this.currentQuestionIndex].confidence = confidenceValue;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:UPDATED_RESPONSE',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.MEMBER.UPDATED_RESPONSE,
       payload: {
         nickname: this.findMemberByName(nickname).serialize(),
       },
@@ -394,8 +395,8 @@ export class ActiveQuizItem implements IActiveQuiz {
     this.findMemberByName(nickname).responses[this.currentQuestionIndex].readingConfirmation = true;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'MEMBER:UPDATED_RESPONSE',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.MEMBER.UPDATED_RESPONSE,
       payload: {
         nickname: this.findMemberByName(nickname).serialize(),
       },
@@ -406,8 +407,8 @@ export class ActiveQuizItem implements IActiveQuiz {
     this.originalObject.sessionConfig[target] = state;
 
     this.pushMessageToClients({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'QUIZ:UPDATED_SETTINGS',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.UPDATED_SETTINGS,
       payload: {
         target,
         state,

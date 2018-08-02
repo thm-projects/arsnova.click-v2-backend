@@ -1,6 +1,7 @@
 import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
 import { ILinkImage } from 'arsnova-click-v2-types/src/assets/library';
 import { ICasData } from 'arsnova-click-v2-types/src/common';
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/src/communication_protocol';
 import { IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response, Router } from 'express';
@@ -298,8 +299,8 @@ class LibRouter {
     const result = [];
     if (!mathjaxArray.length) {
       res.send(JSON.stringify({
-        status: 'STATUS:FAILED',
-        step: 'renderMathjax',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.MATHJAX.RENDER,
         payload: {
           mathjax: req.body.mathjax,
           format: req.body.format,
@@ -352,8 +353,8 @@ class LibRouter {
       });
     });
     res.json({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'CACHE:QUIZ_ASSETS',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.CACHE.QUIZ_ASSETS,
       payload: {},
     });
   }
@@ -403,8 +404,8 @@ class LibRouter {
           console.log('received response from cas server', err, result);
           if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
             res.send({
-              status: 'STATUS:FAILED',
-              step: 'AUTHENTICATE',
+              status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+              step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
               payload: {
                 err,
                 result,
@@ -420,8 +421,8 @@ class LibRouter {
             };
             CasDAO.add(ticket, casDataElement);
             res.send({
-              status: 'STATUS:SUCCESSFUL',
-              step: 'AUTHENTICATE',
+              status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+              step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
               payload: { ticket },
             });
           }
@@ -433,8 +434,8 @@ class LibRouter {
       console.log('error at requesting cas url', error);
       casRequest.abort();
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'AUTHENTICATE',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
         payload: { error },
       });
       return;
@@ -450,8 +451,8 @@ class LibRouter {
 
     if (!username || !passwordHash || !user || !LoginDAO.validateUser(username, passwordHash)) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'AUTHENTICATE_STATIC',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
         payload: { reason: 'UNKOWN_LOGIN' },
       });
       return;
@@ -462,8 +463,8 @@ class LibRouter {
       LoginDAO.setTokenForUser(username, token);
 
       res.send({
-        status: 'STATUS:SUCCESSFUL',
-        step: 'AUTHENTICATE_STATIC',
+        status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
         payload: { token },
       });
       return;
@@ -473,7 +474,7 @@ class LibRouter {
 
     res.send({
       status: `STATUS:${isTokenValid ? 'SUCCESSFUL' : 'FAILED'}`,
-      step: 'AUTHENTICATE_STATIC',
+      step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
       payload: { isTokenValid },
     });
     return;
@@ -485,16 +486,16 @@ class LibRouter {
 
     if (!LoginDAO.validateTokenForUser(username, token)) {
       res.send({
-        status: 'STATUS:FAILED',
-        step: 'AUTHENTICATE_STATIC',
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
         payload: { reason: 'UNKOWN_LOGIN' },
       });
       return;
     }
 
     res.send({
-      status: 'STATUS:SUCCESSFUL',
-      step: 'AUTHENTICATE_STATIC',
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
     });
     return;
   }
