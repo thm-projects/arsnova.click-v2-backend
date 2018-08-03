@@ -473,7 +473,7 @@ class LibRouter {
     const isTokenValid = LoginDAO.validateTokenForUser(username, token);
 
     res.send({
-      status: `STATUS:${isTokenValid ? 'SUCCESSFUL' : 'FAILED'}`,
+      status: isTokenValid ? COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL : COMMUNICATION_PROTOCOL.STATUS.FAILED,
       step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
       payload: { isTokenValid },
     });

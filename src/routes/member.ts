@@ -129,7 +129,7 @@ export class MemberRouter {
       return;
     }
     const result: boolean = activeQuiz.removeMember(req.params.nickname);
-    const response: Object = { status: `STATUS:${result ? 'SUCCESSFUL' : 'FAILED'}` };
+    const response: Object = { status: result ? COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL : COMMUNICATION_PROTOCOL.STATUS.FAILED};
     if (result) {
       Object.assign(response, {
         step: COMMUNICATION_PROTOCOL.MEMBER.REMOVED,
