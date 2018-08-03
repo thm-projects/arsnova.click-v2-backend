@@ -1,8 +1,4 @@
 {
-  "manifest": {
-    "name": "Quiz App made by THM",
-    "description": "The ultimate quiz app from the future!"
-  },
   "export": {
     "page_header": "&LEl concurso y el escalafón serían creado en una sesión en directa con arsnova.click &R__createdAt__",
     "page_footer": "&L&A&Carsnova.click es un Open Source Software, también ves arsnova.io y https://github.com/thm-projects/arsnova.click&RSeite &P von &N",

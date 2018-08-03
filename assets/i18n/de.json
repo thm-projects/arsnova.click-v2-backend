@@ -1,8 +1,4 @@
 {
-  "manifest": {
-    "name": "Quiz-App der THM",
-    "description": "Die Quiz-App der Zukunft!"
-  },
   "export": {
     "page_header": "&LQuiz-Statistik und Ranglisten generiert in einer Live-Session mit arsnova.click&R__createdAt__",
     "page_footer": "&L&A&Carsnova.click ist Open Source Software, siehe arsnova.io&R &P/&N",
