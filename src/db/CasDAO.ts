@@ -1,4 +1,4 @@
-import { ICasData } from 'arsnova-click-v2-types/src/common';
+import { ICasData } from 'arsnova-click-v2-types/dist/common';
 import { AbstractDAO } from './AbstractDAO';
 
 class CasDAO extends AbstractDAO<{ [key: string]: ICasData }> {

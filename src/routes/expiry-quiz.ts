@@ -1,5 +1,5 @@
-import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/src/communication_protocol';
-import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
+import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import { Request, Response, Router } from 'express';
 import { default as DbDAO } from '../db/DbDAO';
 import ExpiryQuizDAO from '../db/ExpiryQuizDAO';

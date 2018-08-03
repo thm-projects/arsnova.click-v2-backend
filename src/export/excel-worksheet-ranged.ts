@@ -1,6 +1,6 @@
-import { INickname } from 'arsnova-click-v2-types/src/common';
-import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
-import { IQuestion, IQuestionRanged } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { INickname } from 'arsnova-click-v2-types/dist/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/dist/excel.interfaces';
+import { IQuestion, IQuestionRanged } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import { ExcelWorksheet } from './excel-worksheet';
 import { calculateNumberOfRangedAnswers } from './lib/excel_function_library';
 
@@ -10,7 +10,13 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
   private readonly _questionIndex: number;
 
   constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
-    super({ theme, translation, quiz, mf, questionIndex });
+    super({
+      theme,
+      translation,
+      quiz,
+      mf,
+      questionIndex,
+    });
     this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
     this._question = this.quiz.originalObject.questionList[questionIndex];
@@ -22,11 +28,16 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     const defaultStyles = this._theme.getStyles();
     const answerCellStyle = {
       alignment: {
-        vertical: 'center', horizontal: 'center',
-      }, font: {
+        vertical: 'center',
+        horizontal: 'center',
+      },
+      font: {
         color: 'FF000000',
-      }, fill: {
-        type: 'pattern', patternType: 'solid', fgColor: 'FFFFE200',
+      },
+      fill: {
+        type: 'pattern',
+        patternType: 'solid',
+        fgColor: 'FFFFE200',
       },
     };
     let minColums = 3;
@@ -56,19 +67,25 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(4, 2).style(Object.assign({}, answerCellStyle, {
       border: {
         right: {
-          style: 'thin', color: 'black',
+          style: 'thin',
+          color: 'black',
         },
       },
     }));
     this.ws.cell(4, 3).style(Object.assign({}, answerCellStyle, {
       border: {
         right: {
-          style: 'thin', color: 'black',
+          style: 'thin',
+          color: 'black',
         },
-      }, font: {
+      },
+      font: {
         color: 'FFFFFFFF',
-      }, fill: {
-        type: 'pattern', patternType: 'solid', fgColor: 'FF008000',
+      },
+      fill: {
+        type: 'pattern',
+        patternType: 'solid',
+        fgColor: 'FF008000',
       },
     }));
     this.ws.cell(4, 4).style(answerCellStyle);
@@ -113,19 +130,21 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     });
 
     this.ws.row(10).filter({
-      firstRow: 10, firstColumn: 1, lastRow: 10, lastColumn: minColums,
+      firstRow: 10,
+      firstColumn: 1,
+      lastRow: 10,
+      lastColumn: minColums,
     });
 
     const hasEntries = this.leaderBoardData.length > 0;
     const attendeeEntryRows = hasEntries ? (
       this.leaderBoardData.length
     ) : 1;
-    const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle,
-      {
-        alignment: {
-          horizontal: 'center',
-        },
-      });
+    const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
+      alignment: {
+        horizontal: 'center',
+      },
+    });
     this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
     this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
@@ -141,16 +160,17 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
           horizontal: 'center',
-        }, font: {
+        },
+        font: {
           color: responseItem.value === castedQuestion.correctValue || responseItem.value < castedQuestion.rangeMin || responseItem.value
-                                                                                                                       > castedQuestion.rangeMax
-                 ? 'FFFFFFFF' : 'FF000000',
-        }, fill: {
+                 > castedQuestion.rangeMax ? 'FFFFFFFF' : 'FF000000',
+        },
+        fill: {
           type: 'pattern',
           patternType: 'solid',
           fgColor: responseItem.value === castedQuestion.correctValue ? 'FF008000' : responseItem.value < castedQuestion.rangeMin
-                                                                                     || responseItem.value > castedQuestion.rangeMax
-                                                                                     ? 'FFB22222' : 'FFFFE200',
+                                                                                     || responseItem.value > castedQuestion.rangeMax ? 'FFB22222'
+                                                                                                                                     : 'FFFFE200',
         },
       });
       if (this.responsesWithConfidenceValue.length > 0) {
@@ -163,7 +183,8 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
-        }, numberFormat: '#,##0;',
+        },
+        numberFormat: '#,##0;',
       });
     });
   }

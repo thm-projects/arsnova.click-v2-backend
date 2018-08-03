@@ -1,4 +1,4 @@
-import { ICommitAction, IGitlabCommitAction } from 'arsnova-click-v2-types/src/gitlab/apiv4';
+import { ICommitAction, IGitlabCommitAction } from 'arsnova-click-v2-types/dist/gitlab/apiv4';
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import Gitlab from 'gitlab';

@@ -1,5 +1,5 @@
-import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as Hex from 'crypto-js/enc-hex';
 import * as fs from 'fs';
 import * as request from 'request';

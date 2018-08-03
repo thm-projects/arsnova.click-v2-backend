@@ -1,5 +1,5 @@
-import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
-import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IActiveQuiz } from 'arsnova-click-v2-types/dist/common';
+import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import { parseCachedAssetQuiz } from '../cache/assets';
 import { DATABASE_TYPE } from '../Enums';
 import { ActiveQuizItem, ActiveQuizItemPlaceholder, MemberGroup } from '../quiz-manager/quiz-manager';

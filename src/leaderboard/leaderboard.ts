@@ -1,7 +1,7 @@
-import { IFreetextAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import { ILeaderBoardItem, IQuizResponse } from 'arsnova-click-v2-types/src/common';
-import { FreeTextQuestion } from 'arsnova-click-v2-types/src/questions';
-import { IQuestion, IQuestionChoice, IQuestionRanged } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IFreetextAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/interfaces';
+import { ILeaderBoardItem, IQuizResponse } from 'arsnova-click-v2-types/dist/common';
+import { FreeTextQuestion } from 'arsnova-click-v2-types/dist/questions';
+import { IQuestion, IQuestionChoice, IQuestionRanged } from 'arsnova-click-v2-types/dist/questions/interfaces';
 
 export class Leaderboard {
   public isCorrectResponse(response: IQuizResponse, question: IQuestion): number {

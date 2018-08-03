@@ -1,4 +1,4 @@
-import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response, Router } from 'express';
 import { default as DbDAO } from '../db/DbDAO';

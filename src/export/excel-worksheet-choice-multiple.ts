@@ -1,7 +1,7 @@
-import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import { INickname, IQuizResponse } from 'arsnova-click-v2-types/src/common';
-import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
-import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/interfaces';
+import { INickname, IQuizResponse } from 'arsnova-click-v2-types/dist/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/dist/excel.interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import { ExcelWorksheet } from './excel-worksheet';
 import { calculateNumberOfAnswers } from './lib/excel_function_library';
 

@@ -1,6 +1,6 @@
-import { ILeaderBoardItem, INickname } from 'arsnova-click-v2-types/src/common';
-import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
-import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { ILeaderBoardItem, INickname } from 'arsnova-click-v2-types/dist/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/dist/excel.interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as path from 'path';
 import { Leaderboard } from '../leaderboard/leaderboard';
 import { staticStatistics } from '../statistics';
@@ -10,7 +10,13 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
   private _isCasRequired = this.quiz.originalObject.sessionConfig.nicks.restrictToCasLogin;
 
   constructor({ wb, theme, translation, quiz, mf }) {
-    super({ theme, translation, quiz, mf, questionIndex: null });
+    super({
+      theme,
+      translation,
+      quiz,
+      mf,
+      questionIndex: null,
+    });
     this._ws = wb.addWorksheet(mf('export.summary'), this._options);
     this.formatSheet();
     this.addSheetData();
@@ -33,7 +39,8 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     }));
     this.ws.cell(1, this.columnsToFormat - 1).style({
       alignment: {
-        horizontal: 'left', vertical: 'center',
+        horizontal: 'left',
+        vertical: 'center',
       },
     });
 
@@ -64,7 +71,10 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     });
 
     this.ws.row(12).filter({
-      firstRow: 12, firstColumn: 1, lastRow: 12, lastColumn: this.columnsToFormat,
+      firstRow: 12,
+      firstColumn: 1,
+      lastRow: 12,
+      lastColumn: this.columnsToFormat,
     });
 
     let nextStartRow = 18;
@@ -97,12 +107,14 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
           horizontal: 'center',
-        }, numberFormat: '#,##0;',
+        },
+        numberFormat: '#,##0;',
       });
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
-        }, numberFormat: '#,##0;',
+        },
+        numberFormat: '#,##0;',
       });
     });
     if (nextStartRow === 18) {
@@ -149,12 +161,14 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
           horizontal: 'center',
-        }, numberFormat: '#,##0;',
+        },
+        numberFormat: '#,##0;',
       });
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
-        }, numberFormat: '#,##0;',
+        },
+        numberFormat: '#,##0;',
       });
     });
   }
@@ -342,7 +356,11 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         const question: IQuestion = this.quiz.originalObject.questionList[i];
         if (leaderBoard.isCorrectResponse(attendee.responses[i], question) === 1) {
           if (!correctResponses[attendee.name]) {
-            correctResponses[attendee.name] = { responseTime: 0, correctQuestions: [], confidenceValue: 0 };
+            correctResponses[attendee.name] = {
+              responseTime: 0,
+              correctQuestions: [],
+              confidenceValue: 0,
+            };
           }
           correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
           correctResponses[attendee.name].correctQuestions.push(i);
@@ -356,9 +374,15 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
   private addLogoImage(): void {
     this.ws.addImage({
-      path: path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png'), type: 'picture', position: {
-        type: 'oneCellAnchor', from: {
-          col: 1, colOff: '1.5mm', row: 1, rowOff: 0,
+      path: path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png'),
+      type: 'picture',
+      position: {
+        type: 'oneCellAnchor',
+        from: {
+          col: 1,
+          colOff: '1.5mm',
+          row: 1,
+          rowOff: 0,
         },
       },
     });

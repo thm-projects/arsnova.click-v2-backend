@@ -1,6 +1,6 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';

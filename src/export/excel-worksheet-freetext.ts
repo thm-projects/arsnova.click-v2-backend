@@ -1,7 +1,7 @@
-import { IFreetextAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import { INickname } from 'arsnova-click-v2-types/src/common';
-import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
-import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IFreetextAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/interfaces';
+import { INickname } from 'arsnova-click-v2-types/dist/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/dist/excel.interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import { ExcelWorksheet } from './excel-worksheet';
 
 export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
@@ -15,7 +15,13 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
   });
 
   constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
-    super({ theme, translation, quiz, mf, questionIndex });
+    super({
+      theme,
+      translation,
+      quiz,
+      mf,
+      questionIndex,
+    });
     this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
     this._question = this.quiz.originalObject.questionList[questionIndex];
@@ -50,13 +56,17 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
 
     this.ws.cell(4, 1).style({
       alignment: {
-        wrapText: true, vertical: 'top',
+        wrapText: true,
+        vertical: 'top',
       },
     });
     this.ws.cell(4, 2).style({
       alignment: {
-        wrapText: true, horizontal: 'center', vertical: 'center',
-      }, font: {
+        wrapText: true,
+        horizontal: 'center',
+        vertical: 'center',
+      },
+      font: {
         color: 'FF000000',
       },
     });
@@ -76,19 +86,21 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     });
 
     this.ws.row(10).filter({
-      firstRow: 10, firstColumn: 1, lastRow: 10, lastColumn: minColums,
+      firstRow: 10,
+      firstColumn: 1,
+      lastRow: 10,
+      lastColumn: minColums,
     });
 
     const hasEntries = this.quiz.memberGroups[0].members.length > 0;
     const attendeeEntryRows = hasEntries ? (
       this.quiz.memberGroups[0].members.length
     ) : 1;
-    const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle,
-      {
-        alignment: {
-          horizontal: 'center',
-        },
-      });
+    const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
+      alignment: {
+        horizontal: 'center',
+      },
+    });
     this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
     this.allResponses.forEach((responseItem, indexInList) => {
@@ -101,7 +113,8 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       this.ws.cell(targetRow, nextColumnIndex++).style({
         font: {
           color: 'FFFFFFFF',
-        }, fill: {
+        },
+        fill: {
           type: 'pattern',
           patternType: 'solid',
           fgColor: leaderboardItem && leaderboardItem.correctQuestions.indexOf(this._questionIndex) > -1 ? 'FF008000' : 'FFB22222',
@@ -117,7 +130,8 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
-        }, numberFormat: '#,##0;',
+        },
+        numberFormat: '#,##0;',
       });
     });
   }

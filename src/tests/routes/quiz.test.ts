@@ -1,6 +1,7 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
+import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
@@ -69,7 +70,7 @@ class QuizApiRouterTestSuite {
     const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    expect(res.body.step).to.equal('QUIZ:UNDEFINED');
+    expect(res.body.step).to.equal(COMMUNICATION_PROTOCOL.QUIZ.UNDEFINED);
   }
 
   @test
@@ -89,7 +90,7 @@ class QuizApiRouterTestSuite {
     const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    expect(res.body.step).to.equal('QUIZ:EXISTS');
+    expect(res.body.step).to.equal(COMMUNICATION_PROTOCOL.QUIZ.EXISTS);
   }
 
   @test
@@ -101,7 +102,7 @@ class QuizApiRouterTestSuite {
     const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    expect(res.body.step).to.equal('QUIZ:AVAILABLE');
+    expect(res.body.step).to.equal(COMMUNICATION_PROTOCOL.QUIZ.AVAILABLE);
   }
 
   @test

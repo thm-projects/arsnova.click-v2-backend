@@ -1,4 +1,4 @@
-import { ILogin, ILoginSerialized } from 'arsnova-click-v2-types/src/common';
+import { ILogin, ILoginSerialized } from 'arsnova-click-v2-types/dist/common';
 import * as jwt from 'jsonwebtoken';
 import { DATABASE_TYPE, USER_AUTHORIZATION } from '../Enums';
 import { staticStatistics } from '../statistics';

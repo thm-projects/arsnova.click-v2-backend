@@ -1,8 +1,8 @@
-import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import { ILinkImage } from 'arsnova-click-v2-types/src/assets/library';
-import { ICasData } from 'arsnova-click-v2-types/src/common';
-import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/src/communication_protocol';
-import { IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/interfaces';
+import { ILinkImage } from 'arsnova-click-v2-types/dist/assets/library';
+import { ICasData } from 'arsnova-click-v2-types/dist/common';
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
+import { IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response, Router } from 'express';
 import * as fileType from 'file-type';
@@ -327,7 +327,7 @@ class LibRouter {
           css: req.body.output === 'html',
           svg: req.body.output === 'svg',
           mml: req.body.output === 'mml',
-        });
+        }).catch(err => console.log(err));
 
         MathjaxDAO.updateRenderedData(data, mathjaxPlain);
         result.push(data);

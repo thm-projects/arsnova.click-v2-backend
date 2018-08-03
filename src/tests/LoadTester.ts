@@ -1,7 +1,7 @@
-import { DefaultAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/answeroption_default';
-import { SingleChoiceQuestion } from 'arsnova-click-v2-types/src/questions/question_choice_single';
-import { DefaultQuestionGroup } from 'arsnova-click-v2-types/src/questions/questiongroup_default';
-import { SessionConfiguration } from 'arsnova-click-v2-types/src/session_configuration/session_config';
+import { DefaultAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/answeroption_default';
+import { SingleChoiceQuestion } from 'arsnova-click-v2-types/dist/questions/question_choice_single';
+import { DefaultQuestionGroup } from 'arsnova-click-v2-types/dist/questions/questiongroup_default';
+import { SessionConfiguration } from 'arsnova-click-v2-types/dist/session_configuration/session_config';
 import QuizManagerDAO from '../db/QuizManagerDAO';
 
 export class LoadTester {

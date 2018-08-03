@@ -1,5 +1,5 @@
-import { IActiveQuiz, ILeaderBoardItem, INickname } from 'arsnova-click-v2-types/src/common';
-import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IActiveQuiz, ILeaderBoardItem, INickname } from 'arsnova-click-v2-types/dist/common';
+import { IQuestion } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as xlsx from 'excel4node';
 import * as MessageFormat from 'messageformat';
 import { Leaderboard } from '../leaderboard/leaderboard';
@@ -103,7 +103,11 @@ export abstract class ExcelWorksheet {
     this.quiz.memberGroups[0].members.forEach(attendee => {
       if (leaderBoard.isCorrectResponse(attendee.responses[questionIndex], question) === 1) {
         if (!correctResponses[attendee.name]) {
-          correctResponses[attendee.name] = { responseTime: 0, correctQuestions: [], confidenceValue: 0 };
+          correctResponses[attendee.name] = {
+            responseTime: 0,
+            correctQuestions: [],
+            confidenceValue: 0,
+          };
         }
         correctResponses[attendee.name].responseTime += <number>attendee.responses[questionIndex].responseTime;
         correctResponses[attendee.name].correctQuestions.push(questionIndex);

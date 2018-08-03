@@ -1,8 +1,8 @@
 import {
   IActiveQuiz, IActiveQuizSerialized, ICasData, IMemberGroup, IMemberGroupSerialized, INickname, INicknameSerialized, IQuizResponse,
-} from 'arsnova-click-v2-types/src/common';
-import { COMMUNICATION_PROTOCOL, COMMUNICATION_PROTOCOL_LOBBY } from 'arsnova-click-v2-types/src/communication_protocol';
-import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+} from 'arsnova-click-v2-types/dist/common';
+import { COMMUNICATION_PROTOCOL, COMMUNICATION_PROTOCOL_LOBBY } from 'arsnova-click-v2-types/dist/communication_protocol';
+import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as WebSocket from 'ws';
 import CasDAO from '../db/CasDAO';
 import illegalNicks from '../nicknames/illegalNicks';

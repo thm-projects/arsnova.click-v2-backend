@@ -12,7 +12,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "sourceMap": true,
-    "target": "es5",
+    "target": "es6",
     "typeRoots": [
       "node_modules/@types"
     ],
@@ -20,7 +20,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "node_modules/arsnova-click-v2-types/**/*.ts"
+    "node_modules/arsnova-click-v2-types/dist/**/*.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts",

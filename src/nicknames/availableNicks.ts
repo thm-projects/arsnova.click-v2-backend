@@ -1,4 +1,4 @@
-import { IAvailableNicks } from 'arsnova-click-v2-types/src/common';
+import { IAvailableNicks } from 'arsnova-click-v2-types/dist/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { staticStatistics } from '../statistics';
@@ -25,7 +25,8 @@ const availableNicks: IAvailableNicks = {
     'Cinderella',
     'Dagobert Duck',
     'Goofy',
-  ], 'science': [
+  ],
+  'science': [
     'Edsger Dijkstra',
     'Konrad Zuse',
     'Alan Turing',
@@ -46,7 +47,8 @@ const availableNicks: IAvailableNicks = {
     'Charles Darwin',
     'Albert Einstein',
     'Euklid',
-  ], 'fantasy': [
+  ],
+  'fantasy': [
     'Harry Potter',
     'Hermione Granger',
     'Ron Weasly',
@@ -67,7 +69,8 @@ const availableNicks: IAvailableNicks = {
     'Ganon',
     'Zelda',
     'Link',
-  ], 'literature': [
+  ],
+  'literature': [
     'George Lucas',
     'J.R.R. Tolkien',
     'Joanne K. Rowling',
@@ -88,7 +91,8 @@ const availableNicks: IAvailableNicks = {
     'Bertolt Brecht',
     'Michael Ende',
     'Enid Blyton',
-  ], 'mythology': [
+  ],
+  'mythology': [
     'Zeus',
     'Jupiter',
     'Apollo',
@@ -109,7 +113,8 @@ const availableNicks: IAvailableNicks = {
     'Philippus',
     'Uriel',
     'Onesimus',
-  ], 'actor': [
+  ],
+  'actor': [
     'Edward Norton',
     'Alan Rickman',
     'Bud Spencer',
@@ -130,7 +135,8 @@ const availableNicks: IAvailableNicks = {
     'Ewan McGregor',
     'Brad Pitt',
     'Patrick Steward',
-  ], 'politics': [
+  ],
+  'politics': [
     'Barack Obama',
     'Angela Merkel',
     'Kofi Annan',
@@ -151,7 +157,8 @@ const availableNicks: IAvailableNicks = {
     'Willy Brandt',
     'Erich Honecker',
     'Ban Ki-moon',
-  ], 'turing_award': [
+  ],
+  'turing_award': [
     'Martin E. Hellman',
     'Whitfield Diffie',
     'Michael Stonebraker',
@@ -215,7 +222,8 @@ const availableNicks: IAvailableNicks = {
     'Richard Hamming',
     'Maurice V. Wilkes',
     'Alan J. Perlis',
-  ], 'emojis': fs.readdirSync(path.join(staticStatistics.pathToAssets, 'images', 'emojis'))
+  ],
+  'emojis': fs.readdirSync(path.join(staticStatistics.pathToAssets, 'images', 'emojis'))
   .map(fileName => `:${fileName.substring(0, fileName.length - 4)}:`),
 };
 

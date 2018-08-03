@@ -1,6 +1,6 @@
-import { INickname } from 'arsnova-click-v2-types/src/common';
-import { IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
-import { IQuestion } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { INickname } from 'arsnova-click-v2-types/dist/common';
+import { IExcelWorksheet } from 'arsnova-click-v2-types/dist/excel.interfaces';
+import { IQuestion } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import { ExcelWorksheet } from './excel-worksheet';
 import { calculateNumberOfAnswers } from './lib/excel_function_library';
 
@@ -10,7 +10,13 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
   private readonly _questionIndex: number;
 
   constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
-    super({ theme, translation, quiz, mf, questionIndex });
+    super({
+      theme,
+      translation,
+      quiz,
+      mf,
+      questionIndex,
+    });
     this._ws = wb.addWorksheet(`${this.mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
     this._question = this.quiz.originalObject.questionList[questionIndex];
@@ -32,7 +38,9 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     const columnsToFormat = answerList.length + 1 < minColums ? minColums : answerList.length + 1;
     const answerCellStyle = {
       alignment: {
-        wrapText: true, horizontal: 'center', vertical: 'center',
+        wrapText: true,
+        horizontal: 'center',
+        vertical: 'center',
       },
     };
 
@@ -67,19 +75,21 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     });
 
     this.ws.row(9).filter({
-      firstRow: 9, firstColumn: 1, lastRow: 9, lastColumn: minColums,
+      firstRow: 9,
+      firstColumn: 1,
+      lastRow: 9,
+      lastColumn: minColums,
     });
 
     const hasEntries = this.quiz.memberGroups[0].members.length > 0;
     const attendeeEntryRows = hasEntries ? (
       this.quiz.memberGroups[0].members.length
     ) : 1;
-    const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle,
-      {
-        alignment: {
-          horizontal: 'center',
-        },
-      });
+    const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
+      alignment: {
+        horizontal: 'center',
+      },
+    });
     this.ws.cell(10, 1, attendeeEntryRows + 9, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
     this.quiz.memberGroups[0].members.forEach((responseItem, indexInList) => {
@@ -98,7 +108,8 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
-        }, numberFormat: '#,##0;',
+        },
+        numberFormat: '#,##0;',
       });
     });
   }

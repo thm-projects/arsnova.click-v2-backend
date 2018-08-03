@@ -1,5 +1,5 @@
-import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
-import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/src/communication_protocol';
+import { IActiveQuiz } from 'arsnova-click-v2-types/dist/common';
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
 import { NextFunction, Request, Response, Router } from 'express';
 import QuizManagerDAO from '../db/QuizManagerDAO';
 import { ActiveQuizItem } from '../quiz-manager/quiz-manager';

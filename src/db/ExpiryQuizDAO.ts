@@ -1,4 +1,4 @@
-import { IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
+import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import { AbstractDAO } from './AbstractDAO';
 
 class ExpiryQuizDAO extends AbstractDAO<IQuestionGroup> {

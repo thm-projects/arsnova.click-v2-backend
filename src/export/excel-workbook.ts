@@ -1,5 +1,5 @@
-import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
-import { IExcelWorkbook, IExcelWorksheet } from 'arsnova-click-v2-types/src/excel.interfaces';
+import { IActiveQuiz } from 'arsnova-click-v2-types/dist/common';
+import { IExcelWorkbook, IExcelWorksheet } from 'arsnova-click-v2-types/dist/excel.interfaces';
 import * as xlsx from 'excel4node';
 import { Response } from 'express';
 import * as MessageFormat from 'messageformat';
@@ -28,9 +28,13 @@ export class ExcelWorkbook implements IExcelWorkbook {
     this._wb = new xlsx.Workbook({
       jszip: {
         compression: 'DEFLATE',
-      }, defaultFont: {
-        size: 12, name: 'Calibri', color: 'FF000000',
-      }, dateFormat: 'd.m.yyyy',
+      },
+      defaultFont: {
+        size: 12,
+        name: 'Calibri',
+        color: 'FF000000',
+      },
+      dateFormat: 'd.m.yyyy',
     });
     this._theme = new ExcelTheme(themeName);
     this._translation = translation;
@@ -50,7 +54,11 @@ export class ExcelWorkbook implements IExcelWorkbook {
 
   private generateSheets(): void {
     const worksheetOptions: any = {
-      wb: this._wb, theme: this._theme, translation: this._translation, quiz: this._quiz, mf: this._mf,
+      wb: this._wb,
+      theme: this._theme,
+      translation: this._translation,
+      quiz: this._quiz,
+      mf: this._mf,
     };
 
     this._worksheets.push(new SummaryExcelWorksheet(worksheetOptions));

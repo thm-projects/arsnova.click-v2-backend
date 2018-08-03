@@ -1,8 +1,8 @@
-import { IAnswerOption } from 'arsnova-click-v2-types/src/answeroptions/interfaces';
-import { IActiveQuiz } from 'arsnova-click-v2-types/src/common';
-import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/src/communication_protocol';
-import { IIsAvailableQuizPayload, IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/src/questions/interfaces';
-import { ISessionConfiguration } from 'arsnova-click-v2-types/src/session_configuration/interfaces';
+import { IAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/interfaces';
+import { IActiveQuiz } from 'arsnova-click-v2-types/dist/common';
+import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
+import { IIsAvailableQuizPayload, IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
+import { ISessionConfiguration } from 'arsnova-click-v2-types/dist/session_configuration/interfaces';
 import { NextFunction, Request, Response, Router } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
