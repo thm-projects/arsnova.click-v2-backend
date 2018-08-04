@@ -9,10 +9,10 @@ import { AbstractDAO } from './AbstractDAO';
 import { default as DbDAO } from './DbDAO';
 
 class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
-  private _onQuizStatusUpdate = new EventEmitter();
+  private _quizStatusUpdateEmitter = new EventEmitter();
 
-  get onQuizStatusUpdate(): EventEmitter {
-    return this._onQuizStatusUpdate;
+  get quizStatusUpdateEmitter(): EventEmitter {
+    return this._quizStatusUpdateEmitter;
   }
 
   public static getInstance(): QuizManagerDAO {
@@ -232,7 +232,7 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
   }
 
   public quizStatusUpdated(): void {
-    this._onQuizStatusUpdate.emit('update', this.getAllJoinableQuizNames());
+    this._quizStatusUpdateEmitter.emit('update', this.getAllJoinableQuizNames());
   }
 
   private checkABCDOrdering(hashtag: string): boolean {
