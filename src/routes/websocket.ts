@@ -118,13 +118,24 @@ export class WebSocketRouter {
         console.log('ws error', err);
       });
 
-      ws.send(JSON.stringify({
-        status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-        step: COMMUNICATION_PROTOCOL.WEBSOCKET.CONNECTED,
-        payload: {
-          activeQuizzes: QuizManagerDAO.getAllActiveQuizNames(),
-        },
-      }));
+      sendQuizStatusUpdate(ws, QuizManagerDAO.getAllJoinableQuizNames());
+      QuizManagerDAO.onQuizStatusUpdate.on('update', activeQuizzes => {
+        sendQuizStatusUpdate(ws, activeQuizzes);
+      });
     });
   }
+}
+
+function sendQuizStatusUpdate(ws: WebSocket, activeQuizzes: Array<string>): void {
+  if (ws.readyState !== WebSocket.OPEN) {
+    return;
+  }
+
+  ws.send(JSON.stringify({
+    status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+    step: COMMUNICATION_PROTOCOL.WEBSOCKET.CONNECTED,
+    payload: {
+      activeQuizzes,
+    },
+  }));
 }

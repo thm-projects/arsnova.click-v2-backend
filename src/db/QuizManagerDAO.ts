@@ -1,5 +1,6 @@
 import { IActiveQuiz } from 'arsnova-click-v2-types/dist/common';
 import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
+import { EventEmitter } from 'events';
 import { parseCachedAssetQuiz } from '../cache/assets';
 import { DATABASE_TYPE } from '../Enums';
 import { ActiveQuizItem, ActiveQuizItemPlaceholder, MemberGroup } from '../quiz-manager/quiz-manager';
@@ -8,6 +9,11 @@ import { AbstractDAO } from './AbstractDAO';
 import { default as DbDAO } from './DbDAO';
 
 class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
+  private _onQuizStatusUpdate = new EventEmitter();
+
+  get onQuizStatusUpdate(): EventEmitter {
+    return this._onQuizStatusUpdate;
+  }
 
   public static getInstance(): QuizManagerDAO {
     if (!this.instance) {
@@ -39,6 +45,8 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
     const name: string = this.normalizeQuizName(quizName);
     if (this.storage[name]) {
       this.storage[name] = new ActiveQuizItemPlaceholder(name);
+
+      this.quizStatusUpdated();
     }
   }
 
@@ -67,6 +75,7 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
       originalObject: quiz,
       currentQuestionIndex: -1,
     });
+    this.quizStatusUpdated();
     return this.storage[name];
   }
 
@@ -94,6 +103,10 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
       return;
     }
     this.storage[name] = data;
+  }
+
+  public getAllJoinableQuizNames(): Array<string> {
+    return Object.keys(this.storage).filter(name => !this.isInactiveQuiz(name) && this.storage[name].currentQuestionIndex === -1);
   }
 
   public getAllActiveQuizNames(): Array<string> {
@@ -216,6 +229,10 @@ class QuizManagerDAO extends AbstractDAO<{ [key: string]: IActiveQuiz }> {
       };
       delete legacyQuiz.configuration;
     }
+  }
+
+  public quizStatusUpdated(): void {
+    this._onQuizStatusUpdate.emit('update', this.getAllJoinableQuizNames());
   }
 
   private checkABCDOrdering(hashtag: string): boolean {

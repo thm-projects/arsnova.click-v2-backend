@@ -18,7 +18,17 @@ export class LobbyRouter {
     this.init();
   }
 
-  public putOpenLobby(req: Request, res: Response): void {
+  private init(): void {
+    this._router.get('/', this.getAll);
+
+    this._router.get('/:quizName', this.getLobbyData);
+
+    this._router.put('/', this.putOpenLobby);
+
+    this._router.delete('/', this.deleteLobby);
+  }
+
+  private putOpenLobby(req: Request, res: Response): void {
     const messageToWSSClients = JSON.stringify({
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.SET_ACTIVE,
@@ -37,7 +47,7 @@ export class LobbyRouter {
     });
   }
 
-  public getLobbyData(req: Request, res: Response): void {
+  private getLobbyData(req: Request, res: Response): void {
     const isInactive: boolean = QuizManagerDAO.isInactiveQuiz(req.params.quizName);
     const quiz = isInactive ? null : QuizManagerDAO.getActiveQuizByName(req.params.quizName).serialize();
     res.send({
@@ -49,7 +59,7 @@ export class LobbyRouter {
     });
   }
 
-  public deleteLobby(req: Request, res: Response): void {
+  private deleteLobby(req: Request, res: Response): void {
     QuizManagerDAO.setQuizAsInactive(req.body.quizName);
     res.send({
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
@@ -58,22 +68,12 @@ export class LobbyRouter {
     });
   }
 
-  public init(): void {
-    this._router.get('/', this.getAll);
-
-    this._router.get('/:quizName', this.getLobbyData);
-
-    this._router.put('/', this.putOpenLobby);
-
-    this._router.delete('/', this.deleteLobby);
-  }
-
   private getAll(req: Request, res: Response, next: NextFunction): void {
     res.json({});
   }
 }
 
-// Create the ApiRouter, and export its configured Express.Router
+// Create the LobbyRouter, and export its configured Express.Router
 const lobbyRoutes = new LobbyRouter();
 const lobbyRouter = lobbyRoutes.router;
 export { lobbyRouter };

@@ -5,6 +5,7 @@ import { COMMUNICATION_PROTOCOL, COMMUNICATION_PROTOCOL_LOBBY } from 'arsnova-cl
 import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as WebSocket from 'ws';
 import CasDAO from '../db/CasDAO';
+import QuizManagerDAO from '../db/QuizManagerDAO';
 import illegalNicks from '../nicknames/illegalNicks';
 import { WebSocketRouter } from '../routes/websocket';
 
@@ -234,6 +235,7 @@ export class ActiveQuizItem implements IActiveQuiz {
       step: COMMUNICATION_PROTOCOL.QUIZ.RESET,
       payload: {},
     });
+    QuizManagerDAO.quizStatusUpdated();
   }
 
   public setTimestamp(startTimestamp: number): void {
@@ -276,27 +278,34 @@ export class ActiveQuizItem implements IActiveQuiz {
   }
 
   public nextQuestion(): number {
-    if (this.currentQuestionIndex < this.originalObject.questionList.length - 1) {
-      this.currentQuestionIndex++;
-      this.memberGroups.forEach(memberGroup => memberGroup.members.forEach(member => {
-        member.responses.push({
-          value: [],
-          responseTime: 0,
-          confidence: 0,
-          readingConfirmation: false,
-        });
-      }));
-      this.pushMessageToClients({
-        status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-        step: COMMUNICATION_PROTOCOL.QUIZ.NEXT_QUESTION,
-        payload: {
-          questionIndex: this.currentQuestionIndex,
-        },
-      });
-      return this.currentQuestionIndex;
-    } else {
+    if (this.currentQuestionIndex >= this.originalObject.questionList.length - 1) {
       return -1;
     }
+
+    this.currentQuestionIndex++;
+
+    if (this.currentQuestionIndex === 0) {
+      QuizManagerDAO.quizStatusUpdated();
+    }
+
+    this.memberGroups.forEach(memberGroup => memberGroup.members.forEach(member => {
+      member.responses.push({
+        value: [],
+        responseTime: 0,
+        confidence: 0,
+        readingConfirmation: false,
+      });
+    }));
+
+    this.pushMessageToClients({
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+      step: COMMUNICATION_PROTOCOL.QUIZ.NEXT_QUESTION,
+      payload: {
+        questionIndex: this.currentQuestionIndex,
+      },
+    });
+
+    return this.currentQuestionIndex;
   }
 
   public findMemberByName(name: string): INickname {
