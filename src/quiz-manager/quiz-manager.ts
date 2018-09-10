@@ -322,7 +322,7 @@ export class ActiveQuizItem implements IActiveQuiz {
       throw new Error(COMMUNICATION_PROTOCOL_LOBBY[COMMUNICATION_PROTOCOL.LOBBY.DUPLICATE_LOGIN]);
     }
     if (!group) {
-      throw new Error(COMMUNICATION_PROTOCOL_LOBBY[COMMUNICATION_PROTOCOL.LOBBY.UNKOWN_GROUP]);
+      throw new Error(COMMUNICATION_PROTOCOL_LOBBY[COMMUNICATION_PROTOCOL.LOBBY.UNKNOWN_GROUP]);
     }
     if (this.originalObject.sessionConfig.nicks.blockIllegalNicks && illegalNicks.indexOf(name.toUpperCase()) > -1) {
       throw new Error(COMMUNICATION_PROTOCOL_LOBBY[COMMUNICATION_PROTOCOL.LOBBY.ILLEGAL_NAME]);
