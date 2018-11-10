@@ -205,20 +205,16 @@ export class MemberRouter {
       return;
     }
 
-    activeQuiz.memberGroups.map(memberGroup => {
-      if ((
-        <ActiveQuizItem>activeQuiz
-      ).findMemberByName(req.body.nickname).responses[activeQuiz.currentQuestionIndex].responseTime) {
+    if (activeQuiz.findMemberByName(req.body.nickname).responses[activeQuiz.currentQuestionIndex].responseTime) {
 
-        res.status(500);
-        res.end(JSON.stringify({
-          status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
-          step: COMMUNICATION_PROTOCOL.MEMBER.DUPLICATE_RESPONSE,
-          payload: {},
-        }));
-        return;
-      }
-    });
+      res.status(500);
+      res.end(JSON.stringify({
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.MEMBER.DUPLICATE_RESPONSE,
+        payload: {},
+      }));
+      return;
+    }
 
     if (typeof req.body.value === 'undefined') {
       res.status(500);
@@ -240,17 +236,17 @@ export class MemberRouter {
   }
 
   public init(): void {
-    this._router.get('/', this.getAll);
+    this._router.get('/', this.getAll.bind(this));
 
-    this._router.get('/:quizName', this.getAllMembers);
-    this._router.get('/:quizName/available', this.getRemainingNicks);
+    this._router.get('/:quizName', this.getAllMembers.bind(this));
+    this._router.get('/:quizName/available', this.getRemainingNicks.bind(this));
 
-    this._router.put('/', this.addMember);
-    this._router.put('/reading-confirmation', this.addReadingConfirmation);
-    this._router.put('/confidence-value', this.addConfidenceValue);
-    this._router.put('/response', this.addResponse);
+    this._router.put('/', this.addMember.bind(this));
+    this._router.put('/reading-confirmation', this.addReadingConfirmation.bind(this));
+    this._router.put('/confidence-value', this.addConfidenceValue.bind(this));
+    this._router.put('/response', this.addResponse.bind(this));
 
-    this._router.delete('/:quizName/:nickname', this.deleteMember);
+    this._router.delete('/:quizName/:nickname', this.deleteMember.bind(this));
 
   }
 

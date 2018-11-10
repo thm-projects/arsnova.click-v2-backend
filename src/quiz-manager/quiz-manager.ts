@@ -372,6 +372,10 @@ export class ActiveQuizItem implements IActiveQuiz {
   }
 
   public addResponseValue(nickname: string, data: Array<number>): void {
+    if (!nickname || !data || !data.length) {
+      return;
+    }
+
     this.findMemberByName(nickname).responses[this.currentQuestionIndex].responseTime = (
       (
         new Date().getTime() - this._currentStartTimestamp
@@ -438,7 +442,9 @@ export class ActiveQuizItem implements IActiveQuiz {
     if (this._ownerSocket && this._ownerSocket.readyState === WebSocket.OPEN) {
       this._ownerSocket.send(JSON.stringify(message));
     } else if (this._ownerSocket) {
+      console.error('trying to send a message to the owner but the socket is not open', message);
     } else {
+      console.error('trying to send a message to the owner but the socket is not defined', message);
     }
   }
 }
@@ -508,6 +514,10 @@ export class ActiveQuizItemPlaceholder implements IActiveQuiz {
   }
 
   public updateQuizSettings(target: string, state: boolean): void {
+    throw new Error('Method not implemented.');
+  }
+
+  public findMemberByName(nickname: string): INickname  {
     throw new Error('Method not implemented.');
   }
 }
