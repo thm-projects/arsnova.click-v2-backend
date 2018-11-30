@@ -6,6 +6,7 @@ import { IQuestionGroup, IQuestionRanged, IQuestionSurvey } from 'arsnova-click-
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as i18n from 'i18n';
+import * as MessageFormat from 'messageformat';
 import { slow, suite, test } from 'mocha-typescript';
 import * as path from 'path';
 import QuizManagerDAO from '../../db/QuizManagerDAO';
@@ -79,9 +80,7 @@ class ExcelExportTestSuite {
   }
 
   public randomIntFromInterval(min: number, max: number): number {
-    return Math.floor(Math.random() * (
-                      max - min + 1
-    ) + min);
+    return Math.floor(Math.random() * (max - min + 1) + min);
   }
 
   @test
@@ -128,9 +127,7 @@ class ExcelExportTestSuite {
             value = [this.randomIntFromInterval(0, 1)];
             break;
           case 'SurveyQuestion':
-            parsedQuestion = (
-              <IQuestionSurvey>question
-            );
+            parsedQuestion = (<IQuestionSurvey>question);
             if (parsedQuestion.multipleSelectionEnabled) {
               value = [];
               for (let i = 0; i < 3; i++) {
@@ -159,9 +156,7 @@ class ExcelExportTestSuite {
             }
             break;
           case 'RangedQuestion':
-            parsedQuestion = (
-              <IQuestionRanged>question
-            );
+            parsedQuestion = (<IQuestionRanged>question);
             useCorrect = Math.random() > 0.5;
             if (useCorrect) {
               value = parsedQuestion.correctValue;
@@ -170,9 +165,7 @@ class ExcelExportTestSuite {
             }
             break;
           case 'FreeTextQuestion':
-            const parsedAnswer: IFreetextAnswerOption = <IFreetextAnswerOption>(
-              <FreeTextQuestion>question
-            ).answerOptionList[0];
+            const parsedAnswer: IFreetextAnswerOption = <IFreetextAnswerOption>(<FreeTextQuestion>question).answerOptionList[0];
             useCorrect = Math.random() > 0.5;
             if (useCorrect) {
               value = parsedAnswer.answerText;
@@ -200,7 +193,7 @@ class ExcelExportTestSuite {
       themeName: this._theme,
       translation: this._language,
       quiz: quiz,
-      mf: i18n.__mf,
+      mf: (i18n.__mf as unknown as MessageFormat),
     });
 
     const buffer = await wb.writeToBuffer();

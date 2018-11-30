@@ -24,7 +24,7 @@ export abstract class ExcelWorksheet {
     return this._createdAt;
   }
 
-  get mf(): MessageFormat {
+  get mf(): MessageFormat.Msg {
     return this._mf;
   }
 
@@ -43,7 +43,7 @@ export abstract class ExcelWorksheet {
   protected _options: Object;
   protected _theme: ExcelTheme;
   protected _translation: string;
-  private readonly _mf: MessageFormat;
+  private readonly _mf: MessageFormat.Msg;
   private readonly _createdAt: string;
   private readonly _quiz: IActiveQuiz;
   private readonly _columnsToFormat: number;
