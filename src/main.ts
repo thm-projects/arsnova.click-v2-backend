@@ -16,7 +16,7 @@ import I18nDAO from './db/I18nDAO';
 import LoginDAO from './db/LoginDAO';
 import MathjaxDAO from './db/MathjaxDAO';
 import QuizManagerDAO from './db/QuizManagerDAO';
-import { WebSocketRouter } from './routes/websocket';
+import { WebSocketRouter } from './routers/websocket/WebSocketRouter';
 import { staticStatistics } from './statistics';
 import { LoadTester } from './tests/LoadTester';
 
@@ -48,11 +48,7 @@ function censor(data: any): any {
   let i = 0;
 
   return (key, value) => {
-    if (i !== 0 && typeof(
-      data
-    ) === 'object' && typeof(
-      value
-    ) === 'object' && data === value) {
+    if (i !== 0 && typeof(data) === 'object' && typeof(value) === 'object' && data === value) {
       return '[Circular]';
     }
 
@@ -67,17 +63,13 @@ function censor(data: any): any {
 }
 
 function rejectionToCreateDump(reason): void {
-  (
-    <IGlobal>global
-  ).createDump(reason);
+  (<IGlobal>global).createDump(reason);
 }
 
 process.on('unhandledRejection', rejectionToCreateDump);
 // process.on('uncaughtException', rejectionToCreateDump); // Throws exceptions when debugging with IntelliJ
 
-(
-  <IGlobal>global
-).DAO = {
+(<IGlobal>global).DAO = {
   CasDAO,
   I18nDAO,
   MathjaxDAO,
@@ -86,9 +78,7 @@ process.on('unhandledRejection', rejectionToCreateDump);
   LoginDAO,
   ExpiryQuizDAO,
 };
-(
-  <IGlobal>global
-).createDump = (plainError) => {
+(<IGlobal>global).createDump = (plainError) => {
   const error = {
     type: '',
     code: '',
@@ -112,12 +102,8 @@ process.on('unhandledRejection', rejectionToCreateDump);
 
   const daoDump = { error };
 
-  Object.keys((
-    <IGlobal>global
-  ).DAO).forEach((dao) => {
-    daoDump[dao] = (
-      <IGlobal>global
-    ).DAO[dao].createDump();
+  Object.keys((<IGlobal>global).DAO).forEach((dao) => {
+    daoDump[dao] = (<IGlobal>global).DAO[dao].createDump();
   });
 
   const insecureDumpAsJson = JSON.stringify(daoDump, censor(daoDump));
@@ -163,29 +149,13 @@ server.on('error', onError);
 server.on('listening', onListening);
 server.on('close', onClose);
 
-let currentApp = App;
-
 const argv = Minimist(process.argv.slice(2));
 if (argv['load-test']) {
   runTest();
 }
 
-if ((
-  <IHotModule>module
-).hot) {
-  (
-    <IHotModule>module
-  ).hot.accept('./main', () => {
-    server.removeListener('request', currentApp);
-    currentApp = require('./main');
-    server.on('request', currentApp);
-  });
-}
-
 function normalizePort(val: number | string): number | string | boolean {
-  const portCheck: number = (
-                              typeof val === 'string'
-                            ) ? parseInt(val, 10) : val;
+  const portCheck: number = (typeof val === 'string') ? parseInt(val, 10) : val;
   if (isNaN(portCheck)) {
     return val;
   } else if (portCheck >= 0) {
@@ -199,9 +169,7 @@ function onError(error: NodeJS.ErrnoException): void {
   if (error.syscall !== 'listen') {
     throw error;
   }
-  const bind: string = (
-                         typeof port === 'string'
-                       ) ? 'Pipe ' + port : 'Port ' + port;
+  const bind: string = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port;
   switch (error.code) {
     case 'EACCESS':
       console.error(`${bind} requires elevated privileges`);
@@ -218,9 +186,7 @@ function onError(error: NodeJS.ErrnoException): void {
 
 function onListening(): void {
   const addr: IInetAddress | string = server.address();
-  const bind: string = (
-                         typeof addr === 'string'
-                       ) ? `pipe ${addr}` : `port ${addr.port}`;
+  const bind: string = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
   console.log(`Listening on ${bind}`);
 
   WebSocketRouter.wss = new WebSocket.Server({ server });
@@ -237,9 +203,7 @@ function runTest(): void {
     if (loadTest.done) {
       clearInterval(interval);
       console.log(`CPU Time Spent End: ${process.cpuUsage().user / 1000000}`);
-      console.log(`Load Test took ${(
-                                      new Date().getTime() - startTime
-                                    ) / 1000}`);
+      console.log(`Load Test took ${(new Date().getTime() - startTime) / 1000}`);
       console.log('----- Load Test Finished -----');
     }
   }, 100);

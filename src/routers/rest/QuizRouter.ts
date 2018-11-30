@@ -3,43 +3,38 @@ import { IActiveQuiz } from 'arsnova-click-v2-types/dist/common';
 import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
 import { IIsAvailableQuizPayload, IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import { ISessionConfiguration } from 'arsnova-click-v2-types/dist/session_configuration/interfaces';
-import { NextFunction, Request, Response, Router } from 'express';
+import { Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { MatchTextToAssetsDb } from '../cache/assets';
-import { default as DbDAO } from '../db/DbDAO';
-import QuizManagerDAO from '../db/QuizManagerDAO';
-import { DATABASE_TYPE } from '../Enums';
-import { ExcelWorkbook } from '../export/excel-workbook';
-import { Leaderboard } from '../leaderboard/leaderboard';
-import { settings, staticStatistics } from '../statistics';
+import {
+  BadRequestError, BodyParam, Delete, Get, InternalServerError, JsonController, NotFoundError, Param, Patch, Post, Req, Res, UnauthorizedError,
+} from 'routing-controllers';
+import { MatchTextToAssetsDb } from '../../cache/assets';
+import { default as DbDAO } from '../../db/DbDAO';
+import QuizManagerDAO from '../../db/QuizManagerDAO';
+import { DATABASE_TYPE } from '../../Enums';
+import { ExcelWorkbook } from '../../export/excel-workbook';
+import { Leaderboard } from '../../leaderboard/leaderboard';
+import { settings, staticStatistics } from '../../statistics';
+import { AbstractRouter } from './AbstractRouter';
 
-export class QuizRouter {
-  get router(): Router {
-    return this._router;
-  }
-
-  private readonly _router: Router;
+@JsonController('/api/v1/quiz')
+export class QuizRouter extends AbstractRouter {
   private readonly _leaderboard: Leaderboard = new Leaderboard();
 
-  /**
-   * Initialize the QuizRouter
-   */
-  constructor() {
-    this._router = Router();
-    this.init();
-  }
+  @Get('/status/:quizName')
+  public getIsAvailableQuiz(@Param('quizName') quizName: string, //
+  ): object {
 
-  public getIsAvailableQuiz(req: Request, res: Response): void {
-    const quiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
+    const quiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     const payload: IIsAvailableQuizPayload = {};
 
-    const isInactive: boolean = QuizManagerDAO.isInactiveQuiz(req.params.quizName);
+    const isInactive: boolean = QuizManagerDAO.isInactiveQuiz(quizName);
     let isInProgress = false;
 
     if (quiz) {
       if (quiz.currentQuestionIndex === -1) {
-        const sessionConfig: ISessionConfiguration = QuizManagerDAO.getActiveQuizByName(req.params.quizName).originalObject.sessionConfig;
+        const sessionConfig: ISessionConfiguration = QuizManagerDAO.getActiveQuizByName(quizName).originalObject.sessionConfig;
         const provideNickSelection: boolean = sessionConfig.nicks.selectedNicks.length > 0;
 
         payload.available = true;
@@ -56,18 +51,22 @@ export class QuizRouter {
     const step = quiz && !isInProgress ? COMMUNICATION_PROTOCOL.QUIZ.AVAILABLE : isInactive || isInProgress ? COMMUNICATION_PROTOCOL.QUIZ.EXISTS
                                                                                                             : COMMUNICATION_PROTOCOL.QUIZ.UNDEFINED;
 
-    const result: Object = {
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step,
       payload,
     };
-    res.send(result);
   }
 
-  public generateDemoQuiz(req: Request, res: Response): void {
+  @Get('/generate/demo/:languageId')
+  public generateDemoQuiz(
+    @Param('languageId') languageId: string, //
+    @Res() res: Response, //
+  ): object {
+
     try {
       const basePath = path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz');
-      let demoQuizPath = path.join(basePath, `${req.params.languageId.toLowerCase()}.demo_quiz.json`);
+      let demoQuizPath = path.join(basePath, `${languageId.toLowerCase()}.demo_quiz.json`);
       if (!fs.existsSync(demoQuizPath)) {
         demoQuizPath = path.join(basePath, 'en.demo_quiz.json');
       }
@@ -77,17 +76,23 @@ export class QuizRouter {
       );
       QuizManagerDAO.convertLegacyQuiz(result);
       res.setHeader('Response-Type', 'application/json');
-      res.send(result);
+      return result;
     } catch (ex) {
-      res.send(`File IO Error: ${ex}`);
+      throw new InternalServerError(`File IO Error: ${ex}`);
     }
   }
 
-  public generateAbcdQuiz(req: Request, res: Response): void {
+  @Get('/generate/abcd/:languageId/:answerLength?')
+  public generateAbcdQuiz(
+    @Param('languageId') languageId: string, //
+    @Param('answerLength') answerLength: number, //
+    @Res() res: Response, //
+  ): object {
+
     try {
-      const answerLength = req.params.answerLength || 4;
+      answerLength = answerLength || 4;
       const basePath = path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'abcd_quiz');
-      let abcdQuizPath = path.join(basePath, `${req.params.languageId.toLowerCase()}.abcd_quiz.json`);
+      let abcdQuizPath = path.join(basePath, `${languageId.toLowerCase()}.abcd_quiz.json`);
       if (!fs.existsSync(abcdQuizPath)) {
         abcdQuizPath = path.join(basePath, 'en.abcd_quiz.json');
       }
@@ -101,160 +106,179 @@ export class QuizRouter {
       )}`;
       QuizManagerDAO.convertLegacyQuiz(result);
       res.setHeader('Response-Type', 'application/json');
-      res.send(result);
+      return result;
     } catch (ex) {
-      res.send(`File IO Error: ${ex}`);
+      throw new InternalServerError(`File IO Error: ${ex}`);
     }
   }
 
-  public uploadQuiz(req: IUploadRequest, res: Response): void {
+  @Post('/upload')
+  public uploadQuiz(
+    @Param('languageId') languageId: string, //
+    @Param('answerLength') answerLength: number, //
+    @Req() req: IUploadRequest, //
+  ): object {
+
     const duplicateQuizzes = [];
     const quizData = [];
     let privateKey = '';
     if (req.busboy) {
-      const promise = new Promise((resolve) => {
-        req.busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
-          if (fieldname === 'uploadFiles[]') {
-            let quiz = '';
-            file.on('data', (buffer) => {
-              quiz += buffer.toString('utf8');
-            });
-            file.on('end', () => {
-              quizData.push({
-                fileName: filename,
-                quiz: JSON.parse(quiz),
+      return new Promise(resolveRequest => {
+        const promise = new Promise((resolve) => {
+
+          // fieldname, file, filename, encoding, mimetype
+          req.busboy.on('file', (fieldname, file, filename) => {
+            if (fieldname === 'uploadFiles[]') {
+              let quiz = '';
+              file.on('data', (buffer: Buffer) => {
+                quiz += buffer.toString('utf8');
               });
-            });
-          }
-        });
-        req.busboy.on('field', (key, value) => {
-          if (key === 'privateKey') {
-            privateKey = value;
-          }
-        });
-        req.busboy.on('finish', () => {
-          resolve();
-        });
-        req.pipe(req.busboy);
-      });
-      promise.then(() => {
-        quizData.forEach((data: { fileName: string, quiz: IQuestionGroup }) => {
-          const dbResult = DbDAO.read(DATABASE_TYPE.QUIZ, { quizName: data.quiz.hashtag });
-          if (dbResult) {
-            duplicateQuizzes.push({
-              quizName: data.quiz.hashtag,
-              fileName: data.fileName,
-              renameRecommendation: QuizManagerDAO.getRenameRecommendations(data.quiz.hashtag),
-            });
-          } else {
-            DbDAO.create(DATABASE_TYPE.QUIZ, {
-              quizName: data.quiz.hashtag,
-              privateKey,
-            });
-            QuizManagerDAO.initInactiveQuiz(data.quiz.hashtag);
-            if (settings.public.cacheQuizAssets) {
-              const quiz: IQuestionGroup = data.quiz;
-              quiz.questionList.forEach((question: IQuestion) => {
-                MatchTextToAssetsDb(question.questionText);
-                question.answerOptionList.forEach((answerOption: IAnswerOption) => {
-                  MatchTextToAssetsDb(answerOption.answerText);
+              file.on('end', () => {
+                quizData.push({
+                  fileName: filename,
+                  quiz: JSON.parse(quiz),
                 });
               });
             }
-          }
+          });
+
+          req.busboy.on('field', (key, value) => {
+            if (key === 'privateKey') {
+              privateKey = value;
+            }
+          });
+
+          req.busboy.on('finish', () => {
+            resolve();
+          });
+
+          req.pipe(req.busboy);
         });
-        res.send({
-          status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-          step: COMMUNICATION_PROTOCOL.QUIZ.UPLOAD_FILE,
-          payload: { duplicateQuizzes },
+        promise.then(() => {
+          quizData.forEach((data: { fileName: string, quiz: IQuestionGroup }) => {
+            const dbResult = DbDAO.read(DATABASE_TYPE.QUIZ, { quizName: data.quiz.hashtag });
+            if (dbResult) {
+              duplicateQuizzes.push({
+                quizName: data.quiz.hashtag,
+                fileName: data.fileName,
+                renameRecommendation: QuizManagerDAO.getRenameRecommendations(data.quiz.hashtag),
+              });
+            } else {
+              DbDAO.create(DATABASE_TYPE.QUIZ, {
+                quizName: data.quiz.hashtag,
+                privateKey,
+              });
+              QuizManagerDAO.initInactiveQuiz(data.quiz.hashtag);
+              if (settings.public.cacheQuizAssets) {
+                const quiz: IQuestionGroup = data.quiz;
+                quiz.questionList.forEach((question: IQuestion) => {
+                  MatchTextToAssetsDb(question.questionText);
+                  question.answerOptionList.forEach((answerOption: IAnswerOption) => {
+                    MatchTextToAssetsDb(answerOption.answerText);
+                  });
+                });
+              }
+            }
+          });
+          resolveRequest({
+            status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+            step: COMMUNICATION_PROTOCOL.QUIZ.UPLOAD_FILE,
+            payload: { duplicateQuizzes },
+          });
         });
       });
     } else {
-      res.send({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.UPLOAD_FILE,
         payload: { message: 'busboy not found' },
-      });
+      }));
     }
   }
 
-  public startQuiz(req: Request, res: Response): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
+  @Post('/start')
+  public startQuiz(
+    @BodyParam('quizName') quizName: string, //
+    @Param('answerLength') answerLength: number, //
+    @Req() req: IUploadRequest, //
+  ): object {
+
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
     if (activeQuiz.currentStartTimestamp) {
-      res.send({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.ALREADY_STARTED,
         payload: {
           startTimestamp: activeQuiz.currentStartTimestamp,
           nextQuestionIndex: activeQuiz.currentQuestionIndex,
         },
-      });
+      }));
     } else {
       const nextQuestionIndex = activeQuiz.originalObject.sessionConfig.readingConfirmationEnabled ? activeQuiz.currentQuestionIndex
                                                                                                    : activeQuiz.nextQuestion();
 
       if (nextQuestionIndex === -1) {
-        res.send({
+        return {
           status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
           step: COMMUNICATION_PROTOCOL.QUIZ.END_OF_QUESTIONS,
           payload: {},
-        });
+        };
       } else {
         const startTimestamp: number = new Date().getTime();
         activeQuiz.setTimestamp(startTimestamp);
-        res.send({
+        return {
           status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
           step: COMMUNICATION_PROTOCOL.QUIZ.START,
           payload: {
             startTimestamp,
             nextQuestionIndex,
           },
-        });
+        };
       }
     }
   }
 
-  public stopQuiz(req: Request, res: Response): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
+  @Post('/stop')
+  public stopQuiz(@BodyParam('quizName') quizName: string, //
+  ): object {
+
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
     activeQuiz.stop();
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.STOP,
       payload: {},
-    });
+    };
   }
 
-  public getCurrentQuizState(req: Request, res: Response): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
+  @Get('/currentState/:quizName')
+  public getCurrentQuizState(@Param('quizName') quizName: string, //
+  ): object {
+
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
     const index = activeQuiz.currentQuestionIndex < 0 ? 0 : activeQuiz.currentQuestionIndex;
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.CURRENT_STATE,
       payload: {
@@ -263,181 +287,195 @@ export class QuizRouter {
         startTimestamp: activeQuiz.currentStartTimestamp,
         numberOfQuestions: activeQuiz.originalObject.questionList.length,
       },
-    });
+    };
   }
 
-  public showReadingConfirmation(req: Request, res: Response): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
+  @Post('/reading-confirmation')
+  public showReadingConfirmation(@BodyParam('quizName') quizName: string, //
+  ): object {
+
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
     activeQuiz.nextQuestion();
     activeQuiz.requestReadingConfirmation();
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.READING_CONFIRMATION_REQUESTED,
       payload: {},
-    });
+    };
   }
 
-  public getQuizStartTime(req: Request, res: Response): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
+  @Get('/startTime/:quizName')
+  public getQuizStartTime(@Param('quizName') quizName: string, //
+  ): object {
+
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.GET_STARTTIME,
       payload: { startTimestamp: activeQuiz.currentStartTimestamp },
-    });
+    };
   }
 
-  public getQuizSettings(req: Request, res: Response): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
+  @Get('/settings/:quizName')
+  public getQuizSettings(@Param('quizName') quizName: string, //
+  ): object {
+
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.UPDATED_SETTINGS,
       payload: { settings: activeQuiz.originalObject.sessionConfig },
-    });
+    };
   }
 
-  public updateQuizSettings(req: Request, res: Response): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
+  @Post('/settings/update')
+  public updateQuizSettings(
+    @BodyParam('quizName') quizName: string, //
+    @BodyParam('target') target: string, //
+    @BodyParam('state') state: boolean, //
+  ): object {
+
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
-    activeQuiz.updateQuizSettings(req.body.target, req.body.state);
-    res.send({
+    activeQuiz.updateQuizSettings(target, state);
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.UPDATED_SETTINGS,
       payload: {},
-    });
+    };
   }
 
-  public reserveQuiz(req: Request, res: Response): void {
-    if (!req.body.quizName || !req.body.privateKey) {
-      res.send(JSON.stringify({
+  @Post('/reserve')
+  public reserveQuiz(
+    @BodyParam('quizName') quizName: string, //
+    @BodyParam('privateKey') privateKey: string, //
+    @BodyParam('serverPassword') serverPassword: string, //
+  ): object {
+
+    if (!quizName || !privateKey) {
+      throw new BadRequestError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.INVALID_PARAMETERS,
         payload: {},
       }));
-      return;
     }
     const activeQuizzesAmount = QuizManagerDAO.getAllActiveQuizNames();
     if (activeQuizzesAmount.length >= settings.public.limitActiveQuizzes) {
-      res.send({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.TOO_MUCH_ACTIVE_QUIZZES,
         payload: {
           activeQuizzes: activeQuizzesAmount,
           limitActiveQuizzes: settings.public.limitActiveQuizzes,
         },
-      });
-      return;
+      }));
     }
     if (settings.public.createQuizPasswordRequired) {
-      if (!req.body.serverPassword) {
-        res.send({
+      if (!serverPassword) {
+        return {
           status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
           step: COMMUNICATION_PROTOCOL.QUIZ.SERVER_PASSWORD_REQUIRED,
           payload: {},
-        });
-        return;
+        };
       }
-      if (req.body.serverPassword !== settings.createQuizPassword) {
-        res.send(JSON.stringify({
+      if (serverPassword !== settings.createQuizPassword) {
+        throw new UnauthorizedError(JSON.stringify({
           status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
           step: COMMUNICATION_PROTOCOL.AUTHORIZATION.INSUFFICIENT_PERMISSIONS,
           payload: {},
         }));
-        return;
       }
     }
-    QuizManagerDAO.initInactiveQuiz(req.body.quizName);
+    QuizManagerDAO.initInactiveQuiz(quizName);
     DbDAO.create(DATABASE_TYPE.QUIZ, {
-      quizName: req.body.quizName,
-      privateKey: req.body.privateKey,
+      quizName: quizName,
+      privateKey: privateKey,
     });
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.RESERVED,
       payload: {},
-    });
+    };
   }
 
-  public reserveQuizWithOverride(req: Request, res: Response): void {
-    if (!req.body.quizName || !req.body.privateKey) {
-      res.status(500);
-      res.end(JSON.stringify({
+  @Post('/reserve/override')
+  public reserveQuizWithOverride(
+    @BodyParam('quizName') quizName: string, //
+    @BodyParam('privateKey') privateKey: string, //
+  ): object {
+
+    if (!quizName || !privateKey) {
+      throw new BadRequestError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.INVALID_PARAMETERS,
         payload: {},
       }));
-      return;
     }
-    QuizManagerDAO.initInactiveQuiz(req.body.quizName);
+    QuizManagerDAO.initInactiveQuiz(quizName);
     DbDAO.create(DATABASE_TYPE.QUIZ, {
-      quizName: req.body.quizName,
-      privateKey: req.body.privateKey,
+      quizName: quizName,
+      privateKey: privateKey,
     });
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.RESERVED,
       payload: {},
-    });
+    };
   }
 
-  public deleteQuiz(req: Request, res: Response): void {
-    if (!req.body.quizName || !req.body.privateKey) {
-      res.status(500);
-      res.end(JSON.stringify({
+  @Delete('/')
+  public deleteQuiz(
+    @BodyParam('quizName') quizName: string, //
+    @BodyParam('privateKey') privateKey: string, //
+  ): object {
+
+    if (!quizName || !privateKey) {
+      throw new BadRequestError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.INVALID_PARAMETERS,
         payload: {},
       }));
-      return;
     }
     const dbResult: boolean = DbDAO.delete(DATABASE_TYPE.QUIZ, {
-      quizName: req.body.quizName,
-      privateKey: req.body.privateKey,
+      quizName: quizName,
+      privateKey: privateKey,
     });
     if (dbResult) {
-      QuizManagerDAO.removeQuiz(req.body.quizName);
-      res.send({
+      QuizManagerDAO.removeQuiz(quizName);
+      return {
         status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
         step: COMMUNICATION_PROTOCOL.QUIZ.REMOVED,
         payload: {},
-      });
+      };
     } else {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new UnauthorizedError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.AUTHORIZATION.INSUFFICIENT_PERMISSIONS,
         payload: {},
@@ -445,146 +483,124 @@ export class QuizRouter {
     }
   }
 
-  public deleteActiveQuiz(req: Request, res: Response): void {
-    if (!req.body.quizName || !req.body.privateKey) {
-      res.send({
+  @Delete('/active')
+  public deleteActiveQuiz(
+    @BodyParam('quizName') quizName: string, //
+    @BodyParam('privateKey') privateKey: string, //
+  ): object {
+
+    if (!quizName || !privateKey) {
+      throw new BadRequestError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.INVALID_PARAMETERS,
         payload: {},
-      });
-      return;
+      }));
     }
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.body.quizName);
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     const dbResult: Object = DbDAO.read(DATABASE_TYPE.QUIZ, {
-      quizName: req.body.quizName,
-      privateKey: req.body.privateKey,
+      quizName,
+      privateKey,
     });
 
     if (!dbResult) {
-      res.send({
+      throw new UnauthorizedError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.AUTHORIZATION.INSUFFICIENT_PERMISSIONS,
         payload: {},
-      });
-      return;
+      }));
     }
 
     if (activeQuiz) {
       activeQuiz.onDestroy();
-      QuizManagerDAO.setQuizAsInactive(req.body.quizName);
-      res.send({
+      QuizManagerDAO.setQuizAsInactive(quizName);
+      return {
         status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
         step: COMMUNICATION_PROTOCOL.LOBBY.CLOSED,
         payload: {},
-      });
-      return;
+      };
     }
   }
 
-  public resetQuiz(req: Request, res: Response): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
+  @Patch('/reset/:quizName')
+  public resetQuiz(@Param('quizName') quizName: string, //
+  ): object {
+
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
     activeQuiz.reset();
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.RESET,
       payload: {},
-    });
+    };
   }
 
-  public getExportFile(req: Request, res: I18nResponse): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
+  @Get('/export/:quizName/:privateKey/:theme/:language')
+  public getExportFile(
+    @Param('quizName') quizName: string, //
+    @Param('privateKey') privateKey: string, //
+    @Param('theme') themeName: string, //
+    @Param('language') translation: string, //
+    @Res() res: I18nResponse, //
+  ): void {
+
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     const dbResult: Object = DbDAO.read(DATABASE_TYPE.QUIZ, {
-      quizName: req.params.quizName,
-      privateKey: req.params.privateKey,
+      quizName,
+      privateKey,
     });
 
     if (!dbResult) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new NotFoundError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.EXPORT.QUIZ_NOT_FOUND,
         payload: {},
       }));
-      return;
     }
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
 
     // TODO: The quiz contains the rewritten cached asset urls. Restore them to the original value!
 
     const wb = new ExcelWorkbook({
-      themeName: req.params.theme,
-      translation: req.params.language,
+      themeName,
+      translation,
       quiz: activeQuiz,
       mf: res.__mf,
     });
     const date: Date = new Date();
     const dateFormatted = `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}-${date.getHours()}_${date.getMinutes()}`;
-    wb.write(`Export-${req.params.quizName}-${dateFormatted}.xlsx`, res);
+    wb.write(`Export-${quizName}-${dateFormatted}.xlsx`, res);
   }
 
-  private init(): void {
-    this._router.get('/', this.getAll);
+  @Get('/leaderboard/:quizName/:questionIndex?')
+  public getLeaderBoardData(
+    @Param('quizName') quizName: string, //
+    @Param('questionIndex') questionIndex: number, //
+  ): object {
 
-    this._router.get('/generate/demo/:languageId', this.generateDemoQuiz);
-    this._router.get('/generate/abcd/:languageId/:answerLength?', this.generateAbcdQuiz);
-    this._router.get('/status/:quizName', this.getIsAvailableQuiz);
-    this._router.get('/currentState/:quizName', this.getCurrentQuizState);
-    this._router.get('/startTime/:quizName', this.getQuizStartTime);
-    this._router.get('/settings/:quizName', this.getQuizSettings);
-    this._router.get('/export/:quizName/:privateKey/:theme/:language', this.getExportFile);
-    this._router.get('/leaderboard/:quizName/:questionIndex?', this.getLeaderBoardData.bind(this));
-
-    this._router.post('/upload', this.uploadQuiz);
-    this._router.post('/start', this.startQuiz);
-    this._router.post('/stop', this.stopQuiz);
-    this._router.post('/reading-confirmation', this.showReadingConfirmation);
-    this._router.post('/settings/update', this.updateQuizSettings);
-    this._router.post('/reserve', this.reserveQuiz);
-    this._router.post('/reserve/override', this.reserveQuizWithOverride);
-
-    this._router.patch('/reset/:quizName', this.resetQuiz);
-
-    this._router.delete('/', this.deleteQuiz);
-    this._router.delete('/active', this.deleteActiveQuiz);
-  }
-
-  private getAll(req: Request, res: Response, next: NextFunction): void {
-    res.json({});
-  }
-
-  private getLeaderBoardData(req: Request, res: Response, next: NextFunction): void {
-    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(req.params.quizName);
+    const activeQuiz: IActiveQuiz = QuizManagerDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      res.status(500);
-      res.end(JSON.stringify({
+      throw new InternalServerError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.QUIZ.IS_INACTIVE,
         payload: {},
       }));
-      return;
     }
 
-    const index: number = +req.params.questionIndex;
     const questionAmount: number = activeQuiz.originalObject.questionList.length;
-    const questionIndex: number = isNaN(index) ? 0 : index;
-    const endIndex: number = isNaN(index) || index < 0 || index > questionAmount ? questionAmount : index + 1;
+    const endIndex: number = isNaN(questionIndex) || questionIndex < 0 || questionIndex > questionAmount ? questionAmount : questionIndex + 1;
     const correctResponses: any = {};
     const partiallyCorrectResponses: any = {};
 
@@ -660,7 +676,7 @@ export class QuizRouter {
       });
     }
 
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.QUIZ.GET_LEADERBOARD_DATA,
       payload: {
@@ -668,11 +684,11 @@ export class QuizRouter {
         partiallyCorrectResponses: this._leaderboard.objectToArray(partiallyCorrectResponses),
         memberGroupResults: this._leaderboard.objectToArray(memberGroupResults),
       },
-    });
+    };
+  }
+
+  @Get('/')
+  private getAll(): object {
+    return {};
   }
 }
-
-// Create the ApiRouter, and export its configured Express.Router
-const quizRoutes = new QuizRouter();
-const quizRouter = quizRoutes.router;
-export { quizRouter };

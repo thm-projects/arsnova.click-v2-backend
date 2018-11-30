@@ -18,14 +18,14 @@ export abstract class AbstractDAO<T> implements IStorageDAO<T> {
   }
 
   protected isEmptyVars(...variables): boolean {
-    return variables.length > 0 && variables.filter(variable => AbstractDAO.isEmptyVar(variable)).length > 0;
+    return variables.length > 0 && variables.filter(variable => this.isEmptyVar(variable)).length > 0;
   }
 
-  private static isEmptyVar(variable: any): boolean {
-    return typeof variable === 'undefined' || AbstractDAO.getLengthOfVar(variable) === 0;
+  private isEmptyVar(variable: any): boolean {
+    return typeof variable === 'undefined' || this.getLengthOfVar(variable) === 0;
   }
 
-  private static getLengthOfVar(variable: any): number {
+  private getLengthOfVar(variable: any): number {
     switch (typeof variable) {
       case 'string':
         return variable.length;

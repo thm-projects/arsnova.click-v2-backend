@@ -7,7 +7,7 @@ import * as WebSocket from 'ws';
 import CasDAO from '../db/CasDAO';
 import QuizManagerDAO from '../db/QuizManagerDAO';
 import illegalNicks from '../nicknames/illegalNicks';
-import { WebSocketRouter } from '../routes/websocket';
+import { WebSocketRouter } from '../routers/websocket/WebSocketRouter';
 
 export class MemberGroup implements IMemberGroup {
   get members(): Array<INickname> {

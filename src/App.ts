@@ -1,24 +1,16 @@
 import * as bodyParser from 'body-parser';
 import * as compress from 'compression';
 import * as busboy from 'connect-busboy';
-import * as cors from 'cors';
 import * as express from 'express';
 import { Request, Response, Router } from 'express';
 import * as i18n from 'i18n';
 import * as logger from 'morgan';
 import * as path from 'path';
+import { createExpressServer, RoutingControllersOptions } from 'routing-controllers';
+import * as swaggerUi from 'swagger-ui-express';
 import options from './cors.config';
 import { IGlobal } from './main';
 
-import { apiRouter } from './routes/api';
-import { router as expiryQuizRouter } from './routes/expiry-quiz';
-import { i18nApiRouter } from './routes/i18n-api';
-import { legacyApiRouter } from './routes/legacy-api';
-import { libRouter } from './routes/lib';
-import { lobbyRouter } from './routes/lobby';
-import { memberRouter } from './routes/member';
-import { nicksRouter } from './routes/nicks';
-import { quizRouter } from './routes/quiz';
 import { dynamicStatistics, staticStatistics } from './statistics';
 
 declare var require: any;
@@ -80,6 +72,20 @@ i18n.configure({
   },
 });
 
+export const routingControllerOptions: RoutingControllersOptions = {
+  defaults: {
+    nullResultCode: 404,
+    undefinedResultCode: 204,
+    paramOptions: {
+      required: true,
+    },
+  },
+  defaultErrorHandler: false,
+  cors: options,
+  controllers: [path.join(__dirname, 'routers', '/rest/*.js')],
+  middlewares: [path.join(__dirname, 'routers', '/middleware/*.js')],
+};
+
 // Creates and configures an ExpressJS web server.
 class App {
 
@@ -92,7 +98,7 @@ class App {
 
   // Run configuration methods on the Express instance.
   constructor() {
-    this._express = express();
+    this._express = createExpressServer(routingControllerOptions);
     this.middleware();
     this.routes();
   }
@@ -107,13 +113,15 @@ class App {
       extended: true,
     }));
     this._express.use(i18n.init);
-    this._express.use(cors(options));
     this._express.use(compress());
-    this._express.options('*', cors(options));
   }
 
   // Configure API endpoints.
   private routes(): void {
+    this._express.use('/api/v1/api-docs', swaggerUi.serve, swaggerUi.setup(null, {
+      swaggerUrl: '/api/v1/api-docs.json',
+    }));
+
     const router: Router = express.Router();
     router.get(`/`, (req: Request, res: Response) => {
       res.send(Object.assign({}, staticStatistics, dynamicStatistics()));
@@ -121,21 +129,11 @@ class App {
     router.get(`/err`, () => {
       throw new Error('testerror');
     });
+
     this._express.use(`${staticStatistics.routePrefix}/`, router);
-    this._express.use(`${staticStatistics.routePrefix}/lib`, libRouter);
-    this._express.use(`${staticStatistics.routePrefix}/api`, legacyApiRouter);
-    this._express.use(`${staticStatistics.routePrefix}/api/v1`, apiRouter);
-    this._express.use(`${staticStatistics.routePrefix}/api/v1/quiz`, quizRouter);
-    this._express.use(`${staticStatistics.routePrefix}/api/v1/expiry-quiz`, expiryQuizRouter);
-    this._express.use(`${staticStatistics.routePrefix}/api/v1/member`, memberRouter);
-    this._express.use(`${staticStatistics.routePrefix}/api/v1/lobby`, lobbyRouter);
-    this._express.use(`${staticStatistics.routePrefix}/api/v1/nicks`, nicksRouter);
-    this._express.use(`${staticStatistics.routePrefix}/api/v1/plugin/i18nator`, i18nApiRouter);
 
     this._express.use((err, req, res, next) => {
-      (
-        <IGlobal>global
-      ).createDump(err);
+      (<IGlobal>global).createDump(err);
       next();
     });
   }

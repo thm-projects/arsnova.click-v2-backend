@@ -11,7 +11,7 @@ import app from '../../App';
 import { default as DbDAO } from '../../db/DbDAO';
 import QuizManagerDAO from '../../db/QuizManagerDAO';
 import { DATABASE_TYPE } from '../../Enums';
-import { WebSocketRouter } from '../../routes/websocket';
+import { WebSocketRouter } from '../../routers/websocket/WebSocketRouter';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');

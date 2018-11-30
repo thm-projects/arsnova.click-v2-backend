@@ -1,10 +1,10 @@
 import { IActiveQuiz, IMessage, INickname } from 'arsnova-click-v2-types/dist/common';
 import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
 import * as WebSocket from 'ws';
-import { default as DbDAO } from '../db/DbDAO';
-import QuizManagerDAO from '../db/QuizManagerDAO';
-import { DATABASE_TYPE } from '../Enums';
-import { IGlobal } from '../main';
+import { default as DbDAO } from '../../db/DbDAO';
+import QuizManagerDAO from '../../db/QuizManagerDAO';
+import { DATABASE_TYPE } from '../../Enums';
+import { IGlobal } from '../../main';
 
 export class WebSocketRouter {
   private static _wss: WebSocket.Server;

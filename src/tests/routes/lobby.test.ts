@@ -9,7 +9,7 @@ import * as WebSocket from 'ws';
 
 import app from '../../App';
 import QuizManagerDAO from '../../db/QuizManagerDAO';
-import { WebSocketRouter } from '../../routes/websocket';
+import { WebSocketRouter } from '../../routers/websocket/WebSocketRouter';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');

@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import Gitlab from 'gitlab';
 import * as path from 'path';
 import { COMMIT_ACTION, GITLAB, LANGUAGES } from '../Enums';
+import { IProjectMetaData } from '../interfaces/IProjectMetaData';
+import { getProjectMetadata } from '../lib/projectMetaData';
 import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectGitLocation, staticStatistics } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 import LoginDAO from './LoginDAO';
@@ -46,11 +48,7 @@ class I18nDAO extends AbstractDAO<object> {
 
       console.log(`* Fetching unused keys`);
       const unusedKeysStart = new Date().getTime();
-      this.storage[projectName].unused = this.getUnusedKeys({
-        params: {},
-        projectAppLocation: projectAppLocation[projectName],
-        i18nFileBaseLocation: i18nFileBaseLocation[projectName],
-      });
+      this.storage[projectName].unused = this.getUnusedKeys(getProjectMetadata(projectName), null);
       const unusedKeysEnd = new Date().getTime();
       console.log(`-- Done. Took ${unusedKeysEnd - unusedKeysStart}ms`);
 
@@ -101,14 +99,15 @@ class I18nDAO extends AbstractDAO<object> {
     }
   }
 
-  public getUnusedKeys(req): object {
+  public getUnusedKeys(metaData: IProjectMetaData, langRef: string): object {
     const result = {};
-    const fileNames = this.fromDir(req.projectAppLocation, /\.(ts|html|js)$/);
-    const langRefs = req.params.langRef ? [req.params.langRef] : availableLangs;
+    const fileNames = this.fromDir(metaData.projectAppLocation, /\.(ts|html|js)$/);
+    const langRefs = langRef ? [langRef] : availableLangs;
 
     for (let i = 0; i < langRefs.length; i++) {
       result[langRefs[i]] = [];
-      const i18nFileContent = JSON.parse(fs.readFileSync(path.join(req.i18nFileBaseLocation, `${langRefs[i].toLowerCase()}.json`)).toString('UTF-8'));
+      const i18nFileContent = JSON.parse(
+        fs.readFileSync(path.join(metaData.i18nFileBaseLocation, `${langRefs[i].toLowerCase()}.json`)).toString('UTF-8'));
       const objectPaths = this.objectPath(i18nFileContent);
 
       objectPaths.forEach((

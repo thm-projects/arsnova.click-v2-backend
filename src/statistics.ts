@@ -5,7 +5,7 @@ import QuizManagerDAO from './db/QuizManagerDAO';
 
 declare function require(name: string): any;
 
-const homedir = require('os').homedir();
+export const homedir = require('os').homedir();
 const interfaces = networkInterfaces();
 const localAddress = interfaces[Object.keys(interfaces).filter(netIface => {
   const singleInterface = interfaces[netIface][0];
@@ -19,6 +19,8 @@ const routePrefix = process.env.ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX || '';
 const rewriteAssetCacheUrl = process.env.ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL || `http://${hostname()}:${portExternal}${routePrefix}`;
 
 export const staticStatistics = {
+  appName: 'arsnova-click-v2-backend',
+  appVersion: '2.0.0',
   hostname: hostname(),
   port: portInternal,
   routePrefix: `${routePrefix}`,

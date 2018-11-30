@@ -4,38 +4,33 @@ import { ICasData } from 'arsnova-click-v2-types/dist/common';
 import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
 import { IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as crypto from 'crypto';
-import { NextFunction, Request, Response, Router } from 'express';
+import { Request, Response } from 'express';
 import * as fileType from 'file-type';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as mjAPI from 'mathjax-node';
 import * as MessageFormat from 'messageformat';
 import * as path from 'path';
+import {
+  BadRequestError, BodyParam, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
+} from 'routing-controllers';
 import * as xml2js from 'xml2js';
-import { MatchTextToAssetsDb } from '../cache/assets';
-import CasDAO from '../db/CasDAO';
-import LoginDAO from '../db/LoginDAO';
-import MathjaxDAO from '../db/MathjaxDAO';
-import { staticStatistics } from '../statistics';
+import { MatchTextToAssetsDb } from '../../cache/assets';
+import CasDAO from '../../db/CasDAO';
+import LoginDAO from '../../db/LoginDAO';
+import MathjaxDAO from '../../db/MathjaxDAO';
+import { staticStatistics } from '../../statistics';
+import { AbstractRouter } from './AbstractRouter';
 
 const derivates: Array<string> = require('../../assets/imageDerivates');
-
 const themeData = JSON.parse(fs.readFileSync(path.join(staticStatistics.pathToAssets, 'themeData.json')).toString());
 const casSettings = { base_url: 'https://cas.thm.de/cas' };
 
-class LibRouter {
-  get router(): Router {
-    return this._router;
-  }
+@JsonController('/lib')
+export class LibRouter extends AbstractRouter {
 
-  private readonly _router: Router;
-
-  /**
-   * Initialize the LibRouter
-   */
   constructor() {
-    this._router = Router();
-    this.init();
+    super();
 
     mjAPI.start();
     mjAPI.config({
@@ -63,8 +58,9 @@ class LibRouter {
     });
   }
 
-  public getAll(req: Request, res: Response, next: NextFunction): void {
-    res.send({
+  @Get('/')
+  public getAll(): object {
+    return {
       paths: [
         {
           name: '/mathjax',
@@ -86,11 +82,16 @@ class LibRouter {
           description: 'Handles authentication via CAS',
         },
       ],
-    });
+    };
   }
 
-  public getLinkImages(req: Request, res: Response, next: NextFunction): void {
-    const theme = req.params.theme || 'theme-Material';
+  @Get('/linkImages/:theme?')
+  public getLinkImages(@Param('theme') theme: string): Array<ILinkImage> {
+
+    if (!theme) {
+      theme = 'theme-Material';
+    }
+
     const basePath = `/assets/images/theme/${theme}`;
     const manifestPath = `${staticStatistics.rewriteAssetCacheUrl}/lib/manifest/${theme}`;
 
@@ -168,31 +169,46 @@ class LibRouter {
       type: 'image/png',
     });
 
-    res.json(result);
+    return result;
   }
 
-  public getFavicon(req: Request, res: Response, next: NextFunction): void {
-    const theme = req.params.theme || 'theme-Material';
-    const filePath = path.join(staticStatistics.pathToAssets, 'images', 'theme', `${theme}`, `logo_s64x64.png`);
+  @Get('/favicon/:theme?')
+  public getFavicon(
+    @Param('theme') theme: string, //
+    @Res() res: Response, //
+  ): Promise<object> {
+
+    if (!theme) {
+      theme = 'theme-Material';
+    }
+
+    let filePath = path.join(staticStatistics.pathToAssets, 'images', 'theme', `${theme}`, `logo_s64x64.png`);
     const exists = fs.existsSync(filePath);
 
-    if (exists) {
+    if (!exists) {
+      filePath = path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png');
+    }
+
+    return new Promise<Buffer>(resolve => {
       fs.readFile(filePath, (err, data: Buffer) => {
         res.contentType(fileType(data).mime);
-        res.end(data);
+        resolve(data);
       });
-
-    } else {
-      fs.readFile(path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png'), (err, data: Buffer) => {
-        res.contentType(fileType(data).mime);
-        res.end(data);
-      });
-    }
+    });
   }
 
-  public getManifest(req: Request, res: I18nResponse, next: NextFunction): void {
-    const theme = req.params.theme || 'theme-Material';
-    const mf: MessageFormat = res.__mf;
+  @Get('/manifest/:theme?')
+  public getManifest(
+    @Param('theme') theme: string, //
+    @Res() res: I18nResponse, //
+    @Req() req: Request, //
+  ): object {
+
+    if (!theme) {
+      theme = 'theme-Material';
+    }
+
+    const mf: MessageFormat.Msg = res.__mf;
     const basePath = req.header('Origin');
 
     const manifest = {
@@ -215,12 +231,14 @@ class LibRouter {
       });
     });
 
-    res.send(manifest);
+    return manifest;
   }
 
-  public getFirstMathjaxExample(req: Request, res: Response, next: NextFunction): void {
-    mjAPI.typeset({
-      math: `<math xmlns="http://www.w3.org/1998/Math/MathML" display="block" mathcolor="black">
+  @Get('/mathjax/example/first')
+  public getFirstMathjaxExample(): object {
+    return new Promise<object>((resolve, reject) => {
+      mjAPI.typeset({
+        math: `<math xmlns="http://www.w3.org/1998/Math/MathML" display="block" mathcolor="black">
   <mrow>
     <mi>f</mi>
     <mrow>
@@ -262,279 +280,272 @@ class LibRouter {
     <mi>z</mi>
   </mrow>
 </math>`,
-      format: 'MathML', // 'inline-TeX', 'MathML'
-      svg: true, //  svg:true, mml: true
-    }, data => {
-      if (!data.errors) {
-        res.send(data);
-      }
+        format: 'MathML', // 'inline-TeX', 'MathML'
+        svg: true, //  svg:true, mml: true
+      }, data => {
+        if (data.errors) {
+          reject(data.errors);
+        } else {
+          resolve(data);
+        }
+      });
     });
   }
 
-  public getSecondMathjaxExample(req: Request, res: Response, next: NextFunction): void {
-    mjAPI.typeset({
-      math: `\\begin{align} a_1& =b_1+c_1\\\\ a_2& =b_2+c_2-d_2+e_2 \\end{align}`,
-      format: 'TeX', // 'inline-TeX', 'MathML'
-      mml: true, //  svg:true, mml: true
-    }, data => {
-      if (!data.errors) {
-        res.send(data);
-      }
+  @Get('/mathjax/example/second')
+  public getSecondMathjaxExample(): Promise<object> {
+    return new Promise<object>((resolve, reject) => {
+      mjAPI.typeset({
+        math: `\\begin{align} a_1& =b_1+c_1\\\\ a_2& =b_2+c_2-d_2+e_2 \\end{align}`,
+        format: 'TeX', // 'inline-TeX', 'MathML'
+        mml: true, //  svg:true, mml: true
+      }, data => {
+        if (data.errors) {
+          reject(data.errors);
+        } else {
+          resolve(data);
+        }
+      });
     });
   }
 
-  public getThirdMathjaxExample(req: Request, res: Response, next: NextFunction): void {
-    fs.readFile(path.join(staticStatistics.pathToAssets, 'images', 'mathjax', 'example_3.svg'), (err, data: Buffer) => {
-      res.send(JSON.stringify(data.toString('utf8')));
+  @Get('/mathjax/example/third')
+  public getThirdMathjaxExample(): Promise<Buffer> {
+    return new Promise<Buffer>(resolve => {
+      fs.readFile(path.join(staticStatistics.pathToAssets, 'images', 'mathjax', 'example_3.svg'), (err, data: Buffer) => {
+        resolve(data);
+      });
     });
   }
 
-  public renderMathjax(req: Request, res: Response, next: NextFunction): void {
-    if (!req.body.mathjax || !req.body.format || !req.body.output) {
-      res.status(500);
-      res.end(`Malformed request received -> ${req.body}`);
-      return;
+  @Post('/mathjax')
+  public renderMathjax(
+    @BodyParam('mathjax') mathjax: string, //
+    @BodyParam('format') format: string, //
+    @BodyParam('output') output: string, //
+  ): Promise<object> {
+
+    if (!mathjax || !format || !output) {
+      throw new InternalServerError(`Malformed request received -> ${mathjax}, ${format}, ${output}`);
     }
-    const mathjaxArray = [...JSON.parse(req.body.mathjax)];
+    const mathjaxArray = [...JSON.parse(mathjax)];
     const result = [];
     if (!mathjaxArray.length) {
-      res.send(JSON.stringify({
+      throw new BadRequestError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.MATHJAX.RENDER,
         payload: {
-          mathjax: req.body.mathjax,
-          format: req.body.format,
+          mathjax,
+          format,
           mathjaxArray,
-          output: req.body.output,
+          output,
         },
       }));
-
-      return;
     }
 
-    mathjaxArray.forEach(async (mathjaxPlain, index) => {
-      const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
+    return new Promise<object>(resolve => {
+      mathjaxArray.forEach(async (mathjaxPlain, index) => {
+        const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
 
-      if (dbResult) {
-        result.push(dbResult);
+        if (dbResult) {
+          result.push(dbResult);
 
-      } else {
+        } else {
 
-        const data = await mjAPI.typeset({
-          math: mathjaxPlain.replace(/( ?\${1,2} ?)/g, ''),
-          format: req.body.format,
-          html: req.body.output === 'html',
-          css: req.body.output === 'html',
-          svg: req.body.output === 'svg',
-          mml: req.body.output === 'mml',
-        }).catch(err => console.log(err));
+          const data = await mjAPI.typeset({
+            math: mathjaxPlain.replace(/( ?\${1,2} ?)/g, ''),
+            format: format,
+            html: output === 'html',
+            css: output === 'html',
+            svg: output === 'svg',
+            mml: output === 'mml',
+          }).catch(err => console.log(err));
 
-        MathjaxDAO.updateRenderedData(data, mathjaxPlain);
-        result.push(data);
-      }
+          MathjaxDAO.updateRenderedData(data, mathjaxPlain);
+          result.push(data);
+        }
 
-      if (index === mathjaxArray.length - 1) {
-        res.send(JSON.stringify(result));
-      }
+        if (index === mathjaxArray.length - 1) {
+          resolve(result);
+        }
+      });
     });
   }
 
-  public cacheQuizAssets(req: Request, res: Response, next: NextFunction): void {
-    if (!req.body.quiz) {
-      res.status(500);
-      res.end(`Malformed request received -> ${req.body}`);
-      return;
+  @Post('/cache/quiz/assets')
+  public cacheQuizAssets(@BodyParam('quiz') quiz: IQuestionGroup): object {
+
+    if (!quiz) {
+      throw new BadRequestError(`Malformed request received -> ${quiz}`);
     }
-    const quiz: IQuestionGroup = req.body.quiz;
+
     quiz.questionList.forEach((question: IQuestion) => {
       MatchTextToAssetsDb(question.questionText);
       question.answerOptionList.forEach((answerOption: IAnswerOption) => {
         MatchTextToAssetsDb(answerOption.answerText);
       });
     });
-    res.json({
+
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.CACHE.QUIZ_ASSETS,
       payload: {},
-    });
+    };
   }
 
-  public getCache(req: Request, res: Response, next: NextFunction): void {
-    if (!req.params.digest || !fs.existsSync(path.join(staticStatistics.pathToCache, req.params.digest))) {
-      res.status(500);
-      res.end(`Malformed request received -> ${req.body}, ${req.params}`);
-      return;
+  @Get('/cache/quiz/assets/:digest')
+  public getCache(@Param('digest') digest: string, @Res() res: Response): Promise<string> {
+
+    if (!digest || !fs.existsSync(path.join(staticStatistics.pathToCache, digest))) {
+      throw new NotFoundError(`Malformed request received -> ${digest}`);
     }
-    fs.readFile(path.join(staticStatistics.pathToCache, req.params.digest), (err, data: Buffer) => {
-      const fileTypeOfBuffer = fileType(data);
-      if (fileTypeOfBuffer) {
-        res.contentType(fileTypeOfBuffer.mime);
-      } else {
-        res.contentType('text/html');
-      }
-      res.end(data.toString('UTF-8'));
+
+    return new Promise<string>(resolve => {
+      fs.readFile(path.join(staticStatistics.pathToCache, digest), (err, data: Buffer) => {
+        const fileTypeOfBuffer = fileType(data);
+        if (fileTypeOfBuffer) {
+          res.contentType(fileTypeOfBuffer.mime);
+        } else {
+          res.contentType('text/html');
+        }
+
+        resolve(data.toString('UTF-8'));
+      });
     });
   }
 
-  public authorize(req: Request, res: Response, next: NextFunction): void {
-    const ticket = req.params.ticket;
+  @Get('/authorize/:ticket?')
+  public authorize(@Param('ticket') ticket: string, @Req() req: Request, @Res() res: Response): Promise<object> {
+
     let serviceUrl = req.headers.referer;
-    if (serviceUrl instanceof Array) {
+    if ((serviceUrl as any) instanceof Array) {
       serviceUrl = serviceUrl[0];
     }
     serviceUrl = encodeURIComponent(serviceUrl.replace(`?ticket=${ticket}`, ''));
 
     if (!ticket) {
-
       const loginUrl = `${casSettings.base_url}/login?service=${serviceUrl}`;
       res.redirect(loginUrl);
       return;
     }
 
-    const casRequest = https.get(`${casSettings.base_url}/serviceValidate?ticket=${ticket}&service=${serviceUrl}`, (casResponse) => {
+    return new Promise<object>(resolve => {
 
-      let data = '';
+      const casRequest = https.get(`${casSettings.base_url}/serviceValidate?ticket=${ticket}&service=${serviceUrl}`, (casResponse) => {
 
-      casResponse.on('data', (chunk) => {
-        data += chunk;
-      });
+        let data = '';
 
-      casResponse.on('end', () => {
-        xml2js.parseString(data, (err, result) => {
-          console.log('received response from cas server', err, result);
-          if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
-            res.send({
-              status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
-              step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
-              payload: {
-                err,
-                result,
-              },
-            });
-            return;
-          } else {
-            const resultData = result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:attributes'][0];
-            const casDataElement: ICasData = {
-              username: resultData['cas:username'],
-              displayName: resultData['cas:displayNmae'],
-              mail: resultData['cas:mail'],
-            };
-            CasDAO.add(ticket, casDataElement);
-            res.send({
-              status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-              step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
-              payload: { ticket },
-            });
-          }
+        casResponse.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        casResponse.on('end', () => {
+          xml2js.parseString(data, (err, result) => {
+            console.log('received response from cas server', err, result);
+            if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
+              throw new UnauthorizedError(JSON.stringify({
+                status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+                step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
+                payload: {
+                  err,
+                  result,
+                },
+              }));
+            } else {
+              const resultData = result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:attributes'][0];
+              const casDataElement: ICasData = {
+                username: resultData['cas:username'],
+                displayName: resultData['cas:displayNmae'],
+                mail: resultData['cas:mail'],
+              };
+              CasDAO.add(ticket, casDataElement);
+              resolve({
+                status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
+                step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
+                payload: { ticket },
+              });
+            }
+          });
         });
       });
-    });
 
-    casRequest.on('error', (error) => {
-      console.log('error at requesting cas url', error);
-      casRequest.abort();
-      res.send({
-        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
-        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
-        payload: { error },
+      casRequest.on('error', (error) => {
+        console.log('error at requesting cas url', error);
+        casRequest.abort();
+        throw new UnauthorizedError(JSON.stringify({
+          status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+          step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
+          payload: { error },
+        }));
       });
-      return;
-    });
 
+    });
   }
 
-  private authorizeStatic(req: Request, res: Response): void {
-    const username = req.body.username;
-    const passwordHash = req.body.passwordHash;
-    let token = req.body.token;
+  @Post('/authorize/static')
+  private authorizeStatic(@BodyParam('username') username: string,
+                          @BodyParam('passwordHash') passwordHash: string,
+                          @BodyParam('token') token: string,
+  ): object {
+
     const user = LoginDAO.getUser(username);
 
     if (!username || !passwordHash || !user || !LoginDAO.validateUser(username, passwordHash)) {
-      res.send({
+      throw new UnauthorizedError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
         payload: { reason: 'UNKOWN_LOGIN' },
-      });
-      return;
+      }));
     }
 
     if (!token || typeof token !== 'string' || token.length === 0) {
       token = user.generateToken();
       LoginDAO.setTokenForUser(username, token);
 
-      res.send({
+      return {
         status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
         step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
         payload: { token },
-      });
-      return;
+      };
     }
 
     const isTokenValid = LoginDAO.validateTokenForUser(username, token);
+    if (!isTokenValid) {
+      throw new UnauthorizedError(JSON.stringify({
+        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
+        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
+        payload: { isTokenValid },
+      }));
+    }
 
-    res.send({
-      status: isTokenValid ? COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL : COMMUNICATION_PROTOCOL.STATUS.FAILED,
+    return {
+      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
       payload: { isTokenValid },
-    });
-    return;
+    };
   }
 
-  private validateToken(req: Request, res: Response): void {
-    const username = req.params.username;
-    const token = req.params.token;
+  @Get('/authorize/validate/:username/:token')
+  private validateToken(@Param('username') username: string, @Param('token') token: string): object {
 
     if (!LoginDAO.validateTokenForUser(username, token)) {
-      res.send({
+      throw new UnauthorizedError(JSON.stringify({
         status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
         step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
         payload: { reason: 'UNKOWN_LOGIN' },
-      });
-      return;
+      }));
     }
 
-    res.send({
+    return {
       status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
       step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
-    });
-    return;
+    };
   }
 
   private randomValueHex(len: number = 40): string {
-    return crypto.randomBytes(Math.ceil((
-                                          len
-                                        ) / 2)).toString('hex') // convert to hexadecimal format
+    return crypto.randomBytes( //
+      Math.ceil((len) / 2), //
+    ).toString('hex') // convert to hexadecimal format
     .slice(0, len);   // return required number of characters
   }
-
-  /**
-   * Take each handler, and attach to one of the Express.Router's
-   * endpoints.
-   */
-  private init(): void {
-    this._router.get('/', this.getAll);
-
-    this._router.get('/linkImages/:theme?', this.getLinkImages);
-    this._router.get('/favicon/:theme?', this.getFavicon);
-    this._router.get('/manifest/:theme?', this.getManifest);
-
-    this._router.post('/mathjax', this.renderMathjax.bind(this));
-    this._router.get('/mathjax/example/first', this.getFirstMathjaxExample);
-    this._router.get('/mathjax/example/second', this.getSecondMathjaxExample);
-    this._router.get('/mathjax/example/third', this.getThirdMathjaxExample);
-
-    this._router.post('/cache/quiz/assets', this.cacheQuizAssets.bind(this));
-    this._router.get('/cache/quiz/assets/:digest', this.getCache.bind(this));
-
-    this._router.post('/authorize/static', this.authorizeStatic.bind(this));
-    this._router.get('/authorize/:ticket?', this.authorize.bind(this));
-
-    this._router.get('/authorize/validate/:username/:token', this.validateToken.bind(this));
-  }
-
 }
-
-// Create the LibRouter, and export its configured Express.Router
-const libRoutes = new LibRouter();
-const libRouter = libRoutes.router;
-export { libRouter };
