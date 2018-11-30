@@ -10,7 +10,7 @@
     "prebuild:DEV": "npm run clean",
     "prebuild:PROD": "npm run clean",
     "build:DEV": "tsc -p tsconfig.json; cp -r assets dist/",
-    "build:PROD": "webpack --config webpack.prod.config.js --mode development --colors",
+    "build:PROD": "tsc -p tsconfig.json; cp -r assets dist/",
     "start:NO_DB": "cd ./dist/ && node main.js --no-db"
   },
   "dependencies": {
