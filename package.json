@@ -11,7 +11,8 @@
     "prebuild:PROD": "npm run clean",
     "build:DEV": "tsc -p tsconfig.json; cp -r assets dist/",
     "build:PROD": "tsc -p tsconfig.json; cp -r assets dist/",
-    "start:NO_DB": "cd ./dist/ && node main.js --no-db"
+    "start:NO_DB": "cd ./dist/ && node main.js --no-db",
+    "dependency-check": "npx --ignore-existing madge --circular --extensions ts src"
   },
   "dependencies": {
     "api-spec-converter": "^2.7.18",
@@ -38,6 +39,8 @@
     "mime-types": "^2.1.21",
     "minimist": "^1.2.0",
     "morgan": "^1.9.1",
+    "multer": "^1.4.1",
+    "arsnova-click-v2-types": "git+https://git.thm.de/arsnova/arsnova-click-v2-types.git",
     "node-sass-middleware": "0.11.0",
     "nodemailer": "^4.7.0",
     "reflect-metadata": "^0.1.12",
@@ -71,7 +74,6 @@
     "@types/websocket": "0.0.40",
     "@types/ws": "^6.0.1",
     "@types/xml2js": "^0.4.3",
-    "arsnova-click-v2-types": "git+https://git.thm.de/arsnova/arsnova-click-v2-types.git",
     "chai": "^4.2.0",
     "chai-http": "^4.2.0",
     "mocha": "^5.2.0",
