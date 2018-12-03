@@ -6,6 +6,7 @@ import { Server } from 'http';
 import * as Minimist from 'minimist';
 import * as path from 'path';
 import * as process from 'process';
+import 'reflect-metadata';
 import * as WebSocket from 'ws';
 import App from './App';
 import { createDefaultPaths } from './app_bootstrap';
