@@ -62,9 +62,11 @@ class MongoDbConnector {
       }
       this._mongoURL += `${mongoHost}:${mongoPort}/${mongoDatabase}`;
 
+      const mongoURLOptions = [`authSource=admin`];
       if (process.env.MONGODB_REPLICA_NAME) {
-        this._mongoURL += `?replicaSet=${mongoReplSet}`;
+        mongoURLOptions.push(`replicaSet=${mongoReplSet}`);
       }
+      this._mongoURL += `?${mongoURLOptions.join('&')}`;
     }
   }
 }
