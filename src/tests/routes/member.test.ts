@@ -1,13 +1,13 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
 
 import app from '../../App';
-import QuizManagerDAO from '../../db/QuizManagerDAO';
+import QuizDAO from '../../db/quiz/QuizDAO';
+import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');
@@ -24,7 +24,7 @@ class MemberApiRouterTestSuite {
   private _nickname = 'testNickname';
 
   public static after(): void {
-    QuizManagerDAO.removeQuiz(hashtag);
+    QuizDAO.removeQuiz(QuizDAO.getQuizByName(hashtag).id);
   }
 
   @test
@@ -36,15 +36,12 @@ class MemberApiRouterTestSuite {
 
   @test
   public async bootstrapQuiz(): Promise<void> {
-    QuizManagerDAO.initInactiveQuiz(this._hashtag);
-    await expect(QuizManagerDAO.isInactiveQuiz(this._hashtag)).to.be.true;
-
-    const quiz: IQuestionGroup = JSON.parse(
+    const quiz: IQuizEntity = JSON.parse(
       fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
-    quiz.hashtag = this._hashtag;
-    QuizManagerDAO.initActiveQuiz(quiz);
+    quiz.name = this._hashtag;
+    QuizDAO.initQuiz(quiz);
 
-    await expect(QuizManagerDAO.isActiveQuiz(this._hashtag)).to.be.true;
+    await expect(QuizDAO.isActiveQuiz(this._hashtag)).to.be.true;
   }
 
   @test
@@ -70,7 +67,7 @@ class MemberApiRouterTestSuite {
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    expect(QuizManagerDAO.getActiveQuizByName(this._hashtag).nextQuestion()).to.equal(0);
+    expect(QuizDAO.getActiveQuizByName(this._hashtag).nextQuestion()).to.equal(0);
   }
 
   @test

@@ -1,7 +1,5 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
-import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
@@ -9,8 +7,10 @@ import * as path from 'path';
 import * as WebSocket from 'ws';
 import app from '../../App';
 import { default as DbDAO } from '../../db/DbDAO';
-import QuizManagerDAO from '../../db/QuizManagerDAO';
-import { DATABASE_TYPE } from '../../Enums';
+import QuizDAO from '../../db/quiz/QuizDAO';
+import { DbCollection } from '../../enums/DbOperation';
+import { MessageProtocol } from '../../enums/Message';
+import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { WebSocketRouter } from '../../routers/websocket/WebSocketRouter';
 import { staticStatistics } from '../../statistics';
 
@@ -33,8 +33,8 @@ class QuizApiRouterTestSuite {
   }
 
   public static after(): void {
-    QuizManagerDAO.removeQuiz(hashtag);
-    DbDAO.delete(DATABASE_TYPE.QUIZ, {
+    QuizDAO.removeQuiz(QuizDAO.getQuizByName(hashtag).id);
+    DbDAO.deleteOne(DbCollection.Quizzes, {
       quizName: hashtag,
       privateKey: privateKey,
     });
@@ -53,9 +53,7 @@ class QuizApiRouterTestSuite {
     const res = await chai.request(app).get(`${this._baseApiRoute}/generate/demo/en`);
     expect(res.type).to.equal('application/json');
     expect(res.status).to.equal(200);
-    expect(res.body.hashtag).to.equal('Demo Quiz ' + (
-                                      QuizManagerDAO.getLastPersistedDemoQuizNumber() + 1
-    ));
+    expect(res.body.hashtag).to.equal('Demo Quiz ' + (QuizDAO.getLastPersistedDemoQuizNumber() + 1));
   }
 
   @test
@@ -70,7 +68,7 @@ class QuizApiRouterTestSuite {
     const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    expect(res.body.step).to.equal(COMMUNICATION_PROTOCOL.QUIZ.UNDEFINED);
+    expect(res.body.step).to.equal(MessageProtocol.Undefined);
   }
 
   @test
@@ -82,7 +80,7 @@ class QuizApiRouterTestSuite {
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    await expect(QuizManagerDAO.isInactiveQuiz(this._hashtag)).to.be.true;
+    await expect(!QuizDAO.isActiveQuiz(this._hashtag)).to.be.true;
   }
 
   @test
@@ -90,19 +88,19 @@ class QuizApiRouterTestSuite {
     const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    expect(res.body.step).to.equal(COMMUNICATION_PROTOCOL.QUIZ.EXISTS);
+    expect(res.body.step).to.equal(MessageProtocol.Exists);
   }
 
   @test
   public async getStatusWhenAvailable(): Promise<void> {
-    const quiz: IQuestionGroup = JSON.parse(
+    const quiz: IQuizEntity = JSON.parse(
       fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
-    quiz.hashtag = this._hashtag;
-    QuizManagerDAO.initActiveQuiz(quiz);
+    quiz.name = this._hashtag;
+    QuizDAO.initQuiz(quiz);
     const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    expect(res.body.step).to.equal(COMMUNICATION_PROTOCOL.QUIZ.AVAILABLE);
+    expect(res.body.step).to.equal(MessageProtocol.Available);
   }
 
   @test

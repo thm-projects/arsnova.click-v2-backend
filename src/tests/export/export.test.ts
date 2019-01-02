@@ -1,17 +1,23 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import { IFreetextAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/interfaces';
-import { FreeTextQuestion } from 'arsnova-click-v2-types/dist/questions';
-import { IQuestionGroup, IQuestionRanged, IQuestionSurvey } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as i18n from 'i18n';
 import * as MessageFormat from 'messageformat';
 import { slow, suite, test } from 'mocha-typescript';
 import * as path from 'path';
-import QuizManagerDAO from '../../db/QuizManagerDAO';
-import { ExcelWorkbook } from '../../export/excel-workbook';
-import { Member } from '../../quiz-manager/quiz-manager';
+import QuizDAO from '../../db/quiz/QuizDAO';
+import { FreeTextAnswerEntity } from '../../entities/answer/FreetextAnwerEntity';
+import { MemberEntity } from '../../entities/member/MemberEntity';
+import { FreeTextQuestionEntity } from '../../entities/question/FreeTextQuestionEntity';
+import { RangedQuestionEntity } from '../../entities/question/RangedQuestionEntity';
+import { SurveyQuestionEntity } from '../../entities/question/SurveyQuestionEntity';
+import { QuizEntity } from '../../entities/quiz/QuizEntity';
+import { SessionConfigurationEntity } from '../../entities/session-configuration/SessionConfigurationEntity';
+import { QuestionType } from '../../enums/QuestionType';
+import { ExcelWorkbook } from '../../export/ExcelWorkbook';
+import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
+import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
 
 @suite
@@ -55,7 +61,7 @@ class ExcelExportTestSuite {
 
       // setting of log level ERROR - default to require('debug')('i18n:error')
       logErrorFn: msg => {
-        console.log('error', msg);
+        LoggerService.error('error', msg);
       },
 
       // object or [obj1, obj2] to bind the i18n api and current locale to - defaults to null
@@ -76,7 +82,7 @@ class ExcelExportTestSuite {
   }
 
   public static after(): void {
-    QuizManagerDAO.removeQuiz('mocha-export-test');
+    QuizDAO.removeQuiz(QuizDAO.getQuizByName('mocha-export-test').id);
   }
 
   public randomIntFromInterval(min: number, max: number): number {
@@ -85,28 +91,35 @@ class ExcelExportTestSuite {
 
   @test
   public async initQuiz(): Promise<void> {
-    QuizManagerDAO.initInactiveQuiz(this._hashtag);
-    await assert.equal(QuizManagerDAO.isInactiveQuiz(this._hashtag), true, 'Expected to find an inactive quiz item');
+    QuizDAO.initQuiz(new QuizEntity({
+      name: this._hashtag,
+      questionList: [],
+      memberGroups: [],
+      sessionConfig: new SessionConfigurationEntity(),
+      adminToken: 'test',
+      privateKey: 'test',
+      readingConfirmationRequested: false,
+    }));
+    await assert.equal(!QuizDAO.isActiveQuiz(this._hashtag), true, 'Expected to find an inactive quiz item');
 
-    const quiz: IQuestionGroup = JSON.parse(
+    const quiz: IQuizEntity = JSON.parse(
       fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
-    quiz.hashtag = this._hashtag;
-    QuizManagerDAO.initActiveQuiz(quiz);
+    quiz.name = this._hashtag;
+    QuizDAO.initQuiz(quiz);
 
-    await assert.equal(QuizManagerDAO.isActiveQuiz(this._hashtag), true, 'Expected to find an active quiz item');
+    await assert.equal(QuizDAO.isActiveQuiz(this._hashtag), true, 'Expected to find an active quiz item');
   }
 
   @test
   public async addMembers(): Promise<void> {
-    const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
+    const quiz = QuizDAO.getActiveQuizByName(this._hashtag);
     for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
-      quiz.memberGroups[0].members.push(new Member({
-        id: memberIndex,
+      quiz.memberGroups[0].members.push(new MemberEntity({
+        id: '',
         name: `testnick${memberIndex + 1}`,
         groupName: 'Default',
-        webSocketAuthorization: 0,
-        responses: [],
-        ticket: null,
+        token: 'token',
+        currentQuizName: this._hashtag,
       }));
     }
     await assert.equal(quiz.memberGroups[0].members.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
@@ -114,20 +127,20 @@ class ExcelExportTestSuite {
 
   @test
   public async addResponses(): Promise<void> {
-    const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
-    for (let questionIndex = 0; questionIndex < quiz.originalObject.questionList.length; questionIndex++) {
-      const question = quiz.originalObject.questionList[questionIndex];
+    const quiz = QuizDAO.getActiveQuizByName(this._hashtag);
+    for (let questionIndex = 0; questionIndex < quiz.questionList.length; questionIndex++) {
+      const question = quiz.questionList[questionIndex];
       for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
         let value;
         let parsedQuestion;
         let useCorrect;
         switch (question.TYPE) {
-          case 'YesNoSingleChoiceQuestion':
-          case 'TrueFalseSingleChoiceQuestion':
+          case QuestionType.YesNoSingleChoiceQuestion:
+          case QuestionType.TrueFalseSingleChoiceQuestion:
             value = [this.randomIntFromInterval(0, 1)];
             break;
-          case 'SurveyQuestion':
-            parsedQuestion = (<IQuestionSurvey>question);
+          case QuestionType.SurveyQuestion:
+            parsedQuestion = (<SurveyQuestionEntity>question);
             if (parsedQuestion.multipleSelectionEnabled) {
               value = [];
               for (let i = 0; i < 3; i++) {
@@ -141,11 +154,11 @@ class ExcelExportTestSuite {
               value = [this.randomIntFromInterval(0, question.answerOptionList.length - 1)];
             }
             break;
-          case 'SingleChoiceQuestion':
-          case 'ABCDSingleChoiceQuestion':
+          case QuestionType.SingleChoiceQuestion:
+          case QuestionType.ABCDSingleChoiceQuestion:
             value = [this.randomIntFromInterval(0, question.answerOptionList.length - 1)];
             break;
-          case 'MultipleChoiceQuestion':
+          case QuestionType.MultipleChoiceQuestion:
             value = [];
             for (let i = 0; i < 3; i++) {
               const generatedValue = this.randomIntFromInterval(0, question.answerOptionList.length - 1);
@@ -155,8 +168,8 @@ class ExcelExportTestSuite {
               value.push(generatedValue);
             }
             break;
-          case 'RangedQuestion':
-            parsedQuestion = (<IQuestionRanged>question);
+          case QuestionType.RangedQuestion:
+            parsedQuestion = (<RangedQuestionEntity>question);
             useCorrect = Math.random() > 0.5;
             if (useCorrect) {
               value = parsedQuestion.correctValue;
@@ -164,8 +177,8 @@ class ExcelExportTestSuite {
               value = this.randomIntFromInterval(parsedQuestion.rangeMin, parsedQuestion.rangeMax);
             }
             break;
-          case 'FreeTextQuestion':
-            const parsedAnswer: IFreetextAnswerOption = <IFreetextAnswerOption>(<FreeTextQuestion>question).answerOptionList[0];
+          case QuestionType.FreeTextQuestion:
+            const parsedAnswer: FreeTextAnswerEntity = <FreeTextAnswerEntity>(<FreeTextQuestionEntity>question).answerOptionList[0];
             useCorrect = Math.random() > 0.5;
             if (useCorrect) {
               value = parsedAnswer.answerText;
@@ -178,7 +191,7 @@ class ExcelExportTestSuite {
         }
         quiz.memberGroups[0].members[memberIndex].responses.push({
           value: value,
-          responseTime: this.randomIntFromInterval(0, quiz.originalObject.questionList[questionIndex].timer),
+          responseTime: this.randomIntFromInterval(0, quiz.questionList[questionIndex].timer),
           confidence: this.randomIntFromInterval(0, 100),
           readingConfirmation: true,
         });
@@ -188,7 +201,7 @@ class ExcelExportTestSuite {
 
   @test(slow(500))
   public async generateExcelWorkbook(): Promise<void> {
-    const quiz = QuizManagerDAO.getActiveQuizByName(this._hashtag);
+    const quiz = QuizDAO.getActiveQuizByName(this._hashtag);
     const wb = new ExcelWorkbook({
       themeName: this._theme,
       translation: this._language,

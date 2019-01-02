@@ -1,9 +1,9 @@
-import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as crypto from 'crypto';
 import { BodyParam, Controller, Get, InternalServerError, Post } from 'routing-controllers';
 import { default as DbDAO } from '../../db/DbDAO';
-import QuizManagerDAO from '../../db/QuizManagerDAO';
-import { DATABASE_TYPE } from '../../Enums';
+import QuizDAO from '../../db/quiz/QuizDAO';
+import { DbCollection } from '../../enums/DbOperation';
+import { IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 
 @Controller('/api')
 export class LegacyApiRouter {
@@ -20,12 +20,12 @@ export class LegacyApiRouter {
 
   @Post('/addHashtag')
   private addHashtag(@BodyParam('sessionConfiguration') sessionConfiguration: any): string {
-    if (QuizManagerDAO.getPersistedQuizByName(sessionConfiguration.hashtag)) {
+    if (QuizDAO.getQuizByName(sessionConfiguration.hashtag)) {
       throw new InternalServerError('Hashtag already in use');
     }
 
-    QuizManagerDAO.initInactiveQuiz(sessionConfiguration.hashtag);
-    DbDAO.create(DATABASE_TYPE.QUIZ, {
+    QuizDAO.addQuiz(sessionConfiguration.hashtag);
+    DbDAO.create(DbCollection.Quizzes, {
       quizName: sessionConfiguration.hashtag,
       privateKey: sessionConfiguration.privateKey,
     });
@@ -46,16 +46,16 @@ export class LegacyApiRouter {
 
   @Post('/removeLocalData')
   private removeLocalData(@BodyParam('sessionConfiguration') sessionConfiguration: any): string {
-    if (!QuizManagerDAO.isActiveQuiz(sessionConfiguration.hashtag)) {
+    if (!QuizDAO.isActiveQuiz(sessionConfiguration.hashtag)) {
       throw new InternalServerError('Missing permissions.');
     }
-    QuizManagerDAO.setQuizAsInactive(sessionConfiguration.hashtag);
+    QuizDAO.setQuizAsInactive(sessionConfiguration.hashtag);
     return 'Session successfully removed';
   }
 
   @Post('/showReadingConfirmation')
   private showReadingConfirmation(@BodyParam('sessionConfiguration') sessionConfiguration: any): void {
-    const activeQuiz = QuizManagerDAO.getActiveQuizByName(sessionConfiguration.hashtag);
+    const activeQuiz = QuizDAO.getActiveQuizByName(sessionConfiguration.hashtag);
     if (!activeQuiz) {
       throw new InternalServerError('Hashtag not found');
     }
@@ -70,7 +70,7 @@ export class LegacyApiRouter {
 
   @Post('/startNextQuestion')
   private startNextQuestion(@BodyParam('sessionConfiguration') sessionConfiguration: any): string {
-    const activeQuiz = QuizManagerDAO.getActiveQuizByName(sessionConfiguration.hashtag);
+    const activeQuiz = QuizDAO.getActiveQuizByName(sessionConfiguration.hashtag);
     if (!activeQuiz) {
       throw new InternalServerError('Hashtag not found');
     }
@@ -79,11 +79,11 @@ export class LegacyApiRouter {
   }
 
   @Post('/updateQuestionGroup')
-  private updateQuestionGroup(@BodyParam('questionGroupModel') questionGroup: IQuestionGroup): string {
-    if (!QuizManagerDAO.isInactiveQuiz(questionGroup.hashtag)) {
+  private updateQuestionGroup(@BodyParam('questionGroupModel') questionGroup: IQuizSerialized): string {
+    if (QuizDAO.getActiveQuizzes().find(val => val.name === questionGroup.name)) {
       throw new InternalServerError('Hashtag not found');
     }
-    QuizManagerDAO.initActiveQuiz(questionGroup);
-    return `Session with hashtag ${questionGroup.hashtag} successfully updated`;
+    // TODO Update model of quiz
+    return `Session with hashtag ${questionGroup.name} successfully updated`;
   }
 }

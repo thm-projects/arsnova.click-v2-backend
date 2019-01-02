@@ -19,8 +19,7 @@
     "outDir": "dist/"
   },
   "include": [
-    "src/**/*.ts",
-    "node_modules/arsnova-click-v2-types/dist/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts",

@@ -1,6 +1,5 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
@@ -8,8 +7,9 @@ import * as path from 'path';
 
 import app from '../../App';
 import { default as DbDAO } from '../../db/DbDAO';
-import QuizManagerDAO from '../../db/QuizManagerDAO';
-import { DATABASE_TYPE } from '../../Enums';
+import QuizDAO from '../../db/quiz/QuizDAO';
+import { DbCollection } from '../../enums/DbOperation';
+import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');
@@ -27,8 +27,8 @@ class LegacyApiRouterTestSuite {
   private _privateKey = privateKey;
 
   public static after(): void {
-    QuizManagerDAO.removeQuiz(hashtag);
-    DbDAO.delete(DATABASE_TYPE.QUIZ, {
+    QuizDAO.removeQuiz(QuizDAO.getQuizByName(hashtag).id);
+    DbDAO.deleteOne(DbCollection.Quizzes, {
       quizName: hashtag,
       privateKey: privateKey,
     });
@@ -58,7 +58,7 @@ class LegacyApiRouterTestSuite {
     });
     await expect(res.status).to.equal(200);
     await expect(res['text']).to.equal('Hashtag successfully created');
-    await expect(QuizManagerDAO.isInactiveQuiz(this._hashtag)).to.be.true;
+    await expect(!QuizDAO.isActiveQuiz(this._hashtag)).to.be.true;
   }
 
   @test
@@ -81,15 +81,15 @@ class LegacyApiRouterTestSuite {
 
   @test
   public async updateQuestionGroup(): Promise<void> {
-    const quiz: IQuestionGroup = JSON.parse(
+    const quiz: IQuizEntity = JSON.parse(
       fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
-    quiz.hashtag = this._hashtag;
+    quiz.name = this._hashtag;
     const res = await chai.request(app).post(`${this._baseApiRoute}/updateQuestionGroup`).send({
       questionGroupModel: quiz,
     });
     await expect(res.status).to.equal(200);
     await expect(res['text']).to.equal(`Session with hashtag ${this._hashtag} successfully updated`);
-    await expect(QuizManagerDAO.isActiveQuiz(this._hashtag)).to.be.true;
+    await expect(QuizDAO.isActiveQuiz(this._hashtag)).to.be.true;
   }
 
   @test
@@ -113,7 +113,7 @@ class LegacyApiRouterTestSuite {
     });
     await expect(res.status).to.equal(200);
     await expect(res['text']).to.equal(`Next Question with index 0 started.`);
-    await expect(QuizManagerDAO.getActiveQuizByName(this._hashtag).currentQuestionIndex).to.equal(0);
+    await expect(QuizDAO.getActiveQuizByName(this._hashtag).currentQuestionIndex).to.equal(0);
   }
 
   @test
@@ -126,6 +126,6 @@ class LegacyApiRouterTestSuite {
     });
     await expect(res.status).to.equal(200);
     await expect(res['text']).to.equal('Session successfully removed');
-    await expect(QuizManagerDAO.isInactiveQuiz(this._hashtag)).to.be.true;
+    await expect(!QuizDAO.isActiveQuiz(this._hashtag)).to.be.true;
   }
 }

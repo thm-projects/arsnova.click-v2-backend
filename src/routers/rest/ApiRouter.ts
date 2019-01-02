@@ -7,7 +7,7 @@ import * as path from 'path';
 import { Get, getMetadataArgsStorage, JsonController, NotFoundError, Param, Res } from 'routing-controllers';
 import { OpenAPI, routingControllersToSpec } from 'routing-controllers-openapi';
 import { routingControllerOptions } from '../../App';
-import { homedir, settings, staticStatistics } from '../../statistics';
+import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
 declare global {
@@ -22,7 +22,8 @@ declare global {
 
 @JsonController('/api/v1')
 export class ApiRouter extends AbstractRouter {
-  private static _specFile = path.join(homedir, 'spec.json');
+  private static homedir = require('os').homedir();
+  private static _specFile = path.join(ApiRouter.homedir, 'spec.json');
 
   private openAPISpec(): OpenAPIObject {
     const storage = getMetadataArgsStorage();
@@ -36,13 +37,16 @@ export class ApiRouter extends AbstractRouter {
 
   private regenerateSpecFile(): void {
     const spec = this.openAPISpec();
-    if (!fs.existsSync(homedir)) {
-      fs.mkdirSync(homedir, { recursive: true });
+    if (!fs.existsSync(ApiRouter.homedir)) {
+      fs.mkdirSync(ApiRouter.homedir, { recursive: true });
     }
     fs.writeFileSync(ApiRouter._specFile, JSON.stringify(spec));
   }
 
-  @Get('/')
+  @Get('/') //
+  @OpenAPI({
+    description: 'Returns the current server settings',
+  })
   private getAll(): object {
     return {
       serverConfig: settings.public,
@@ -81,7 +85,10 @@ export class ApiRouter extends AbstractRouter {
     });
   }
 
-  @Get('/files/:directory/:subdirectory/:fileName')
+  @Get('/files/:directory/:subdirectory/:fileName') //
+  @OpenAPI({
+    summary: 'Transfers assets like sound files for the quizzes',
+  })
   private getFileByName(
     @Param('directory') directory: string, //
     @Param('subdirectory') subdirectory: string, //
@@ -105,7 +112,10 @@ export class ApiRouter extends AbstractRouter {
     return fs.readFileSync(path.join(`${pathToFiles}`, file));
   }
 
-  @Get('/files/images/theme/:themeName/:fileName')
+  @Get('/files/images/theme/:themeName/:fileName') //
+  @OpenAPI({
+    deprecated: true,
+  })
   private getThemeImageFileByName(
     @Param('themeName') themeName: string, //
     @Param('fileName') fileName: string, //

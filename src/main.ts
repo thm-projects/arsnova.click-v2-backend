@@ -9,15 +9,17 @@ import * as process from 'process';
 import 'reflect-metadata';
 import * as WebSocket from 'ws';
 import App from './App';
-import { createDefaultPaths } from './app_bootstrap';
+import AssetDAO from './db/AssetDAO';
 import CasDAO from './db/CasDAO';
 import DbDAO from './db/DbDAO';
-import ExpiryQuizDAO from './db/ExpiryQuizDAO';
 import I18nDAO from './db/I18nDAO';
-import LoginDAO from './db/LoginDAO';
 import MathjaxDAO from './db/MathjaxDAO';
-import QuizManagerDAO from './db/QuizManagerDAO';
+import MemberDAO from './db/MemberDAO';
+import QuizDAO from './db/quiz/QuizDAO';
+import UserDAO from './db/UserDAO';
+import { jsonCensor } from './lib/jsonCensor';
 import { WebSocketRouter } from './routers/websocket/WebSocketRouter';
+import LoggerService from './services/LoggerService';
 import { staticStatistics } from './statistics';
 import { LoadTester } from './tests/LoadTester';
 
@@ -32,52 +34,37 @@ interface IHotModule extends NodeModule {
   };
 }
 
-export declare interface IGlobal extends NodeJS.Global {
+export interface IGlobal extends NodeJS.Global {
   DAO: {
-    CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizManagerDAO: {}, DbDAO: {}, LoginDAO: {}, ExpiryQuizDAO: {}
+    AssetDAO: {}, CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizDAO: {}, DbDAO: {}, UserDAO: {}, MemberDAO: {},
   };
   createDump: Function;
 }
 
-declare interface IInetAddress {
+interface IInetAddress {
   port: number;
   family: string;
   address: string;
-}
-
-function censor(data: any): any {
-  let i = 0;
-
-  return (key, value) => {
-    if (i !== 0 && typeof(data) === 'object' && typeof(value) === 'object' && data === value) {
-      return '[Circular]';
-    }
-
-    if (i >= 29) {// seems to be a harded maximum of 30 serialized objects?
-      return '[Unknown]';
-    }
-
-    ++i; // so we know we aren't using the original object anymore
-
-    return value;
-  };
 }
 
 function rejectionToCreateDump(reason): void {
   (<IGlobal>global).createDump(reason);
 }
 
-process.on('unhandledRejection', rejectionToCreateDump);
-// process.on('uncaughtException', rejectionToCreateDump); // Throws exceptions when debugging with IntelliJ
+if (process.env.NODE_ENV === 'production') {
+  process.on('unhandledRejection', rejectionToCreateDump);
+  process.on('uncaughtException', rejectionToCreateDump); // Throws exceptions when debugging with IntelliJ
+}
 
 (<IGlobal>global).DAO = {
+  AssetDAO,
   CasDAO,
   I18nDAO,
   MathjaxDAO,
-  QuizManagerDAO,
+  QuizDAO,
   DbDAO,
-  LoginDAO,
-  ExpiryQuizDAO,
+  UserDAO,
+  MemberDAO,
 };
 (<IGlobal>global).createDump = (plainError) => {
   const error = {
@@ -107,17 +94,17 @@ process.on('unhandledRejection', rejectionToCreateDump);
     daoDump[dao] = (<IGlobal>global).DAO[dao].createDump();
   });
 
-  const insecureDumpAsJson = JSON.stringify(daoDump, censor(daoDump));
+  const insecureDumpAsJson = JSON.stringify(daoDump, jsonCensor(daoDump));
 
   const dumpCryptorParams: ReadonlyArray<string> = [
     path.join(staticStatistics.pathToJobs, 'DumpCryptor.js'), `--base-path=${__dirname}`, '--command=encrypt', `--data=${insecureDumpAsJson}`,
   ];
   const dumpCryptorInstance = child_process.spawn(`node`, dumpCryptorParams);
   dumpCryptorInstance.stderr.on('data', (data) => {
-    console.log(`DumpCryptor (stderr): ${data.toString().replace('\n', '')}`);
+    LoggerService.error(`DumpCryptor (stderr): ${data.toString().replace('\n', '')}`);
   });
   dumpCryptorInstance.on('exit', () => {
-    console.log(`DumpCryptor (exit): Dump generated`);
+    LoggerService.error(`DumpCryptor (exit): Dump generated`);
   });
 
   const mailParams: ReadonlyArray<string> = [
@@ -129,20 +116,20 @@ process.on('unhandledRejection', rejectionToCreateDump);
   ];
   const mailInstance = child_process.spawn(`node`, mailParams);
   mailInstance.stderr.on('data', (data) => {
-    console.log(`SendMail (stderr): ${data.toString().replace('\n', '')}`);
+    LoggerService.error(`SendMail (stderr): ${data.toString().replace('\n', '')}`);
   });
   mailInstance.stdout.on('data', (data) => {
-    console.log(`SendMail (stdout): ${data.toString().replace('\n', '')}`);
+    LoggerService.error(`SendMail (stdout): ${data.toString().replace('\n', '')}`);
   });
   mailInstance.on('exit', () => {
-    console.log(`SendMail (exit): Done`);
+    LoggerService.error(`SendMail (exit): Done`);
   });
 };
 
-createDefaultPaths();
-
 const port: string | number | boolean = normalizePort(staticStatistics.port);
 App.set('port', port);
+
+LoggerService.info(`Booting NodeJS ${process.version} on ${process.arch} architecture`);
 
 const server: Server = http.createServer(App);
 server.listen(port);
@@ -173,11 +160,11 @@ function onError(error: NodeJS.ErrnoException): void {
   const bind: string = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port;
   switch (error.code) {
     case 'EACCESS':
-      console.error(`${bind} requires elevated privileges`);
+      LoggerService.error(`${bind} requires elevated privileges`);
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(`${bind} is already in use`);
+      LoggerService.error(`${bind} is already in use`);
       process.exit(1);
       break;
     default:
@@ -188,7 +175,7 @@ function onError(error: NodeJS.ErrnoException): void {
 function onListening(): void {
   const addr: IInetAddress | string = server.address();
   const bind: string = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
-  console.log(`Listening on ${bind}`);
+  LoggerService.info(`Listening on ${bind}`);
 
   WebSocketRouter.wss = new WebSocket.Server({ server });
 

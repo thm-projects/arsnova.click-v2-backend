@@ -1,19 +1,16 @@
-import { ICommitAction, IGitlabCommitAction } from 'arsnova-click-v2-types/dist/gitlab/apiv4';
-import { spawnSync } from 'child_process';
-import * as fs from 'fs';
-import Gitlab from 'gitlab';
-import * as path from 'path';
-import { COMMIT_ACTION, GITLAB, LANGUAGES } from '../Enums';
-import { IProjectMetaData } from '../interfaces/IProjectMetaData';
-import { getProjectMetadata } from '../lib/projectMetaData';
-import { availableLangs, i18nFileBaseLocation, projectAppLocation, projectGitLocation, staticStatistics } from '../statistics';
+import * as Gitlab from 'gitlab';
+import { Branch, CommitAction, GitlabProject, Language } from '../enums/Enums';
+import { ICommitAction, IGitlabCommitAction } from '../interfaces/gitlab/apiv4';
+import { generateToken } from '../lib/generateToken';
+import LoggerService from '../services/LoggerService';
+import { availableLangs } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
-import LoginDAO from './LoginDAO';
 
 class I18nDAO extends AbstractDAO<object> {
 
   private readonly mergeRequestTitle = 'WIP: Update i18n keys';
   private readonly commitMessage = 'Updates i18n keys';
+  private readonly gitlabAccessToken = process.env.GITLAB_TOKEN;
 
   constructor(storage: object) {
     super(storage);
@@ -21,48 +18,66 @@ class I18nDAO extends AbstractDAO<object> {
 
   public static getInstance(): I18nDAO {
     if (!this.instance) {
-      this.instance = new I18nDAO({ 'arsnova-click-v2-backend': {} });
+      this.instance = new I18nDAO({
+        [GitlabProject['arsnova-click-v2-backend']]: {
+          name: 'arsnova-click-v2-backend',
+          unused: null,
+          langData: null,
+          lastUpdate: null,
+        },
+        [GitlabProject['arsnova-click-v2-frontend']]: {
+          name: 'arsnova-click-v2-frontend',
+          unused: null,
+          langData: null,
+          lastUpdate: null,
+        },
+      });
     }
     return this.instance;
   }
 
-  public reloadCache(): void {
-    Object.keys(this.storage).forEach(projectName => {
-      console.log(``);
-      console.log(`------- Building cache for '${projectName}' -------`);
+  public async cacheUpdateRequired(project: GitlabProject): Promise<boolean> {
+    if (!this.storage[project].lastUpdate || !this.storage[project].langData || !this.storage[project].unused) {
+      return true;
+    }
 
-      console.log(`* Fetching language data`);
-      const langDataStart = new Date().getTime();
-      const langData = [];
-      availableLangs.forEach(langRef => {
-        this.buildKeys({
-          root: '',
-          dataNode: JSON.parse(fs.readFileSync(path.join(i18nFileBaseLocation[projectName], `${langRef.toLowerCase()}.json`)).toString('UTF-8')),
-          langRef: langRef.toLowerCase(),
-          langData,
-        });
-      });
-      this.storage[projectName].langData = langData;
-      const langDataEnd = new Date().getTime();
-      console.log(`-- Done. Took ${langDataEnd - langDataStart}ms`);
-
-      console.log(`* Fetching unused keys`);
-      const unusedKeysStart = new Date().getTime();
-      this.storage[projectName].unused = this.getUnusedKeys(getProjectMetadata(projectName), null);
-      const unusedKeysEnd = new Date().getTime();
-      console.log(`-- Done. Took ${unusedKeysEnd - unusedKeysStart}ms`);
-
-      console.log(`* Fetching active git branch`);
-      const gitBranchStart = new Date().getTime();
-      this.storage[projectName].branch = this.getBranch({
-        projectGitLocation: projectGitLocation[projectName],
-      });
-      const gitBranchEnd = new Date().getTime();
-      console.log(`-- Done. Took ${gitBranchEnd - gitBranchStart}ms`);
-
+    const gitlabService: Gitlab = this.prepareGitlabConnection();
+    const commits = await gitlabService.Commits.all(project, {
+      since: this.storage[project].lastUpdate.toISOString(),
     });
-    console.log(``);
-    console.log(`Cache built successfully`);
+
+    return commits.length > 0;
+  }
+
+  public reloadCache(): Promise<void> {
+    return new Promise(resolve => {
+      Object.values(this.storage).forEach(async (project, index, array) => {
+        const gitlabProject = project['name'] === 'arsnova-click-v2-backend' ? GitlabProject['arsnova-click-v2-backend']
+                                                                             : GitlabProject['arsnova-click-v2-frontend'];
+
+        const updateRequired = await this.cacheUpdateRequired(gitlabProject);
+        if (!updateRequired) {
+          resolve();
+          return;
+        }
+
+        const langDataStart = new Date().getTime();
+        this.storage[gitlabProject].langData = await this.getI18nFileContentFromRepo(gitlabProject);
+        const langDataEnd = new Date().getTime();
+        LoggerService.info(`Built language data for ${project['name']} in ${langDataEnd - langDataStart}ms`);
+
+        const unusedKeysStart = new Date().getTime();
+        this.storage[gitlabProject].unused = await this.getUnusedI18nKeysFromSourceFiles(gitlabProject, this.storage[gitlabProject].langData);
+        const unusedKeysEnd = new Date().getTime();
+        LoggerService.info(`Built unused keys for ${project['name']} in ${unusedKeysEnd - unusedKeysStart}ms`);
+
+        this.storage[gitlabProject].lastUpdate = new Date();
+
+        if (index === array.length - 1) {
+          resolve();
+        }
+      });
+    });
   }
 
   public buildKeys({ root, dataNode, langRef, langData }): void {
@@ -99,61 +114,76 @@ class I18nDAO extends AbstractDAO<object> {
     }
   }
 
-  public getUnusedKeys(metaData: IProjectMetaData, langRef: string): object {
-    const result = {};
-    const fileNames = this.fromDir(metaData.projectAppLocation, /\.(ts|html|js)$/);
-    const langRefs = langRef ? [langRef] : availableLangs;
-
-    for (let i = 0; i < langRefs.length; i++) {
-      result[langRefs[i]] = [];
-      const i18nFileContent = JSON.parse(
-        fs.readFileSync(path.join(metaData.i18nFileBaseLocation, `${langRefs[i].toLowerCase()}.json`)).toString('UTF-8'));
-      const objectPaths = this.objectPath(i18nFileContent);
-
-      objectPaths.forEach((
-        i18nPath => {
-          let matched = false;
-          fileNames.forEach(filename => {
-            if (matched) {
-              return;
-            }
-            const fileContent = fs.readFileSync(filename).toString('UTF-8');
-            matched = fileContent.indexOf(i18nPath) > -1;
-          });
-          if (!matched) {
-            result[langRefs[i]].push(i18nPath);
-          }
-        }
-      ));
+  public async pushChanges(project: GitlabProject, token: string, data: object): Promise<void> {
+    const isAuthorized = await this.isAuthorizedForGitlabProject(project, token);
+    if (!isAuthorized) {
+      return;
     }
 
-    return result;
-  }
-
-  public getBranch(req): string {
-    const command = `git branch 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \\(.*\\)/\\1/"`;
-    const child = spawnSync('/bin/sh', [`-c`, command], { cwd: req.projectGitLocation });
-    return child.stdout.toString().replace('\n', '');
-  }
-
-  public async pushChanges(username: string, token: string): Promise<void> {
     const branch = this.generateBranchName();
-    const gitlabService = this.prepareGitlabConnection(username, token);
+    const gitlabService: Gitlab = this.prepareGitlabConnection(token);
 
-    await gitlabService.Branches.create(GITLAB.PROJECT_ID, branch, GITLAB.TARGET_BRANCH);
-    await gitlabService.Commits.create(GITLAB.PROJECT_ID, branch, this.commitMessage, this.generateCommitActions());
-    await gitlabService.MergeRequests.create(GITLAB.PROJECT_ID, branch, GITLAB.TARGET_BRANCH, this.mergeRequestTitle);
+    await gitlabService.Branches.create(project, branch, Branch.TargetBranch);
+    await gitlabService.Commits.create(project, branch, this.commitMessage, this.generateCommitActions(project, data));
+    await gitlabService.MergeRequests.create(project, branch, Branch.TargetBranch, this.mergeRequestTitle);
   }
 
-  public async isAuthorizedForGitlabProject(username: string, token: string): Promise<boolean> {
-    const gitlabService = this.prepareGitlabConnection(username, token);
-    const project = await gitlabService.Projects.show(GITLAB.PROJECT_ID);
+  public async getUnusedI18nKeysFromSourceFiles(project: GitlabProject, i18nContent: { [key: string]: any }): Promise<Array<any>> {
+    const gitlabService = this.prepareGitlabConnection();
 
-    if (!project) {
+    const filter = /\.(ts|html|js)$/;
+    const negativeFilter = /(spec|test|po|mock|pipe|module|config|conf|karma|environment|assets|adapter)\./;
+    const fileContents = ((await gitlabService.Repositories.tree(project, {
+      recursive: true,
+      ref: Branch.TargetBranch,
+    })).filter(val => val.type === 'blob' && val.name.match(filter)).filter(val => !val.name.match(negativeFilter)));
+
+    let fileData = [];
+    while (fileContents.length > 0) {
+      fileData = fileData.concat(...await Promise.all<any>(fileContents.splice(0, 50).map(val => {
+        return gitlabService.RepositoryFiles.showRaw(project, `${val.path}`, Branch.TargetBranch).catch(rejected => LoggerService.error(rejected));
+      }))).filter(val => !!val);
+    }
+
+    return Object.values(i18nContent).map(val => val.key).filter(i18nPath => {
+      return !fileData.some(fileContent => fileContent.includes(i18nPath));
+    });
+
+  }
+
+  public getI18nFileContentFromRepo(project: GitlabProject): Promise<Array<any>> {
+    const gitlabService = this.prepareGitlabConnection();
+
+    return new Promise<Array<any>>(resolve => {
+      const langData = [];
+
+      availableLangs.forEach(async (langRef, index) => {
+        const dataNode = await gitlabService.RepositoryFiles.showRaw(project, `${this.buildI18nBasePath(project)}/${langRef.toLowerCase()}.json`,
+          Branch.TargetBranch);
+
+        this.buildKeys({
+          root: '',
+          dataNode,
+          langRef: langRef.toLowerCase(),
+          langData,
+        });
+
+        if (index === availableLangs.length - 1) {
+          resolve(langData);
+        }
+      });
+    });
+  }
+
+  public async isAuthorizedForGitlabProject(project: GitlabProject, token?: string): Promise<boolean> {
+    const gitlabService = this.prepareGitlabConnection(token);
+    const remoteProject = await gitlabService.Projects.show(project);
+
+    if (!remoteProject) {
       return false;
     }
 
-    return project.permissions.project_access.access_level >= 30;
+    return remoteProject.permissions.project_access.access_level >= 30;
   }
 
   public createObjectFromKeys({ data, result }): void {
@@ -181,71 +211,40 @@ class I18nDAO extends AbstractDAO<object> {
     }
   }
 
-  private prepareGitlabConnection(username: string, token: string): typeof Gitlab {
-    return new Gitlab({
+  private prepareGitlabConnection(token?: string): typeof Gitlab {
+    return new Gitlab.default({
       url: 'https://git.thm.de',
-      token: LoginDAO.getGitlabTokenForUser(username, token),
+      token: token || this.gitlabAccessToken,
     });
   }
 
-  private generateCommitActions(): Array<IGitlabCommitAction> {
-    return Object.keys(LANGUAGES).map(langKey => this.generateCommitActionForFile(langKey));
+  private generateCommitActions(project: GitlabProject, data: object): Array<IGitlabCommitAction> {
+    return Object.values(Language).map(langKey => this.generateCommitActionForFile(project, langKey, data[langKey]));
   }
 
-  private generateCommitActionForFile(langKey): IGitlabCommitAction {
+  private generateCommitActionForFile(project: GitlabProject, langKey: string, data: object): IGitlabCommitAction {
     return {
-      action: <ICommitAction>COMMIT_ACTION.UPDATE,
-      file_path: `assets/i18n/${langKey.toLowerCase()}.json`,
-      content: fs.readFileSync(path.join(staticStatistics.pathToAssets, 'i18n', `${langKey.toLowerCase()}.json`)).toString('UTF-8'),
+      action: <ICommitAction>CommitAction.Update,
+      file_path: `${this.buildI18nBasePath(project)}/${langKey.toLowerCase()}.json`,
+      content: JSON.stringify(data),
     };
   }
 
   private generateBranchName(): string {
-    return `i18n-change_${Math.random()}`;
-  }
-
-  private fromDir(startPath, filter): Array<string> {
-    if (!fs.existsSync(startPath)) {
-      console.log('no dir ', startPath);
-      return;
-    }
-
-    let result = [];
-
-    const files = fs.readdirSync(startPath);
-    for (let i = 0; i < files.length; i++) {
-      const filename = path.join(startPath, files[i]);
-      const stat = fs.lstatSync(filename);
-      if (stat.isDirectory()) {
-        result = result.concat(this.fromDir(filename, filter));
-      } else if (filter.test(filename)) {
-        result.push(filename);
-      }
-    }
-    return result;
-  }
-
-  private objectPath(obj, currentPath = ''): Array<string> {
-    let localCurrentPath = currentPath;
-    let result = [];
-
-    if (localCurrentPath.length) {
-      localCurrentPath = localCurrentPath + '.';
-    }
-    for (const prop in obj) {
-      if (obj.hasOwnProperty(prop)) {
-        if (typeof obj[prop] === 'object') {
-          result = result.concat(this.objectPath(obj[prop], localCurrentPath + prop));
-        } else {
-          result.push(localCurrentPath + prop);
-        }
-      }
-    }
-    return result;
+    return `i18n-change_${generateToken(Math.random(), new Date().getTime())}`;
   }
 
   private isString(data): boolean {
     return typeof data === 'string';
+  }
+
+  private buildI18nBasePath(project: GitlabProject): string {
+    switch (project) {
+      case GitlabProject['arsnova-click-v2-backend']:
+        return 'assets/i18n';
+      case GitlabProject['arsnova-click-v2-frontend']:
+        return 'src/assets/i18n';
+    }
   }
 }
 

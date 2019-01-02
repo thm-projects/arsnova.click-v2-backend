@@ -1,8 +1,3 @@
-import { IAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/interfaces';
-import { ILinkImage } from 'arsnova-click-v2-types/dist/assets/library';
-import { ICasData } from 'arsnova-click-v2-types/dist/common';
-import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
-import { IQuestion, IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as crypto from 'crypto';
 import { Request, Response } from 'express';
 import * as fileType from 'file-type';
@@ -15,10 +10,20 @@ import {
   BadRequestError, BodyParam, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
 } from 'routing-controllers';
 import * as xml2js from 'xml2js';
-import { MatchTextToAssetsDb } from '../../cache/assets';
+import AssetDAO from '../../db/AssetDAO';
 import CasDAO from '../../db/CasDAO';
-import LoginDAO from '../../db/LoginDAO';
+import DbDAO from '../../db/DbDAO';
 import MathjaxDAO from '../../db/MathjaxDAO';
+import UserDAO from '../../db/UserDAO';
+import { AbstractAnswerEntity } from '../../entities/answer/AbstractAnswerEntity';
+import { DbCollection } from '../../enums/DbOperation';
+import { MessageProtocol, StatusProtocol } from '../../enums/Message';
+import { ILinkImage } from '../../interfaces/assets';
+import { IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
+import { ICasData } from '../../interfaces/users/ICasData';
+import { MatchTextToAssetsDb } from '../../lib/cache/assets';
+import { AuthService } from '../../services/AuthService';
+import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
@@ -328,12 +333,13 @@ export class LibRouter extends AbstractRouter {
     if (!mathjax || !format || !output) {
       throw new InternalServerError(`Malformed request received -> ${mathjax}, ${format}, ${output}`);
     }
-    const mathjaxArray = [...JSON.parse(mathjax)];
+    const mathjaxArray: Array<string> = [];
+    mathjaxArray.push(...JSON.parse(mathjax));
     const result = [];
     if (!mathjaxArray.length) {
       throw new BadRequestError(JSON.stringify({
-        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
-        step: COMMUNICATION_PROTOCOL.MATHJAX.RENDER,
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.Render,
         payload: {
           mathjax,
           format,
@@ -373,45 +379,48 @@ export class LibRouter extends AbstractRouter {
   }
 
   @Post('/cache/quiz/assets')
-  public cacheQuizAssets(@BodyParam('quiz') quiz: IQuestionGroup): object {
+  public async cacheQuizAssets(@BodyParam('quiz') quiz: IQuizSerialized): Promise<object> {
 
     if (!quiz) {
       throw new BadRequestError(`Malformed request received -> ${quiz}`);
     }
 
-    quiz.questionList.forEach((question: IQuestion) => {
-      MatchTextToAssetsDb(question.questionText);
-      question.answerOptionList.forEach((answerOption: IAnswerOption) => {
-        MatchTextToAssetsDb(answerOption.answerText);
+    const promises: Array<Promise<any>> = [];
+
+    quiz.questionList.forEach(question => {
+      promises.push(MatchTextToAssetsDb(question.questionText).then(val => question.questionText = val));
+      question.answerOptionList.forEach((answerOption: AbstractAnswerEntity) => {
+        promises.push(MatchTextToAssetsDb(answerOption.answerText).then(val => answerOption.answerText = val));
       });
     });
 
+    await Promise.all<any>(promises);
+
     return {
-      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-      step: COMMUNICATION_PROTOCOL.CACHE.QUIZ_ASSETS,
-      payload: {},
+      status: StatusProtocol.Success,
+      step: MessageProtocol.QuizAssets,
+      payload: {
+        quiz,
+      },
     };
   }
 
   @Get('/cache/quiz/assets/:digest')
-  public getCache(@Param('digest') digest: string, @Res() res: Response): Promise<string> {
+  public getCache(@Param('digest') digest: string, @Res() res: Response): string {
 
-    if (!digest || !fs.existsSync(path.join(staticStatistics.pathToCache, digest))) {
+    if (!digest || !AssetDAO.getAssetByDigest(digest)) {
       throw new NotFoundError(`Malformed request received -> ${digest}`);
     }
 
-    return new Promise<string>(resolve => {
-      fs.readFile(path.join(staticStatistics.pathToCache, digest), (err, data: Buffer) => {
-        const fileTypeOfBuffer = fileType(data);
-        if (fileTypeOfBuffer) {
-          res.contentType(fileTypeOfBuffer.mime);
-        } else {
-          res.contentType('text/html');
-        }
+    const data = AssetDAO.getAssetByDigest(digest).data;
+    const fileTypeOfBuffer = fileType(data.buffer);
+    if (fileTypeOfBuffer) {
+      res.contentType(fileTypeOfBuffer.mime);
+    } else {
+      res.contentType('text/html');
+    }
 
-        resolve(data.toString('UTF-8'));
-      });
-    });
+    return data.buffer.toString('UTF-8');
   }
 
   @Get('/authorize/:ticket?')
@@ -441,11 +450,11 @@ export class LibRouter extends AbstractRouter {
 
         casResponse.on('end', () => {
           xml2js.parseString(data, (err, result) => {
-            console.log('received response from cas server', err, result);
+            LoggerService.info('received response from cas server', err, result);
             if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
               throw new UnauthorizedError(JSON.stringify({
-                status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
-                step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
+                status: StatusProtocol.Failed,
+                step: MessageProtocol.Authenticate,
                 payload: {
                   err,
                   result,
@@ -460,8 +469,8 @@ export class LibRouter extends AbstractRouter {
               };
               CasDAO.add(ticket, casDataElement);
               resolve({
-                status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-                step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
+                status: StatusProtocol.Success,
+                step: MessageProtocol.Authenticate,
                 payload: { ticket },
               });
             }
@@ -470,11 +479,11 @@ export class LibRouter extends AbstractRouter {
       });
 
       casRequest.on('error', (error) => {
-        console.log('error at requesting cas url', error);
+        LoggerService.info('error at requesting cas url', error.message);
         casRequest.abort();
         throw new UnauthorizedError(JSON.stringify({
-          status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
-          step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE,
+          status: StatusProtocol.Failed,
+          step: MessageProtocol.Authenticate,
           payload: { error },
         }));
       });
@@ -483,44 +492,45 @@ export class LibRouter extends AbstractRouter {
   }
 
   @Post('/authorize/static')
-  private authorizeStatic(@BodyParam('username') username: string,
-                          @BodyParam('passwordHash') passwordHash: string,
-                          @BodyParam('token') token: string,
-  ): object {
+  private async authorizeStatic(
+    @BodyParam('username') username: string,
+    @BodyParam('passwordHash') password: string,
+    @BodyParam('token', { required: false }) token: string,
+  ): Promise<object> {
 
-    const user = LoginDAO.getUser(username);
+    const user = UserDAO.getUser(username);
 
-    if (!username || !passwordHash || !user || !LoginDAO.validateUser(username, passwordHash)) {
+    if (!username || !password || !user || !UserDAO.validateUser(username, password)) {
       throw new UnauthorizedError(JSON.stringify({
-        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
-        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.AuthenticateStatic,
         payload: { reason: 'UNKOWN_LOGIN' },
       }));
     }
 
     if (!token || typeof token !== 'string' || token.length === 0) {
-      token = user.generateToken();
-      LoginDAO.setTokenForUser(username, token);
+      token = await AuthService.generateToken(user);
+      DbDAO.update(DbCollection.Users, { _id: user.id }, { token });
 
       return {
-        status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
+        status: StatusProtocol.Success,
+        step: MessageProtocol.AuthenticateStatic,
         payload: { token },
       };
     }
 
-    const isTokenValid = LoginDAO.validateTokenForUser(username, token);
+    const isTokenValid = UserDAO.validateTokenForUser(username, token);
     if (!isTokenValid) {
       throw new UnauthorizedError(JSON.stringify({
-        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
-        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.AuthenticateStatic,
         payload: { isTokenValid },
       }));
     }
 
     return {
-      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-      step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
+      status: StatusProtocol.Success,
+      step: MessageProtocol.AuthenticateStatic,
       payload: { isTokenValid },
     };
   }
@@ -528,17 +538,17 @@ export class LibRouter extends AbstractRouter {
   @Get('/authorize/validate/:username/:token')
   private validateToken(@Param('username') username: string, @Param('token') token: string): object {
 
-    if (!LoginDAO.validateTokenForUser(username, token)) {
-      throw new UnauthorizedError(JSON.stringify({
-        status: COMMUNICATION_PROTOCOL.STATUS.FAILED,
-        step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
+    if (!UserDAO.validateTokenForUser(username, token)) {
+      return {
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.AuthenticateStatic,
         payload: { reason: 'UNKOWN_LOGIN' },
-      }));
+      };
     }
 
     return {
-      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-      step: COMMUNICATION_PROTOCOL.AUTHORIZATION.AUTHENTICATE_STATIC,
+      status: StatusProtocol.Success,
+      step: MessageProtocol.AuthenticateStatic,
     };
   }
 

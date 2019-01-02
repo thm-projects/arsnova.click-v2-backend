@@ -1,13 +1,15 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
 
 import router from '../../App';
-import QuizManagerDAO from '../../db/QuizManagerDAO';
+import QuizDAO from '../../db/quiz/QuizDAO';
+import { QuizEntity } from '../../entities/quiz/QuizEntity';
+import { SessionConfigurationEntity } from '../../entities/session-configuration/SessionConfigurationEntity';
+import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { staticStatistics } from '../../statistics';
 
 chai.use(require('chai-http'));
@@ -72,28 +74,36 @@ class MathjaxLibRouterTestSuite {
 class CacheQuizAssetsLibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/cache/quiz/assets`;
   private _hashtag = hashtag;
-  private _quiz: IQuestionGroup = JSON.parse(
+  private _quiz: IQuizEntity = JSON.parse(
     fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
 
   public static before(): void {
-    QuizManagerDAO.initInactiveQuiz(hashtag);
+    QuizDAO.initQuiz(new QuizEntity({
+      name: hashtag,
+      memberGroups: [],
+      questionList: [],
+      sessionConfig: new SessionConfigurationEntity(),
+      adminToken: 'test',
+      privateKey: 'test',
+      readingConfirmationRequested: false,
+    }));
   }
 
   public static after(): void {
-    QuizManagerDAO.removeQuiz(hashtag);
+    QuizDAO.removeQuiz(QuizDAO.getQuizByName(hashtag).id);
   }
 
   @test
   public async postNewAssetExists(): Promise<void> {
-    this._quiz.hashtag = this._hashtag;
+    this._quiz.name = this._hashtag;
     const res = await chai.request(router).post(`${this._baseApiRoute}/`).send({ quiz: this._quiz });
     expect(res.type).to.eql('application/json');
   }
 
   @test.skip
   public async quizWithAssetUrlsExists(): Promise<void> {
-    this._quiz.hashtag = this._hashtag;
-    const parsedQuiz: IQuestionGroup = QuizManagerDAO.initActiveQuiz(this._quiz).originalObject;
+    this._quiz.name = this._hashtag;
+    const parsedQuiz: IQuizEntity = QuizDAO.initQuiz(this._quiz);
     expect(parsedQuiz.questionList.map(question => question.questionText)
     .filter(questionText => questionText.indexOf(staticStatistics.rewriteAssetCacheUrl) > -1).length).to.be
     .greaterThan(0, 'Expect to find the rewritten assets storage url');

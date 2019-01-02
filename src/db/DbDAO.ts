@@ -1,111 +1,128 @@
-declare function require(name: string): any;
-
-import * as fs from 'fs';
-import * as lowdb from 'lowdb';
-import { AdapterSync } from 'lowdb';
-import * as FileSync from 'lowdb/adapters/FileSync';
-import * as MemoryDb from 'lowdb/adapters/Memory';
-import * as Minimist from 'minimist';
-import * as path from 'path';
-import * as process from 'process';
-import { createHomePath } from '../app_bootstrap';
-import { DATABASE_TYPE } from '../Enums';
+import { EventEmitter } from 'events';
+import { Cursor, DeleteWriteOpResultObject, FilterQuery, FindOneOptions, InsertOneWriteOpResult, UpdateWriteOpResult } from 'mongodb';
+import { Connection } from 'mongoose';
+import { DbCollection, DbEvent } from '../enums/DbOperation';
+import { IDbObject } from '../interfaces/database/IDbObject';
+import LoggerService from '../services/LoggerService';
 import { AbstractDAO } from './AbstractDAO';
+import MongoDBConnector from './MongoDBConnector';
 
-const argv = Minimist(process.argv.slice(2));
-const homedir = require('os').homedir();
-if (createHomePath) {
-  createHomePath();
-} else {
-  // Reimplement the createHomePath function because it is not defined in mocha
-  const pathToOutput = path.join(homedir, '.arsnova-click-v2-backend');
-  if (!fs.existsSync(pathToOutput)) {
-    fs.mkdirSync(pathToOutput);
+class DbDAO extends AbstractDAO<object> {
+  private static DB_RECONNECT_INTERVAL = 1000 * 60 * 5; // 5 Minutes
+  public readonly DB = MongoDBConnector.dbName;
+
+  private _dbCon: Connection = null;
+
+  get dbCon(): Connection {
+    return this._dbCon;
   }
-}
 
-// DB Lib: https://github.com/typicode/lowdb
-let adapter: AdapterSync;
-if (typeof argv.db !== 'undefined' && !argv.db) {
-  adapter = new MemoryDb('');
-} else {
-  let pathToDb: string;
-  if (typeof argv.db === 'string') {
-    pathToDb = path.join(homedir, '.arsnova-click-v2-backend', argv.db);
-  } else {
-    pathToDb = path.join(homedir, '.arsnova-click-v2-backend', 'arsnova-click-v2-db-v1.json');
+  private _isDbAvailable = new EventEmitter();
+
+  get isDbAvailable(): EventEmitter {
+    return this._isDbAvailable;
   }
-  adapter = new FileSync(pathToDb);
-}
-const db = lowdb(adapter);
 
-class DbDAO extends AbstractDAO<typeof db> {
+  private _isConnected = false;
 
-  constructor() {
-    super(db);
-    const state = this.getState();
-    if (!state[DATABASE_TYPE.QUIZ]) {
-      this.initDb(DATABASE_TYPE.QUIZ, []);
-    }
-    if (!state[DATABASE_TYPE.ASSETS]) {
-      this.initDb(DATABASE_TYPE.ASSETS, {});
-    }
-    if (!state[DATABASE_TYPE.USERS]) {
-      this.initDb(DATABASE_TYPE.USERS, {});
-    }
+  constructor(_storage: object) {
+    super(_storage);
+
+    this.connectToDb();
   }
 
   public static getInstance(): DbDAO {
     if (!this.instance) {
-      this.instance = new DbDAO();
+      this.instance = new DbDAO({});
     }
     return this.instance;
   }
 
-  public create(database: DATABASE_TYPE, data: object, ref?: string): void {
-    if (ref) {
-      this.storage.set(`${database}.${ref}`, data).write();
-    } else {
-      this.storage.get(database).push(data).write();
+  public create(collection: string, elem: IDbObject | object): Promise<InsertOneWriteOpResult> {
+    if (!this._isConnected || !this._dbCon) {
+      return;
     }
+
+    return this._dbCon.collection(collection).insertOne(elem);
   }
 
-  public read(database: DATABASE_TYPE, query?: object): object {
-    if (query) {
-      return this.storage.get(database).find(query).value();
+  public readOne(collection: string, query: FilterQuery<any>, options?: FindOneOptions): Promise<any> {
+    if (!this._isConnected || !this._dbCon) {
+      return;
     }
-    return this.storage.get(database).value();
+
+    return this._dbCon.collection(collection).findOne(query, options);
   }
 
-  public update(database: DATABASE_TYPE, query: object, update: object): void {
-    this.storage.get(database).find(query).assign(update).write();
-  }
-
-  public delete(database: DATABASE_TYPE, query: { quizName: string, privateKey: string }): boolean {
-    const dbContent: any = this.read(database, query);
-    if (!dbContent || dbContent.privateKey !== query.privateKey) {
-      return false;
+  public readMany(collection: string, query: FilterQuery<any>): Cursor<any> {
+    if (!this._isConnected || !this._dbCon) {
+      return;
     }
-    this.storage.get(database).remove(query).write();
-    return true;
+
+    return this._dbCon.collection(collection).find(query);
   }
 
-  public closeConnections(): void {
-    Object.keys(DATABASE_TYPE).forEach((type) => this.closeConnection(DATABASE_TYPE[type]));
+  public update(collection: string, query: FilterQuery<any>, update: object): Promise<UpdateWriteOpResult> {
+    if (!this._isConnected || !this._dbCon) {
+      return;
+    }
+
+    return this._dbCon.collection(collection).updateOne(query, { $set: update });
   }
 
-  public getState(): typeof lowdb {
-    return (
-      <lowdb.LowdbBase<any>>this.storage
-    ).getState();
+  public deleteOne(collection: string, query: FilterQuery<any>): Promise<DeleteWriteOpResultObject> {
+    if (!this._isConnected || !this._dbCon) {
+      return;
+    }
+
+    return this._dbCon.collection(collection).deleteOne(query);
   }
 
-  private closeConnection(database: DATABASE_TYPE): void {
-    this.storage.get(database);
+  public deleteMany(collection: string, query: FilterQuery<any>): Promise<DeleteWriteOpResultObject> {
+    if (!this._isConnected || !this._dbCon) {
+      return;
+    }
+
+    return this._dbCon.collection(collection).deleteMany(query);
   }
 
-  private initDb(type: DATABASE_TYPE, initialValue: any): void {
-    this.storage.set(type, initialValue).write();
+  public clearStorage(): void {
+  }
+
+  private connectToDb(): Promise<void> {
+    return MongoDBConnector.connect(this.DB).then((db: Connection) => {
+      this._dbCon = db;
+      this._dbCon.useDb(this.DB);
+
+      Object.keys(DbCollection).forEach(collection => {
+        collection = collection.toLowerCase();
+
+        if (!this._dbCon.collection(collection)) {
+          LoggerService.info('Creating not existing collection', collection);
+          this._dbCon.createCollection(collection, {
+            validationLevel: 'strict',
+            validationAction: 'error',
+          });
+        }
+      });
+
+      LoggerService.info(`Db connected`);
+
+      this._isConnected = true;
+      this._isDbAvailable.emit(DbEvent.Connected, true);
+
+      db.on('error', () => {
+        this._isDbAvailable.emit(DbEvent.Connected, false);
+      });
+
+    }).catch((error) => {
+      LoggerService.error(`Db connection failed with error ${error}, will retry in ${DbDAO.DB_RECONNECT_INTERVAL / 1000} seconds`);
+
+      this._isConnected = false;
+      this._isDbAvailable.emit(DbEvent.Connected, false);
+
+      setTimeout(this.connectToDb.bind(this), DbDAO.DB_RECONNECT_INTERVAL);
+    });
   }
 }
 

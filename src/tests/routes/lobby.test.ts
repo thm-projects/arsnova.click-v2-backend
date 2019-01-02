@@ -1,6 +1,5 @@
 /// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
 
-import { IQuestionGroup } from 'arsnova-click-v2-types/dist/questions/interfaces';
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
@@ -8,7 +7,10 @@ import * as path from 'path';
 import * as WebSocket from 'ws';
 
 import app from '../../App';
-import QuizManagerDAO from '../../db/QuizManagerDAO';
+import QuizDAO from '../../db/quiz/QuizDAO';
+import { QuizEntity } from '../../entities/quiz/QuizEntity';
+import { SessionConfigurationEntity } from '../../entities/session-configuration/SessionConfigurationEntity';
+import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { WebSocketRouter } from '../../routers/websocket/WebSocketRouter';
 import { staticStatistics } from '../../statistics';
 
@@ -25,12 +27,20 @@ class LobbyApiRouterTestSuite {
   private _hashtag = hashtag;
 
   public static before(): void {
-    QuizManagerDAO.initInactiveQuiz(hashtag);
+    QuizDAO.initQuiz(new QuizEntity({
+      name: hashtag,
+      memberGroups: [],
+      questionList: [],
+      sessionConfig: new SessionConfigurationEntity(),
+      adminToken: 'test',
+      privateKey: 'test',
+      readingConfirmationRequested: false,
+    }));
     WebSocketRouter.wss = new WebSocket.Server({ port: staticStatistics.port });
   }
 
   public static after(): void {
-    QuizManagerDAO.removeQuiz(hashtag);
+    QuizDAO.removeQuiz(QuizDAO.getQuizByName(hashtag).id);
     WebSocketRouter.wss.close();
   }
 
@@ -43,13 +53,13 @@ class LobbyApiRouterTestSuite {
 
   @test
   public async putOpenLobby(): Promise<void> {
-    const quiz: IQuestionGroup = JSON.parse(
+    const quiz: IQuizEntity = JSON.parse(
       fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
-    quiz.hashtag = this._hashtag;
+    quiz.name = this._hashtag;
     const res = await chai.request(app).put(`${this._baseApiRoute}/`).send({ quiz });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    await expect(QuizManagerDAO.isActiveQuiz(this._hashtag)).to.be.true;
+    await expect(QuizDAO.isActiveQuiz(this._hashtag)).to.be.true;
   }
 
   @test
@@ -64,6 +74,6 @@ class LobbyApiRouterTestSuite {
     const res = await chai.request(app).del(`${this._baseApiRoute}/`).send({ quizName: this._hashtag });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    await expect(QuizManagerDAO.isInactiveQuiz(this._hashtag)).to.be.true;
+    await expect(!QuizDAO.isActiveQuiz(this._hashtag)).to.be.true;
   }
 }

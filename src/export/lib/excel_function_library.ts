@@ -1,6 +1,6 @@
-import { IActiveQuiz } from 'arsnova-click-v2-types/dist/common';
+import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 
-export function calculateNumberOfAnswers(quiz: IActiveQuiz, questionIndex: number, answerNumber: number): number {
+export function calculateNumberOfAnswers(quiz: IQuizEntity, questionIndex: number, answerNumber: number): number {
   let numberOfAnswers = 0;
   quiz.memberGroups[0].members.forEach(nickname => {
     const response = nickname.responses[questionIndex].value;
@@ -14,7 +14,7 @@ export function calculateNumberOfAnswers(quiz: IActiveQuiz, questionIndex: numbe
   return numberOfAnswers;
 }
 
-export function calculateNumberOfRangedAnswers(quiz: IActiveQuiz,
+export function calculateNumberOfRangedAnswers(quiz: IQuizEntity,
                                                questionIndex: number,
                                                minRange,
                                                correctValue,

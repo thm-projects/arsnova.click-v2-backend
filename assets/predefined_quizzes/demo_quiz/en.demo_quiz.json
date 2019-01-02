@@ -1,176 +1,174 @@
 {
-  "hashtag":"Demo Quiz 1 EN",
-  "isFirstStart":true,
-  "questionList":[
+  "name": "Demo Quiz 1",
+  "questionList": [
     {
-      "questionText":"###How are you feeling?\n![Sixteen faces expressing the human passions.](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Sixteen_faces_expressing_the_human_passions._Wellcome_L0068375.jpg/620px-Sixteen_faces_expressing_the_human_passions._Wellcome_L0068375.jpg)\n\nSource: [Wikipedia on \"Emotion\"](https://en.wikipedia.org/wiki/Emotion)",
-      "timer":120,
-      "displayAnswerText":true,
-      "answerOptionList":[
+      "questionText": "### How are you feeling?\n![Sixteen faces expressing the human passions.](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Sixteen_faces_expressing_the_human_passions._Wellcome_L0068375.jpg/620px-Sixteen_faces_expressing_the_human_passions._Wellcome_L0068375.jpg)\n\nSource: [Wikipedia on \"Emotion\"](https://en.wikipedia.org/wiki/Emotion)",
+      "timer": 120,
+      "displayAnswerText": true,
+      "answerOptionList": [
         {
-          "answerText":":smile:",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": ":smile:",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":":cry:",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": ":cry:",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":":rage:",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": ":rage:",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":":neutral_face:",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": ":neutral_face:",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         }
       ],
-      "showOneAnswerPerRow":true,
-      "TYPE":"SurveyQuestion",
-      "multipleSelectionEnabled":false
+      "showOneAnswerPerRow": true,
+      "TYPE": "SurveyQuestion",
+      "multipleSelectionEnabled": false
     },
     {
-      "questionText":"###Fake or Photo?\n![Kassel](https://arsnova.thm.de/blog/wp-content/uploads/2017/02/Bettgestell-auf-Turmdach.png)",
-      "timer":60,
-      "displayAnswerText":true,
-      "answerOptionList":[
+      "questionText": "### Fake or Photo?\n![Kassel](https://arsnova.thm.de/blog/wp-content/uploads/2017/02/Bettgestell-auf-Turmdach.png)",
+      "timer": 60,
+      "displayAnswerText": true,
+      "answerOptionList": [
         {
-          "answerText":"Fake",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "Fake",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":"Photo",
-          "isCorrect":true,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "Photo",
+          "isCorrect": true,
+          "TYPE": "DefaultAnswerOption"
         }
       ],
-      "showOneAnswerPerRow":true,
-      "TYPE":"TrueFalseSingleChoiceQuestion"
+      "showOneAnswerPerRow": true,
+      "TYPE": "TrueFalseSingleChoiceQuestion"
     },
     {
-      "questionText":"###The 1 Million Euro Question\nHow many cubic elements does the classic cube invented by Ernő Rubik consist of?\n\nhttps://www.youtube.com/watch?v=GSd66EnQjms\n\nSource: German RTL Show *Wer wird Millionär?* \nbroadcast on 7th December 2015",
-      "timer":180,
-      "displayAnswerText":true,
-      "answerOptionList":[
+      "questionText": "### The 1 Million Euro Question\nHow many cubic elements does the classic cube invented by Ernő Rubik consist of?\n\nhttps://www.youtube.com/watch?v=GSd66EnQjms\n\nSource: German RTL Show *Wer wird Millionär?* \nbroadcast on 7th December 2015",
+      "timer": 180,
+      "displayAnswerText": true,
+      "answerOptionList": [
         {
-          "answerText":"28",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "28",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":"26",
-          "isCorrect":true,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "26",
+          "isCorrect": true,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":"24",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "24",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":"22",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "22",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         }
       ],
-      "showOneAnswerPerRow":true,
-      "TYPE":"SingleChoiceQuestion"
+      "showOneAnswerPerRow": true,
+      "TYPE": "SingleChoiceQuestion"
     },
     {
-      "questionText":"###Distance between Earth and Moon\n![Größenverhältnis Erde zu Mond](https://upload.wikimedia.org/wikipedia/commons/f/f6/Moon_Earth_Comparison.png)\n\n**Estimate the median distance between Earth and Moon in whole Earth diameters $ø_{Earth}$!**\n\n$ø_{Earth} = 12,756 $ km\n$ø_{Moon} = 3,476$ km\n\nSource: [Wikipedia](https://de.wikipedia.org/wiki/Mond)\n\n",
-      "timer":120,
-      "displayAnswerText":true,
-      "answerOptionList":[
-
+      "questionText": "### Distance between Earth and Moon\n![Größenverhältnis Erde zu Mond](https://upload.wikimedia.org/wikipedia/commons/f/f6/Moon_Earth_Comparison.png)\n\n**Estimate the median distance between Earth and Moon in whole Earth diameters $ø_{Earth}$!**\n\n$ø_{Earth} = 12,756 $ km\n$ø_{Moon} = 3,476$ km\n\nSource: [Wikipedia](https://de.wikipedia.org/wiki/Mond)\n\n",
+      "timer": 120,
+      "displayAnswerText": true,
+      "answerOptionList": [
       ],
-      "TYPE":"RangedQuestion",
-      "rangeMin":10,
-      "rangeMax":50,
-      "correctValue":30
+      "TYPE": "RangedQuestion",
+      "rangeMin": 10,
+      "rangeMax": 50,
+      "correctValue": 30
     },
     {
-      "questionText":"###Enter  $\\pi$ with an accuracy of 2 digits after the decimal point!\n![Kreiszahl Pi](https://upload.wikimedia.org/wikipedia/commons/2/2a/Pi-unrolled-720.gif)\n\nLeonhard Euler:\n \n$$e^{i \\pi} +1 = 0$$\n\nKarl Weierstraß: \n\n$$\\pi = \\int_{-\\infty}^\\infty \\frac{\\mathrm{d} x}{1 + x^2} = 2\\cdot \\int_{-1}^1 \\frac{\\mathrm{d} x}{1 + x^2}$$",
-      "timer":120,
-      "displayAnswerText":true,
-      "answerOptionList":[
+      "questionText": "### Enter  $\\pi$ with an accuracy of 2 digits after the decimal point!\n![Kreiszahl Pi](https://upload.wikimedia.org/wikipedia/commons/2/2a/Pi-unrolled-720.gif)\n\nLeonhard Euler:\n \n$$e^{i \\pi} +1 = 0$$\n\nKarl Weierstraß: \n\n$$\\pi = \\int_{-\\infty}^\\infty \\frac{\\mathrm{d} x}{1 + x^2} = 2\\cdot \\int_{-1}^1 \\frac{\\mathrm{d} x}{1 + x^2}$$",
+      "timer": 120,
+      "displayAnswerText": true,
+      "answerOptionList": [
         {
-          "answerText":"3.14",
-          "isCorrect":false,
-          "configCaseSensitive":false,
-          "configTrimWhitespaces":false,
-          "configUseKeywords":true,
-          "configUsePunctuation":true,
-          "TYPE":"FreeTextAnswerOption"
+          "answerText": "3.14",
+          "isCorrect": false,
+          "configCaseSensitive": false,
+          "configTrimWhitespaces": false,
+          "configUseKeywords": true,
+          "configUsePunctuation": true,
+          "TYPE": "FreeTextAnswerOption"
         }
       ],
-      "TYPE":"FreeTextQuestion"
+      "TYPE": "FreeTextQuestion"
     },
     {
-      "questionText":"###In which language is this program written?\n```c++\nfloat angle = 0;\n\nvoid setup() {\n  size(130, 130, OPENGL);\n}\n\nvoid draw() {\n  background(100);\n\n  translate(60, 40, 0);\n  rotateY(angle);\n  angle += .01;\n  \n  beginShape(TRIANGLES);\n  vertex(0, 40, 0);\n  vertex(40, 40, 0);\n  vertex(20, 0, -20);\n\n  vertex(0, 40, 0);\n  vertex(20, 40, -40);\n  vertex(20, 0, -20);\n\n  vertex(40, 40, 0);\n  vertex(20, 40, -40);\n  vertex(20, 0, -20);\n  endShape();\n}\n```",
-      "timer":90,
-      "displayAnswerText":true,
-      "answerOptionList":[
+      "questionText": "### In which language is this program written?\n```c++\nfloat angle = 0;\n\nvoid setup() {\n  size(130, 130, OPENGL);\n}\n\nvoid draw() {\n  background(100);\n\n  translate(60, 40, 0);\n  rotateY(angle);\n  angle += .01;\n  \n  beginShape(TRIANGLES);\n  vertex(0, 40, 0);\n  vertex(40, 40, 0);\n  vertex(20, 0, -20);\n\n  vertex(0, 40, 0);\n  vertex(20, 40, -40);\n  vertex(20, 0, -20);\n\n  vertex(40, 40, 0);\n  vertex(20, 40, -40);\n  vertex(20, 0, -20);\n  endShape();\n}\n```",
+      "timer": 90,
+      "displayAnswerText": true,
+      "answerOptionList": [
         {
-          "answerText":"Groovy",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "Groovy",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":"Python",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "Python",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":"Java",
-          "isCorrect":true,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "Java",
+          "isCorrect": true,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":"Processing",
-          "isCorrect":true,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "Processing",
+          "isCorrect": true,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":"Scala",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": "Scala",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         },
         {
-          "answerText":":black_joker:",
-          "isCorrect":false,
-          "TYPE":"DefaultAnswerOption"
+          "answerText": ":black_joker:",
+          "isCorrect": false,
+          "TYPE": "DefaultAnswerOption"
         }
       ],
-      "showOneAnswerPerRow":true,
-      "TYPE":"MultipleChoiceQuestion"
+      "showOneAnswerPerRow": true,
+      "TYPE": "MultipleChoiceQuestion"
     }
   ],
-  "sessionConfig":{
-    "music":{
-      "enabled":{
-        "lobby":true,
-        "countdownRunning":true,
-        "countdownEnd":true
+  "sessionConfig": {
+    "music": {
+      "enabled": {
+        "lobby": true,
+        "countdownRunning": true,
+        "countdownEnd": true
       },
-      "volumeConfig":{
-        "global":50,
-        "useGlobalVolume":false,
-        "lobby":50,
-        "countdownRunning":50,
-        "countdownEnd":100
+      "volumeConfig": {
+        "global": 50,
+        "useGlobalVolume": false,
+        "lobby": 50,
+        "countdownRunning": 50,
+        "countdownEnd": 100
       },
-      "titleConfig":{
-        "lobby":"Song2",
-        "countdownRunning":"Song0",
-        "countdownEnd":"Song1"
+      "titleConfig": {
+        "lobby": "Song2",
+        "countdownRunning": "Song0",
+        "countdownEnd": "Song1"
       }
     },
-    "nicks":{
-      "selectedNicks":[
+    "nicks": {
+      "selectedNicks": [
         "Edsger Dijkstra",
         "Konrad Zuse",
         "Alan Turing",
@@ -192,16 +190,18 @@
         "Albert Einstein",
         "Euklid"
       ],
-      "blockIllegalNicks":true,
-      "restrictToCasLogin":false,
-      "memberGroups": ["Default"],
+      "blockIllegalNicks": true,
+      "restrictToCasLogin": false,
+      "memberGroups": [
+        "Default"
+      ],
       "maxMembersPerGroup": 10,
       "autoJoinToGroup": false
     },
-    "theme":"theme-Material",
-    "readingConfirmationEnabled":false,
-    "showResponseProgress":true,
-    "confidenceSliderEnabled":true
+    "theme": "theme-Material",
+    "readingConfirmationEnabled": false,
+    "showResponseProgress": true,
+    "confidenceSliderEnabled": true
   },
-  "TYPE":"DefaultQuestionGroup"
+  "TYPE": "DefaultQuestionGroup"
 }

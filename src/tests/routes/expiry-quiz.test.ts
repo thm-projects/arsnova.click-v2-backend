@@ -4,8 +4,9 @@ import * as chai from 'chai';
 import { suite, test } from 'mocha-typescript';
 
 import app from '../../App';
-import LoginDAO from '../../db/LoginDAO';
-import { USER_AUTHORIZATION } from '../../Enums';
+import LoginDAO from '../../db/UserDAO';
+import { UserRole } from '../../enums/UserRole';
+import { AuthService } from '../../services/AuthService';
 import { staticStatistics } from '../../statistics';
 
 chai.use(require('chai-http'));
@@ -25,13 +26,13 @@ class ExpiryQuizTestSuite {
   @test
   public async postQuizApiExists(): Promise<void> {
     LoginDAO.initUser({
-      username: 'testuser',
+      name: 'testuser',
       passwordHash: 'hash',
       gitlabToken: '',
-      userAuthorizations: [USER_AUTHORIZATION.CREATE_EXPIRED_QUIZ],
+      userAuthorizations: [UserRole.CreateExpiredQuiz],
     });
     const user = LoginDAO.getUser('testuser');
-    const token = user.generateToken();
+    const token = await AuthService.generateToken(user);
     LoginDAO.setTokenForUser('testuser', token);
     const res = await chai.request(app).post(`${this._baseApiRoute}/quiz`).send({
       quiz: {},

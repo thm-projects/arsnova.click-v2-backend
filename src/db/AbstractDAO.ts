@@ -1,4 +1,5 @@
-import { IStorageDAO } from 'arsnova-click-v2-types/dist/common';
+import { EventEmitter } from 'events';
+import { IStorageDAO } from '../interfaces/database/IStorageDAO';
 
 export abstract class AbstractDAO<T> implements IStorageDAO<T> {
   protected static instance;
@@ -7,6 +8,12 @@ export abstract class AbstractDAO<T> implements IStorageDAO<T> {
 
   get storage(): T {
     return this._storage;
+  }
+
+  private _updateEmitter = new EventEmitter();
+
+  get updateEmitter(): NodeJS.EventEmitter {
+    return this._updateEmitter;
   }
 
   protected constructor(storage: T) {

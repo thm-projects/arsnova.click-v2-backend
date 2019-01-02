@@ -1,6 +1,6 @@
 import { Get, JsonController } from 'routing-controllers';
-import availableNicks from '../../nicknames/availableNicks';
-import illegalNicks from '../../nicknames/illegalNicks';
+import availableNicks from '../../lib/nicknames/availableNicks';
+import illegalNicks from '../../lib/nicknames/illegalNicks';
 import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/nicks')

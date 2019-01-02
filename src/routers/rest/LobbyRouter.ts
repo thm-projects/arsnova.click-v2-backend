@@ -1,7 +1,11 @@
-import { COMMUNICATION_PROTOCOL } from 'arsnova-click-v2-types/dist/communication_protocol';
-import { IQuestionGroup } from 'arsnova-click-v2-types/dist/main';
 import { BodyParam, Delete, Get, JsonController, Param, Put } from 'routing-controllers';
-import QuizManagerDAO from '../../db/QuizManagerDAO';
+import DbDAO from '../../db/DbDAO';
+import QuizDAO from '../../db/quiz/QuizDAO';
+import { DbCollection } from '../../enums/DbOperation';
+import { MessageProtocol, StatusProtocol } from '../../enums/Message';
+import { QuizState } from '../../enums/QuizState';
+import { IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
+import { QuizModel } from '../../models/quiz/QuizModelItem';
 import { WebSocketRouter } from '../websocket/WebSocketRouter';
 import { AbstractRouter } from './AbstractRouter';
 
@@ -9,25 +13,39 @@ import { AbstractRouter } from './AbstractRouter';
 export class LobbyRouter extends AbstractRouter {
 
   @Put('/')
-  private putOpenLobby( //
-    @BodyParam('quiz') quiz: IQuestionGroup, //
-  ): object {
+  private async putOpenLobby( //
+    @BodyParam('quiz') quiz: IQuizSerialized, //
+    @BodyParam('privateKey') privateKey: string, //
+  ): Promise<object> {
 
     const messageToWSSClients = JSON.stringify({
-      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-      step: COMMUNICATION_PROTOCOL.QUIZ.SET_ACTIVE,
+      status: StatusProtocol.Success,
+      step: MessageProtocol.SetActive,
       payload: {
-        quizName: quiz.hashtag,
+        quizName: quiz.name,
       },
     });
     WebSocketRouter.wss.clients.forEach(client => client.send(messageToWSSClients));
 
+    quiz.state = QuizState.Active;
+    quiz.adminToken = privateKey;
+    quiz.currentQuestionIndex = -1;
+    quiz.currentStartTimestamp = -1;
+    const addedQuiz = QuizDAO.getQuizByName(quiz.name);
+    if (addedQuiz) {
+      DbDAO.update(DbCollection.Quizzes, { _id: addedQuiz.id }, quiz);
+    } else {
+      const quizValidator = new QuizModel(quiz);
+      const result = quizValidator.validateSync();
+      if (result) {
+        throw result;
+      }
+      await quizValidator.save();
+    }
+
     return {
-      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-      step: COMMUNICATION_PROTOCOL.LOBBY.OPENED,
-      payload: {
-        quiz: QuizManagerDAO.initActiveQuiz(quiz).serialize(),
-      },
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Opened,
     };
   }
 
@@ -35,12 +53,12 @@ export class LobbyRouter extends AbstractRouter {
   private getLobbyData(@Param('quizName') quizName: string, //
   ): object {
 
-    const isInactive: boolean = QuizManagerDAO.isInactiveQuiz(quizName);
-    const quiz = isInactive ? null : QuizManagerDAO.getActiveQuizByName(quizName).serialize();
+    const isActive = QuizDAO.isActiveQuiz(quizName);
+    const quiz = isActive ? QuizDAO.getActiveQuizByName(quizName).serialize() : null;
 
     return {
-      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-      step: isInactive ? COMMUNICATION_PROTOCOL.LOBBY.CLOSED : COMMUNICATION_PROTOCOL.LOBBY.OPENED,
+      status: StatusProtocol.Success,
+      step: isActive ? MessageProtocol.Opened : MessageProtocol.Closed,
       payload: {
         quiz,
       },
@@ -51,11 +69,14 @@ export class LobbyRouter extends AbstractRouter {
   private deleteLobby(@BodyParam('quizName') quizName: string, //
   ): object {
 
-    QuizManagerDAO.setQuizAsInactive(quizName);
+    const addedQuiz = QuizDAO.getQuizByName(quizName);
+    if (addedQuiz) {
+      DbDAO.update(DbCollection.Quizzes, { _id: addedQuiz.id }, { state: QuizState.Inactive });
+    }
 
     return {
-      status: COMMUNICATION_PROTOCOL.STATUS.SUCCESSFUL,
-      step: COMMUNICATION_PROTOCOL.LOBBY.CLOSED,
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Closed,
       payload: {},
     };
   }

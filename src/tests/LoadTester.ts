@@ -1,8 +1,9 @@
-import { DefaultAnswerOption } from 'arsnova-click-v2-types/dist/answeroptions/answeroption_default';
-import { SingleChoiceQuestion } from 'arsnova-click-v2-types/dist/questions/question_choice_single';
-import { DefaultQuestionGroup } from 'arsnova-click-v2-types/dist/questions/questiongroup_default';
-import { SessionConfiguration } from 'arsnova-click-v2-types/dist/session_configuration/session_config';
-import QuizManagerDAO from '../db/QuizManagerDAO';
+import MemberDAO from '../db/MemberDAO';
+import QuizDAO from '../db/quiz/QuizDAO';
+import { DefaultAnswerEntity } from '../entities/answer/DefaultAnswerEntity';
+import { SingleChoiceQuestionEntity } from '../entities/question/SingleChoiceQuestionEntity';
+import { QuizEntity } from '../entities/quiz/QuizEntity';
+import { SessionConfigurationEntity } from '../entities/session-configuration/SessionConfigurationEntity';
 
 export class LoadTester {
   private static readonly QUIZ_AMOUNT = 100;
@@ -19,14 +20,14 @@ export class LoadTester {
   private startQuizzes(): void {
     for (let i = 0; i < LoadTester.QUIZ_AMOUNT; i++) {
       setTimeout(() => {
-        const quiz = QuizManagerDAO.getActiveQuizByName(`loadquiz_${i}`);
+        const quiz = QuizDAO.getQuizByName(`loadquiz_${i}`);
         quiz.nextQuestion();
 
         for (let j = 0; j < LoadTester.ATTENDEE_AMOUNT_PER_QUIZ; j++) {
           setTimeout(() => {
-            quiz.setReadingConfirmation(`attendee_${j}`);
-            quiz.addResponseValue(`attendee_${j}`, [0]);
-            quiz.setConfidenceValue(`attendee_${j}`, 100);
+            MemberDAO.getMemberByName(`attendee_${j}`).setReadingConfirmation();
+            MemberDAO.getMemberByName(`attendee_${j}`).addResponseValue([0]);
+            MemberDAO.getMemberByName(`attendee_${j}`).setConfidenceValue(100);
 
             if (j === LoadTester.ATTENDEE_AMOUNT_PER_QUIZ - 1) {
               this.done = true;
@@ -39,19 +40,27 @@ export class LoadTester {
 
   private addAttendees(): void {
     for (let i = 0; i < LoadTester.QUIZ_AMOUNT; i++) {
-      const quiz = QuizManagerDAO.getActiveQuizByName(`loadquiz_${i}`);
+      const quiz = QuizDAO.getQuizByName(`loadquiz_${i}`);
       for (let j = 0; j < LoadTester.ATTENDEE_AMOUNT_PER_QUIZ; j++) {
-        quiz.addMember(`attendee_${j}`, 0, 'Default');
+        MemberDAO.addMember({
+          name: `attendee_${j}`,
+          groupName: 'Default',
+          token: 'token',
+          currentQuizName: quiz.name,
+        });
       }
     }
   }
 
   private loadQuizzes(): void {
     for (let i = 0; i < LoadTester.QUIZ_AMOUNT; i++) {
-      QuizManagerDAO.initInactiveQuiz(`loadquiz_${i}`);
-      const quiz = new DefaultQuestionGroup({
-        hashtag: `loadquiz_${i}`,
-        sessionConfig: new SessionConfiguration({
+      const quiz = new QuizEntity({
+        name: `loadquiz_${i}`,
+        readingConfirmationRequested: false,
+        memberGroups: [{ name: 'Default' }],
+        adminToken: 'test',
+        privateKey: 'test',
+        sessionConfig: new SessionConfigurationEntity({
           music: {
             enabled: {
               lobby: true,
@@ -85,12 +94,12 @@ export class LoadTester {
           confidenceSliderEnabled: true,
         }),
         questionList: [
-          new SingleChoiceQuestion({
+          new SingleChoiceQuestionEntity({
             answerOptionList: [
-              new DefaultAnswerOption({
+              new DefaultAnswerEntity({
                 answerText: 'answer1',
                 isCorrect: true,
-              }), new DefaultAnswerOption({
+              }), new DefaultAnswerEntity({
                 answerText: 'answer2',
                 isCorrect: false,
               }),
@@ -98,7 +107,7 @@ export class LoadTester {
           }),
         ],
       });
-      QuizManagerDAO.initActiveQuiz(quiz);
+      QuizDAO.initQuiz(quiz);
     }
   }
 }

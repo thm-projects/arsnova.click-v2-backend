@@ -2,9 +2,13 @@ import { AbstractDAO } from './AbstractDAO';
 
 class MathjaxDAO extends AbstractDAO<object> {
 
+  constructor() {
+    super({});
+  }
+
   public static getInstance(): MathjaxDAO {
     if (!this.instance) {
-      this.instance = new MathjaxDAO({});
+      this.instance = new MathjaxDAO();
     }
     return this.instance;
   }
