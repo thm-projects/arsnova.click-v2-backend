@@ -1,9 +1,8 @@
 import { Binary, ObjectId } from 'bson';
-import { IEntity } from '../interfaces/entities/IEntity';
 import { IAssetSerialized } from '../interfaces/IAsset';
 import { AbstractEntity } from './AbstractEntity';
 
-export class AssetEntity extends AbstractEntity implements IEntity {
+export class AssetEntity extends AbstractEntity {
   private _url: string;
 
   get url(): string {

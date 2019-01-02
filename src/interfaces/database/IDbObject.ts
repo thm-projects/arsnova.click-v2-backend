@@ -1,7 +1,7 @@
 import { FilterQuery } from 'mongodb';
-import { IEntity } from '../entities/IEntity';
+import { AbstractEntity } from '../../entities/AbstractEntity';
 
-export interface IDbObject extends Object {
+export interface IDbObject {
   query?: FilterQuery<any>;
-  value?: IEntity | Array<IEntity>;
+  value?: AbstractEntity | Array<AbstractEntity>;
 }
