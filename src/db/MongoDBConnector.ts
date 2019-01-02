@@ -62,11 +62,20 @@ class MongoDbConnector {
       }
       this._mongoURL += `${mongoHost}:${mongoPort}/${mongoDatabase}`;
 
-      const mongoURLOptions = [`authSource=admin`];
+      const mongoURLOptions = [];
       if (process.env.MONGODB_REPLICA_NAME) {
         mongoURLOptions.push(`replicaSet=${mongoReplSet}`);
       }
-      this._mongoURL += `?${mongoURLOptions.join('&')}`;
+      if (process.env.MONGODB_AUTH_SOURCE) {
+        if (Boolean(process.env.MONGODB_AUTH_SOURCE)) {
+          mongoURLOptions.push(`authSource=${process.env.MONGODB_AUTH_SOURCE}`);
+        }
+      } else {
+        mongoURLOptions.push(`authSource=admin`);
+      }
+      if (mongoURLOptions.length) {
+        this._mongoURL += `?${mongoURLOptions.join('&')}`;
+      }
     }
   }
 }
