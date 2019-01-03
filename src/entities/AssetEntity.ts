@@ -1,4 +1,4 @@
-import { Binary, ObjectId } from 'bson';
+import { ObjectId } from 'bson';
 import { IAssetSerialized } from '../interfaces/IAsset';
 import { AbstractEntity } from './AbstractEntity';
 
@@ -23,14 +23,24 @@ export class AssetEntity extends AbstractEntity {
     this._digest = value;
   }
 
-  private _data: Binary;
+  private _data: Uint8Array;
 
-  get data(): Binary {
+  get data(): Uint8Array {
     return this._data;
   }
 
-  set data(value: Binary) {
+  set data(value: Uint8Array) {
     this._data = value;
+  }
+
+  private _mimeType: string;
+
+  get mimeType(): string {
+    return this._mimeType;
+  }
+
+  set mimeType(value: string) {
+    this._mimeType = value;
   }
 
   constructor(data: IAssetSerialized) {
@@ -40,6 +50,7 @@ export class AssetEntity extends AbstractEntity {
     this._url = data.url;
     this._digest = data.digest;
     this._data = data.data;
+    this._mimeType = data.mimeType;
   }
 
   public serialize(): IAssetSerialized {
@@ -48,6 +59,7 @@ export class AssetEntity extends AbstractEntity {
       url: this.url,
       digest: this.digest,
       data: this.data,
+      mimeType: this.mimeType,
     };
   }
 }

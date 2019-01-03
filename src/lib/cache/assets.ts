@@ -1,6 +1,6 @@
 import { Binary } from 'bson';
 import * as Hex from 'crypto-js/enc-hex';
-import * as request from 'request';
+import * as requestPromise from 'request-promise-native';
 import AssetDAO from '../../db/AssetDAO';
 import { IAnswerEntity } from '../../interfaces/answeroptions/IAnswerEntity';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
@@ -35,24 +35,25 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
       if (!foundUrl.startsWith('http')) {
         foundUrl = `http://${foundUrl}`;
       }
-      const req = request(foundUrl);
-      req.on('error', (err) => {
-        LoggerService.error('error at requesting asset url', err.message);
-        req.abort();
-        resolve(value);
-      }).on('response', async (response) => {
+      requestPromise({
+        url: foundUrl,
+        method: 'GET',
+        resolveWithFullResponse: true,
+        encoding: null,
+      }).then(response => {
         const contentType = response.headers['content-type'];
         const hasContentTypeMatched = acceptedFileTypes.some((contentTypeRegex) => contentType.match(contentTypeRegex) !== null);
         if (!hasContentTypeMatched) {
-          req.abort();
           resolve(value);
           return;
         }
 
+        const buffer = Buffer.from(response.body, 'utf8');
         const assetValidator = new AssetModel({
-          url: foundUrl.replace(/\./g, '_'),
+          url: foundUrl,
           digest,
-          data: new Binary(response.body),
+          mimeType: contentType,
+          data: new Binary(buffer),
         });
 
         const result = assetValidator.validateSync();
@@ -62,6 +63,9 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
 
         assetValidator.save();
         resolve(parsedResult);
+      }).catch((err) => {
+        LoggerService.error('error at requesting asset url', err);
+        resolve(value);
       });
     });
   });
@@ -73,8 +77,7 @@ export function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>): voi
     const matchedQuestionText = question.questionText.match(assetsUrlRegex);
     if (matchedQuestionText) {
       matchedQuestionText.forEach((matchedValueElement: string) => {
-        const encodedText = matchedValueElement.replace(/\./g, '_');
-        const existing = AssetDAO.getAssetByUrl(encodedText);
+        const existing = AssetDAO.getAssetByUrl(matchedValueElement);
         if (!existing) {
           return;
         }
@@ -86,8 +89,7 @@ export function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>): voi
       const matchedAnswerText = answerOption.answerText.match(assetsUrlRegex);
       if (matchedAnswerText) {
         matchedAnswerText.forEach((matchedValueElement: string) => {
-          const encodedText = matchedValueElement.replace(/\./g, '_');
-          const existing = AssetDAO.getAssetByUrl(encodedText);
+          const existing = AssetDAO.getAssetByUrl(matchedValueElement);
           if (!existing) {
             return;
           }

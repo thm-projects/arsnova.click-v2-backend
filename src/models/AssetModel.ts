@@ -1,4 +1,3 @@
-import { Binary } from 'bson';
 import { index, prop, Typegoose } from 'typegoose';
 import AssetDAO from '../db/AssetDAO';
 import DbDAO from '../db/DbDAO';
@@ -6,11 +5,12 @@ import { DbCollection, DbEvent, DbWatchStreamOperation } from '../enums/DbOperat
 import { IAssetSerialized } from '../interfaces/IAsset';
 import LoggerService from '../services/LoggerService';
 
-@index({ name: 1 }, { unique: true })
+@index({ digest: 1 }, { unique: true })
 export class AssetModelItem extends Typegoose implements IAssetSerialized {
-  @prop() public data: Binary;
+  @prop({ required: true }) public data: Uint8Array;
   @prop() public digest: string;
   @prop() public url: string;
+  @prop() public mimeType: string;
 }
 
 export const AssetModel = new AssetModelItem().getModelForClass(AssetModelItem, {

@@ -10,7 +10,6 @@ import {
   BadRequestError, BodyParam, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
 } from 'routing-controllers';
 import * as xml2js from 'xml2js';
-import AssetDAO from '../../db/AssetDAO';
 import CasDAO from '../../db/CasDAO';
 import DbDAO from '../../db/DbDAO';
 import MathjaxDAO from '../../db/MathjaxDAO';
@@ -406,21 +405,16 @@ export class LibRouter extends AbstractRouter {
   }
 
   @Get('/cache/quiz/assets/:digest')
-  public getCache(@Param('digest') digest: string, @Res() res: Response): string {
+  public async getCache(@Param('digest') digest: string, @Res() response: Response): Promise<Buffer> {
 
-    if (!digest || !AssetDAO.getAssetByDigest(digest)) {
+    const doc = await DbDAO.readOne(DbCollection.Assets, { digest });
+    if (!doc || !doc.data) {
       throw new NotFoundError(`Malformed request received -> ${digest}`);
     }
 
-    const data = AssetDAO.getAssetByDigest(digest).data;
-    const fileTypeOfBuffer = fileType(data.buffer);
-    if (fileTypeOfBuffer) {
-      res.contentType(fileTypeOfBuffer.mime);
-    } else {
-      res.contentType('text/html');
-    }
+    response.contentType(doc.mimeType);
 
-    return data.buffer.toString('UTF-8');
+    return doc.data.buffer;
   }
 
   @Get('/authorize/:ticket?')

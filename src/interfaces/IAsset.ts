@@ -1,4 +1,4 @@
-import { Binary, ObjectId } from 'bson';
+import { ObjectId } from 'bson';
 
 export interface IAssetSerialized extends IAssetBase {
   id?: string;
@@ -12,5 +12,6 @@ export interface IAsset extends IAssetBase {
 export interface IAssetBase {
   url: string;
   digest: string;
-  data: Binary;
+  data: Uint8Array;
+  mimeType: string;
 }
