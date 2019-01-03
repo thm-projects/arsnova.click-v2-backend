@@ -65,7 +65,7 @@ class App {
   // Configure API endpoints.
   private routes(): void {
     this._express.use('/api/v1/api-docs', swaggerUi.serve, swaggerUi.setup(null, {
-      swaggerUrl: '/api/v1/api-docs.json',
+      swaggerUrl: `${staticStatistics.rewriteAssetCacheUrl}/api/v1/api-docs.json`,
     }));
 
     const router: Router = express.Router();

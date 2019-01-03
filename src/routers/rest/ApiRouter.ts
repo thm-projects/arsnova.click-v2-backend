@@ -22,7 +22,7 @@ declare global {
 
 @JsonController('/api/v1')
 export class ApiRouter extends AbstractRouter {
-  private static homedir = require('os').homedir();
+  private static homedir = path.join(require('os').homedir(), '.arsnova-click-v2');
   private static _specFile = path.join(ApiRouter.homedir, 'spec.json');
 
   private openAPISpec(): OpenAPIObject {
