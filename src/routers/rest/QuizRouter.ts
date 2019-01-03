@@ -464,6 +464,7 @@ export class QuizRouter extends AbstractRouter {
 
     quiz.privateKey = privateKey;
     quiz.expiry = new Date(quiz.expiry);
+    quiz.state = QuizState.Inactive;
 
     const quizValidator = new QuizModel(quiz);
     const result = quizValidator.validateSync();
