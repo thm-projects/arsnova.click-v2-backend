@@ -235,6 +235,9 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
   public removeSocketFromChannel(socket: WebSocket): void {
     const index = this._socketChannel.findIndex(value => value === socket);
     this._socketChannel.splice(index, 1);
+    if (!this._socketChannel.length) {
+      DbDAO.update(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
+    }
   }
 
   public containsSocket(socket: WebSocket): boolean {

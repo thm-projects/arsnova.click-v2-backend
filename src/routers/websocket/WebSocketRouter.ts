@@ -54,6 +54,7 @@ export class WebSocketRouter {
   private static init(): void {
     WebSocketRouter._wss.on('connection', (ws: WebSocket) => {
       ws.on('close', opcode => {
+        this.disconnectFromChannel(ws);
         LoggerService.info('Closing socket connection', opcode, `(${this.getWebSocketOpcode(opcode)})`);
       });
       ws.on('error', (err) => {
