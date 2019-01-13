@@ -79,7 +79,9 @@ export class QuizRouter extends AbstractRouter {
 
     return {
       status: StatusProtocol.Success,
-      step: quiz ? quiz.state === QuizState.Active ? MessageProtocol.Available : MessageProtocol.AlreadyTaken : MessageProtocol.Unavailable,
+      step: quiz ? quiz.state === QuizState.Active ? MessageProtocol.Available : quiz.privateKey === token ? MessageProtocol.Editable
+                                                                                                           : MessageProtocol.AlreadyTaken
+                 : MessageProtocol.Unavailable,
       payload,
     };
   }
