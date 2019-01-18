@@ -427,6 +427,7 @@ export class QuizRouter extends AbstractRouter {
     quiz.privateKey = privateKey;
     quiz.state = QuizState.Active;
 
+    QuizDAO.convertLegacyQuiz(quiz);
     const quizValidator = new QuizModel(quiz);
     const result = quizValidator.validateSync();
 
@@ -459,6 +460,7 @@ export class QuizRouter extends AbstractRouter {
       if (existingQuiz.privateKey !== privateKey) {
         throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
       }
+      QuizDAO.convertLegacyQuiz(quiz);
 
       DbDAO.update(DbCollection.Quizzes, { _id: existingQuiz.id }, quiz);
       return;
@@ -468,6 +470,7 @@ export class QuizRouter extends AbstractRouter {
     quiz.expiry = new Date(quiz.expiry);
     quiz.state = QuizState.Inactive;
 
+    QuizDAO.convertLegacyQuiz(quiz);
     const quizValidator = new QuizModel(quiz);
     const result = quizValidator.validateSync();
 
