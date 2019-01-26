@@ -199,7 +199,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
         const profile: any = this.quiz.memberGroups[0].members.filter(nickname => nickname.name === responseItem.name)[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         // noinspection SuspiciousInstanceOfGuard
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail instanceof Array ? profile.mail.slice(-1)[0] : profile.mail);
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(Array.isArray(profile.mail) ? profile.mail.slice(-1)[0] : profile.mail);
       }
       const chosenAnswer: AbstractAnswerEntity = this._question.answerOptionList[responseItem.responses[this._questionIndex].value[0]];
       this.ws.cell(nextStartRow, nextColumnIndex++).string(chosenAnswer.answerText);

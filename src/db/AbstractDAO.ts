@@ -37,7 +37,7 @@ export abstract class AbstractDAO<T> implements IStorageDAO<T> {
       case 'string':
         return variable.length;
       case 'object':
-        if (variable instanceof Array) {
+        if (Array.isArray(variable)) {
           return variable.length;
         }
         return Object.keys(variable).length;

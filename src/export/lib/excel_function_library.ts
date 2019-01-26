@@ -5,7 +5,7 @@ export function calculateNumberOfAnswers(quiz: IQuizEntity, questionIndex: numbe
   quiz.memberGroups[0].members.forEach(nickname => {
     const response = nickname.responses[questionIndex].value;
     // noinspection SuspiciousInstanceOfGuard
-    if (response instanceof Array) {
+    if (Array.isArray(response)) {
       numberOfAnswers += response.indexOf(answerNumber) > -1 ? 1 : 0;
     } else if (typeof response === 'number') {
       numberOfAnswers += response;

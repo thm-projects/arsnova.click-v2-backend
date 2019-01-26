@@ -236,19 +236,23 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   private replaceTypeInformationOnLegacyQuiz(obj): void {
-    if (obj.hasOwnProperty('type')) {
-      obj.TYPE = obj.type;
-      delete obj.type;
-      Object.keys(obj).forEach((key) => {
-        if (obj[key] instanceof Array) {
-          obj[key].forEach((elem, index) => {
-            this.replaceTypeInformationOnLegacyQuiz(obj[key][index]);
-          });
-        } else if (obj[key] instanceof Object) {
-          this.replaceTypeInformationOnLegacyQuiz(obj[key]);
-        }
-      });
+    if (!obj.hasOwnProperty('type')) {
+      return;
     }
+
+    obj.TYPE = obj.type;
+    delete obj.type;
+
+    Object.values(obj).forEach((val) => {
+      if (Array.isArray(val)) {
+        val.forEach((elem, index) => {
+          this.replaceTypeInformationOnLegacyQuiz(val[index]);
+        });
+
+      } else if (typeof val === 'object') {
+        this.replaceTypeInformationOnLegacyQuiz(val);
+      }
+    });
   }
 
   private getLastPersistedNumberForQuizzes(data: Array<IQuizEntity>): number {

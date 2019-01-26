@@ -192,7 +192,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       const chosenAnswer = this._question.answerOptionList.filter((answer, index) => {
         const responseValue = nickItem.responses[this._questionIndex].value;
         // noinspection SuspiciousInstanceOfGuard
-        if (responseValue instanceof Array) {
+        if (Array.isArray(responseValue)) {
           return responseValue.indexOf(index) > -1;
         }
         return null;

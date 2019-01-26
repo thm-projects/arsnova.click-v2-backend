@@ -6,8 +6,8 @@ import { QuizEntity } from '../entities/quiz/QuizEntity';
 import { SessionConfigurationEntity } from '../entities/session-configuration/SessionConfigurationEntity';
 
 export class LoadTester {
-  private static readonly QUIZ_AMOUNT = 100;
-  private static readonly ATTENDEE_AMOUNT_PER_QUIZ = 200;
+  private static readonly QUIZ_AMOUNT = 1000;
+  private static readonly ATTENDEE_AMOUNT_PER_QUIZ = 100;
 
   public done = false;
 

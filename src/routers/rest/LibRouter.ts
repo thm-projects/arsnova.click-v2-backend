@@ -421,7 +421,7 @@ export class LibRouter extends AbstractRouter {
   public authorize(@Param('ticket') ticket: string, @Req() req: Request, @Res() res: Response): Promise<object> {
 
     let serviceUrl = req.headers.referer;
-    if ((serviceUrl as any) instanceof Array) {
+    if (Array.isArray(serviceUrl)) {
       serviceUrl = serviceUrl[0];
     }
     serviceUrl = encodeURIComponent(serviceUrl.replace(`?ticket=${ticket}`, ''));
