@@ -694,11 +694,10 @@ export class QuizRouter extends AbstractRouter {
     });
 
     if (orderByGroups) {
-      Object.keys(memberGroupResults).forEach(groupName => {
-        const memberGroup = memberGroupResults[groupName];
+      Object.values(memberGroupResults).forEach((memberGroup: any) => {
         const maxMembersPerGroup = activeQuiz.sessionConfig.nicks.maxMembersPerGroup;
         // (10 / 1) * (1 / 1) * (1.815 / 1)
-        memberGroupResults[groupName].score = Math.round(
+        memberGroup.score = Math.round(
           (maxMembersPerGroup / memberGroup.memberAmount) * (memberGroup.correctQuestions.length / activeQuiz.questionList.length)
           * (memberGroup.responseTime / memberGroup.memberAmount) * 100);
       });
