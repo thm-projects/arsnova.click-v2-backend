@@ -19,7 +19,7 @@ export class PointBasedLeaderboardScore extends AbstractLeaderboardScore {
 
   public getScoreForGroup({ memberGroupResults, correctResponses, partiallyCorrectResponses, activeQuiz }): object {
     Object.values(memberGroupResults).forEach((memberGroup: any) => {
-      memberGroup.score += Object.values(correctResponses).map(val => val.score);
+      memberGroup.score += Object.values(correctResponses).map((val: any) => val.score);
     });
 
     return memberGroupResults;

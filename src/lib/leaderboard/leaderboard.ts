@@ -1,4 +1,3 @@
-import * as path from 'path';
 import { FreeTextAnswerEntity } from '../../entities/answer/FreetextAnwerEntity';
 import { AbstractChoiceQuestionEntity } from '../../entities/question/AbstractChoiceQuestionEntity';
 import { AbstractQuestionEntity } from '../../entities/question/AbstractQuestionEntity';
@@ -6,7 +5,6 @@ import { FreeTextQuestionEntity } from '../../entities/question/FreeTextQuestion
 import { RangedQuestionEntity } from '../../entities/question/RangedQuestionEntity';
 import { LeaderboardConfiguration } from '../../enums/LeaderboardConfiguration';
 import { QuestionType } from '../../enums/QuestionType';
-import { ILeaderboardConfigurationAlgorithm } from '../../interfaces/leaderboard/ILeaderboardConfigurationAlgorithm';
 import { ILeaderBoardItemBase } from '../../interfaces/leaderboard/ILeaderBoardItemBase';
 import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
@@ -16,12 +14,10 @@ import { PointBasedLeaderboardScore } from './PointBasedLeaderboardScore';
 import { TimeBasedLeaderboardScore } from './TimeBasedLeaderboardScore';
 
 export class Leaderboard {
-  private algorithm: Array<ILeaderboardConfigurationAlgorithm> = require(path.join(staticStatistics.pathToAssets, 'leaderboard-config.json'));
-  private selectedAlgorithm = this.algorithm.find(value => value.algorithm === staticStatistics.leaderboardAlgorithm);
   private leaderboardConfigurator: AbstractLeaderboardScore;
 
-  constructor(props) {
-    switch (this.selectedAlgorithm) {
+  constructor() {
+    switch (staticStatistics.leaderboardAlgorithm) {
       case LeaderboardConfiguration.TimeBased:
         this.leaderboardConfigurator = new TimeBasedLeaderboardScore();
         break;
@@ -66,7 +62,7 @@ export class Leaderboard {
     });
   }
 
-  public buildLeaderboard(activeQuiz: IQuizEntity, questionIndex: number): object {
+  public buildLeaderboard(activeQuiz: IQuizEntity, questionIndex: number): any {
 
     const questionAmount: number = activeQuiz.questionList.length;
     const endIndex: number = isNaN(questionIndex) || questionIndex < 0 || questionIndex > questionAmount ? questionAmount : questionIndex + 1;

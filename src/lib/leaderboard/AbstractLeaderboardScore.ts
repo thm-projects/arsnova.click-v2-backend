@@ -3,7 +3,7 @@ import { ILeaderboardConfigurationAlgorithm } from '../../interfaces/leaderboard
 import { staticStatistics } from '../../statistics';
 
 export abstract class AbstractLeaderboardScore {
-  public readonly algorithm: ILeaderboardConfigurationAlgorithm;
+  protected algorithm: ILeaderboardConfigurationAlgorithm;
   protected readonly algorithms: Array<ILeaderboardConfigurationAlgorithm> = require(
     path.join(staticStatistics.pathToAssets, 'leaderboard-config.json'));
 
