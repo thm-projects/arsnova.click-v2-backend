@@ -2,6 +2,7 @@ import { cpus, freemem, hostname, loadavg, networkInterfaces, totalmem } from 'o
 import * as path from 'path';
 import * as process from 'process';
 import { Language } from './enums/Enums';
+import { LeaderboardConfiguration } from './enums/LeaderboardConfiguration';
 
 declare function require(name: string): any;
 
@@ -16,6 +17,7 @@ const portInternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_INTERNAL || 3010;
 const portExternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL || portInternal;
 const routePrefix = process.env.ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX || '';
 const rewriteAssetCacheUrl = process.env.ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL || `http://${hostname()}:${portExternal}${routePrefix}`;
+const leaderboardAlgorithm = process.env.LEADERBOARD_ALGORITHM || LeaderboardConfiguration.TimeBased;
 
 export const staticStatistics = {
   appName: 'arsnova-click-v2-backend',
@@ -29,6 +31,7 @@ export const staticStatistics = {
   pathToJobs: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'jobs'),
   cpuCores: cpus().length,
   jwtSecret: 'arsnova.click-v2',
+  leaderboardAlgorithm,
 };
 
 export const dynamicStatistics = () => {

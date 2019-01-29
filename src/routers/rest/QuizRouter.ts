@@ -24,11 +24,9 @@ import { default as DbDAO } from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { AbstractAnswerEntity } from '../../entities/answer/AbstractAnswerEntity';
-import { AbstractQuestionEntity } from '../../entities/question/AbstractQuestionEntity';
 import { QuizEntity } from '../../entities/quiz/QuizEntity';
 import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
-import { QuestionType } from '../../enums/QuestionType';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
 import { TokenType } from '../../enums/TokenType';
@@ -631,77 +629,7 @@ export class QuizRouter extends AbstractRouter {
       }));
     }
 
-    const questionAmount: number = activeQuiz.questionList.length;
-    const endIndex: number = isNaN(questionIndex) || questionIndex < 0 || questionIndex > questionAmount ? questionAmount : questionIndex + 1;
-    const correctResponses: any = {};
-    const partiallyCorrectResponses: any = {};
-
-    const orderByGroups = activeQuiz.memberGroups.length > 1;
-    const memberGroupResults = {};
-
-    activeQuiz.memberGroups.forEach((memberGroup) => {
-      memberGroupResults[memberGroup.name] = {
-        correctQuestions: [],
-        responseTime: 0,
-        score: 0,
-        memberAmount: memberGroup.members.length,
-      };
-
-      memberGroup.members.forEach(attendee => {
-        for (let i: number = questionIndex; i < endIndex; i++) {
-          const question: AbstractQuestionEntity = activeQuiz.questionList[i];
-          if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
-            continue;
-          }
-          const isCorrect = this._leaderboard.isCorrectResponse(attendee.responses[i], question);
-          if (isCorrect === 1) {
-            if (!correctResponses[attendee.name]) {
-              correctResponses[attendee.name] = {
-                responseTime: 0,
-                correctQuestions: [],
-                confidenceValue: 0,
-              };
-            }
-            correctResponses[attendee.name].correctQuestions.push(i);
-            correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-            correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-
-            memberGroupResults[memberGroup.name].correctQuestions.push(i);
-            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
-
-          } else if (isCorrect === 0) {
-
-            if (!partiallyCorrectResponses[attendee.name]) {
-              partiallyCorrectResponses[attendee.name] = {
-                responseTime: 0,
-                correctQuestions: [],
-                confidenceValue: 0,
-              };
-            }
-
-            partiallyCorrectResponses[attendee.name].correctQuestions.push(i);
-            partiallyCorrectResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-            partiallyCorrectResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-
-          } else {
-
-            delete correctResponses[attendee.name];
-            delete partiallyCorrectResponses[attendee.name];
-            break;
-          }
-        }
-      });
-    });
-
-    if (orderByGroups) {
-      Object.values(memberGroupResults).forEach((memberGroup: any) => {
-        const maxMembersPerGroup = activeQuiz.sessionConfig.nicks.maxMembersPerGroup;
-        // (10 / 1) * (1 / 1) * (1.815 / 1)
-        memberGroup.score = Math.round(
-          (maxMembersPerGroup / memberGroup.memberAmount) * (memberGroup.correctQuestions.length / activeQuiz.questionList.length)
-          * (memberGroup.responseTime / memberGroup.memberAmount) * 100);
-      });
-    }
+    const { correctResponses, partiallyCorrectResponses, memberGroupResults } = this._leaderboard.buildLeaderboard(activeQuiz, questionIndex);
 
     return {
       status: StatusProtocol.Success,

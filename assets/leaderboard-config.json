@@ -1,0 +1,27 @@
+[
+  {
+    "algorithm": "PointBased",
+    "parameter": {
+      "bonusForCorrect": 1,
+      "bonusForTime": {
+        "onlyCorrect": true,
+        "parameter": [
+          {
+            "value": 5,
+            "bonus": 2
+          },
+          {
+            "value": 10,
+            "bonus": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "algorithm": "TimeBased",
+    "parameters": {
+      "bonusForCorrect": 1
+    }
+  }
+]

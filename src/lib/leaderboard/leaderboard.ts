@@ -1,13 +1,35 @@
+import * as path from 'path';
 import { FreeTextAnswerEntity } from '../../entities/answer/FreetextAnwerEntity';
 import { AbstractChoiceQuestionEntity } from '../../entities/question/AbstractChoiceQuestionEntity';
 import { AbstractQuestionEntity } from '../../entities/question/AbstractQuestionEntity';
 import { FreeTextQuestionEntity } from '../../entities/question/FreeTextQuestionEntity';
 import { RangedQuestionEntity } from '../../entities/question/RangedQuestionEntity';
+import { LeaderboardConfiguration } from '../../enums/LeaderboardConfiguration';
 import { QuestionType } from '../../enums/QuestionType';
+import { ILeaderboardConfigurationAlgorithm } from '../../interfaces/leaderboard/ILeaderboardConfigurationAlgorithm';
 import { ILeaderBoardItemBase } from '../../interfaces/leaderboard/ILeaderBoardItemBase';
+import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
+import { staticStatistics } from '../../statistics';
+import { AbstractLeaderboardScore } from './AbstractLeaderboardScore';
+import { PointBasedLeaderboardScore } from './PointBasedLeaderboardScore';
+import { TimeBasedLeaderboardScore } from './TimeBasedLeaderboardScore';
 
 export class Leaderboard {
+  private algorithm: Array<ILeaderboardConfigurationAlgorithm> = require(path.join(staticStatistics.pathToAssets, 'leaderboard-config.json'));
+  private selectedAlgorithm = this.algorithm.find(value => value.algorithm === staticStatistics.leaderboardAlgorithm);
+  private leaderboardConfigurator: AbstractLeaderboardScore;
+
+  constructor(props) {
+    switch (this.selectedAlgorithm) {
+      case LeaderboardConfiguration.TimeBased:
+        this.leaderboardConfigurator = new TimeBasedLeaderboardScore();
+        break;
+      case LeaderboardConfiguration.PointBased:
+        this.leaderboardConfigurator = new PointBasedLeaderboardScore();
+    }
+  }
+
   public isCorrectResponse(response: IQuizResponse, question: AbstractQuestionEntity): number {
     switch (question.TYPE) {
       case QuestionType.SingleChoiceQuestion:
@@ -42,6 +64,89 @@ export class Leaderboard {
         score: obj[value].score,
       };
     });
+  }
+
+  public buildLeaderboard(activeQuiz: IQuizEntity, questionIndex: number): object {
+
+    const questionAmount: number = activeQuiz.questionList.length;
+    const endIndex: number = isNaN(questionIndex) || questionIndex < 0 || questionIndex > questionAmount ? questionAmount : questionIndex + 1;
+    const correctResponses: any = {};
+    const partiallyCorrectResponses: any = {};
+
+    const orderByGroups = activeQuiz.memberGroups.length > 1;
+    const memberGroupResults = {};
+
+    activeQuiz.memberGroups.forEach((memberGroup) => {
+      memberGroupResults[memberGroup.name] = {
+        correctQuestions: [],
+        responseTime: 0,
+        score: 0,
+        memberAmount: memberGroup.members.length,
+      };
+
+      memberGroup.members.forEach(attendee => {
+        for (let i: number = questionIndex; i < endIndex; i++) {
+          const question: AbstractQuestionEntity = activeQuiz.questionList[i];
+          if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
+            continue;
+          }
+          const isCorrect = this.isCorrectResponse(attendee.responses[i], question);
+          if (isCorrect === 1) {
+            if (!correctResponses[attendee.name]) {
+              correctResponses[attendee.name] = {
+                responseTime: 0,
+                correctQuestions: [],
+                confidenceValue: 0,
+              };
+            }
+            correctResponses[attendee.name].correctQuestions.push(i);
+            correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
+            correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
+            correctResponses[attendee.name].score += this.leaderboardConfigurator.getScoreForCorrect(attendee.responses[i].responseTime);
+
+            memberGroupResults[memberGroup.name].correctQuestions.push(i);
+            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
+
+          } else if (isCorrect === 0) {
+
+            if (!partiallyCorrectResponses[attendee.name]) {
+              partiallyCorrectResponses[attendee.name] = {
+                responseTime: 0,
+                correctQuestions: [],
+                confidenceValue: 0,
+              };
+            }
+
+            partiallyCorrectResponses[attendee.name].correctQuestions.push(i);
+            partiallyCorrectResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
+            partiallyCorrectResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
+            partiallyCorrectResponses[attendee.name].score += this.leaderboardConfigurator.getScoreForPartiallyCorrect(
+              attendee.responses[i].responseTime);
+
+          } else {
+
+            delete correctResponses[attendee.name];
+            delete partiallyCorrectResponses[attendee.name];
+            break;
+          }
+        }
+      });
+    });
+
+    if (orderByGroups) {
+      this.leaderboardConfigurator.getScoreForGroup({
+        memberGroupResults,
+        correctResponses,
+        partiallyCorrectResponses,
+        activeQuiz,
+      });
+    }
+
+    return {
+      correctResponses,
+      partiallyCorrectResponses,
+      memberGroupResults,
+    };
   }
 
   private isCorrectSingleChoiceQuestion(response: number, question: AbstractChoiceQuestionEntity): boolean {
