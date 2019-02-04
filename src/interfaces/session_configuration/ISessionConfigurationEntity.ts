@@ -1,3 +1,4 @@
+import { LeaderboardConfiguration } from '../../enums/LeaderboardConfiguration';
 import { ISessionConfigurationSerialized } from './ISessionConfigurationSerialized';
 import { IMusicSessionConfigurationEntity } from './music/IMusicSessionConfigurationEntity';
 import { INickSessionConfigurationEntity } from './nicks/INickSessionConfigurationEntity';
@@ -5,6 +6,7 @@ import { INickSessionConfigurationEntity } from './nicks/INickSessionConfigurati
 export interface ISessionConfigurationEntity extends ISessionConfigurationSerialized {
   music: IMusicSessionConfigurationEntity;
   nicks: INickSessionConfigurationEntity;
+  leaderboardAlgorithm: LeaderboardConfiguration;
 
   serialize(): ISessionConfigurationSerialized;
 

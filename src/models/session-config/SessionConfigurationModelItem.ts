@@ -1,4 +1,5 @@
 import { prop, Typegoose } from 'typegoose';
+import { LeaderboardConfiguration } from '../../enums/LeaderboardConfiguration';
 import { ISessionConfigurationSerialized } from '../../interfaces/session_configuration/ISessionConfigurationSerialized';
 import { MusicSessionConfigurationModelItem } from './MusicSessionConfigurationModelItem';
 import { NickSessionConfigurationModelItem } from './NickSessionConfigurationModelItem';
@@ -10,4 +11,5 @@ export class SessionConfigurationModelItem extends Typegoose implements ISession
   @prop() public readingConfirmationEnabled: boolean;
   @prop() public showResponseProgress: boolean;
   @prop() public theme: string;
+  @prop({ enum: LeaderboardConfiguration }) public leaderboardAlgorithm: LeaderboardConfiguration;
 }

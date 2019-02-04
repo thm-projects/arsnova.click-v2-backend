@@ -14,15 +14,19 @@ import { PointBasedLeaderboardScore } from './PointBasedLeaderboardScore';
 import { TimeBasedLeaderboardScore } from './TimeBasedLeaderboardScore';
 
 export class Leaderboard {
-  private leaderboardConfigurator: AbstractLeaderboardScore;
+  private readonly _timebasedLeaderboard: AbstractLeaderboardScore = new TimeBasedLeaderboardScore;
+  private readonly _pointbasedLeaderboard: AbstractLeaderboardScore = new PointBasedLeaderboardScore;
+  private readonly _defaultLeaderboard: AbstractLeaderboardScore;
 
   constructor() {
     switch (staticStatistics.leaderboardAlgorithm) {
       case LeaderboardConfiguration.TimeBased:
-        this.leaderboardConfigurator = new TimeBasedLeaderboardScore();
+        this._defaultLeaderboard = this._timebasedLeaderboard;
         break;
       case LeaderboardConfiguration.PointBased:
-        this.leaderboardConfigurator = new PointBasedLeaderboardScore();
+        this._defaultLeaderboard = this._pointbasedLeaderboard;
+        break;
+      default:
     }
   }
 
@@ -63,6 +67,15 @@ export class Leaderboard {
   }
 
   public buildLeaderboard(activeQuiz: IQuizEntity, questionIndex: number): any {
+    let scoringLeaderboard: AbstractLeaderboardScore;
+
+    if (activeQuiz.sessionConfig.leaderboardAlgorithm === LeaderboardConfiguration.TimeBased) {
+      scoringLeaderboard = this._timebasedLeaderboard;
+    } else if (activeQuiz.sessionConfig.leaderboardAlgorithm === LeaderboardConfiguration.PointBased) {
+      scoringLeaderboard = this._pointbasedLeaderboard;
+    } else {
+      scoringLeaderboard = this._defaultLeaderboard;
+    }
 
     const questionAmount: number = activeQuiz.questionList.length;
     const endIndex: number = isNaN(questionIndex) || questionIndex < 0 || questionIndex > questionAmount ? questionAmount : questionIndex + 1;
@@ -98,7 +111,7 @@ export class Leaderboard {
             correctResponses[attendee.name].correctQuestions.push(i);
             correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
             correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-            correctResponses[attendee.name].score += this.leaderboardConfigurator.getScoreForCorrect(attendee.responses[i].responseTime);
+            correctResponses[attendee.name].score += scoringLeaderboard.getScoreForCorrect(attendee.responses[i].responseTime);
 
             memberGroupResults[memberGroup.name].correctQuestions.push(i);
             memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
@@ -116,8 +129,7 @@ export class Leaderboard {
             partiallyCorrectResponses[attendee.name].correctQuestions.push(i);
             partiallyCorrectResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
             partiallyCorrectResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-            partiallyCorrectResponses[attendee.name].score += this.leaderboardConfigurator.getScoreForPartiallyCorrect(
-              attendee.responses[i].responseTime);
+            partiallyCorrectResponses[attendee.name].score += scoringLeaderboard.getScoreForPartiallyCorrect(attendee.responses[i].responseTime);
 
           } else {
 
@@ -130,7 +142,7 @@ export class Leaderboard {
     });
 
     if (orderByGroups) {
-      this.leaderboardConfigurator.getScoreForGroup({
+      scoringLeaderboard.getScoreForGroup({
         memberGroupResults,
         correctResponses,
         partiallyCorrectResponses,

@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with ARSnova Click.  If not, see <http://www.gnu.org/licenses/>.*/
 
+import { LeaderboardConfiguration } from '../../enums/LeaderboardConfiguration';
 import { ISessionConfigurationEntity } from '../../interfaces/session_configuration/ISessionConfigurationEntity';
 import { ISessionConfigurationSerialized } from '../../interfaces/session_configuration/ISessionConfigurationSerialized';
 import { IMusicSessionConfigurationEntity } from '../../interfaces/session_configuration/music/IMusicSessionConfigurationEntity';
@@ -83,8 +84,18 @@ export abstract class AbstractSessionConfigurationEntity implements ISessionConf
     this._confidenceSliderEnabled = value;
   }
 
+  private _leaderboardAlgorithm: LeaderboardConfiguration;
+
+  get leaderboardAlgorithm(): LeaderboardConfiguration {
+    return this._leaderboardAlgorithm;
+  }
+
+  set leaderboardAlgorithm(value: LeaderboardConfiguration) {
+    this._leaderboardAlgorithm = value;
+  }
+
   protected constructor({
-                          music, nicks, theme, readingConfirmationEnabled, showResponseProgress, confidenceSliderEnabled,
+                          music, nicks, theme, readingConfirmationEnabled, showResponseProgress, confidenceSliderEnabled, leaderboardAlgorithm,
                         }) {
     this.music = new MusicSessionConfigurationEntity(music);
     this.nicks = new NickSessionConfigurationEntity(nicks);
@@ -92,6 +103,7 @@ export abstract class AbstractSessionConfigurationEntity implements ISessionConf
     this.readingConfirmationEnabled = readingConfirmationEnabled;
     this.showResponseProgress = showResponseProgress;
     this.confidenceSliderEnabled = confidenceSliderEnabled;
+    this.leaderboardAlgorithm = leaderboardAlgorithm;
   }
 
   public serialize(): ISessionConfigurationSerialized {
@@ -102,12 +114,13 @@ export abstract class AbstractSessionConfigurationEntity implements ISessionConf
       readingConfirmationEnabled: this.readingConfirmationEnabled,
       showResponseProgress: this.showResponseProgress,
       confidenceSliderEnabled: this.confidenceSliderEnabled,
+      leaderboardAlgorithm: this.leaderboardAlgorithm,
     };
   }
 
   public equals(value: ISessionConfigurationEntity): boolean {
     return this.music.equals(value.music) && this.nicks.equals(value.nicks) && this.theme === value.theme && this.readingConfirmationEnabled
            === value.readingConfirmationEnabled && this.showResponseProgress === value.showResponseProgress && this.confidenceSliderEnabled
-           === value.confidenceSliderEnabled;
+           === value.confidenceSliderEnabled && value.leaderboardAlgorithm === this.leaderboardAlgorithm;
   }
 }

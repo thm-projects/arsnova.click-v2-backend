@@ -4,6 +4,7 @@ import { DefaultAnswerEntity } from '../entities/answer/DefaultAnswerEntity';
 import { SingleChoiceQuestionEntity } from '../entities/question/SingleChoiceQuestionEntity';
 import { QuizEntity } from '../entities/quiz/QuizEntity';
 import { SessionConfigurationEntity } from '../entities/session-configuration/SessionConfigurationEntity';
+import { LeaderboardConfiguration } from '../enums/LeaderboardConfiguration';
 
 export class LoadTester {
   private static readonly QUIZ_AMOUNT = 1000;
@@ -61,6 +62,7 @@ export class LoadTester {
         adminToken: 'test',
         privateKey: 'test',
         sessionConfig: new SessionConfigurationEntity({
+          leaderboardAlgorithm: LeaderboardConfiguration.TimeBased,
           music: {
             enabled: {
               lobby: true,
