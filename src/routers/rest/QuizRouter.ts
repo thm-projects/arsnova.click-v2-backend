@@ -196,6 +196,27 @@ export class QuizRouter extends AbstractRouter {
 
       quiz.requestReadingConfirmation();
       DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, { readingConfirmationRequested: true });
+      return {
+        status: StatusProtocol.Success,
+        step: MessageProtocol.ReadingConfirmationRequested,
+      };
+    } else if (quiz.readingConfirmationRequested) {
+      const currentStartTimestamp: number = new Date().getTime();
+      DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+        currentStartTimestamp,
+        readingConfirmationRequested: false,
+      });
+
+      quiz.readingConfirmationRequested = false;
+      quiz.startNextQuestion(currentStartTimestamp);
+      return {
+        status: StatusProtocol.Success,
+        step: MessageProtocol.Start,
+        payload: {
+          currentStartTimestamp,
+          currentQuestionIndex: quiz.currentQuestionIndex,
+        },
+      };
     } else {
       const nextQuestionIndex = quiz.nextQuestion();
       if (nextQuestionIndex === -1) {
@@ -422,6 +443,8 @@ export class QuizRouter extends AbstractRouter {
       privateKey: privateKey,
       type: TokenType.QuizToken,
     });
+    quiz.currentQuestionIndex = -1;
+    quiz.currentStartTimestamp = -1;
     quiz.privateKey = privateKey;
     quiz.state = QuizState.Active;
 

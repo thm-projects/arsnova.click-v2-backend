@@ -357,12 +357,18 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       path: path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png'),
       type: 'picture',
       position: {
-        type: 'oneCellAnchor',
+        type: 'twoCellAnchor',
         from: {
           col: 1,
-          colOff: '1.5mm',
+          colOff: '1mm',
           row: 1,
-          rowOff: 0,
+          rowOff: '1mm',
+        },
+        to: {
+          col: 1,
+          colOff: '13mm',
+          row: 2,
+          rowOff: '11mm',
         },
       },
     });

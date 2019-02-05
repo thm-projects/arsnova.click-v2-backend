@@ -149,10 +149,10 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     return entity;
   }
 
-  public updateQuiz(id: ObjectId, updatedFields: { [key: string]: any } | IQuizSerialized): IQuizEntity {
+  public updateQuiz(id: ObjectId, updatedFields: any): IQuizEntity {
     const quiz = this.getQuizById(id);
     if (!quiz) {
-      throw new Error(`Unkown updated quiz: ${id.toHexString()}`);
+      throw new Error(`Unknown updated quiz: ${id.toHexString()}`);
     }
 
     if (updatedFields.sessionConfig) {
