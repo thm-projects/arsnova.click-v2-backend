@@ -149,11 +149,15 @@ export class MemberRouter extends AbstractRouter {
       return;
     }
     const result: DeleteWriteOpResultObject = await activeQuiz.removeMember(nickname);
-    const response: Object = { status: result ? StatusProtocol.Success : StatusProtocol.Failed };
+    const response: Object = { status: result.deletedCount ? StatusProtocol.Success : StatusProtocol.Failed };
     if (result && result.deletedCount) {
       Object.assign(response, {
         step: MessageProtocol.Removed,
         payload: {},
+      });
+    } else {
+      Object.assign(response, {
+        message: result,
       });
     }
     return response;
