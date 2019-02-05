@@ -1,5 +1,6 @@
 import MemberDAO from '../../db/MemberDAO';
 import { IMemberEntity } from '../../interfaces/entities/Member/IMemberEntity';
+import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSerialized';
 import { IMemberGroupEntity } from '../../interfaces/users/IMemberGroupEntity';
 import { IMemberGroupSerialized } from '../../interfaces/users/IMemberGroupSerialized';
 import { AbstractEntity } from '../AbstractEntity';
@@ -31,7 +32,7 @@ export class MemberGroupEntity extends AbstractEntity implements IMemberGroupEnt
   public serialize(): IMemberGroupSerialized {
     return {
       name: this.name,
-      members: this.members.map(val => val.serialize()),
+      members: this.members.map(val => val ? val.serialize() : {} as IMemberSerialized),
     };
   }
 }
