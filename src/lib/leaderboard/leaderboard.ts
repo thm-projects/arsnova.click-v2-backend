@@ -14,8 +14,8 @@ import { PointBasedLeaderboardScore } from './PointBasedLeaderboardScore';
 import { TimeBasedLeaderboardScore } from './TimeBasedLeaderboardScore';
 
 export class Leaderboard {
-  private readonly _timebasedLeaderboard: AbstractLeaderboardScore = new TimeBasedLeaderboardScore;
-  private readonly _pointbasedLeaderboard: AbstractLeaderboardScore = new PointBasedLeaderboardScore;
+  private readonly _timebasedLeaderboard: AbstractLeaderboardScore = new TimeBasedLeaderboardScore();
+  private readonly _pointbasedLeaderboard: AbstractLeaderboardScore = new PointBasedLeaderboardScore();
   private readonly _defaultLeaderboard: AbstractLeaderboardScore;
 
   constructor() {
