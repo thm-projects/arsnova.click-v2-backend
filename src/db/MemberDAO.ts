@@ -45,7 +45,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
   public updateMember(id: ObjectId, updatedFields: { [key: string]: any }): void {
     const member = this.getMemberById(id);
     if (!member) {
-      throw new Error(`Unkown updated quiz: ${id.toHexString()}`);
+      throw new Error(`Unknown updated member: ${id.toHexString()}`);
     }
 
     Object.keys(updatedFields).forEach(key => member[key] = updatedFields[key]);
@@ -67,7 +67,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
   }
 
   public getMembersOfQuiz(quizName: string): Array<MemberEntity> {
-    return this.storage.filter(val => val.currentQuizName === quizName);
+    return this.storage.filter(val => !!val.currentQuizName.match(new RegExp(`^${quizName}$`, 'i')));
   }
 
   public getMemberByToken(token: string): MemberEntity {

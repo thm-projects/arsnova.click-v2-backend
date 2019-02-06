@@ -225,10 +225,6 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       return;
     }
 
-    socket.on('close', () => {
-      this.removeSocketFromChannel(socket);
-    });
-
     this._socketChannel.push(socket);
   }
 
@@ -236,7 +232,11 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     const index = this._socketChannel.findIndex(value => value === socket);
     this._socketChannel.splice(index, 1);
     if (!this._socketChannel.length) {
-      DbDAO.update(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
+      setTimeout(() => {
+        if (!this._socketChannel.length) {
+          DbDAO.update(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
+        }
+      }, 5000);
     }
   }
 

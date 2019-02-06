@@ -209,7 +209,7 @@ export class MemberRouter extends AbstractRouter {
       status: StatusProtocol.Success,
       step: MessageProtocol.GetPlayers,
       payload: {
-        memberGroups: activeQuiz.memberGroups.map(memberGroup => memberGroup.serialize()),
+        members: MemberDAO.getMembersOfQuiz(quizName).map(member => member.serialize()),
       },
     };
   }
