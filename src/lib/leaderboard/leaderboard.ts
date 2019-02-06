@@ -106,6 +106,7 @@ export class Leaderboard {
                 responseTime: 0,
                 correctQuestions: [],
                 confidenceValue: 0,
+                score: 0,
               };
             }
             correctResponses[attendee.name].correctQuestions.push(i);
@@ -185,9 +186,14 @@ export class Leaderboard {
   }
 
   private isCorrectFreeTextQuestion(response: string, question: FreeTextQuestionEntity): boolean {
+    if (!response) {
+      return false;
+    }
+
     const answerOption: FreeTextAnswerEntity = <FreeTextAnswerEntity>question.answerOptionList[0];
     let refValue = answerOption.answerText;
     let result = false;
+
     if (!answerOption.configCaseSensitive) {
       refValue = refValue.toLowerCase();
       response = response.toLowerCase();

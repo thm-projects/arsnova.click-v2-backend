@@ -138,6 +138,35 @@ export class MemberRouter extends AbstractRouter {
     };
   }
 
+  @Put('/response')
+  public addResponse(
+    @HeaderParam('authorization') token: string, //
+    @BodyParam('response') value: string, //
+  ): object {
+
+    if (!Array.isArray(value) && !['string', 'number'].includes(typeof value)) {
+      throw new BadRequestError(MessageProtocol.InvalidData);
+    }
+
+    const member = MemberDAO.getMemberByToken(token);
+    const quiz = QuizDAO.getActiveQuizByName(member.currentQuizName);
+    if (!member || !quiz) {
+      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
+    }
+
+    if (member.responses[quiz.currentQuestionIndex].responseTime > 0) {
+      throw new BadRequestError(MessageProtocol.DuplicateResponse);
+    }
+
+    member.addResponseValue(value);
+
+    return {
+      status: StatusProtocol.Success,
+      step: MessageProtocol.UpdatedResponse,
+      payload: {},
+    };
+  }
+
   @Delete('/:quizName/:nickname')
   public async deleteMember(
     @Param('quizName') quizName: string, //
@@ -206,31 +235,6 @@ export class MemberRouter extends AbstractRouter {
       status: StatusProtocol.Success,
       step: MessageProtocol.GetRemainingNicks,
       payload: { nicknames: names },
-    };
-  }
-
-  @Put('/response')
-  public addResponse(
-    @HeaderParam('authorization') token: string, //
-    @BodyParam('response') value: Array<number> | number | string, //
-  ): object {
-
-    const member = MemberDAO.getMemberByToken(token);
-    const quiz = QuizDAO.getActiveQuizByName(member.currentQuizName);
-    if (!member || !quiz) {
-      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
-    }
-
-    if (member.responses[quiz.currentQuestionIndex].responseTime > 0) {
-      throw new BadRequestError(MessageProtocol.DuplicateResponse);
-    }
-
-    member.addResponseValue(value);
-
-    return {
-      status: StatusProtocol.Success,
-      step: MessageProtocol.UpdatedResponse,
-      payload: {},
     };
   }
 }

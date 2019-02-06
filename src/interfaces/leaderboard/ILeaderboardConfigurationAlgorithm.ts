@@ -2,7 +2,7 @@ import { ILeaderboardConfigurationParamterBonusAlgorithm } from './ILeaderboardC
 
 export interface ILeaderboardConfigurationAlgorithm {
   algorithm: string;
-  parameter: {
+  parameters: {
     bonusForCorrect: number; bonusForTime: {
       onlyCorrect: boolean; parameter: Array<ILeaderboardConfigurationParamterBonusAlgorithm>;
     }

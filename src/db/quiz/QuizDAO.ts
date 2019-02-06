@@ -180,7 +180,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public getQuizByName(name: string): IQuizEntity {
-    return this.storage.find(val => val.name === name);
+    return this.storage.find(val => !!val.name.match(new RegExp(name, 'i')));
   }
 
   public getExpiryQuizzes(): Array<IQuizEntity> {
@@ -198,7 +198,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public isActiveQuiz(quizname: string): boolean {
-    return !!this.getActiveQuizzes().find(val => val.name === quizname);
+    return !!this.getActiveQuizzes().find(val => !!val.name.match(new RegExp(quizname, 'i')));
   }
 
   public setQuizAsInactive(quizName: string): void {
@@ -206,7 +206,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public getActiveQuizByName(quizName: string): IQuizEntity {
-    return this.getActiveQuizzes().find(val => val.name.toLowerCase() === quizName.toLowerCase());
+    return this.getActiveQuizzes().find(val => !!val.name.match(new RegExp(quizName, 'i')));
   }
 
   public getQuizBySocket(ws: WebSocket): IQuizEntity {

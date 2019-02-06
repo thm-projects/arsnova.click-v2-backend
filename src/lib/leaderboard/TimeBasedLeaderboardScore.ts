@@ -10,7 +10,7 @@ export class TimeBasedLeaderboardScore extends AbstractLeaderboardScore {
   }
 
   public getScoreForCorrect(responseTime: number): number {
-    return this.algorithm.parameter.bonusForTime.parameter.find(val => val.value <= (responseTime / 1000)).bonus;
+    return Math.round(this.algorithm.parameters.bonusForCorrect * (responseTime / 1000));
   }
 
   public getScoreForPartiallyCorrect(responseTime: number): number {
