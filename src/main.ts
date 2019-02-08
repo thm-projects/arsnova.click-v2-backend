@@ -179,7 +179,9 @@ function onListening(): void {
 
   WebSocketRouter.wss = new WebSocket.Server({ server });
 
-  I18nDAO.reloadCache();
+  I18nDAO.reloadCache().catch(reason => {
+    console.error('Could not reload i18n dao cache', reason);
+  });
 }
 
 function runTest(): void {
@@ -187,14 +189,11 @@ function runTest(): void {
   console.log(`CPU Time Spent Begin: ${process.cpuUsage().user / 1000000}`);
   const startTime = new Date().getTime();
   const loadTest = new LoadTester();
-  const interval = setInterval(() => {
-    if (loadTest.done) {
-      clearInterval(interval);
-      console.log(`CPU Time Spent End: ${process.cpuUsage().user / 1000000}`);
-      console.log(`Load Test took ${(new Date().getTime() - startTime) / 1000}`);
-      console.log('----- Load Test Finished -----');
-    }
-  }, 100);
+  loadTest.done.on('done', () => {
+    console.log(`CPU Time Spent End: ${process.cpuUsage().user / 1000000}`);
+    console.log(`Load Test took ${(new Date().getTime() - startTime) / 1000}`);
+    console.log('----- Load Test Finished -----');
+  });
 }
 
 function onClose(): void {

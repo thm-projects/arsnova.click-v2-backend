@@ -1,4 +1,4 @@
-import { Authorized, BodyParam, Get, HeaderParam, JsonController, Param, Post } from 'routing-controllers';
+import { Authorized, BodyParam, Get, HeaderParam, InternalServerError, JsonController, Param, Post } from 'routing-controllers';
 import I18nDAO from '../../db/I18nDAO';
 import { GitlabProject, Language } from '../../enums/Enums';
 import { StatusProtocol } from '../../enums/Message';
@@ -43,7 +43,11 @@ export class I18nApiRouter extends AbstractRouter {
       unused: {},
     };
 
-    await I18nDAO.reloadCache();
+    try {
+      await I18nDAO.reloadCache();
+    } catch (e) {
+      return new InternalServerError(e);
+    }
 
     payload.langData = I18nDAO.storage[GitlabProject[project]].langData;
     payload.unused = I18nDAO.storage[GitlabProject[project]].unused;

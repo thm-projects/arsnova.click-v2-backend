@@ -50,7 +50,7 @@ class I18nDAO extends AbstractDAO<object> {
   }
 
   public reloadCache(): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       Object.values(this.storage).forEach(async (project, index, array) => {
         const gitlabProject = project['name'] === 'arsnova-click-v2-backend' ? GitlabProject['arsnova-click-v2-backend']
                                                                              : GitlabProject['arsnova-click-v2-frontend'];
@@ -61,20 +61,24 @@ class I18nDAO extends AbstractDAO<object> {
           return;
         }
 
-        const langDataStart = new Date().getTime();
-        this.storage[gitlabProject].langData = await this.getI18nFileContentFromRepo(gitlabProject);
-        const langDataEnd = new Date().getTime();
-        LoggerService.info(`Built language data for ${project['name']} in ${langDataEnd - langDataStart}ms`);
+        try {
+          const langDataStart = new Date().getTime();
+          this.storage[gitlabProject].langData = await this.getI18nFileContentFromRepo(gitlabProject);
+          const langDataEnd = new Date().getTime();
+          LoggerService.info(`Built language data for ${project['name']} in ${langDataEnd - langDataStart}ms`);
 
-        const unusedKeysStart = new Date().getTime();
-        this.storage[gitlabProject].unused = await this.getUnusedI18nKeysFromSourceFiles(gitlabProject, this.storage[gitlabProject].langData);
-        const unusedKeysEnd = new Date().getTime();
-        LoggerService.info(`Built unused keys for ${project['name']} in ${unusedKeysEnd - unusedKeysStart}ms`);
+          const unusedKeysStart = new Date().getTime();
+          this.storage[gitlabProject].unused = await this.getUnusedI18nKeysFromSourceFiles(gitlabProject, this.storage[gitlabProject].langData);
+          const unusedKeysEnd = new Date().getTime();
+          LoggerService.info(`Built unused keys for ${project['name']} in ${unusedKeysEnd - unusedKeysStart}ms`);
 
-        this.storage[gitlabProject].lastUpdate = new Date();
+          this.storage[gitlabProject].lastUpdate = new Date();
 
-        if (index === array.length - 1) {
-          resolve();
+          if (index === array.length - 1) {
+            resolve();
+          }
+        } catch (e) {
+          reject(e);
         }
       });
     });

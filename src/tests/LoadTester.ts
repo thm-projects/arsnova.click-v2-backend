@@ -5,12 +5,13 @@ import { SingleChoiceQuestionEntity } from '../entities/question/SingleChoiceQue
 import { QuizEntity } from '../entities/quiz/QuizEntity';
 import { SessionConfigurationEntity } from '../entities/session-configuration/SessionConfigurationEntity';
 import { LeaderboardConfiguration } from '../enums/LeaderboardConfiguration';
+import EventEmitter = NodeJS.EventEmitter;
 
 export class LoadTester {
   private static readonly QUIZ_AMOUNT = 1000;
   private static readonly ATTENDEE_AMOUNT_PER_QUIZ = 100;
 
-  public done = false;
+  public done = new EventEmitter();
 
   constructor() {
     this.loadQuizzes();
@@ -31,7 +32,7 @@ export class LoadTester {
             MemberDAO.getMemberByName(`attendee_${j}`).setConfidenceValue(100);
 
             if (j === LoadTester.ATTENDEE_AMOUNT_PER_QUIZ - 1) {
-              this.done = true;
+              this.done.emit('done');
             }
           }, 0);
         }
