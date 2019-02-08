@@ -8,6 +8,7 @@ export interface IQuizStatusPayload {
   name?: string;
   state?: QuizState;
   available?: boolean;
+  readingConfirmationRequested?: boolean;
   provideNickSelection?: boolean;
   authorizeViaCas?: boolean;
   maxMembersPerGroup?: number;

@@ -220,6 +220,13 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     }));
   }
 
+  public stop(): void {
+    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Stop,
+    }));
+  }
+
   public addSocketToChannel(socket: WebSocket): void {
     if (this._socketChannel.find(value => value === socket)) {
       return;

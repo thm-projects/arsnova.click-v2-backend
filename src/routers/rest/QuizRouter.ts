@@ -68,6 +68,7 @@ export class QuizRouter extends AbstractRouter {
         payload.autoJoinToGroup = quiz.sessionConfig.nicks.autoJoinToGroup;
         payload.memberGroups = quiz.memberGroups.map(memberGroup => memberGroup.serialize());
         payload.startTimestamp = quiz.currentStartTimestamp;
+        payload.readingConfirmationRequested = quiz.readingConfirmationRequested;
       }
 
       payload.name = quiz.name;
@@ -229,6 +230,7 @@ export class QuizRouter extends AbstractRouter {
       });
 
       quiz.readingConfirmationRequested = false;
+      quiz.currentStartTimestamp = currentStartTimestamp;
       quiz.startNextQuestion(currentStartTimestamp);
       return {
         status: StatusProtocol.Success,
@@ -255,6 +257,8 @@ export class QuizRouter extends AbstractRouter {
     }
 
     DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quizName).id }, { currentStartTimestamp: -1 });
+
+    activeQuiz.stop();
 
     return {
       status: StatusProtocol.Success,

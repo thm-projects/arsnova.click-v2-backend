@@ -44,6 +44,8 @@ export interface IQuizEntity extends IQuizBase {
 
   reset(): void;
 
+  stop(): void;
+
   onRemove(): void;
 }
 
