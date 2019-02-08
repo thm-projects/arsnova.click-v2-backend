@@ -229,21 +229,29 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
 
   public addSocketToChannel(socket: WebSocket): void {
     if (this._socketChannel.find(value => value === socket)) {
+      console.error(`Cannot add socket to quiz channel ${this.name} since it is already added`);
       return;
     }
 
+    console.log(`Adding socket to quiz channel ${this.name}`);
     this._socketChannel.push(socket);
   }
 
   public removeSocketFromChannel(socket: WebSocket): void {
     const index = this._socketChannel.findIndex(value => value === socket);
+    if (index === -1) {
+      console.log(`Cannot remove socket from quiz channel ${this.name} since it is not found`);
+      return;
+    }
+
+    console.log(`Removing socket from quiz channel ${this.name}`);
     this._socketChannel.splice(index, 1);
     if (!this._socketChannel.length) {
       setTimeout(() => {
         if (!this._socketChannel.length) {
           DbDAO.update(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
         }
-      }, 5000);
+      }, 300000); // 5 minutes
     }
   }
 

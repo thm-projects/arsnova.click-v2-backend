@@ -94,7 +94,7 @@ export class Leaderboard {
       };
 
       memberGroup.members.forEach(attendee => {
-        for (let i: number = questionIndex; i < endIndex; i++) {
+        for (let i = questionIndex || 0; i < endIndex; i++) {
           const question: AbstractQuestionEntity = activeQuiz.questionList[i];
           if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
             continue;
