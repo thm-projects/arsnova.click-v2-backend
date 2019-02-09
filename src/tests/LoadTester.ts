@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import MemberDAO from '../db/MemberDAO';
 import QuizDAO from '../db/quiz/QuizDAO';
 import { DefaultAnswerEntity } from '../entities/answer/DefaultAnswerEntity';
@@ -5,7 +6,6 @@ import { SingleChoiceQuestionEntity } from '../entities/question/SingleChoiceQue
 import { QuizEntity } from '../entities/quiz/QuizEntity';
 import { SessionConfigurationEntity } from '../entities/session-configuration/SessionConfigurationEntity';
 import { LeaderboardConfiguration } from '../enums/LeaderboardConfiguration';
-import EventEmitter = NodeJS.EventEmitter;
 
 export class LoadTester {
   private static readonly QUIZ_AMOUNT = 1000;
