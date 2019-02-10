@@ -105,8 +105,10 @@ export class WebSocketRouter {
 
   private static sendQuizStatusUpdate(ws: WebSocket, activeQuizzes: Array<string>): void {
     if (ws.readyState !== WebSocket.OPEN) {
+      console.log('cannot send activequizzes to socket: no socket open', activeQuizzes);
       return;
     }
+    console.log('sending activequizzes to socket', activeQuizzes);
 
     ws.send(JSON.stringify({
       status: StatusProtocol.Success,
