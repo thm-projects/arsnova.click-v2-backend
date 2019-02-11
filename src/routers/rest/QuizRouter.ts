@@ -61,7 +61,7 @@ export class QuizRouter extends AbstractRouter {
     const payload: IQuizStatusPayload = {};
 
     if (quiz) {
-      if (quiz.state === QuizState.Active) {
+      if ([QuizState.Active, QuizState.Running].includes(quiz.state)) {
         payload.provideNickSelection = quiz.sessionConfig.nicks.selectedNicks.length > 0;
         payload.authorizeViaCas = quiz.sessionConfig.nicks.restrictToCasLogin;
         payload.maxMembersPerGroup = quiz.sessionConfig.nicks.maxMembersPerGroup;
@@ -78,8 +78,9 @@ export class QuizRouter extends AbstractRouter {
 
     return {
       status: StatusProtocol.Success,
-      step: quiz ? quiz.state === QuizState.Active ? MessageProtocol.Available : quiz.privateKey === token ? MessageProtocol.Editable
-                                                                                                           : MessageProtocol.AlreadyTaken
+      step: quiz ? [QuizState.Active, QuizState.Running].includes(quiz.state) ? MessageProtocol.Available : quiz.privateKey === token
+                                                                                                            ? MessageProtocol.Editable
+                                                                                                            : MessageProtocol.AlreadyTaken
                  : MessageProtocol.Unavailable,
       payload,
     };
@@ -196,7 +197,10 @@ export class QuizRouter extends AbstractRouter {
       }
 
       quiz.requestReadingConfirmation();
-      DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, { readingConfirmationRequested: true });
+      DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+        readingConfirmationRequested: true,
+        state: QuizState.Running,
+      });
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.ReadingConfirmationRequested,
@@ -206,6 +210,7 @@ export class QuizRouter extends AbstractRouter {
       DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
         currentStartTimestamp,
         readingConfirmationRequested: false,
+        state: QuizState.Running,
       });
 
       quiz.readingConfirmationRequested = false;
@@ -227,6 +232,7 @@ export class QuizRouter extends AbstractRouter {
       DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
         currentStartTimestamp,
         readingConfirmationRequested: false,
+        state: QuizState.Running,
       });
 
       quiz.readingConfirmationRequested = false;
