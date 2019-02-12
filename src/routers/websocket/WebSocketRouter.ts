@@ -53,8 +53,13 @@ export class WebSocketRouter {
 
   private static init(): void {
     WebSocketRouter._wss.on('connection', (ws: WebSocket) => {
+      const quizStatusUpdateHandler = () => {
+        WebSocketRouter.sendQuizStatusUpdate(ws, QuizDAO.getJoinableQuizzes().map(val => val.name));
+      };
+
       ws.on('close', opcode => {
         this.disconnectFromChannel(ws);
+        QuizDAO.updateEmitter.off(DbEvent.Change, quizStatusUpdateHandler.bind(this));
         LoggerService.info('Closing socket connection', opcode, `(${this.getWebSocketOpcode(opcode)})`);
       });
       ws.on('error', (err) => {
@@ -81,10 +86,8 @@ export class WebSocketRouter {
         }
       });
 
-      WebSocketRouter.sendQuizStatusUpdate(ws, QuizDAO.getJoinableQuizzes().map(val => val.name));
-      QuizDAO.updateEmitter.on(DbEvent.Change, () => {
-        WebSocketRouter.sendQuizStatusUpdate(ws, QuizDAO.getJoinableQuizzes().map(val => val.name));
-      });
+      quizStatusUpdateHandler();
+      QuizDAO.updateEmitter.on(DbEvent.Change, quizStatusUpdateHandler.bind(this));
     });
   }
 

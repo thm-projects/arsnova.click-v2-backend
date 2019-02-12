@@ -85,13 +85,17 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
 
   public getAllPersistedAbcdQuizzes(): Array<IQuizEntity> {
     return this.storage.filter((value) => {
-      return this.checkABCDOrdering(value.name);
+      return this.checkABCDOrdering(value.name.toLowerCase());
     });
   }
 
   public getAllPersistedAbcdQuizzesByLength(length: number): Array<IQuizEntity> {
     return this.storage.filter((value) => {
-      return this.checkABCDOrdering(value.name) && value.questionList[0].answerOptionList.length === length;
+      const abcdString = value.name.toLowerCase().match(/([a-zA-Z]*)(\s[0-9]*)/i);
+      if (!abcdString || abcdString.length < 2) {
+        return false;
+      }
+      return this.checkABCDOrdering(abcdString[1]) && value.questionList[0].answerOptionList.length === length;
     });
   }
 
