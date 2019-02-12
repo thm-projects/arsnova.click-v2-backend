@@ -88,7 +88,7 @@ export class WebSocketRouter {
 
       ws.on('close', opcode => {
         this.disconnectFromChannel(ws);
-        QuizDAO.updateEmitter.off(DbEvent.Change, quizStatusUpdateHandler.bind(this));
+        QuizDAO.updateEmitter.off(DbEvent.Change, quizStatusUpdateHandler);
         LoggerService.info('Closing socket connection', opcode, `(${this.getWebSocketOpcode(opcode)})`);
       });
       ws.on('ping', this.onPing.bind(this, ws));
@@ -118,7 +118,7 @@ export class WebSocketRouter {
       });
 
       quizStatusUpdateHandler();
-      QuizDAO.updateEmitter.on(DbEvent.Change, quizStatusUpdateHandler.bind(this));
+      QuizDAO.updateEmitter.on(DbEvent.Change, quizStatusUpdateHandler);
     });
   }
 

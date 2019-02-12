@@ -149,6 +149,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._description = value;
   }
 
+  private _dropEmptyQuizTimeout: any;
   private _socketChannel: Array<WebSocket> = [];
 
   constructor(quiz: IQuizSerialized) {
@@ -235,6 +236,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
 
     console.log(`Adding socket to quiz channel ${this.name}`);
     this._socketChannel.push(socket);
+    clearTimeout(this._dropEmptyQuizTimeout);
   }
 
   public removeSocketFromChannel(socket: WebSocket): void {
@@ -247,7 +249,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     console.log(`Removing socket from quiz channel ${this.name}`);
     this._socketChannel.splice(index, 1);
     if (!this._socketChannel.length) {
-      setTimeout(() => {
+      this._dropEmptyQuizTimeout = setTimeout(() => {
         if (!this._socketChannel.length) {
           DbDAO.update(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
           DbDAO.deleteMany(DbCollection.Members, { currentQuizName: this.name });
