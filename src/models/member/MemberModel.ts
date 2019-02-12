@@ -6,7 +6,10 @@ import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSeria
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
 import LoggerService from '../../services/LoggerService';
 
-@index({ name: 1 }, { unique: true })
+@index({
+  name: 1,
+  currentQuizName: 1,
+}, { unique: true })
 export class MemberModelItem extends Typegoose implements IMemberSerialized {
   @prop() public colorCode: string;
   @prop({ required: false }) public groupName: string;
