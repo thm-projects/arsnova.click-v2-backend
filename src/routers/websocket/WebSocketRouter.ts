@@ -51,17 +51,48 @@ export class WebSocketRouter {
     return matchedValues.length ? matchedValues[0] : '[UNKNOWN]';
   }
 
+  private static onPing(ws): void {
+    ws.pong();
+    ws['isAlive'] = true;
+  }
+
+  private static onPong(ws): void {
+    ws['isAlive'] = true;
+  }
+
+  private static keepalive(): void {
+    setInterval(() => {
+      this.wss.clients.forEach(socket => {
+        if (socket.readyState !== WebSocket.OPEN) {
+          return;
+        }
+
+        if (socket['isAlive']) {
+          socket['isAlive'] = false;
+          socket.ping();
+        } else {
+          socket.close(WebSocketStatus.PolicyViolation);
+        }
+      });
+    }, 30000);
+  }
+
   private static init(): void {
+    this.keepalive();
+
     WebSocketRouter._wss.on('connection', (ws: WebSocket) => {
       const quizStatusUpdateHandler = () => {
         WebSocketRouter.sendQuizStatusUpdate(ws, QuizDAO.getJoinableQuizzes().map(val => val.name));
       };
+      ws['isAlive'] = true;
 
       ws.on('close', opcode => {
         this.disconnectFromChannel(ws);
         QuizDAO.updateEmitter.off(DbEvent.Change, quizStatusUpdateHandler.bind(this));
         LoggerService.info('Closing socket connection', opcode, `(${this.getWebSocketOpcode(opcode)})`);
       });
+      ws.on('ping', this.onPing.bind(this, ws));
+      ws.on('pong', this.onPong.bind(this, ws));
       ws.on('error', (err) => {
         WebSocketRouter.handleError(ws, err, '');
       });
