@@ -10,6 +10,7 @@ import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSeria
 import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { MemberModel } from '../../models/member/MemberModel';
 import { AuthService } from '../../services/AuthService';
+import LoggerService from '../../services/LoggerService';
 import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/member')
@@ -90,6 +91,7 @@ export class MemberRouter extends AbstractRouter {
       };
 
     } catch (ex) {
+      LoggerService.error('Cannot add member', ex.message);
       throw new InternalServerError(JSON.stringify({
         status: StatusProtocol.Failed,
         step: MessageProtocol.Added,

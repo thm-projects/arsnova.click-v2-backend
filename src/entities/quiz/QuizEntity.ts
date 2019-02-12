@@ -250,6 +250,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       setTimeout(() => {
         if (!this._socketChannel.length) {
           DbDAO.update(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
+          DbDAO.deleteMany(DbCollection.Members, { currentQuizName: this.name });
         }
       }, 300000); // 5 minutes
     }
