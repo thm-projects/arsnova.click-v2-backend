@@ -1,7 +1,9 @@
 import { ObjectId } from 'bson';
 import * as WebSocket from 'ws';
 import CasDAO from '../../db/CasDAO';
+import DbDAO from '../../db/DbDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
+import { DbCollection } from '../../enums/DbOperation';
 import { IMemberEntity } from '../../interfaces/entities/Member/IMemberEntity';
 import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSerialized';
 import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
@@ -30,7 +32,7 @@ export class MemberEntity extends AbstractEntity implements IMemberEntity {
     this._currentQuizName = value;
 
     if (value) {
-      this.generateResponseForQuiz(QuizDAO.getQuizByName(value).questionList.length);
+      this._responses = this.generateResponseForQuiz(QuizDAO.getQuizByName(value).questionList.length);
     }
   }
 
@@ -118,7 +120,7 @@ export class MemberEntity extends AbstractEntity implements IMemberEntity {
     this._currentQuizName = data.currentQuizName;
 
     if (!data.responses) {
-      this.generateResponseForQuiz(QuizDAO.getQuizByName(data.currentQuizName).questionList.length);
+      this._responses = this.generateResponseForQuiz(QuizDAO.getQuizByName(data.currentQuizName).questionList.length);
     }
 
     CasDAO.remove(data.ticket);
@@ -141,6 +143,9 @@ export class MemberEntity extends AbstractEntity implements IMemberEntity {
 
     this.responses[this.getCurrentQuiz().currentQuestionIndex].value = data;
     this.responses[this.getCurrentQuiz().currentQuestionIndex].responseTime = responseTime;
+    DbDAO.updateOne(DbCollection.Members, {
+      _id: this.id,
+    }, { responses: this.responses });
     this.getCurrentQuiz().updatedMemberResponse({
       nickname: this.name,
       update: {
@@ -152,6 +157,9 @@ export class MemberEntity extends AbstractEntity implements IMemberEntity {
 
   public setConfidenceValue(confidence: number): void {
     this.responses[this.getCurrentQuiz().currentQuestionIndex].confidence = confidence;
+    DbDAO.updateOne(DbCollection.Members, {
+      _id: this.id,
+    }, { responses: this.responses });
     this.getCurrentQuiz().updatedMemberResponse({
       nickname: this.name,
       update: { confidence: confidence },
@@ -160,6 +168,9 @@ export class MemberEntity extends AbstractEntity implements IMemberEntity {
 
   public setReadingConfirmation(): void {
     this.responses[this.getCurrentQuiz().currentQuestionIndex].readingConfirmation = true;
+    DbDAO.updateOne(DbCollection.Members, {
+      _id: this.id,
+    }, { responses: this.responses });
     this.getCurrentQuiz().updatedMemberResponse({
       nickname: this.name,
       update: { readingConfirmation: true },
@@ -167,16 +178,16 @@ export class MemberEntity extends AbstractEntity implements IMemberEntity {
   }
 
   public generateResponseForQuiz(questionAmount: number): Array<IQuizResponse> {
-    this._responses.splice(0, this._responses.length);
+    const responses: Array<IQuizResponse> = [];
     for (let i = 0; i < questionAmount; i++) {
-      this._responses[i] = {
+      responses[i] = {
         value: [],
         responseTime: -1,
         confidence: 0,
         readingConfirmation: false,
       };
     }
-    return this._responses;
+    return responses;
   }
 
   private getCurrentQuiz(): IQuizEntity {

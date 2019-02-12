@@ -62,12 +62,20 @@ class DbDAO extends AbstractDAO<object> {
     return this._dbCon.collection(collection).find(query);
   }
 
-  public update(collection: string, query: FilterQuery<any>, update: object): Promise<UpdateWriteOpResult> {
+  public updateOne(collection: string, query: FilterQuery<any>, update: object): Promise<UpdateWriteOpResult> {
     if (!this._isConnected || !this._dbCon) {
       return;
     }
 
     return this._dbCon.collection(collection).updateOne(query, { $set: update });
+  }
+
+  public updateMany(collection: string, query: FilterQuery<any>, update: object): Promise<UpdateWriteOpResult> {
+    if (!this._isConnected || !this._dbCon) {
+      return;
+    }
+
+    return this._dbCon.collection(collection).updateMany(query, { $set: update });
   }
 
   public deleteOne(collection: string, query: FilterQuery<any>): Promise<DeleteWriteOpResultObject> {

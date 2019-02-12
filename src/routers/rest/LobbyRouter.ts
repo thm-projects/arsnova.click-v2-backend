@@ -33,7 +33,7 @@ export class LobbyRouter extends AbstractRouter {
     quiz.currentStartTimestamp = -1;
     const addedQuiz = QuizDAO.getQuizByName(quiz.name);
     if (addedQuiz) {
-      DbDAO.update(DbCollection.Quizzes, { _id: addedQuiz.id }, quiz);
+      DbDAO.updateOne(DbCollection.Quizzes, { _id: addedQuiz.id }, quiz);
     } else {
       const quizValidator = new QuizModel(quiz);
       const result = quizValidator.validateSync();
@@ -71,7 +71,7 @@ export class LobbyRouter extends AbstractRouter {
 
     const addedQuiz = QuizDAO.getQuizByName(quizName);
     if (addedQuiz) {
-      DbDAO.update(DbCollection.Quizzes, { _id: addedQuiz.id }, { state: QuizState.Inactive });
+      DbDAO.updateOne(DbCollection.Quizzes, { _id: addedQuiz.id }, { state: QuizState.Inactive });
     }
 
     return {

@@ -55,7 +55,7 @@ export class AdminRouter extends AbstractRouter {
     }
 
     if (originalUser && UserDAO.getUser(originalUser)) {
-      DbDAO.update(DbCollection.Users, { name: originalUser }, userData);
+      DbDAO.updateOne(DbCollection.Users, { name: originalUser }, userData);
       return;
     }
 

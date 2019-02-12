@@ -504,7 +504,7 @@ export class LibRouter extends AbstractRouter {
 
     if (!token || typeof token !== 'string' || token.length === 0) {
       token = await AuthService.generateToken(user);
-      DbDAO.update(DbCollection.Users, { _id: user.id }, { token });
+      DbDAO.updateOne(DbCollection.Users, { _id: user.id }, { token });
 
       return {
         status: StatusProtocol.Success,

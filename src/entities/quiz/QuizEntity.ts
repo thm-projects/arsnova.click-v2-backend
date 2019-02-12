@@ -251,7 +251,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     if (!this._socketChannel.length) {
       this._dropEmptyQuizTimeout = setTimeout(() => {
         if (!this._socketChannel.length) {
-          DbDAO.update(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
+          DbDAO.updateOne(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
           DbDAO.deleteMany(DbCollection.Members, { currentQuizName: this.name });
         }
       }, 300000); // 5 minutes
@@ -328,7 +328,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     }
     this._currentQuestionIndex = nextIndex;
 
-    DbDAO.update(DbCollection.Quizzes, { _id: this.id }, { currentQuestionIndex: nextIndex });
+    DbDAO.updateOne(DbCollection.Quizzes, { _id: this.id }, { currentQuestionIndex: nextIndex });
 
     this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
       status: StatusProtocol.Success,

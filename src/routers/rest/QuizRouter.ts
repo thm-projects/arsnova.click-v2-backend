@@ -197,7 +197,7 @@ export class QuizRouter extends AbstractRouter {
       }
 
       quiz.requestReadingConfirmation();
-      DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+      DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
         readingConfirmationRequested: true,
         state: QuizState.Running,
       });
@@ -207,7 +207,7 @@ export class QuizRouter extends AbstractRouter {
       };
     } else if (quiz.readingConfirmationRequested) {
       const currentStartTimestamp: number = new Date().getTime();
-      DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+      DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
         currentStartTimestamp,
         readingConfirmationRequested: false,
         state: QuizState.Running,
@@ -229,7 +229,7 @@ export class QuizRouter extends AbstractRouter {
         throw new BadRequestError(MessageProtocol.EndOfQuestions);
       }
       const currentStartTimestamp: number = new Date().getTime();
-      DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+      DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
         currentStartTimestamp,
         readingConfirmationRequested: false,
         state: QuizState.Running,
@@ -262,7 +262,7 @@ export class QuizRouter extends AbstractRouter {
       }));
     }
 
-    DbDAO.update(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quizName).id }, { currentStartTimestamp: -1 });
+    DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quizName).id }, { currentStartTimestamp: -1 });
 
     activeQuiz.stop();
 
@@ -403,7 +403,7 @@ export class QuizRouter extends AbstractRouter {
       }));
     }
 
-    DbDAO.update(DbCollection.Quizzes, { _id: activeQuiz.id }, { ['sessionConfig.' + quizSettings.target]: quizSettings.state });
+    DbDAO.updateOne(DbCollection.Quizzes, { _id: activeQuiz.id }, { ['sessionConfig.' + quizSettings.target]: quizSettings.state });
 
     return {
       status: StatusProtocol.Success,
@@ -472,7 +472,7 @@ export class QuizRouter extends AbstractRouter {
         throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
       }
       const newQuiz = Object.assign({}, existingQuiz.serialize(), quiz);
-      await DbDAO.update(DbCollection.Quizzes, { _id: existingQuiz.id }, newQuiz);
+      await DbDAO.updateOne(DbCollection.Quizzes, { _id: existingQuiz.id }, newQuiz);
       return new QuizEntity(newQuiz).serialize();
 
     } else {
@@ -493,7 +493,7 @@ export class QuizRouter extends AbstractRouter {
       }
       QuizDAO.convertLegacyQuiz(quiz);
 
-      DbDAO.update(DbCollection.Quizzes, { _id: existingQuiz.id }, quiz);
+      DbDAO.updateOne(DbCollection.Quizzes, { _id: existingQuiz.id }, quiz);
       return;
     }
 
@@ -556,7 +556,7 @@ export class QuizRouter extends AbstractRouter {
       return;
     }
 
-    DbDAO.update(DbCollection.Quizzes, { _id: quiz.id }, { state: QuizState.Inactive });
+    DbDAO.updateOne(DbCollection.Quizzes, { _id: quiz.id }, { state: QuizState.Inactive });
     DbDAO.deleteMany(DbCollection.Members, { currentQuizName: quiz.name });
 
     return {
@@ -585,7 +585,7 @@ export class QuizRouter extends AbstractRouter {
       return;
     }
 
-    DbDAO.update(DbCollection.Quizzes, { _id: quiz.id }, {
+    DbDAO.updateOne(DbCollection.Quizzes, { _id: quiz.id }, {
       state: QuizState.Active,
       currentQuestionIndex: -1,
       currentStartTimestamp: -1,
@@ -593,7 +593,7 @@ export class QuizRouter extends AbstractRouter {
 
     const members = MemberDAO.getMembersOfQuiz(quizName);
     if (members.length > 0) {
-      DbDAO.update(DbCollection.Members, { currentQuizName: quizName }, {
+      DbDAO.updateMany(DbCollection.Members, { currentQuizName: quizName }, {
         responses: members[0].generateResponseForQuiz(quiz.questionList.length),
       });
     }
@@ -685,7 +685,7 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
-    DbDAO.update(DbCollection.Quizzes, { _id: existingQuiz.id }, { visibility: QuizVisibility.Account });
+    DbDAO.updateOne(DbCollection.Quizzes, { _id: existingQuiz.id }, { visibility: QuizVisibility.Account });
   }
 
   @Get('/public')
