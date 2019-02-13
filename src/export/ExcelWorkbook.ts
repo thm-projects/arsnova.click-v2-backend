@@ -70,7 +70,6 @@ export class ExcelWorkbook implements IExcelWorkbook {
         case QuestionType.SingleChoiceQuestion:
         case QuestionType.YesNoSingleChoiceQuestion:
         case QuestionType.TrueFalseSingleChoiceQuestion:
-        case QuestionType.ABCDSingleChoiceQuestion:
           this._worksheets.push(new SingleChoiceExcelWorksheet(worksheetOptions));
           break;
         case QuestionType.MultipleChoiceQuestion:
@@ -80,6 +79,7 @@ export class ExcelWorkbook implements IExcelWorkbook {
           this._worksheets.push(new RangedExcelWorksheet(worksheetOptions));
           break;
         case QuestionType.SurveyQuestion:
+        case QuestionType.ABCDSingleChoiceQuestion:
           this._worksheets.push(new SurveyExcelWorksheet(worksheetOptions));
           break;
         case QuestionType.FreeTextQuestion:
