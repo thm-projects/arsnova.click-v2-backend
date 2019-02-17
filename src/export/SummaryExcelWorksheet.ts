@@ -1,6 +1,5 @@
 import * as path from 'path';
 import MemberDAO from '../db/MemberDAO';
-import { AbstractQuestionEntity } from '../entities/question/AbstractQuestionEntity';
 import { QuestionType } from '../enums/QuestionType';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
@@ -8,6 +7,36 @@ import { ILeaderBoardItemBase } from '../interfaces/leaderboard/ILeaderBoardItem
 import { Leaderboard } from '../lib/leaderboard/leaderboard';
 import { staticStatistics } from '../statistics';
 import { ExcelWorksheet } from './ExcelWorksheet';
+
+declare global {
+  namespace xlsx {
+    // noinspection TsLint
+    interface Row {
+      filter(config: object): void;
+
+      setHeight(height: number): void;
+
+      setWidth(width: number): void;
+    }
+
+    // noinspection TsLint
+    interface Worksheet {
+      cell: Function;
+      addImage: Function;
+
+      row(index: number): Row;
+    }
+
+    class Workbook {
+      constructor(config: object);
+    }
+
+    // noinspection TsLint
+    interface Workbook {
+      addWorksheet: Function;
+    }
+  }
+}
 
 export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
@@ -175,11 +204,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         return !!response.value && response.value !== -1;
       }).length;
     }).length;
-    const allResponses: Array<IMemberEntity> = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => {
-      return nickname.responses.map(response => {
-        return !!response.value && response.value !== -1 ? response.value : null;
-      });
-    });
+    const allResponses: Array<IMemberEntity> = MemberDAO.getMembersOfQuiz(this.quiz.name);
     const numberOfAttendees = this.quiz.memberGroups[0].members.length;
     const numberOfQuestions = this.quiz.questionList.length;
 
@@ -190,7 +215,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     this.ws.cell(currentRowIndex, 1).string(this.createdAt);
     this.ws.cell(currentRowIndex, this.columnsToFormat - 1, currentRowIndex, this.columnsToFormat, true)
-    .string(JSON.stringify(this.quiz));
+    .string(JSON.stringify(this.quiz.serialize()));
     currentRowIndex += 2;
 
     this.addLogoImage();
@@ -249,13 +274,8 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     let nextStartRow = currentRowIndex + 5;
     this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
-      let hasNotAllQuestionsCorrect = false;
-      this.quiz.questionList.forEach((item, index) => {
-        if (item.TYPE !== QuestionType.SurveyQuestion && leaderboardItem.correctQuestions.indexOf((index)) === -1) {
-          hasNotAllQuestionsCorrect = true;
-        }
-      });
-      if (hasNotAllQuestionsCorrect) {
+      if (this.quiz.questionList.some((item, index) => ![QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(item.TYPE)
+                                                       && leaderboardItem.correctQuestions.indexOf((index)) === -1)) {
         return;
       }
       nextColumnIndex = 1;
@@ -330,27 +350,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
   protected getLeaderboardData(): Array<ILeaderBoardItemBase> {
     const leaderBoard = new Leaderboard();
-    const correctResponses: any = {};
-
-    MemberDAO.getMembersOfQuiz(this.quiz.name).forEach(attendee => {
-      for (let i = 0; i < this.quiz.questionList.length; i++) {
-        const question: AbstractQuestionEntity = this.quiz.questionList[i];
-        if (leaderBoard.isCorrectResponse(attendee.responses[i], question) === 1) {
-          if (!correctResponses[attendee.name]) {
-            correctResponses[attendee.name] = {
-              responseTime: 0,
-              correctQuestions: [],
-              confidenceValue: 0,
-            };
-          }
-          correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-          correctResponses[attendee.name].correctQuestions.push(i);
-          correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-        }
-      }
-    });
-
-    return leaderBoard.objectToArray(correctResponses);
+    return leaderBoard.sortBy(leaderBoard.buildLeaderboard(this.quiz), 'score');
   }
 
   private addLogoImage(): void {

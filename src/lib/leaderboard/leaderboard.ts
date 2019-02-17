@@ -68,7 +68,7 @@ export class Leaderboard {
     }).filter(value => value.score > 0);
   }
 
-  public buildLeaderboard(activeQuiz: IQuizEntity, questionIndex: number): any {
+  public buildLeaderboard(activeQuiz: IQuizEntity, questionIndex?: number): any {
     let scoringLeaderboard: AbstractLeaderboardScore;
 
     if (activeQuiz.sessionConfig.leaderboardAlgorithm === LeaderboardConfiguration.TimeBased) {

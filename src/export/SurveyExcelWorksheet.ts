@@ -165,9 +165,9 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(leaderboardItem.name);
-      const nickItem = MemberDAO.getMembersOfQuiz(this.quiz.name).filter((nick: IMemberEntity) => {
+      const nickItem = MemberDAO.getMembersOfQuiz(this.quiz.name).find((nick: IMemberEntity) => {
         return nick.name === leaderboardItem.name;
-      })[0];
+      });
       if (this._isCasRequired) {
         const profile = nickItem.casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
