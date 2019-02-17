@@ -15,14 +15,20 @@ export class PointBasedLeaderboardScore extends AbstractLeaderboardScore {
   }
 
   public getScoreForPartiallyCorrect(responseTime: number): number {
-    return 0;
+    return this.algorithm.parameters.bonusForPartiallyCorrect + this.algorithm.parameters.bonusForTime.parameter.find(
+      val => val.value <= (responseTime / 1000)).bonus;
   }
 
-  public getScoreForGroup({ memberGroupResults, correctResponses, partiallyCorrectResponses, activeQuiz }): object {
+  public getScoreForGroup({ memberGroupResults, correctResponses, activeQuiz }): object {
     Object.values(memberGroupResults).forEach((memberGroup: any) => {
       memberGroup.score += Object.values(correctResponses).map((val: any) => val.score);
     });
 
     return memberGroupResults;
+  }
+
+  public getScoreForWrongAnswer(responseTime: number): number {
+    return this.algorithm.parameters.bonusForWrong + this.algorithm.parameters.bonusForTime.parameter.find(
+      val => val.value <= (responseTime / 1000)).bonus;
   }
 }

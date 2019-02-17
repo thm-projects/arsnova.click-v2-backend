@@ -3,8 +3,12 @@ import { ILeaderboardConfigurationParamterBonusAlgorithm } from './ILeaderboardC
 export interface ILeaderboardConfigurationAlgorithm {
   algorithm: string;
   parameters: {
-    bonusForCorrect: number; bonusForTime: {
-      onlyCorrect: boolean; parameter: Array<ILeaderboardConfigurationParamterBonusAlgorithm>;
+    bonusForCorrect: number; //
+    bonusForPartiallyCorrect: number; //
+    bonusForWrong: number; //
+    bonusForTime: {
+      onlyCorrect: boolean; //
+      parameter: Array<ILeaderboardConfigurationParamterBonusAlgorithm>;
     }
   };
 }

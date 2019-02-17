@@ -11,6 +11,8 @@ export abstract class AbstractLeaderboardScore {
 
   public abstract getScoreForPartiallyCorrect(responseTime: number): number;
 
-  public abstract getScoreForGroup({ memberGroupResults, correctResponses, partiallyCorrectResponses, activeQuiz }): object;
-}
+  public abstract getScoreForGroup({ memberGroupResults, correctResponses, activeQuiz }): object;
 
+  public abstract getScoreForWrongAnswer(responseTime: number): number;
+
+}

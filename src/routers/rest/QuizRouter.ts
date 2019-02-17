@@ -662,14 +662,13 @@ export class QuizRouter extends AbstractRouter {
       }));
     }
 
-    const { correctResponses, partiallyCorrectResponses, memberGroupResults } = this._leaderboard.buildLeaderboard(activeQuiz, questionIndex);
+    const { correctResponses, memberGroupResults } = this._leaderboard.buildLeaderboard(activeQuiz, questionIndex);
 
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.GetLeaderboardData,
       payload: {
         correctResponses: this._leaderboard.sortBy(correctResponses, 'score'),
-        partiallyCorrectResponses: this._leaderboard.sortBy(partiallyCorrectResponses, 'score'),
         memberGroupResults: this._leaderboard.sortBy(memberGroupResults, 'score'),
       },
     };

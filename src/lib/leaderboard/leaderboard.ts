@@ -65,7 +65,7 @@ export class Leaderboard {
         confidenceValue: obj[value].confidenceValue / obj[value].correctQuestions.length,
         score: obj[value].score,
       };
-    });
+    }).filter(value => value.score > 0);
   }
 
   public buildLeaderboard(activeQuiz: IQuizEntity, questionIndex: number): any {
@@ -82,7 +82,6 @@ export class Leaderboard {
     const questionAmount: number = activeQuiz.questionList.length;
     const endIndex: number = isNaN(questionIndex) || questionIndex < 0 || questionIndex > questionAmount ? questionAmount : questionIndex + 1;
     const correctResponses: any = {};
-    const partiallyCorrectResponses: any = {};
 
     const orderByGroups = activeQuiz.memberGroups.length > 1;
     const memberGroupResults = {};
@@ -107,43 +106,35 @@ export class Leaderboard {
           if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
             continue;
           }
+          if (!correctResponses[attendee.name]) {
+            correctResponses[attendee.name] = {
+              responseTime: 0,
+              correctQuestions: [],
+              confidenceValue: 0,
+              score: 0,
+            };
+          }
+          correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
+          correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
+
           const isCorrect = this.isCorrectResponse(attendee.responses[i], question);
           if (isCorrect === 1) {
-            if (!correctResponses[attendee.name]) {
-              correctResponses[attendee.name] = {
-                responseTime: 0,
-                correctQuestions: [],
-                confidenceValue: 0,
-                score: 0,
-              };
-            }
             correctResponses[attendee.name].correctQuestions.push(i);
-            correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-            correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
             correctResponses[attendee.name].score += scoringLeaderboard.getScoreForCorrect(attendee.responses[i].responseTime);
 
             memberGroupResults[memberGroup.name].correctQuestions.push(i);
             memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
 
           } else if (isCorrect === 0) {
+            correctResponses[attendee.name].correctQuestions.push(i);
+            correctResponses[attendee.name].score += scoringLeaderboard.getScoreForPartiallyCorrect(attendee.responses[i].responseTime);
 
-            if (!partiallyCorrectResponses[attendee.name]) {
-              partiallyCorrectResponses[attendee.name] = {
-                responseTime: 0,
-                correctQuestions: [],
-                confidenceValue: 0,
-                score: 0,
-              };
-            }
-
-            partiallyCorrectResponses[attendee.name].correctQuestions.push(i);
-            partiallyCorrectResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-            partiallyCorrectResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
-            partiallyCorrectResponses[attendee.name].score += scoringLeaderboard.getScoreForPartiallyCorrect(attendee.responses[i].responseTime);
+            memberGroupResults[memberGroup.name].correctQuestions.push(i);
+            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
 
           } else {
-
-            delete correctResponses[attendee.name];
+            correctResponses[attendee.name].score += scoringLeaderboard.getScoreForWrongAnswer(attendee.responses[i].responseTime);
+            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
             break;
           }
         }
@@ -154,14 +145,12 @@ export class Leaderboard {
       scoringLeaderboard.getScoreForGroup({
         memberGroupResults,
         correctResponses,
-        partiallyCorrectResponses,
         activeQuiz,
       });
     }
 
     return {
       correctResponses,
-      partiallyCorrectResponses,
       memberGroupResults,
     };
   }
@@ -170,7 +159,7 @@ export class Leaderboard {
   public sortBy(correctResponses: object, parameter: string): Array<ILeaderBoardItemBase>;
   public sortBy(correctResponses: object | Array<ILeaderBoardItemBase>, parameter: string): Array<ILeaderBoardItemBase> {
     const comparator = (a, b) => {
-      return a[parameter] > b[parameter] ? 1 : a[parameter] === b[parameter] ? 0 : -1;
+      return a[parameter] > b[parameter] ? -1 : a[parameter] === b[parameter] ? 0 : 1;
     };
 
     if (Array.isArray(correctResponses)) {

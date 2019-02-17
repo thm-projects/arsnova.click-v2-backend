@@ -14,10 +14,10 @@ export class TimeBasedLeaderboardScore extends AbstractLeaderboardScore {
   }
 
   public getScoreForPartiallyCorrect(responseTime: number): number {
-    return 0;
+    return Math.round(this.algorithm.parameters.bonusForPartiallyCorrect / (responseTime / 1000) * 100);
   }
 
-  public getScoreForGroup({ memberGroupResults, correctResponses, partiallyCorrectResponses, activeQuiz }): object {
+  public getScoreForGroup({ memberGroupResults, correctResponses, activeQuiz }): object {
     Object.values(memberGroupResults).forEach((memberGroup: any) => {
       const maxMembersPerGroup = activeQuiz.sessionConfig.nicks.maxMembersPerGroup;
       // (10 / 1) * (1 / 1) * (1.815 / 1) * 100 = 1815
@@ -27,5 +27,9 @@ export class TimeBasedLeaderboardScore extends AbstractLeaderboardScore {
     });
 
     return memberGroupResults;
+  }
+
+  public getScoreForWrongAnswer(responseTime: number): number {
+    return Math.round(this.algorithm.parameters.bonusForWrong / (responseTime / 1000) * 100);
   }
 }

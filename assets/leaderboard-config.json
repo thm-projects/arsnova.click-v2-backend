@@ -2,7 +2,9 @@
   {
     "algorithm": "PointBased",
     "parameter": {
-      "bonusForCorrect": 1,
+      "bonusForCorrect": 2,
+      "bonusForPartiallyCorrect": 1,
+      "bonusForWrong": 0,
       "bonusForTime": {
         "onlyCorrect": true,
         "parameter": [
@@ -21,7 +23,9 @@
   {
     "algorithm": "TimeBased",
     "parameters": {
-      "bonusForCorrect": 1
+      "bonusForCorrect": 2,
+      "bonusForPartiallyCorrect": 1,
+      "bonusForWrong": 0
     }
   }
 ]
