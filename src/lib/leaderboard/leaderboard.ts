@@ -1,3 +1,4 @@
+import MemberDAO from '../../db/MemberDAO';
 import { FreeTextAnswerEntity } from '../../entities/answer/FreetextAnwerEntity';
 import { AbstractChoiceQuestionEntity } from '../../entities/question/AbstractChoiceQuestionEntity';
 import { AbstractQuestionEntity } from '../../entities/question/AbstractQuestionEntity';
@@ -8,6 +9,7 @@ import { QuestionType } from '../../enums/QuestionType';
 import { ILeaderBoardItemBase } from '../../interfaces/leaderboard/ILeaderBoardItemBase';
 import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
+import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
 import { AbstractLeaderboardScore } from './AbstractLeaderboardScore';
 import { PointBasedLeaderboardScore } from './PointBasedLeaderboardScore';
@@ -93,8 +95,14 @@ export class Leaderboard {
         memberAmount: memberGroup.members.length,
       };
 
-      memberGroup.members.forEach(attendee => {
-        for (let i = questionIndex || 0; i < endIndex; i++) {
+      memberGroup.members.forEach(attendeeName => {
+        const attendee = MemberDAO.getMembersOfQuiz(activeQuiz.name).find(quizAttendee => quizAttendee.name === attendeeName);
+        if (!attendee) {
+          LoggerService.error(`Cannot find member ${attendeeName} in DAO which should be in quiz ${activeQuiz.name}`);
+          return;
+        }
+
+        for (let i = 0; i < endIndex; i++) {
           const question: AbstractQuestionEntity = activeQuiz.questionList[i];
           if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
             continue;
@@ -124,6 +132,7 @@ export class Leaderboard {
                 responseTime: 0,
                 correctQuestions: [],
                 confidenceValue: 0,
+                score: 0,
               };
             }
 
@@ -135,7 +144,6 @@ export class Leaderboard {
           } else {
 
             delete correctResponses[attendee.name];
-            delete partiallyCorrectResponses[attendee.name];
             break;
           }
         }
@@ -156,6 +164,20 @@ export class Leaderboard {
       partiallyCorrectResponses,
       memberGroupResults,
     };
+  }
+
+  public sortBy(correctResponses: Array<ILeaderBoardItemBase>, parameter: string): Array<ILeaderBoardItemBase>;
+  public sortBy(correctResponses: object, parameter: string): Array<ILeaderBoardItemBase>;
+  public sortBy(correctResponses: object | Array<ILeaderBoardItemBase>, parameter: string): Array<ILeaderBoardItemBase> {
+    const comparator = (a, b) => {
+      return a[parameter] > b[parameter] ? 1 : a[parameter] === b[parameter] ? 0 : -1;
+    };
+
+    if (Array.isArray(correctResponses)) {
+      return correctResponses.sort(comparator);
+    } else {
+      return this.objectToArray(correctResponses).sort(comparator);
+    }
   }
 
   private isCorrectSingleChoiceQuestion(response: number, question: AbstractChoiceQuestionEntity): boolean {

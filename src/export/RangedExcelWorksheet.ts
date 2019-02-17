@@ -1,3 +1,4 @@
+import MemberDAO from '../db/MemberDAO';
 import { RangedQuestionEntity } from '../entities/question/RangedQuestionEntity';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
@@ -151,7 +152,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       if (this._isCasRequired) {
         nextColumnIndex += 2;
       }
-      const responseItem = this.quiz.memberGroups[0].members.filter(nickitem => {
+      const responseItem = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickitem => {
         return nickitem.name === leaderboardItem.name;
       })[0].responses[this._questionIndex];
       const castedQuestion = <RangedQuestionEntity>this._question;
@@ -216,7 +217,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      this.quiz.memberGroups[0].members.forEach((nickItem) => {
+      MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -236,7 +237,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
 
     let nextStartRow = 10;
     this.leaderBoardData.forEach((leaderboardItem) => {
-      const responseItem = this.quiz.memberGroups[0].members.filter(nickitem => {
+      const responseItem = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickitem => {
         return nickitem.name === leaderboardItem.name;
       })[0].responses[this._questionIndex];
 
@@ -244,7 +245,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(leaderboardItem.name);
       if (this._isCasRequired) {
-        const profile = this.quiz.memberGroups[0].members.filter((nick: IMemberEntity) => {
+        const profile = MemberDAO.getMembersOfQuiz(this.quiz.name).filter((nick: IMemberEntity) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);

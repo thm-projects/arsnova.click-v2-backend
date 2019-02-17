@@ -1,3 +1,4 @@
+import MemberDAO from '../db/MemberDAO';
 import { FreeTextAnswerEntity } from '../entities/answer/FreetextAnwerEntity';
 import { FreeTextQuestionEntity } from '../entities/question/FreeTextQuestionEntity';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
@@ -8,7 +9,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
   private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
   private _question: FreeTextQuestionEntity;
   private readonly _questionIndex: number;
-  private allResponses: Array<IMemberEntity> = this.quiz.memberGroups[0].members.filter(nickname => {
+  private allResponses: Array<IMemberEntity> = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => {
     return nickname.responses.filter(response => {
       return !!response.value && response.value !== -1 ? response.value : null;
     })[0];
@@ -168,7 +169,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      this.quiz.memberGroups[0].members.forEach((nickItem) => {
+      MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));

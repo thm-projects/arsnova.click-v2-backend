@@ -230,7 +230,7 @@ export class MemberRouter extends AbstractRouter {
     }
     const names: Array<String> = activeQuiz.sessionConfig.nicks.selectedNicks.filter((nick) => {
       return !activeQuiz.memberGroups.find(memberGroup => {
-        return !!memberGroup.members.find(value => value.name === nick);
+        return !!memberGroup.members.find(value => value === nick);
       });
     });
     return {

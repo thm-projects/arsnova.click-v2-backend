@@ -1,3 +1,4 @@
+import MemberDAO from '../db/MemberDAO';
 import { AbstractAnswerEntity } from '../entities/answer/AbstractAnswerEntity';
 import { SingleChoiceQuestionEntity } from '../entities/question/SingleChoiceQuestionEntity';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
@@ -100,7 +101,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       lastColumn: minColums,
     });
 
-    const responses = this.quiz.memberGroups[0].members.map(nickname => nickname.responses[this._questionIndex]);
+    const responses = MemberDAO.getMembersOfQuiz(this.quiz.name).map(nickname => nickname.responses[this._questionIndex]);
     const hasEntries: boolean = responses.length > 0;
     const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
     const attendeeEntryRowStyle: any = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
@@ -148,7 +149,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
 
   public addSheetData(): void {
     const answerList = this._question.answerOptionList;
-    const allResponses: Array<IMemberEntity> = this.quiz.memberGroups[0].members.filter(nickname => {
+    const allResponses: Array<IMemberEntity> = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => {
       return nickname.responses.map(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
@@ -172,7 +173,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      this.quiz.memberGroups[0].members.forEach((nickItem) => {
+      MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -196,7 +197,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile: any = this.quiz.memberGroups[0].members.filter(nickname => nickname.name === responseItem.name)[0].casProfile;
+        const profile: any = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => nickname.name === responseItem.name)[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         // noinspection SuspiciousInstanceOfGuard
         this.ws.cell(nextStartRow, nextColumnIndex++).string(Array.isArray(profile.mail) ? profile.mail.slice(-1)[0] : profile.mail);

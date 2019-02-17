@@ -1,3 +1,4 @@
+import MemberDAO from '../db/MemberDAO';
 import { SurveyQuestionEntity } from '../entities/question/SurveyQuestionEntity';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
@@ -141,7 +142,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(7, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      this.quiz.memberGroups[0].members.forEach((nickItem) => {
+      MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(7, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -164,7 +165,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(leaderboardItem.name);
-      const nickItem = this.quiz.memberGroups[0].members.filter((nick: IMemberEntity) => {
+      const nickItem = MemberDAO.getMembersOfQuiz(this.quiz.name).filter((nick: IMemberEntity) => {
         return nick.name === leaderboardItem.name;
       })[0];
       if (this._isCasRequired) {

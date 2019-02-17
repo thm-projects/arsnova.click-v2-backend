@@ -1,6 +1,7 @@
 import { ObjectId } from 'bson';
 import { MemberEntity } from '../entities/member/MemberEntity';
 import { DbCollection, DbEvent } from '../enums/DbOperation';
+import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { AbstractDAO } from './AbstractDAO';
 import DbDAO from './DbDAO';
@@ -66,7 +67,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     }
   }
 
-  public getMembersOfQuiz(quizName: string): Array<MemberEntity> {
+  public getMembersOfQuiz(quizName: string): Array<IMemberEntity> {
     return this.storage.filter(val => !!val.currentQuizName.match(new RegExp(`^${quizName}$`, 'i')));
   }
 

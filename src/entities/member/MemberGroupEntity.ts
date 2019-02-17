@@ -1,18 +1,15 @@
-import MemberDAO from '../../db/MemberDAO';
-import { IMemberEntity } from '../../interfaces/entities/Member/IMemberEntity';
-import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSerialized';
 import { IMemberGroupEntity } from '../../interfaces/users/IMemberGroupEntity';
 import { IMemberGroupSerialized } from '../../interfaces/users/IMemberGroupSerialized';
 import { AbstractEntity } from '../AbstractEntity';
 
 export class MemberGroupEntity extends AbstractEntity implements IMemberGroupEntity {
-  private _members: Array<IMemberEntity>;
+  private _members: Array<string>;
 
-  get members(): Array<IMemberEntity> {
+  get members(): Array<string> {
     return this._members;
   }
 
-  set members(value: Array<IMemberEntity>) {
+  set members(value: Array<string>) {
     this._members = value;
   }
 
@@ -26,13 +23,13 @@ export class MemberGroupEntity extends AbstractEntity implements IMemberGroupEnt
     super();
 
     this._name = data.name;
-    this._members = (data.members || []).map(val => MemberDAO.getMemberByName(val.name));
+    this._members = data.members || [];
   }
 
   public serialize(): IMemberGroupSerialized {
     return {
       name: this.name,
-      members: this.members.map(val => val ? val.serialize() : {} as IMemberSerialized),
+      members: this.members,
     };
   }
 }

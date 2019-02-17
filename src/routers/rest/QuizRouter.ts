@@ -668,9 +668,9 @@ export class QuizRouter extends AbstractRouter {
       status: StatusProtocol.Success,
       step: MessageProtocol.GetLeaderboardData,
       payload: {
-        correctResponses: this._leaderboard.objectToArray(correctResponses),
-        partiallyCorrectResponses: this._leaderboard.objectToArray(partiallyCorrectResponses),
-        memberGroupResults: this._leaderboard.objectToArray(memberGroupResults),
+        correctResponses: this._leaderboard.sortBy(correctResponses, 'score'),
+        partiallyCorrectResponses: this._leaderboard.sortBy(partiallyCorrectResponses, 'score'),
+        memberGroupResults: this._leaderboard.sortBy(memberGroupResults, 'score'),
       },
     };
   }

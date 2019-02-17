@@ -1,5 +1,6 @@
 import * as xlsx from 'excel4node';
 import * as MessageFormat from 'messageformat';
+import MemberDAO from '../db/MemberDAO';
 import { AbstractQuestionEntity } from '../entities/question/AbstractQuestionEntity';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { ILeaderBoardItemBase } from '../interfaces/leaderboard/ILeaderBoardItemBase';
@@ -72,11 +73,11 @@ export abstract class ExcelWorksheet {
 
     this._columnsToFormat = 4;
     if (questionIndex) {
-      this._responsesWithConfidenceValue = this._quiz.memberGroups[0].members.filter(nickname => {
+      this._responsesWithConfidenceValue = MemberDAO.getMembersOfQuiz(this._quiz.name).filter(nickname => {
         return nickname.responses[questionIndex].confidence > -1;
       });
     } else {
-      this._responsesWithConfidenceValue = this._quiz.memberGroups[0].members.filter(nickname => {
+      this._responsesWithConfidenceValue = MemberDAO.getMembersOfQuiz(this._quiz.name).filter(nickname => {
         return nickname.responses.filter(responseItem => responseItem.confidence > -1);
       });
     }
@@ -102,7 +103,7 @@ export abstract class ExcelWorksheet {
     const correctResponses: any = {};
 
     const question: AbstractQuestionEntity = this.quiz.questionList[questionIndex];
-    this.quiz.memberGroups[0].members.forEach(attendee => {
+    MemberDAO.getMembersOfQuiz(this._quiz.name).forEach(attendee => {
       if (leaderBoard.isCorrectResponse(attendee.responses[questionIndex], question) === 1) {
         if (!correctResponses[attendee.name]) {
           correctResponses[attendee.name] = {

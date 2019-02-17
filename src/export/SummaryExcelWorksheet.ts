@@ -1,4 +1,5 @@
 import * as path from 'path';
+import MemberDAO from '../db/MemberDAO';
 import { AbstractQuestionEntity } from '../entities/question/AbstractQuestionEntity';
 import { QuestionType } from '../enums/QuestionType';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
@@ -169,12 +170,12 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
   public addSheetData(): void {
     let currentRowIndex = 1;
-    const numberOfResponses = this.quiz.memberGroups[0].members.filter(nickname => {
+    const numberOfResponses = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => {
       return nickname.responses.filter(response => {
         return !!response.value && response.value !== -1;
       }).length;
     }).length;
-    const allResponses: Array<IMemberEntity> = this.quiz.memberGroups[0].members.filter(nickname => {
+    const allResponses: Array<IMemberEntity> = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => {
       return nickname.responses.map(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
@@ -262,7 +263,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       const targetRow = indexInList + currentRowIndex;
       this.ws.cell(targetRow, nextColumnIndex++).string(leaderboardItem.name);
       if (this._isCasRequired) {
-        const profile = this.quiz.memberGroups[0].members.filter((nick: IMemberEntity) => {
+        const profile = MemberDAO.getMembersOfQuiz(this.quiz.name).filter((nick: IMemberEntity) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
@@ -303,7 +304,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       const targetRow = indexInList + nextStartRow;
       this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile = this.quiz.memberGroups[0].members.filter((nick: IMemberEntity) => {
+        const profile = MemberDAO.getMembersOfQuiz(this.quiz.name).filter((nick: IMemberEntity) => {
           return nick.name === responseItem.name;
         })[0].casProfile;
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
@@ -331,7 +332,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     const leaderBoard = new Leaderboard();
     const correctResponses: any = {};
 
-    this.quiz.memberGroups[0].members.forEach(attendee => {
+    MemberDAO.getMembersOfQuiz(this.quiz.name).forEach(attendee => {
       for (let i = 0; i < this.quiz.questionList.length; i++) {
         const question: AbstractQuestionEntity = this.quiz.questionList[i];
         if (leaderBoard.isCorrectResponse(attendee.responses[i], question) === 1) {

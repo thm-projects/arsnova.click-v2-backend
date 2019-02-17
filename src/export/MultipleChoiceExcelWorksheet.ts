@@ -1,3 +1,4 @@
+import MemberDAO from '../db/MemberDAO';
 import { AbstractAnswerEntity } from '../entities/answer/AbstractAnswerEntity';
 import { MultipleChoiceQuestionEntity } from '../entities/question/MultipleChoiceQuestionEntity';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
@@ -102,7 +103,8 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     });
 
     this.quiz.memberGroups.forEach((memberGroup) => {
-      const responses = memberGroup.members.map(nickname => nickname.responses[this._questionIndex]);
+      const responses = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(attendee => attendee.groupName === memberGroup.name)
+      .map(nickname => nickname.responses[this._questionIndex]);
       const hasEntries: boolean = responses.length > 0;
       const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
       const attendeeEntryRowStyle: Object = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle,
@@ -138,7 +140,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
 
   public addSheetData(): void {
     const answerList = this._question.answerOptionList;
-    const allResponses: Array<IMemberEntity> = this.quiz.memberGroups[0].members.filter(nickname => {
+    const allResponses: Array<IMemberEntity> = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => {
       return nickname.responses.map(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
@@ -153,7 +155,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      this.quiz.memberGroups[0].members.forEach((nickItem) => {
+      MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -182,13 +184,13 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile = this.quiz.memberGroups[0].members.filter((nick: IMemberEntity) => {
+        const profile = MemberDAO.getMembersOfQuiz(this.quiz.name).filter((nick: IMemberEntity) => {
           return nick.name === responseItem.name;
         })[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
       }
-      const nickItem = this.quiz.memberGroups[0].members.filter(nick => nick.name === responseItem.name)[0];
+      const nickItem = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nick => nick.name === responseItem.name)[0];
       const chosenAnswer = this._question.answerOptionList.filter((answer, index) => {
         const responseValue = nickItem.responses[this._questionIndex].value;
         // noinspection SuspiciousInstanceOfGuard

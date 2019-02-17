@@ -143,10 +143,24 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     this.updateEmitter.emit(DbEvent.Change, this.getJoinableQuizzes());
   }
 
-  public addQuiz(doc: IQuizSerialized): IQuizEntity {
+  public async addQuiz(doc: IQuizSerialized): Promise<IQuizEntity> {
     if (this.getQuizByName(doc.name)) {
       throw new Error(`Duplicate quiz insertion: ${doc.name}`);
     }
+
+    await DbDAO.readMany(DbCollection.Members, { currentQuizName: doc.name }).forEach(memberDoc => {
+      if (!Array.isArray(doc.memberGroups)) {
+        doc.memberGroups = [];
+      }
+      if (!doc.memberGroups.find(memberGroup => memberGroup.name === memberDoc.groupName)) {
+        doc.memberGroups.push(new MemberGroupEntity({ name: memberDoc.groupName }));
+      }
+      if (doc.memberGroups.find(memberGroup => memberGroup.name === memberDoc.groupName).members.includes(memberDoc.name)) {
+        return;
+      }
+
+      doc.memberGroups.find(memberGroup => memberGroup.name === memberDoc.groupName).members.push(memberDoc.name);
+    });
 
     const entity = new QuizEntity(doc);
     this.storage.push(entity);

@@ -8,7 +8,6 @@ import { slow, suite, test } from 'mocha-typescript';
 import * as path from 'path';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { FreeTextAnswerEntity } from '../../entities/answer/FreetextAnwerEntity';
-import { MemberEntity } from '../../entities/member/MemberEntity';
 import { FreeTextQuestionEntity } from '../../entities/question/FreeTextQuestionEntity';
 import { RangedQuestionEntity } from '../../entities/question/RangedQuestionEntity';
 import { SurveyQuestionEntity } from '../../entities/question/SurveyQuestionEntity';
@@ -114,13 +113,7 @@ class ExcelExportTestSuite {
   public async addMembers(): Promise<void> {
     const quiz = QuizDAO.getActiveQuizByName(this._hashtag);
     for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
-      quiz.memberGroups[0].members.push(new MemberEntity({
-        id: '',
-        name: `testnick${memberIndex + 1}`,
-        groupName: 'Default',
-        token: 'token',
-        currentQuizName: this._hashtag,
-      }));
+      quiz.memberGroups[0].members.push(`testnick${memberIndex + 1}`);
     }
     await assert.equal(quiz.memberGroups[0].members.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
   }
@@ -189,12 +182,14 @@ class ExcelExportTestSuite {
           default:
             throw new Error(`Unsupported question type ${question.TYPE}`);
         }
-        quiz.memberGroups[0].members[memberIndex].responses.push({
-          value: value,
-          responseTime: this.randomIntFromInterval(0, quiz.questionList[questionIndex].timer),
-          confidence: this.randomIntFromInterval(0, 100),
-          readingConfirmation: true,
-        });
+        const responses = [
+          {
+            value: value,
+            responseTime: this.randomIntFromInterval(0, quiz.questionList[questionIndex].timer),
+            confidence: this.randomIntFromInterval(0, 100),
+            readingConfirmation: true,
+          },
+        ];
       }
     }
   }

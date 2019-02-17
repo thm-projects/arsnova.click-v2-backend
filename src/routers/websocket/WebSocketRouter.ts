@@ -1,10 +1,10 @@
 import * as WebSocket from 'ws';
+import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { DbEvent } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { WebSocketStatus } from '../../enums/WebSocketStatus';
 import { IMessage } from '../../interfaces/communication/IMessage';
-import { IMemberEntity } from '../../interfaces/entities/Member/IMemberEntity';
 import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
 import { IGlobal } from '../../main';
 import LoggerService from '../../services/LoggerService';
@@ -33,14 +33,7 @@ export class WebSocketRouter {
     } else {
       res.step = MessageProtocol.AllPlayers;
       res.payload = {
-        members: activeQuiz.memberGroups.map((memberGroup) => {
-          // TODO: this does strange stuff
-          return memberGroup.members.map((nickname: IMemberEntity) => {
-            return nickname.serialize();
-          });
-        }).reduce((previousValue, currentValue) => {
-          return previousValue.concat(...currentValue);
-        }),
+        members: MemberDAO.getMembersOfQuiz(activeQuiz.name).map(nickname => nickname.serialize()),
       };
     }
     ws.send(JSON.stringify(res));

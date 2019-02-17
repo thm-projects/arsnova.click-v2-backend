@@ -184,7 +184,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
         return;
       }
 
-      this.memberGroups.find(group => group.name === member.groupName).members.push(member);
+      this.memberGroups.find(group => group.name === member.groupName).members.push(member.name);
       this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
         status: StatusProtocol.Success,
         step: MessageProtocol.Added,
@@ -197,7 +197,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       }
 
       const memberGroup = this.memberGroups.find(group => group.name === member.groupName);
-      memberGroup.members.splice(memberGroup.members.findIndex(quizMembers => quizMembers.name === member.name), 1);
+      memberGroup.members.splice(memberGroup.members.findIndex(quizMember => quizMember === member.name), 1);
 
       this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
         status: StatusProtocol.Success,
