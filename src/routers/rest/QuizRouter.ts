@@ -183,8 +183,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/next')
-  public startQuiz(@HeaderParam('authorization') token: string, //
-  ): object {
+  public async startQuiz(@HeaderParam('authorization') token: string): Promise<object> {
     const quiz = QuizDAO.getQuizByToken(token);
     if (!quiz || ![QuizState.Active, QuizState.Running].includes(quiz.state)) {
       throw new InternalServerError(MessageProtocol.IsInactive);
@@ -197,7 +196,7 @@ export class QuizRouter extends AbstractRouter {
       }
 
       quiz.requestReadingConfirmation();
-      DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+      await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
         readingConfirmationRequested: true,
         state: QuizState.Running,
       });
@@ -207,7 +206,7 @@ export class QuizRouter extends AbstractRouter {
       };
     } else if (quiz.readingConfirmationRequested) {
       const currentStartTimestamp: number = new Date().getTime();
-      DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+      await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
         currentStartTimestamp,
         readingConfirmationRequested: false,
         state: QuizState.Running,
@@ -229,7 +228,7 @@ export class QuizRouter extends AbstractRouter {
         throw new BadRequestError(MessageProtocol.EndOfQuestions);
       }
       const currentStartTimestamp: number = new Date().getTime();
-      DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+      await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
         currentStartTimestamp,
         readingConfirmationRequested: false,
         state: QuizState.Running,
