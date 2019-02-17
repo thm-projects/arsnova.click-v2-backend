@@ -10,8 +10,7 @@ import { ExcelWorksheet } from './ExcelWorksheet';
 
 declare global {
   namespace xlsx {
-    // noinspection TsLint
-    interface Row {
+    interface IRow {
       filter(config: object): void;
 
       setHeight(height: number): void;
@@ -19,20 +18,14 @@ declare global {
       setWidth(width: number): void;
     }
 
-    // noinspection TsLint
-    interface Worksheet {
+    interface IWorksheet {
       cell: Function;
       addImage: Function;
 
-      row(index: number): Row;
+      row(index: number): IRow;
     }
 
-    class Workbook {
-      constructor(config: object);
-    }
-
-    // noinspection TsLint
-    interface Workbook {
+    interface IWorkbook {
       addWorksheet: Function;
     }
   }
