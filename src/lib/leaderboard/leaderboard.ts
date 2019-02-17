@@ -81,7 +81,7 @@ export class Leaderboard {
 
     const questionAmount: number = activeQuiz.questionList.length;
     const endIndex: number = isNaN(questionIndex) || questionIndex < 0 || questionIndex > questionAmount ? questionAmount : questionIndex + 1;
-    const correctResponses: any = {};
+    const responses: any = {};
 
     const orderByGroups = activeQuiz.memberGroups.length > 1;
     const memberGroupResults = {};
@@ -106,36 +106,34 @@ export class Leaderboard {
           if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
             continue;
           }
-          if (!correctResponses[attendee.name]) {
-            correctResponses[attendee.name] = {
+          if (!responses[attendee.name]) {
+            responses[attendee.name] = {
               responseTime: 0,
               correctQuestions: [],
               confidenceValue: 0,
               score: 0,
             };
           }
-          correctResponses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-          correctResponses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
+          responses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
+          responses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
+
+          memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
 
           const isCorrect = this.isCorrectResponse(attendee.responses[i], question);
           if (isCorrect === 1) {
-            correctResponses[attendee.name].correctQuestions.push(i);
-            correctResponses[attendee.name].score += scoringLeaderboard.getScoreForCorrect(attendee.responses[i].responseTime);
+            responses[attendee.name].correctQuestions.push(i);
+            responses[attendee.name].score += scoringLeaderboard.getScoreForCorrect(attendee.responses[i].responseTime);
 
             memberGroupResults[memberGroup.name].correctQuestions.push(i);
-            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
 
           } else if (isCorrect === 0) {
-            correctResponses[attendee.name].correctQuestions.push(i);
-            correctResponses[attendee.name].score += scoringLeaderboard.getScoreForPartiallyCorrect(attendee.responses[i].responseTime);
+            responses[attendee.name].correctQuestions.push(i);
+            responses[attendee.name].score += scoringLeaderboard.getScoreForPartiallyCorrect(attendee.responses[i].responseTime);
 
             memberGroupResults[memberGroup.name].correctQuestions.push(i);
-            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
 
           } else {
-            correctResponses[attendee.name].score += scoringLeaderboard.getScoreForWrongAnswer(attendee.responses[i].responseTime);
-            memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
-            break;
+            responses[attendee.name].score += scoringLeaderboard.getScoreForWrongAnswer(attendee.responses[i].responseTime);
           }
         }
       });
@@ -144,13 +142,13 @@ export class Leaderboard {
     if (orderByGroups) {
       scoringLeaderboard.getScoreForGroup({
         memberGroupResults,
-        correctResponses,
+        correctResponses: responses,
         activeQuiz,
       });
     }
 
     return {
-      correctResponses,
+      correctResponses: responses,
       memberGroupResults,
     };
   }
@@ -170,7 +168,7 @@ export class Leaderboard {
   }
 
   private isCorrectSingleChoiceQuestion(response: number, question: AbstractChoiceQuestionEntity): boolean {
-    return question.answerOptionList[response].isCorrect;
+    return question.answerOptionList[response] && question.answerOptionList[response].isCorrect;
   }
 
   private isCorrectMultipleChoiceQuestion(response: Array<number>, question: AbstractChoiceQuestionEntity): number {
