@@ -102,8 +102,8 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       lastColumn: minColums,
     });
 
-    this.quiz.memberGroups.forEach((memberGroup) => {
-      const responses = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(attendee => attendee.groupName === memberGroup.name)
+    this.quiz.sessionConfig.nicks.memberGroups.forEach(memberGroup => {
+      const responses = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(attendee => attendee.groupName === memberGroup)
       .map(nickname => nickname.responses[this._questionIndex]);
       const hasEntries: boolean = responses.length > 0;
       const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
@@ -150,7 +150,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     this.ws.cell(2, 1).string(this.mf('export.question'));
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
+    const correctResponsesPercentage: number = this.leaderBoardData.length / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');

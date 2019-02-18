@@ -7,14 +7,11 @@ import { QuizVisibility } from '../../enums/QuizVisibility';
 import { IQuestionSerialized } from '../questions/IQuestion';
 import { ISessionConfigurationEntity } from '../session_configuration/ISessionConfigurationEntity';
 import { ISessionConfigurationSerialized } from '../session_configuration/ISessionConfigurationSerialized';
-import { IMemberGroupEntity } from '../users/IMemberGroupEntity';
-import { IMemberGroupSerialized } from '../users/IMemberGroupSerialized';
 
 export interface IQuizEntity extends IQuizBase {
   id?: ObjectId;
   sessionConfig: ISessionConfigurationEntity;
   questionList: Array<AbstractQuestionEntity>;
-  memberGroups: Array<IMemberGroupEntity>;
 
   serialize(): IQuizSerialized;
 
@@ -54,7 +51,6 @@ export interface IQuizSerialized extends IQuizBase {
   id?: string;
   sessionConfig: ISessionConfigurationSerialized;
   questionList: Array<IQuestionSerialized>;
-  memberGroups: Array<IMemberGroupSerialized>;
 }
 
 export interface IQuizBase {

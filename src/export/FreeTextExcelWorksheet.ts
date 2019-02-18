@@ -93,8 +93,8 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       lastColumn: minColums,
     });
 
-    const hasEntries = this.quiz.memberGroups[0].members.length > 0;
-    const attendeeEntryRows = hasEntries ? (this.quiz.memberGroups[0].members.length) : 1;
+    const hasEntries = MemberDAO.getMembersOfQuiz(this.quiz.name).length > 0;
+    const attendeeEntryRows = hasEntries ? (MemberDAO.getMembersOfQuiz(this.quiz.name).length) : 1;
     const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
       alignment: {
         horizontal: 'center',
@@ -156,7 +156,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
        ${this.mf(answerOption.configTrimWhitespaces ? 'global.yes' : 'global.no')}`);
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.length / this.quiz.memberGroups[0].members.length * 100;
+    const correctResponsesPercentage: number = this.leaderBoardData.length / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     this.ws.cell(7, 3).string(`

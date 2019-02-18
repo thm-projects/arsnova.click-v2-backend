@@ -1,6 +1,5 @@
 import { QuizState } from '../enums/QuizState';
 import { IQuizSerialized } from './quizzes/IQuizEntity';
-import { IMemberGroupSerialized } from './users/IMemberGroupSerialized';
 
 export interface IQuizStatusPayload {
   startTimestamp?: number;
@@ -13,5 +12,5 @@ export interface IQuizStatusPayload {
   authorizeViaCas?: boolean;
   maxMembersPerGroup?: number;
   autoJoinToGroup?: boolean;
-  memberGroups?: Array<IMemberGroupSerialized>;
+  memberGroups?: Array<string>;
 }

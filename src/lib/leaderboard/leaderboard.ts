@@ -83,21 +83,23 @@ export class Leaderboard {
     const endIndex: number = isNaN(questionIndex) || questionIndex < 0 || questionIndex > questionAmount ? questionAmount : questionIndex + 1;
     const responses: any = {};
 
-    const orderByGroups = activeQuiz.memberGroups.length > 1;
+    const orderByGroups = activeQuiz.sessionConfig.nicks.memberGroups.length > 1;
     const memberGroupResults = {};
+    const members = MemberDAO.getMembersOfQuiz(activeQuiz.name);
 
-    activeQuiz.memberGroups.forEach((memberGroup) => {
-      memberGroupResults[memberGroup.name] = {
+    activeQuiz.sessionConfig.nicks.memberGroups.forEach((memberGroup) => {
+      const membersOfGroup = members.filter(member => member.groupName === memberGroup);
+
+      memberGroupResults[memberGroup] = {
         correctQuestions: [],
         responseTime: 0,
         score: 0,
-        memberAmount: memberGroup.members.length,
+        memberAmount: membersOfGroup.length,
       };
 
-      memberGroup.members.forEach(attendeeName => {
-        const attendee = MemberDAO.getMembersOfQuiz(activeQuiz.name).find(quizAttendee => quizAttendee.name === attendeeName);
+      membersOfGroup.forEach(attendee => {
         if (!attendee) {
-          LoggerService.error(`Cannot find member ${attendeeName} in DAO which should be in quiz ${activeQuiz.name}`);
+          LoggerService.error(`Cannot find member ${attendee} in DAO which should be in quiz ${activeQuiz.name}`);
           return;
         }
 
@@ -117,20 +119,20 @@ export class Leaderboard {
           responses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
           responses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
 
-          memberGroupResults[memberGroup.name].responseTime += <number>attendee.responses[i].responseTime;
+          memberGroupResults[memberGroup].responseTime += <number>attendee.responses[i].responseTime;
 
           const isCorrect = this.isCorrectResponse(attendee.responses[i], question);
           if (isCorrect === 1) {
             responses[attendee.name].correctQuestions.push(i);
             responses[attendee.name].score += scoringLeaderboard.getScoreForCorrect(attendee.responses[i].responseTime);
 
-            memberGroupResults[memberGroup.name].correctQuestions.push(i);
+            memberGroupResults[memberGroup].correctQuestions.push(i);
 
           } else if (isCorrect === 0) {
             responses[attendee.name].correctQuestions.push(i);
             responses[attendee.name].score += scoringLeaderboard.getScoreForPartiallyCorrect(attendee.responses[i].responseTime);
 
-            memberGroupResults[memberGroup.name].correctQuestions.push(i);
+            memberGroupResults[memberGroup].correctQuestions.push(i);
 
           } else {
             responses[attendee.name].score += scoringLeaderboard.getScoreForWrongAnswer(attendee.responses[i].responseTime);

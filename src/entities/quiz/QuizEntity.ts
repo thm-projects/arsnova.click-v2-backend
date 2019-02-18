@@ -169,22 +169,11 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._visibility = quiz.visibility;
     this._description = quiz.description;
 
-    if (!quiz.memberGroups) {
-      if (quiz.sessionConfig && quiz.sessionConfig.nicks && quiz.sessionConfig.nicks.memberGroups) {
-        quiz.memberGroups = quiz.sessionConfig.nicks.memberGroups.map(group => ({ name: group }));
-      } else {
-        quiz.memberGroups = [];
-      }
-    }
-
-    this._memberGroups = quiz.memberGroups.map(val => new MemberGroupEntity(val));
-
     MemberDAO.updateEmitter.on(DbEvent.Create, (member: MemberEntity) => {
       if (member.currentQuizName !== this.name) {
         return;
       }
 
-      this.memberGroups.find(group => group.name === member.groupName).members.push(member.name);
       this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
         status: StatusProtocol.Success,
         step: MessageProtocol.Added,
@@ -195,9 +184,6 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       if (member.currentQuizName !== this.name) {
         return;
       }
-
-      const memberGroup = this.memberGroups.find(group => group.name === member.groupName);
-      memberGroup.members.splice(memberGroup.members.findIndex(quizMember => quizMember === member.name), 1);
 
       this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
         status: StatusProtocol.Success,
@@ -286,7 +272,6 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       expiry: this.expiry,
       state: this.state,
       currentStartTimestamp: this.currentStartTimestamp,
-      memberGroups: this.memberGroups.map(val => val.serialize()),
       currentQuestionIndex: this.currentQuestionIndex,
       adminToken: this.adminToken,
       privateKey: this.privateKey,

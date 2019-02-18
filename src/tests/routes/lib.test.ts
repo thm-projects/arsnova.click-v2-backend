@@ -80,7 +80,6 @@ class CacheQuizAssetsLibRouterTestSuite {
   public static before(): void {
     QuizDAO.initQuiz(new QuizEntity({
       name: hashtag,
-      memberGroups: [],
       questionList: [],
       sessionConfig: new SessionConfigurationEntity(),
       adminToken: 'test',

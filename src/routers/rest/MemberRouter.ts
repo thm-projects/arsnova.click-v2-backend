@@ -82,12 +82,6 @@ export class MemberRouter extends AbstractRouter {
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.Added,
-        payload: {
-          memberGroups: activeQuiz.memberGroups.map(memberGroup => {
-            return memberGroup.serialize();
-          }),
-          sessionConfiguration: activeQuiz.sessionConfig.serialize(),
-        },
       };
 
     } catch (ex) {
@@ -228,10 +222,8 @@ export class MemberRouter extends AbstractRouter {
         payload: {},
       }));
     }
-    const names: Array<String> = activeQuiz.sessionConfig.nicks.selectedNicks.filter((nick) => {
-      return !activeQuiz.memberGroups.find(memberGroup => {
-        return !!memberGroup.members.find(value => value === nick);
-      });
+    const names: Array<string> = activeQuiz.sessionConfig.nicks.selectedNicks.filter((nick) => {
+      return !MemberDAO.getMembersOfQuiz(activeQuiz.name).find(member => member.name === nick);
     });
     return {
       status: StatusProtocol.Success,

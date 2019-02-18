@@ -7,7 +7,6 @@ import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
 import { IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 import { ISessionConfigurationSerialized } from '../../interfaces/session_configuration/ISessionConfigurationSerialized';
-import { IMemberGroupSerialized } from '../../interfaces/users/IMemberGroupSerialized';
 import LoggerService from '../../services/LoggerService';
 
 @index({ name: 1 }, { unique: true })
@@ -26,7 +25,6 @@ export class QuizModelItem extends Typegoose implements IQuizSerialized {
   }) public state: QuizState;
   @prop() public sessionConfig: ISessionConfigurationSerialized;
   @prop() public currentStartTimestamp: number;
-  @prop() public memberGroups: Array<IMemberGroupSerialized>;
   @prop() public currentQuestionIndex: number;
   @prop() public adminToken: string;
   @prop() public privateKey: string;

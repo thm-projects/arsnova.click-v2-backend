@@ -6,8 +6,10 @@ import * as i18n from 'i18n';
 import * as MessageFormat from 'messageformat';
 import { slow, suite, test } from 'mocha-typescript';
 import * as path from 'path';
+import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { FreeTextAnswerEntity } from '../../entities/answer/FreetextAnwerEntity';
+import { MemberEntity } from '../../entities/member/MemberEntity';
 import { FreeTextQuestionEntity } from '../../entities/question/FreeTextQuestionEntity';
 import { RangedQuestionEntity } from '../../entities/question/RangedQuestionEntity';
 import { SurveyQuestionEntity } from '../../entities/question/SurveyQuestionEntity';
@@ -93,7 +95,6 @@ class ExcelExportTestSuite {
     QuizDAO.initQuiz(new QuizEntity({
       name: this._hashtag,
       questionList: [],
-      memberGroups: [],
       sessionConfig: new SessionConfigurationEntity(),
       adminToken: 'test',
       privateKey: 'test',
@@ -113,9 +114,14 @@ class ExcelExportTestSuite {
   public async addMembers(): Promise<void> {
     const quiz = QuizDAO.getActiveQuizByName(this._hashtag);
     for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
-      quiz.memberGroups[0].members.push(`testnick${memberIndex + 1}`);
+      MemberDAO.getMembersOfQuiz(quiz.name).push(new MemberEntity({
+        name: `testnick${memberIndex + 1}`,
+        groupName: 'Default',
+        currentQuizName: quiz.name,
+        token: 'testnick',
+      }));
     }
-    await assert.equal(quiz.memberGroups[0].members.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
+    await assert.equal(MemberDAO.getMembersOfQuiz(quiz.name).length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
   }
 
   @test

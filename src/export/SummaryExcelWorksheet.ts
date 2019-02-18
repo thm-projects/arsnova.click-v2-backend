@@ -198,7 +198,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       }).length;
     }).length;
     const allResponses: Array<IMemberEntity> = MemberDAO.getMembersOfQuiz(this.quiz.name);
-    const numberOfAttendees = this.quiz.memberGroups[0].members.length;
+    const numberOfAttendees = MemberDAO.getMembersOfQuiz(this.quiz.name).length;
     const numberOfQuestions = this.quiz.questionList.length;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.quiz_name')}: ${this.quiz.name}`);
@@ -214,7 +214,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.addLogoImage();
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.number_attendees')}:`);
-    this.ws.cell(currentRowIndex, 3).number(this.quiz.memberGroups[0].members.length);
+    this.ws.cell(currentRowIndex, 3).number(MemberDAO.getMembersOfQuiz(this.quiz.name).length);
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_number_attendees_participated')}:`);

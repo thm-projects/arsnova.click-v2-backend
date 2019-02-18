@@ -61,19 +61,20 @@ export class QuizRouter extends AbstractRouter {
     const payload: IQuizStatusPayload = {};
 
     if (quiz) {
+      const members = MemberDAO.getMembersOfQuiz(quiz.name);
+
       if ([QuizState.Active, QuizState.Running].includes(quiz.state)) {
         payload.provideNickSelection = quiz.sessionConfig.nicks.selectedNicks.length > 0;
         payload.authorizeViaCas = quiz.sessionConfig.nicks.restrictToCasLogin;
         payload.maxMembersPerGroup = quiz.sessionConfig.nicks.maxMembersPerGroup;
         payload.autoJoinToGroup = quiz.sessionConfig.nicks.autoJoinToGroup;
-        payload.memberGroups = quiz.memberGroups.map(memberGroup => memberGroup.serialize());
+        payload.memberGroups = quiz.sessionConfig.nicks.memberGroups;
         payload.startTimestamp = quiz.currentStartTimestamp;
         payload.readingConfirmationRequested = quiz.readingConfirmationRequested;
       }
 
       payload.name = quiz.name;
       payload.state = quiz.state;
-      payload.quiz = quiz.serialize();
     }
 
     return {
@@ -709,5 +710,36 @@ export class QuizRouter extends AbstractRouter {
   @Get('/')
   private getAll(): object {
     return {};
+  }
+
+  @Get('/:quizName?')
+  private getQuiz(
+    @Params() params: { [key: string]: any }, //
+    @HeaderParam('authorization', { required: false }) token: string, //
+  ): object {
+
+    const quizName = params.quizName;
+    const member = MemberDAO.getMemberByToken(token);
+
+    if (!quizName && (!token || !member)) {
+      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
+    }
+
+    const quiz: IQuizEntity = QuizDAO.getQuizByName(quizName || member.currentQuizName);
+    const payload: IQuizStatusPayload = {};
+
+    if (quiz) {
+      payload.state = quiz.state;
+      payload.quiz = quiz.serialize();
+    }
+
+    return {
+      status: StatusProtocol.Success,
+      step: quiz ? [QuizState.Active, QuizState.Running].includes(quiz.state) ? MessageProtocol.Available : quiz.privateKey === token
+                                                                                                            ? MessageProtocol.Editable
+                                                                                                            : MessageProtocol.AlreadyTaken
+                 : MessageProtocol.Unavailable,
+      payload,
+    };
   }
 }
