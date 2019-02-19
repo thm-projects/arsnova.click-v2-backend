@@ -182,10 +182,18 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/next')
-  public async startQuiz(@HeaderParam('authorization') token: string): Promise<object> {
-    const quiz = QuizDAO.getQuizByToken(token);
+  public async startQuiz(
+    @HeaderParam('authorization') token: string, //
+    @BodyParam('quizName') quizName: string, //
+  ): Promise<object> {
+    const quiz = QuizDAO.getQuizByName(quizName);
     if (!quiz || ![QuizState.Active, QuizState.Running].includes(quiz.state)) {
+      console.error('No quiz found or not active', JSON.stringify(quiz));
       throw new InternalServerError(MessageProtocol.IsInactive);
+    }
+
+    if (quiz.privateKey !== token) {
+      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
     if (quiz.sessionConfig.readingConfirmationEnabled && !quiz.readingConfirmationRequested) {
