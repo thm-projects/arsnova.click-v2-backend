@@ -18,6 +18,7 @@ import MemberDAO from './db/MemberDAO';
 import QuizDAO from './db/quiz/QuizDAO';
 import UserDAO from './db/UserDAO';
 import { jsonCensor } from './lib/jsonCensor';
+import { rejectionToCreateDump } from './lib/rejectionToCreateDump';
 import { WebSocketRouter } from './routers/websocket/WebSocketRouter';
 import LoggerService from './services/LoggerService';
 import { staticStatistics } from './statistics';
@@ -47,20 +48,10 @@ interface IInetAddress {
   address: string;
 }
 
-function rejectionToCreateDump(reason): void {
-  try {
-    (<IGlobal>global).createDump(reason);
-  } catch (e) {
-    LoggerService.error('Cannot create dump', e.message);
-  } finally {
-    // noinspection TsLint
-    console.trace(reason);
-  }
-}
+process.on('unhandledRejection', rejectionToCreateDump);
+process.on('uncaughtException', rejectionToCreateDump); // Throws exceptions when debugging with IntelliJ
 
 if (process.env.NODE_ENV === 'production') {
-  process.on('unhandledRejection', rejectionToCreateDump);
-  process.on('uncaughtException', rejectionToCreateDump); // Throws exceptions when debugging with IntelliJ
 }
 
 (<IGlobal>global).DAO = {

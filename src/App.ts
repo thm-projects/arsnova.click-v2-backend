@@ -8,7 +8,6 @@ import * as path from 'path';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
 import options from './lib/cors.config';
-import { IGlobal } from './main';
 import { roleAuthorizationChecker } from './routers/middleware/roleAuthorizationChecker';
 
 import { dynamicStatistics, staticStatistics } from './statistics';
@@ -24,7 +23,7 @@ export const routingControllerOptions: RoutingControllersOptions = {
     },
   },
   authorizationChecker: roleAuthorizationChecker,
-  defaultErrorHandler: true,
+  defaultErrorHandler: false,
   cors: options,
   controllers: [path.join(__dirname, 'routers', '/rest/*.js')],
   middlewares: [path.join(__dirname, 'routers', '/middleware/*.js')],
@@ -77,13 +76,6 @@ class App {
     });
 
     this._express.use(`${staticStatistics.routePrefix}/`, router);
-
-    this._express.use((err, req, res, next) => {
-      if (process.env.NODE_ENV === 'production') {
-        (<IGlobal>global).createDump(err);
-      }
-      next();
-    });
   }
 }
 

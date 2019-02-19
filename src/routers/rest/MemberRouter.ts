@@ -137,7 +137,7 @@ export class MemberRouter extends AbstractRouter {
   @Put('/response')
   public addResponse(
     @HeaderParam('authorization') token: string, //
-    @BodyParam('response') value: string, //
+    @BodyParam('response', { required: false }) value: string, //
   ): object {
 
     if (!Array.isArray(value) && !['string', 'number'].includes(typeof value)) {

@@ -351,13 +351,14 @@ export class LibRouter extends AbstractRouter {
 
     return new Promise<object>(resolve => {
       mathjaxArray.forEach(async (mathjaxPlain, index) => {
-        const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
 
+        const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
         if (dbResult) {
           result.push(dbResult);
+          return;
+        }
 
-        } else {
-
+        try {
           const data = await mjAPI.typeset({
             math: mathjaxPlain.replace(/( ?\${1,2} ?)/g, ''),
             format: format,
@@ -365,10 +366,12 @@ export class LibRouter extends AbstractRouter {
             css: output === 'html',
             svg: output === 'svg',
             mml: output === 'mml',
-          }).catch(err => console.log(err));
+          });
 
           MathjaxDAO.updateRenderedData(data, mathjaxPlain);
           result.push(data);
+        } catch (e) {
+          console.error('error while trying to parse mathjax', e);
         }
 
         if (index === mathjaxArray.length - 1) {
