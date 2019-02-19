@@ -323,7 +323,7 @@ export class QuizRouter extends AbstractRouter {
     }
 
     if (quiz.currentQuestionIndex < quiz.questionList.length) {
-      this.startQuiz(quiz.name);
+      this.startQuiz(token, quiz.name);
     }
   }
 
