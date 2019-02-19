@@ -26,6 +26,8 @@ import { LoadTester } from './tests/LoadTester';
 
 require('source-map-support').install();
 
+Error.stackTraceLimit = Infinity;
+
 declare var global: any;
 declare var module: any;
 

@@ -6,6 +6,10 @@ export class SendSocketMessageService {
       return;
     }
 
-    socket.send(JSON.stringify(message));
+    try {
+      socket.send(JSON.stringify(message));
+    } catch (e) {
+      console.error('Cannot send message to socket', e);
+    }
   }
 }

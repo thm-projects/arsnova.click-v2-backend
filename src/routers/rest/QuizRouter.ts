@@ -195,21 +195,32 @@ export class QuizRouter extends AbstractRouter {
       }
 
       quiz.requestReadingConfirmation();
-      await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
-        readingConfirmationRequested: true,
-        state: QuizState.Running,
-      });
+
+      try {
+        await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+          readingConfirmationRequested: true,
+          state: QuizState.Running,
+        });
+      } catch (e) {
+        throw new InternalServerError(e);
+      }
+
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.ReadingConfirmationRequested,
       };
     } else if (quiz.readingConfirmationRequested) {
       const currentStartTimestamp: number = new Date().getTime();
-      await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
-        currentStartTimestamp,
-        readingConfirmationRequested: false,
-        state: QuizState.Running,
-      });
+
+      try {
+        await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+          currentStartTimestamp,
+          readingConfirmationRequested: false,
+          state: QuizState.Running,
+        });
+      } catch (e) {
+        throw new InternalServerError(e);
+      }
 
       quiz.readingConfirmationRequested = false;
       quiz.startNextQuestion(currentStartTimestamp);
@@ -227,11 +238,16 @@ export class QuizRouter extends AbstractRouter {
         throw new BadRequestError(MessageProtocol.EndOfQuestions);
       }
       const currentStartTimestamp: number = new Date().getTime();
-      await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
-        currentStartTimestamp,
-        readingConfirmationRequested: false,
-        state: QuizState.Running,
-      });
+
+      try {
+        await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
+          currentStartTimestamp,
+          readingConfirmationRequested: false,
+          state: QuizState.Running,
+        });
+      } catch (e) {
+        throw new InternalServerError(e);
+      }
 
       quiz.readingConfirmationRequested = false;
       quiz.currentStartTimestamp = currentStartTimestamp;
@@ -275,11 +291,13 @@ export class QuizRouter extends AbstractRouter {
   public getStartTime(@HeaderParam('authorization') token: string): number {
     const member = MemberDAO.getMemberByToken(token);
     if (!member) {
+      console.error('Unknown member');
       throw new BadRequestError('Unknown member');
     }
 
     const quiz = QuizDAO.getQuizByName(member.currentQuizName);
     if (!quiz || ![QuizState.Active, QuizState.Running].includes(quiz.state)) {
+      console.error('Quiz is not active and not running');
       throw new BadRequestError('Quiz is not active and not running');
     }
 
@@ -705,7 +723,7 @@ export class QuizRouter extends AbstractRouter {
     return {};
   }
 
-  @Get('/:quizName?')
+  @Get('/quiz/:quizName?')
   private getQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
