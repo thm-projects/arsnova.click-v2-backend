@@ -48,7 +48,14 @@ interface IInetAddress {
 }
 
 function rejectionToCreateDump(reason): void {
-  (<IGlobal>global).createDump(reason);
+  try {
+    (<IGlobal>global).createDump(reason);
+  } catch (e) {
+    LoggerService.error('Cannot create dump', e.message);
+  } finally {
+    // noinspection TsLint
+    console.trace(reason);
+  }
 }
 
 if (process.env.NODE_ENV === 'production') {
