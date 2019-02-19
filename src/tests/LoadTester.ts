@@ -59,7 +59,6 @@ export class LoadTester {
       const quiz = new QuizEntity({
         name: `loadquiz_${i}`,
         readingConfirmationRequested: false,
-        adminToken: 'test',
         privateKey: 'test',
         sessionConfig: new SessionConfigurationEntity({
           leaderboardAlgorithm: LeaderboardConfiguration.TimeBased,

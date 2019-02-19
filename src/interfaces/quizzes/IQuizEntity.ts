@@ -60,7 +60,6 @@ export interface IQuizBase {
   expiry?: Date;
   state?: QuizState;
   currentStartTimestamp?: number;
-  adminToken: string;
   privateKey: string;
   visibility?: QuizVisibility;
   description?: string;

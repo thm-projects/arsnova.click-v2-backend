@@ -13,6 +13,7 @@ import * as xml2js from 'xml2js';
 import CasDAO from '../../db/CasDAO';
 import DbDAO from '../../db/DbDAO';
 import MathjaxDAO from '../../db/MathjaxDAO';
+import QuizDAO from '../../db/quiz/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { AbstractAnswerEntity } from '../../entities/answer/AbstractAnswerEntity';
 import { DbCollection } from '../../enums/DbOperation';
@@ -509,7 +510,10 @@ export class LibRouter extends AbstractRouter {
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.AuthenticateStatic,
-        payload: { token },
+        payload: {
+          token,
+          quizzes: QuizDAO.getAllQuizzes().filter(quiz => quiz.privateKey === user.privateKey).map(quiz => quiz.serialize()),
+        },
       };
     }
 

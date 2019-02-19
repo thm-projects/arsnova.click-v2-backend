@@ -218,7 +218,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public getQuizByToken(token: string): IQuizEntity {
-    return this.storage.find(quiz => quiz.adminToken === token);
+    return this.storage.find(quiz => quiz.privateKey === token);
   }
 
   public getAllPublicQuizzes(): Array<IQuizEntity> {

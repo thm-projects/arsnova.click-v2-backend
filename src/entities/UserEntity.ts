@@ -56,11 +56,22 @@ export class UserEntity extends AbstractEntity implements IUserEntity {
     this._gitlabToken = value;
   }
 
+  private _privateKey: string;
+
+  get privateKey(): string {
+    return this._privateKey;
+  }
+
+  set privateKey(value: string) {
+    this._privateKey = value;
+  }
+
   constructor(data: IUserSerialized) {
     super();
 
     this._id = new ObjectId(data.id || data._id);
     this._name = data.name;
+    this._privateKey = data.privateKey;
     this._passwordHash = data.passwordHash;
     this._gitlabToken = data.gitlabToken;
     this._token = data.token;
@@ -83,6 +94,7 @@ export class UserEntity extends AbstractEntity implements IUserEntity {
       token: this.token,
       name: this.name,
       passwordHash: this.passwordHash,
+      privateKey: this.privateKey,
       gitlabToken: this.gitlabToken,
       userAuthorizations: this.userAuthorizations,
     };

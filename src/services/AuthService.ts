@@ -52,6 +52,7 @@ export class AuthService {
     return this.createToken({
       name: user.name,
       userAuthorizations: availableRoles,
+      privateKey: user.privateKey,
       gitlabToken,
     });
   }

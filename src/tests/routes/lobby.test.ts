@@ -31,7 +31,6 @@ class LobbyApiRouterTestSuite {
       name: hashtag,
       questionList: [],
       sessionConfig: new SessionConfigurationEntity(),
-      adminToken: 'test',
       privateKey: 'test',
       readingConfirmationRequested: false,
     }));

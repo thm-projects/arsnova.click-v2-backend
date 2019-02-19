@@ -29,14 +29,12 @@ import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
-import { TokenType } from '../../enums/TokenType';
 import { ExcelWorkbook } from '../../export/ExcelWorkbook';
 import { IQuizStatusPayload } from '../../interfaces/IQuizStatusPayload';
 import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 import { MatchTextToAssetsDb } from '../../lib/cache/assets';
 import { Leaderboard } from '../../lib/leaderboard/leaderboard';
 import { QuizModel } from '../../models/quiz/QuizModelItem';
-import { AuthService } from '../../services/AuthService';
 import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
@@ -448,11 +446,6 @@ export class QuizRouter extends AbstractRouter {
       await Promise.all<any>(promises);
     }
 
-    quiz.adminToken = AuthService.createToken({
-      quizName: quiz.name,
-      privateKey: privateKey,
-      type: TokenType.QuizToken,
-    });
     quiz.currentQuestionIndex = -1;
     quiz.currentStartTimestamp = -1;
     quiz.privateKey = privateKey;
@@ -581,7 +574,7 @@ export class QuizRouter extends AbstractRouter {
     }
 
     const quiz = QuizDAO.getQuizByName(quizName);
-    if (!quiz || quiz.adminToken !== privateKey) {
+    if (!quiz || quiz.privateKey !== privateKey) {
       return;
     }
 

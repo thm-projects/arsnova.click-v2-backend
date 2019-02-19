@@ -28,7 +28,6 @@ export class LobbyRouter extends AbstractRouter {
     WebSocketRouter.wss.clients.forEach(client => client.send(messageToWSSClients));
 
     quiz.state = QuizState.Active;
-    quiz.adminToken = privateKey;
     quiz.currentQuestionIndex = -1;
     quiz.currentStartTimestamp = -1;
     const addedQuiz = QuizDAO.getQuizByName(quiz.name);

@@ -109,16 +109,6 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._memberGroups = value;
   }
 
-  private _adminToken: string;
-
-  get adminToken(): string {
-    return this._adminToken;
-  }
-
-  set adminToken(value: string) {
-    this._adminToken = value;
-  }
-
   private _privateKey: string;
 
   get privateKey(): string {
@@ -163,7 +153,6 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._state = quiz.state || QuizState.Inactive;
     this._currentStartTimestamp = quiz.currentStartTimestamp || -1;
     this._currentQuestionIndex = typeof quiz.currentQuestionIndex !== 'undefined' ? quiz.currentQuestionIndex : -1;
-    this._adminToken = quiz.adminToken;
     this._privateKey = quiz.privateKey;
     this._readingConfirmationRequested = !!quiz.readingConfirmationRequested;
     this._visibility = quiz.visibility;
@@ -273,7 +262,6 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       state: this.state,
       currentStartTimestamp: this.currentStartTimestamp,
       currentQuestionIndex: this.currentQuestionIndex,
-      adminToken: this.adminToken,
       privateKey: this.privateKey,
       readingConfirmationRequested: this.readingConfirmationRequested,
       visibility: this.visibility,

@@ -26,7 +26,6 @@ export class QuizModelItem extends Typegoose implements IQuizSerialized {
   @prop() public sessionConfig: ISessionConfigurationSerialized;
   @prop() public currentStartTimestamp: number;
   @prop() public currentQuestionIndex: number;
-  @prop() public adminToken: string;
   @prop() public privateKey: string;
   @prop() public description?: string;
   @prop() public readingConfirmationRequested: boolean;

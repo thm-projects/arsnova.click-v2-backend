@@ -96,7 +96,6 @@ class ExcelExportTestSuite {
       name: this._hashtag,
       questionList: [],
       sessionConfig: new SessionConfigurationEntity(),
-      adminToken: 'test',
       privateKey: 'test',
       readingConfirmationRequested: false,
     }));
