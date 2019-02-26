@@ -225,6 +225,10 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     return this.storage.filter(val => val.visibility === QuizVisibility.Any);
   }
 
+  public getQuizById(id: ObjectId | string): IQuizEntity {
+    return this.storage.find(val => val.id.equals(id));
+  }
+
   private checkABCDOrdering(quizname: string): boolean {
     let ordered = true;
     if (!quizname || quizname.length < 2 || quizname.charAt(0) !== 'a') {
@@ -273,10 +277,6 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
 
   private getQuizByState(states: Array<QuizState>): Array<IQuizEntity> {
     return this.storage.filter(val => states.includes(val.state));
-  }
-
-  private getQuizById(id: ObjectId): IQuizEntity {
-    return this.storage.find(val => val.id.equals(id));
   }
 }
 

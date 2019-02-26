@@ -72,6 +72,14 @@ export class AdminRouter extends AbstractRouter {
     return QuizDAO.getAllQuizzes().map(quiz => quiz.serialize());
   }
 
+  @Get('/quiz/:id') //
+  @OpenAPI({
+    description: 'Returns an available quiz by the id',
+  })
+  private getQuiz(@Param('id') quizId: string): object {
+    return QuizDAO.getQuizById(quizId).serialize();
+  }
+
   @Delete('/quiz/:quizName') //
   @OpenAPI({
     description: 'Removes a given quiz',
