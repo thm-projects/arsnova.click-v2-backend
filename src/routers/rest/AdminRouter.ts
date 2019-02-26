@@ -69,7 +69,13 @@ export class AdminRouter extends AbstractRouter {
     description: 'Returns all available quizzes',
   })
   private getQuizzes(): object {
-    return QuizDAO.getAllQuizzes().map(quiz => quiz.serialize());
+    return QuizDAO.getAllQuizzes().map(quiz => ({
+      state: quiz.state,
+      id: quiz.id.toHexString(),
+      name: quiz.name,
+      expiry: quiz.expiry,
+      visibility: quiz.visibility,
+    }));
   }
 
   @Get('/quiz/:id') //
