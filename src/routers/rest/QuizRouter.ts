@@ -231,7 +231,7 @@ export class QuizRouter extends AbstractRouter {
       }
 
       quiz.readingConfirmationRequested = false;
-      quiz.startNextQuestion(currentStartTimestamp);
+      quiz.startNextQuestion();
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.Start,
@@ -259,7 +259,7 @@ export class QuizRouter extends AbstractRouter {
 
       quiz.readingConfirmationRequested = false;
       quiz.currentStartTimestamp = currentStartTimestamp;
-      quiz.startNextQuestion(currentStartTimestamp);
+      quiz.startNextQuestion();
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.Start,

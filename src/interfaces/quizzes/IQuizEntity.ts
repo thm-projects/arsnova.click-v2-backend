@@ -37,7 +37,7 @@ export interface IQuizEntity extends IQuizBase {
 
   updatedMemberResponse(payload: object): void;
 
-  startNextQuestion(currentStartTimestamp: number): void;
+  startNextQuestion(): void;
 
   reset(): void;
 

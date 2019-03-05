@@ -140,6 +140,8 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
   }
 
   private _dropEmptyQuizTimeout: any;
+  private _quizTimerInterval: any;
+  private _quizTimer: number;
   private _socketChannel: Array<WebSocket> = [];
 
   constructor(quiz: IQuizSerialized) {
@@ -319,14 +321,30 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     return DbDAO.deleteOne(DbCollection.Members, { name });
   }
 
-  public startNextQuestion(currentStartTimestamp: number): void {
+  public startNextQuestion(): void {
     this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
       status: StatusProtocol.Success,
       step: MessageProtocol.Start,
-      payload: {
-        currentStartTimestamp,
-      },
+      payload: {},
     }));
+
+    this._quizTimer = this._questionList[this._currentQuestionIndex].timer;
+
+    this._quizTimerInterval = setInterval(() => {
+      this._quizTimer--;
+      this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+        status: StatusProtocol.Success,
+        step: MessageProtocol.Countdown,
+        payload: {
+          value: this._quizTimer,
+        },
+      }));
+
+      if (this._quizTimer <= 0) {
+        clearInterval(this._quizTimerInterval);
+      }
+
+    }, 1000);
   }
 
   public requestReadingConfirmation(): void {
@@ -344,5 +362,11 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       step: MessageProtocol.UpdatedResponse,
       payload,
     }));
+    if (this._quizTimer && MemberDAO.getMembersOfQuiz(this.name).every(nick => {
+      const val = nick.responses[this.currentQuestionIndex].value;
+      return typeof val === 'number' ? val > -1 : val.length > 0;
+    })) {
+      this._quizTimer = 1;
+    }
   }
 }
