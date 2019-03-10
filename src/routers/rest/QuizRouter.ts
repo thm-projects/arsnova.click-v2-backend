@@ -544,7 +544,7 @@ export class QuizRouter extends AbstractRouter {
       name: quizName,
       privateKey: privateKey,
     });
-    if (dbResult && dbResult.deletedCount) {
+    if (dbResult && dbResult.result.ok) {
       quiz.onRemove();
       return {
         status: StatusProtocol.Success,
