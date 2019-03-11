@@ -1,5 +1,6 @@
 import * as Converter from 'api-spec-converter';
 import { Request, Response } from 'express';
+import fileType from 'file-type';
 import * as fs from 'fs';
 import { OpenAPIObject } from 'openapi3-ts';
 import * as path from 'path';
@@ -8,7 +9,6 @@ import { OpenAPI, routingControllersToSpec } from 'routing-controllers-openapi';
 import { routingControllerOptions } from '../../App';
 import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
-import FileType = require('file-type');
 
 declare global {
   interface IUploadRequest extends Request {
@@ -125,7 +125,7 @@ export class ApiRouter extends AbstractRouter {
     const pathToFiles = path.join(staticStatistics.pathToAssets, 'images', 'theme', `${themeName}`, `${fileName}`);
     if (fs.existsSync(pathToFiles)) {
       const data: Buffer = fs.readFileSync(pathToFiles);
-      res.contentType(FileType(data).mime);
+      res.contentType(fileType(data).mime);
       return data;
     } else {
       throw new NotFoundError('File not found');
