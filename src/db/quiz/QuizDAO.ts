@@ -8,8 +8,8 @@ import { DbCollection, DbEvent } from '../../enums/DbOperation';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
 import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
+import { generateToken } from '../../lib/generateToken';
 import { setPath } from '../../lib/resolveNestedObjectProperty';
-import { uuidv4 } from '../../lib/staticlib';
 import { AbstractDAO } from '../AbstractDAO';
 import DbDAO from '../DbDAO';
 
@@ -66,7 +66,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     const dateFormatted = `${dateYearPart}-${date.getHours()}_${date.getMinutes()}_${date.getSeconds()}`;
     result.push(`${quizName} ${count + 1}`);
     result.push(`${quizName} ${dateFormatted}`);
-    result.push(`${quizName} ${uuidv4()}`);
+    result.push(`${quizName} ${generateToken(quizName)}`);
     return result;
   }
 
