@@ -1,6 +1,5 @@
 import * as crypto from 'crypto';
 import { Request, Response } from 'express';
-import * as fileType from 'file-type';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as mjAPI from 'mathjax-node';
@@ -26,6 +25,7 @@ import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
+import FileType = require('file-type');
 
 const derivates: Array<string> = require('../../assets/imageDerivates');
 const themeData = JSON.parse(fs.readFileSync(path.join(staticStatistics.pathToAssets, 'themeData.json')).toString());
@@ -196,7 +196,7 @@ export class LibRouter extends AbstractRouter {
 
     return new Promise<Buffer>(resolve => {
       fs.readFile(filePath, (err, data: Buffer) => {
-        res.contentType(fileType(data).mime);
+        res.contentType(FileType(data).mime);
         resolve(data);
       });
     });
