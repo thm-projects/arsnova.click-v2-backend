@@ -57,7 +57,10 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
   }
 
   public removeAllMembers(): void {
-    this.storage.forEach(member => this.updateEmitter.emit(DbEvent.Delete, member));
+    this.storage.forEach(member => {
+      this.updateEmitter.emit(DbEvent.Delete, member);
+      QuizDAO.getQuizByName(member.currentQuizName).onMemberRemoved(member);
+    });
     this.storage.splice(0, this.storage.length);
   }
 
