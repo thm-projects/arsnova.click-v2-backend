@@ -3,7 +3,7 @@ import { DeleteWriteOpResultObject } from 'mongodb';
 import * as WebSocket from 'ws';
 import DbDAO from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
-import { DbCollection, DbEvent } from '../../enums/DbOperation';
+import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuestionType } from '../../enums/QuestionType';
 import { QuizState } from '../../enums/QuizState';
@@ -159,29 +159,22 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._readingConfirmationRequested = !!quiz.readingConfirmationRequested;
     this._visibility = quiz.visibility;
     this._description = quiz.description;
+  }
 
-    MemberDAO.updateEmitter.on(DbEvent.Create, (member: MemberEntity) => {
-      if (member.currentQuizName !== this.name) {
-        return;
-      }
+  public onMemberAdded(member: MemberEntity): void {
+    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Added,
+      payload: { member: member.serialize() },
+    }));
+  }
 
-      this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
-        status: StatusProtocol.Success,
-        step: MessageProtocol.Added,
-        payload: { member: member.serialize() },
-      }));
-    });
-    MemberDAO.updateEmitter.on(DbEvent.Delete, (member: MemberEntity) => {
-      if (member.currentQuizName !== this.name) {
-        return;
-      }
-
-      this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
-        status: StatusProtocol.Success,
-        step: MessageProtocol.Removed,
-        payload: { name: member.name },
-      }));
-    });
+  public onMemberRemoved(member: MemberEntity): void {
+    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Removed,
+      payload: { name: member.name },
+    }));
   }
 
   public onRemove(): void {

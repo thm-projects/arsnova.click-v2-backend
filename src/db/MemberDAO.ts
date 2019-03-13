@@ -5,6 +5,7 @@ import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { AbstractDAO } from './AbstractDAO';
 import DbDAO from './DbDAO';
+import QuizDAO from './quiz/QuizDAO';
 
 class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
 
@@ -41,6 +42,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     const member = new MemberEntity(memberSerialized);
     this.storage.push(member);
     this.updateEmitter.emit(DbEvent.Create, member);
+    QuizDAO.getQuizByName(member.currentQuizName).onMemberAdded(member);
   }
 
   public updateMember(id: ObjectId, updatedFields: { [key: string]: any }): void {
@@ -64,6 +66,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
 
     if (members.length) {
       this.updateEmitter.emit(DbEvent.Delete, members[0]);
+      QuizDAO.getQuizByName(members[0].currentQuizName).onMemberRemoved(members[0]);
     }
   }
 

@@ -1,6 +1,7 @@
 import { ObjectId } from 'bson';
 import { DeleteWriteOpResultObject } from 'mongodb';
 import WebSocket from 'ws';
+import { MemberEntity } from '../../entities/member/MemberEntity';
 import { AbstractQuestionEntity } from '../../entities/question/AbstractQuestionEntity';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
@@ -44,6 +45,10 @@ export interface IQuizEntity extends IQuizBase {
   stop(): void;
 
   onRemove(): void;
+
+  onMemberAdded(member: MemberEntity): void;
+
+  onMemberRemoved(memberEntity: MemberEntity): void;
 }
 
 export interface IQuizSerialized extends IQuizBase {
