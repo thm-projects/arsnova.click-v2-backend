@@ -1,9 +1,10 @@
-import { Authorized, BodyParam, Delete, Get, JsonController, Param, Put } from 'routing-controllers';
+import { Authorized, BodyParam, Delete, Get, JsonController, Param, Post, Put } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { default as DbDAO } from '../../db/DbDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { DbCollection } from '../../enums/DbOperation';
+import { QuizState } from '../../enums/QuizState';
 import { UserRole } from '../../enums/UserRole';
 import { IUserSerialized } from '../../interfaces/users/IUserSerialized';
 import { UserModel } from '../../models/UserModelItem/UserModel';
@@ -76,6 +77,23 @@ export class AdminRouter extends AbstractRouter {
       expiry: quiz.expiry,
       visibility: quiz.visibility,
     }));
+  }
+
+  @Post('/quiz') //
+  @OpenAPI({
+    description: 'Deactivates a given quiz',
+  }) //
+  @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
+  private async updateQuizState(@BodyParam('quizname') quizname: string): Promise<void> {
+    const quiz = QuizDAO.getQuizByName(quizname);
+    if (!quiz) {
+      return;
+    }
+
+    DbDAO.updateOne(DbCollection.Quizzes, { _id: quiz.id }, { state: QuizState.Inactive });
+    DbDAO.deleteMany(DbCollection.Members, { currentQuizName: quiz.name });
+
+    quiz.onRemove();
   }
 
   @Get('/quiz/:id') //
