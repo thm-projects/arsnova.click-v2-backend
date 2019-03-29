@@ -1,4 +1,4 @@
-import * as Gitlab from 'gitlab';
+const Gitlab = require('gitlab/dist/es5').default;
 import { Branch, CommitAction, GitlabProject, Language } from '../enums/Enums';
 import { ICommitAction, IGitlabCommitAction } from '../interfaces/gitlab/apiv4';
 import { generateToken } from '../lib/generateToken';
@@ -41,7 +41,7 @@ class I18nDAO extends AbstractDAO<object> {
       return true;
     }
 
-    const gitlabService: Gitlab = this.prepareGitlabConnection();
+    const gitlabService = this.prepareGitlabConnection();
     const commits = await gitlabService.Commits.all(project, {
       since: this.storage[project].lastUpdate.toISOString(),
     });
@@ -125,7 +125,7 @@ class I18nDAO extends AbstractDAO<object> {
     }
 
     const branch = this.generateBranchName();
-    const gitlabService: Gitlab = this.prepareGitlabConnection(token);
+    const gitlabService = this.prepareGitlabConnection(token);
 
     await gitlabService.Branches.create(project, branch, Branch.TargetBranch);
     await gitlabService.Commits.create(project, branch, this.commitMessage, this.generateCommitActions(project, data));
@@ -215,8 +215,8 @@ class I18nDAO extends AbstractDAO<object> {
     }
   }
 
-  private prepareGitlabConnection(token?: string): typeof Gitlab {
-    return new Gitlab.default({
+  private prepareGitlabConnection(token?: string): any {
+    return new Gitlab({
       url: 'https://git.thm.de',
       token: token || this.gitlabAccessToken,
     });
