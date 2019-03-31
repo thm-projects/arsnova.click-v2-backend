@@ -666,10 +666,12 @@ export class QuizRouter extends AbstractRouter {
     return buffer;
   }
 
-  @Get('/leaderboard/:quizName/:questionIndex?')
+  @Get('/leaderboard/:quizName/:amount/:questionIndex?')
   public getLeaderBoardData(
     @Param('quizName') quizName: string, //
+    @Param('amount') amount: number, //
     @Param('questionIndex') questionIndex: number, //
+    @HeaderParam('authorization') authorization: string, //
   ): object {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
@@ -680,14 +682,27 @@ export class QuizRouter extends AbstractRouter {
         payload: {},
       }));
     }
+    const member = MemberDAO.getMemberByToken(authorization);
 
     const { correctResponses, memberGroupResults } = this._leaderboard.buildLeaderboard(activeQuiz, questionIndex);
+
+    const sortedCorrectResponses = this._leaderboard.sortBy(correctResponses, 'score');
+    const ownResponse: { [key: string]: any } = {};
+    if (member) {
+      ownResponse.element = sortedCorrectResponses.find(value => value.name === member.name);
+      ownResponse.index = sortedCorrectResponses.indexOf(ownResponse.element);
+      if (ownResponse.index > 0) {
+        ownResponse.closestOpponent = sortedCorrectResponses[ownResponse.index - 1];
+      }
+    }
+    sortedCorrectResponses.splice(0, amount);
 
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.GetLeaderboardData,
       payload: {
-        correctResponses: this._leaderboard.sortBy(correctResponses, 'score'),
+        correctResponses: sortedCorrectResponses,
+        ownResponse: ownResponse,
         memberGroupResults: this._leaderboard.sortBy(memberGroupResults, 'score'),
       },
     };
