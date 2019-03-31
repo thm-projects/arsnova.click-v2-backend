@@ -4,7 +4,7 @@ import * as process from 'process';
 import { Language } from './enums/Enums';
 import { LeaderboardConfiguration } from './enums/LeaderboardConfiguration';
 
-declare function require(name: string): any;
+const config = require(path.join(__dirname, 'config.json'));
 
 const interfaces = networkInterfaces();
 const localAddress = interfaces[Object.keys(interfaces).filter(netIface => {
@@ -12,12 +12,14 @@ const localAddress = interfaces[Object.keys(interfaces).filter(netIface => {
   return singleInterface.family === 'IPv4' && singleInterface.internal === false;
 })[0]];
 const localIpv4Address = localAddress ? localAddress[0].address : '127.0.0.1';
-const basePath = process.env.ARSNOVA_CLICK_BACKEND_BASE_PATH || '';
-const portInternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_INTERNAL || 3010;
-const portExternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL || portInternal;
-const routePrefix = process.env.ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX || '';
-const rewriteAssetCacheUrl = process.env.ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL || `http://${hostname()}:${portExternal}${routePrefix}`;
-const leaderboardAlgorithm = process.env.LEADERBOARD_ALGORITHM || LeaderboardConfiguration.TimeBased;
+
+const basePath = process.env.ARSNOVA_CLICK_BACKEND_BASE_PATH || config.basePath || '';
+const portInternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_INTERNAL || config.portInternal || 3010;
+const portExternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL || config.portExternal || portInternal;
+const routePrefix = process.env.ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX || config.routePrefix || '';
+const rewriteAssetCacheUrl = process.env.ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL || config.rewriteAssetCacheUrl
+                             || `http://${hostname()}:${portExternal}${routePrefix}`;
+const leaderboardAlgorithm = process.env.LEADERBOARD_ALGORITHM || config.leaderboardAlgorithm || LeaderboardConfiguration.TimeBased;
 
 export const staticStatistics = {
   appName: 'arsnova-click-v2-backend',
@@ -39,11 +41,7 @@ export const dynamicStatistics = () => {
     uptime: process.uptime(),
     loadavg: loadavg(),
     freemem: freemem(),
-    totalmem: totalmem(), /*
-     connectedUsers: QuizDAO.getAllActiveMembers(),
-     activeQuizzes: QuizDAO.getAllActiveQuizNames(),
-     persistedQuizzes: Object.keys(QuizDAO.getAllPersistedQuizzes()).length,
-     */
+    totalmem: totalmem(),
   };
 };
 

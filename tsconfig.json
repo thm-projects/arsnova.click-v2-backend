@@ -10,6 +10,7 @@
     ],
     "module": "commonjs",
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "sourceMap": true,
     "target": "es6",
     "typeRoots": [
@@ -18,7 +19,8 @@
     "outDir": "dist/"
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.json"
   ],
   "exclude": [
     "src/**/*.spec.ts",

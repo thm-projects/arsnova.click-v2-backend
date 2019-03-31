@@ -1,0 +1,8 @@
+{
+  "basePath": "",
+  "portInternal": 3010,
+  "portExternal": 3010,
+  "routePrefix": "",
+  "rewriteAssetCacheUrl": "",
+  "leaderboardAlgorithm": "TimeBased"
+}
