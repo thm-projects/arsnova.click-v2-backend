@@ -66,7 +66,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     const dateFormatted = `${dateYearPart}-${date.getHours()}_${date.getMinutes()}_${date.getSeconds()}`;
     result.push(`${quizName} ${count + 1}`);
     result.push(`${quizName} ${dateFormatted}`);
-    result.push(`${quizName} ${generateToken(quizName)}`);
+    result.push(`${quizName} ${generateToken(quizName, new Date().getTime())}`);
     return result;
   }
 
