@@ -6,6 +6,7 @@ import UserDAO from '../../db/UserDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { QuizState } from '../../enums/QuizState';
 import { UserRole } from '../../enums/UserRole';
+import { IAdminQuiz } from '../../interfaces/quizzes/IAdminQuiz';
 import { IUserSerialized } from '../../interfaces/users/IUserSerialized';
 import { UserModel } from '../../models/UserModelItem/UserModel';
 import { AbstractRouter } from './AbstractRouter';
@@ -69,14 +70,26 @@ export class AdminRouter extends AbstractRouter {
   @OpenAPI({
     description: 'Returns all available quizzes',
   })
-  private getQuizzes(): object {
-    return QuizDAO.getAllQuizzes().map(quiz => ({
-      state: quiz.state,
-      id: quiz.id.toHexString(),
-      name: quiz.name,
-      expiry: quiz.expiry,
-      visibility: quiz.visibility,
-    }));
+  private getQuizzes(): Array<IAdminQuiz> {
+    return QuizDAO.getAllQuizzes().map(quiz => {
+      let questionAmount = 0;
+      let answerAmount = 0;
+      if (Array.isArray(quiz.questionList) && quiz.questionList.length) {
+        questionAmount = quiz.questionList.length;
+        answerAmount = quiz.questionList.map(question => question.answerOptionList.length)
+        .reduce((previousValue, currentValue) => previousValue + currentValue);
+      }
+
+      return {
+        state: quiz.state,
+        id: quiz.id.toHexString(),
+        name: quiz.name,
+        expiry: quiz.expiry,
+        visibility: quiz.visibility,
+        questionAmount,
+        answerAmount,
+      };
+    });
   }
 
   @Post('/quiz') //
