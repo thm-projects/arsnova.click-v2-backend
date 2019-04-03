@@ -9,6 +9,9 @@ const MemoryDb = require('lowdb/adapters/Memory');
 class LoginGenerator {
 
   constructor() {
+  }
+
+  buildOutputPaths() {
     this.pathToOutput = path.join(homedir, '.arsnova-click-v2-backend');
     this.pathToDb = path.join(this.pathToOutput, 'arsnova-click-v2-db-v1.json');
     this.adapter = new FileSync(this.pathToDb);
@@ -31,6 +34,8 @@ class LoginGenerator {
   }
 
   generate(username, password) {
+    this.buildOutputPaths();
+
     if (!this.db.getState()['users']) {
       this.db.set('users', {}).write();
     }
@@ -124,6 +129,21 @@ class LoginGenerator {
     }
     return this.tohex(H0) + this.tohex(H1) + this.tohex(H2) + this.tohex(H3) + this.tohex(H4);
   }
+
+  generateMongoDbUser() {
+    var MongoClient = require('mongodb').MongoClient;
+    var url = `mongodb://${argv.username}:${argv.password}@localhost:27017/arsnova-click-v2`;
+    MongoClient.connect(url, function (err, db) {
+      if (err) throw err;
+      var dbo = db.db("arsnova-click-v2");
+      var user = {name: "default-user", passwordHash: "cb14db1f6b75333ed9a09c4819d0aa538da8b8f3", userAuthorizations: ['SuperAdmin']};
+      dbo.collection("users").insertOne(user, function (err, res) {
+        if (err) throw err;
+        console.log("1 user created");
+        db.close();
+      });
+    });
+  }
 }
 
 const loginGenerator = new LoginGenerator();
@@ -150,8 +170,11 @@ if (process.argv.length < 2) {
         loginGenerator.adapter = new MemoryDb('');
         loginGenerator.db = lowdb(loginGenerator.adapter);
         break;
+      case 'MongoDb':
+        loginGenerator.generateMongoDbUser();
+        return;
       default:
-        throw new Error(`DB Type ${argv.adapter} is currently not supported. Use 'MemoryDb' or 'FileSync' instead`);
+        throw new Error(`DB Type ${argv.adapter} is currently not supported. Use 'MemoryDb', 'MongoDb' or 'FileSync' instead`);
     }
   }
 
