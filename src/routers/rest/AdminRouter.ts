@@ -1,6 +1,7 @@
 import { Authorized, BodyParam, Delete, Get, JsonController, Param, Post, Put } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { default as DbDAO } from '../../db/DbDAO';
+import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { DbCollection } from '../../enums/DbOperation';
@@ -88,6 +89,7 @@ export class AdminRouter extends AbstractRouter {
         visibility: quiz.visibility,
         questionAmount,
         answerAmount,
+        memberAmount: MemberDAO.getMembersOfQuiz(quiz.name).map(member => member.serialize()),
       };
     });
   }
