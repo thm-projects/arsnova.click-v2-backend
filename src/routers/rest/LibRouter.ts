@@ -448,7 +448,7 @@ export class LibRouter extends AbstractRouter {
 
         casResponse.on('end', () => {
           xml2js.parseString(data, (err, result) => {
-            LoggerService.info('received response from cas server', err, result);
+            LoggerService.info('received response from cas server', err.message, result);
             if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
               throw new UnauthorizedError(JSON.stringify({
                 status: StatusProtocol.Failed,
