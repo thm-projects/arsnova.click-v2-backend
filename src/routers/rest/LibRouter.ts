@@ -205,7 +205,7 @@ export class LibRouter extends AbstractRouter {
   @Get('/manifest/:theme?')
   public getManifest(
     @Param('theme') theme: string, //
-    @Res() res: I18nResponse, //
+    @Res() res: ICustomI18nResponse, //
     @Req() req: Request, //
   ): object {
 

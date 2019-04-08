@@ -633,7 +633,7 @@ export class QuizRouter extends AbstractRouter {
     @Param('privateKey') privateKey: string, //
     @Param('theme') themeName: string, //
     @Param('language') translation: string, //
-    @Res() res: I18nResponse, //
+    @Res() res: ICustomI18nResponse, //
   ): Promise<Buffer> {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);

@@ -15,7 +15,7 @@ declare global {
     busboy: any;
   }
 
-  interface I18nResponse extends Response {
+  interface ICustomI18nResponse extends Response {
     __mf: any;
   }
 }
