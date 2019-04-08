@@ -17,7 +17,10 @@ export class QuizModelItem extends Typegoose implements IQuizSerialized {
     enum: QuizVisibility,
     default: QuizVisibility.Account,
   }) public visibility?: QuizVisibility;
-  @prop() public name: string;
+  @prop({
+    minlength: 2,
+    trim: true,
+  }) public name: string;
   @arrayProp({ items: Object }) public questionList: Array<AbstractQuestionEntity>;
   @prop({
     default: QuizState.Inactive,
