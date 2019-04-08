@@ -58,15 +58,19 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
 
   public getRenameRecommendations(quizName: string): Array<string> {
     const result = [];
+    if (!quizName) {
+      return result;
+    }
+
     const count = this.storage.filter((value: IQuizEntity) => {
-      return value.name.startsWith(quizName.toLowerCase());
+      return value.name.trim().toLowerCase().startsWith(quizName.trim().toLowerCase());
     }).length;
     const date = new Date();
     const dateYearPart = `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}`;
     const dateFormatted = `${dateYearPart}-${date.getHours()}_${date.getMinutes()}_${date.getSeconds()}`;
     result.push(`${quizName} ${count + 1}`);
     result.push(`${quizName} ${dateFormatted}`);
-    result.push(`${quizName} ${generateToken(quizName, new Date().getTime())}`);
+    result.push(`${quizName} ${generateToken(quizName, new Date().getTime()).substr(0, 10)}`);
     return result;
   }
 
