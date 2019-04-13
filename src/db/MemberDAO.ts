@@ -42,7 +42,9 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     const member = new MemberEntity(memberSerialized);
     this.storage.push(member);
     this.updateEmitter.emit(DbEvent.Create, member);
-    QuizDAO.getQuizByName(member.currentQuizName).onMemberAdded(member);
+    QuizDAO.updateEmitter.once(DbEvent.Initialized, () => {
+      QuizDAO.getQuizByName(member.currentQuizName).onMemberAdded(member);
+    });
   }
 
   public updateMember(id: ObjectId, updatedFields: { [key: string]: any }): void {

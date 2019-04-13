@@ -23,7 +23,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
         const cursor = DbDAO.readMany(DbCollection.Quizzes, {});
         cursor.forEach(doc => {
           this.addQuiz(doc);
-        });
+        }).then(() => this.updateEmitter.emit(DbEvent.Initialized));
       }
     });
   }

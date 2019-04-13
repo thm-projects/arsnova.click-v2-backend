@@ -355,6 +355,9 @@ export class LibRouter extends AbstractRouter {
         const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
         if (dbResult) {
           result.push(dbResult);
+          if (index === mathjaxArray.length - 1) {
+            resolve(result);
+          }
           return;
         }
 

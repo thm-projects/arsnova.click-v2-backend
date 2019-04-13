@@ -695,13 +695,12 @@ export class QuizRouter extends AbstractRouter {
         ownResponse.closestOpponent = sortedCorrectResponses[ownResponse.index - 1];
       }
     }
-    sortedCorrectResponses.splice(0, amount);
 
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.GetLeaderboardData,
       payload: {
-        correctResponses: sortedCorrectResponses,
+        correctResponses: sortedCorrectResponses.splice(0, amount),
         ownResponse: ownResponse,
         memberGroupResults: this._leaderboard.sortBy(memberGroupResults, 'score'),
       },
