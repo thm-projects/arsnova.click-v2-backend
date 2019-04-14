@@ -227,7 +227,8 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public getAllPublicQuizzes(): Array<IQuizEntity> {
-    return this.storage.filter(val => val.visibility === QuizVisibility.Any);
+    const currentTime = new Date().getTime();
+    return this.storage.filter(val => val.visibility === QuizVisibility.Any && (!val.expiry || new Date(val.expiry).getTime() > currentTime));
   }
 
   public getQuizById(id: ObjectId | string): IQuizEntity {
