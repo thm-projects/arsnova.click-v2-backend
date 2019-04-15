@@ -46,7 +46,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     if (QuizDAO.isInitialized) {
       this.notifyQuizDAO(member);
     } else {
-      QuizDAO.updateEmitter.once(DbEvent.Initialized, this.notifyQuizDAO.call(this, member));
+      QuizDAO.updateEmitter.once(DbEvent.Initialized, () => this.notifyQuizDAO(member));
     }
   }
 
