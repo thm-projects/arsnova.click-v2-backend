@@ -517,7 +517,7 @@ export class QuizRouter extends AbstractRouter {
     }
 
     quiz.privateKey = privateKey;
-    quiz.expiry = new Date(quiz.expiry);
+    quiz.expiry = quiz.expiry ? new Date(quiz.expiry) : quiz.expiry;
     quiz.state = QuizState.Inactive;
 
     QuizDAO.convertLegacyQuiz(quiz);
