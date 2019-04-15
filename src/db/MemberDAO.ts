@@ -42,9 +42,12 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     const member = new MemberEntity(memberSerialized);
     this.storage.push(member);
     this.updateEmitter.emit(DbEvent.Create, member);
-    QuizDAO.updateEmitter.once(DbEvent.Initialized, () => {
-      QuizDAO.getQuizByName(member.currentQuizName).onMemberAdded(member);
-    });
+
+    if (QuizDAO.isInitialized) {
+      this.notifyQuizDAO(member);
+    } else {
+      QuizDAO.updateEmitter.once(DbEvent.Initialized, this.notifyQuizDAO.call(this, member));
+    }
   }
 
   public updateMember(id: ObjectId, updatedFields: { [key: string]: any }): void {
@@ -81,6 +84,14 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
 
   public getMemberByToken(token: string): MemberEntity {
     return this.storage.find(val => val.token === token);
+  }
+
+  private notifyQuizDAO(member: MemberEntity): void {
+    const quiz = QuizDAO.getQuizByName(member.currentQuizName);
+    if (!quiz) {
+      console.error(`The quiz '${member.currentQuizName}' for the member ${member.name} could not be found`);
+    }
+    QuizDAO.getQuizByName(member.currentQuizName).onMemberAdded(member);
   }
 
   private getMemberById(id: ObjectId | string): MemberEntity {

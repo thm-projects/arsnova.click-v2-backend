@@ -4,6 +4,12 @@ import { IStorageDAO } from '../interfaces/database/IStorageDAO';
 export abstract class AbstractDAO<T> implements IStorageDAO<T> {
   protected static instance;
 
+  protected _isInitialized: boolean;
+
+  get isInitialized(): boolean {
+    return this._isInitialized;
+  }
+
   protected _storage: T;
 
   get storage(): T {
