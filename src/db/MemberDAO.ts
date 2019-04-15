@@ -90,6 +90,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     const quiz = QuizDAO.getQuizByName(member.currentQuizName);
     if (!quiz) {
       console.error(`The quiz '${member.currentQuizName}' for the member ${member.name} could not be found`);
+      return;
     }
     QuizDAO.getQuizByName(member.currentQuizName).onMemberAdded(member);
   }
