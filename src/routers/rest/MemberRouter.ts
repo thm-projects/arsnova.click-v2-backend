@@ -150,6 +150,11 @@ export class MemberRouter extends AbstractRouter {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
+    if (!member.responses[quiz.currentQuestionIndex]) {
+      console.error(`No responses for questionIndex ${quiz.currentQuestionIndex} found for member ${member.name} of quiz ${quiz.name}.
+        Quiz has ${quiz.questionList.length} questions.`);
+      throw new BadRequestError(MessageProtocol.InvalidData);
+    }
     if (member.responses[quiz.currentQuestionIndex].responseTime > 0) {
       throw new BadRequestError(MessageProtocol.DuplicateResponse);
     }
