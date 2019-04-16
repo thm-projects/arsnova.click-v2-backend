@@ -175,7 +175,7 @@ export class MemberRouter extends AbstractRouter {
   ): Promise<object> {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
-    if (!activeQuiz) {
+    if (!activeQuiz || !nickname) {
       return;
     }
     const result: DeleteWriteOpResultObject = await activeQuiz.removeMember(nickname);

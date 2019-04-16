@@ -189,6 +189,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       status: StatusProtocol.Success,
       step: MessageProtocol.Reset,
     }));
+    clearTimeout(this._quizTimerInterval);
   }
 
   public stop(): void {
@@ -324,10 +325,13 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     }));
 
     this._quizTimer = this._questionList[this._currentQuestionIndex].timer;
-    if (this._quizTimer === -1) {
+    if (this._quizTimer <= 0) {
       return;
     }
 
+    if (this._quizTimerInterval) {
+      clearInterval(this._quizTimerInterval);
+    }
     this._quizTimerInterval = setInterval(() => {
       this._quizTimer--;
       this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
