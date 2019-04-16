@@ -75,7 +75,7 @@ export abstract class AbstractQuestionEntity {
     const questionTextWithoutMarkdownChars = this.getQuestionTextWithoutMarkdownChars().length;
 
     // hard coded checkup values are ugly, but the schema import seems to be messed up here...
-    return answerOptionListValid && questionTextWithoutMarkdownChars > 4 && questionTextWithoutMarkdownChars < 50001 && this.timer >= 0;
+    return answerOptionListValid && questionTextWithoutMarkdownChars > 4 && questionTextWithoutMarkdownChars < 50001 && this.timer >= -1;
   }
 
   public getQuestionTextWithoutMarkdownChars(): string {

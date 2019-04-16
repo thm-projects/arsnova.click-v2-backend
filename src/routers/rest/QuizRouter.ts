@@ -608,6 +608,7 @@ export class QuizRouter extends AbstractRouter {
       state: QuizState.Active,
       currentQuestionIndex: -1,
       currentStartTimestamp: -1,
+      readingConfirmationRequested: false,
     });
 
     const members = MemberDAO.getMembersOfQuiz(quizName);

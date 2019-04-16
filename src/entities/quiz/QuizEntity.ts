@@ -196,6 +196,8 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       status: StatusProtocol.Success,
       step: MessageProtocol.Stop,
     }));
+    this.currentStartTimestamp = -1;
+    clearTimeout(this._quizTimerInterval);
   }
 
   public addSocketToChannel(socket: WebSocket): void {
@@ -322,6 +324,9 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     }));
 
     this._quizTimer = this._questionList[this._currentQuestionIndex].timer;
+    if (this._quizTimer === -1) {
+      return;
+    }
 
     this._quizTimerInterval = setInterval(() => {
       this._quizTimer--;
