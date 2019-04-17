@@ -312,21 +312,6 @@ export class QuizRouter extends AbstractRouter {
     return quiz.currentStartTimestamp;
   }
 
-  public postNextStep(@HeaderParam('authorization') token: string): object {
-    const quiz = QuizDAO.getQuizByToken(token);
-    if (!quiz || ![QuizState.Active, QuizState.Running].includes(quiz.state)) {
-      return;
-    }
-
-    if (quiz.sessionConfig.readingConfirmationEnabled) {
-      return this.showReadingConfirmation(quiz.name);
-    }
-
-    if (quiz.currentQuestionIndex < quiz.questionList.length) {
-      this.startQuiz(token, quiz.name);
-    }
-  }
-
   @Get('/currentState/:quizName')
   public getCurrentQuizState(@Param('quizName') quizName: string, //
   ): object {
@@ -415,16 +400,16 @@ export class QuizRouter extends AbstractRouter {
   @Post('/settings')
   public updateQuizSettings(
     @HeaderParam('authorization') token: string, //
+    @BodyParam('quizName') quizName: string, //
     @BodyParam('settings') quizSettings: { state: boolean, target: string }, //
   ): object {
 
-    const activeQuiz: IQuizEntity = QuizDAO.getQuizByToken(token);
+    const activeQuiz: IQuizEntity = QuizDAO.getQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
-        status: StatusProtocol.Failed,
-        step: MessageProtocol.IsInactive,
-        payload: {},
-      }));
+      throw new InternalServerError(MessageProtocol.IsInactive);
+    }
+    if (activeQuiz.privateKey !== token) {
+      throw new InternalServerError(MessageProtocol.InsufficientPermissions);
     }
 
     DbDAO.updateOne(DbCollection.Quizzes, { _id: activeQuiz.id }, { ['sessionConfig.' + quizSettings.target]: quizSettings.state });

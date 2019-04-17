@@ -305,7 +305,6 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       status: StatusProtocol.Success,
       step: MessageProtocol.NextQuestion,
       payload: {
-        quiz: this.serialize(),
         nextQuestionIndex: nextIndex,
       },
     }));
