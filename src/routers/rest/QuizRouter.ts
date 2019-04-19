@@ -459,6 +459,7 @@ export class QuizRouter extends AbstractRouter {
 
     quiz.currentQuestionIndex = -1;
     quiz.currentStartTimestamp = -1;
+    quiz.readingConfirmationRequested = false;
     quiz.privateKey = privateKey;
     quiz.state = QuizState.Active;
 
