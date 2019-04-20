@@ -688,7 +688,7 @@ export class QuizRouter extends AbstractRouter {
       step: MessageProtocol.GetLeaderboardData,
       payload: {
         correctResponses: sortedCorrectResponses.splice(0, amount),
-        ownResponse: ownResponse,
+        ownResponse,
         memberGroupResults: this._leaderboard.sortBy(memberGroupResults, 'score'),
       },
     };

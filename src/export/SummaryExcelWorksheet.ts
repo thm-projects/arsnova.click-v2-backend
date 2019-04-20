@@ -343,7 +343,8 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
   protected getLeaderboardData(): Array<ILeaderBoardItemBase> {
     const leaderBoard = new Leaderboard();
-    return leaderBoard.sortBy(leaderBoard.buildLeaderboard(this.quiz), 'score');
+    const { correctResponses } = leaderBoard.buildLeaderboard(this.quiz);
+    return leaderBoard.sortBy(correctResponses, 'score');
   }
 
   private addLogoImage(): void {
