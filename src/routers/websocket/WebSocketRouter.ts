@@ -75,13 +75,18 @@ export class WebSocketRouter {
 
     WebSocketRouter._wss.on('connection', (ws: WebSocket) => {
       const quizStatusUpdateHandler = () => {
-        WebSocketRouter.sendQuizStatusUpdate(ws, QuizDAO.getJoinableQuizzes().map(val => val.name));
+        WebSocketRouter.sendQuizStatusUpdate(ws, MessageProtocol.Connected, QuizDAO.getJoinableQuizzes().map(val => val.name));
+      };
+      const quizSessionUpdateHandler = () => {
+        WebSocketRouter.sendQuizStatusUpdate(ws, MessageProtocol.UpdatedSettings,
+          { sessionConfig: QuizDAO.getQuizBySocket(ws).sessionConfig.serialize() });
       };
       ws['isAlive'] = true;
 
       ws.on('close', opcode => {
         this.disconnectFromChannel(ws);
-        QuizDAO.updateEmitter.off(DbEvent.Change, quizStatusUpdateHandler);
+        QuizDAO.updateEmitter.off(DbEvent.StateChanged, quizStatusUpdateHandler);
+        QuizDAO.updateEmitter.off(DbEvent.SessionConfigChanged, quizSessionUpdateHandler);
         LoggerService.info('Closing socket connection', opcode, `(${this.getWebSocketOpcode(opcode)})`);
       });
       ws.on('ping', this.onPing.bind(this, ws));
@@ -111,7 +116,8 @@ export class WebSocketRouter {
       });
 
       quizStatusUpdateHandler();
-      QuizDAO.updateEmitter.on(DbEvent.Change, quizStatusUpdateHandler);
+      QuizDAO.updateEmitter.on(DbEvent.StateChanged, quizStatusUpdateHandler);
+      QuizDAO.updateEmitter.on(DbEvent.SessionConfigChanged, quizSessionUpdateHandler);
     });
   }
 
@@ -130,19 +136,17 @@ export class WebSocketRouter {
     }));
   }
 
-  private static sendQuizStatusUpdate(ws: WebSocket, activeQuizzes: Array<string>): void {
+  private static sendQuizStatusUpdate(ws: WebSocket, step: MessageProtocol, payload: object): void {
     if (ws.readyState !== WebSocket.OPEN) {
-      console.log('cannot send activequizzes to socket: no socket open', activeQuizzes);
+      console.log('cannot send payload to socket: no socket open', payload);
       return;
     }
-    console.log('sending activequizzes to socket', activeQuizzes);
+    console.log('sending payload to socket', payload);
 
     ws.send(JSON.stringify({
       status: StatusProtocol.Success,
-      step: MessageProtocol.Connected,
-      payload: {
-        activeQuizzes,
-      },
+      step,
+      payload,
     }));
   }
 

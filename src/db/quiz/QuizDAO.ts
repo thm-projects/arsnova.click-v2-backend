@@ -187,6 +187,14 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
       setPath(quiz, key, updatedFields[key]);
     });
 
+    if (updatedFields.state) {
+      this.updateEmitter.emit(DbEvent.StateChanged, quiz);
+    }
+
+    if (updatedFields.sessionConfig || Object.keys(updatedFields).find(field => field.startsWith('sessionConfig'))) {
+      this.updateEmitter.emit(DbEvent.SessionConfigChanged);
+    }
+
     this.updateEmitter.emit(DbEvent.Change, quiz);
     return quiz;
   }

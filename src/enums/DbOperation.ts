@@ -33,9 +33,11 @@ export enum DbCollection {
 }
 
 export enum DbEvent {
-  Connected   = 'connected', //
-  Change      = 'change', //
-  Initialized = 'initialized', //
-  Create      = 'create', //
-  Delete      = 'delete', //
+  SessionConfigChanged = 'sessionConfigChanged', //
+  StateChanged         = 'stateChanged', //
+  Connected            = 'connected', //
+  Change               = 'change', //
+  Initialized          = 'initialized', //
+  Create               = 'create', //
+  Delete               = 'delete', //
 }
