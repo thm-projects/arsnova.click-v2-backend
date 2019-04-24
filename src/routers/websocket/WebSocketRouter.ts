@@ -75,7 +75,7 @@ export class WebSocketRouter {
 
     WebSocketRouter._wss.on('connection', (ws: WebSocket) => {
       const quizStatusUpdateHandler = () => {
-        WebSocketRouter.sendQuizStatusUpdate(ws, MessageProtocol.Connected, QuizDAO.getJoinableQuizzes().map(val => val.name));
+        WebSocketRouter.sendQuizStatusUpdate(ws, MessageProtocol.Connected, { activeQuizzes: QuizDAO.getJoinableQuizzes().map(val => val.name) });
       };
       const quizSessionUpdateHandler = () => {
         WebSocketRouter.sendQuizStatusUpdate(ws, MessageProtocol.UpdatedSettings,
