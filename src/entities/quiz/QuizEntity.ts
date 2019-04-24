@@ -348,6 +348,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
 
       if (this._quizTimer <= 0) {
         clearInterval(this._quizTimerInterval);
+        DbDAO.updateOne(DbCollection.Quizzes, { _id: this.id }, { currentStartTimestamp: -1 });
       }
 
     }, 1000);
