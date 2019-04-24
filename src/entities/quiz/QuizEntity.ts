@@ -369,11 +369,15 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       step: MessageProtocol.UpdatedResponse,
       payload,
     }));
-    if (this._quizTimer && MemberDAO.getMembersOfQuiz(this.name).every(nick => {
+    if (MemberDAO.getMembersOfQuiz(this.name).every(nick => {
       const val = nick.responses[this.currentQuestionIndex].value;
       return typeof val === 'number' ? val > -1 : val.length > 0;
     })) {
-      this._quizTimer = 1;
+      if (this._quizTimer) {
+        this._quizTimer = 1;
+      } else {
+        DbDAO.updateOne(DbCollection.Quizzes, { _id: this.id }, { currentStartTimestamp: -1 });
+      }
     }
   }
 }
