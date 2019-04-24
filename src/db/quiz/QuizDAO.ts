@@ -12,6 +12,7 @@ import { generateToken } from '../../lib/generateToken';
 import { setPath } from '../../lib/resolveNestedObjectProperty';
 import { AbstractDAO } from '../AbstractDAO';
 import DbDAO from '../DbDAO';
+import MemberDAO from '../MemberDAO';
 
 class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
 
@@ -52,7 +53,10 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public removeQuiz(id: ObjectId): void {
-    this.storage.splice(this.storage.findIndex(val => val.id.equals(id)), 1);
+    const removedQuiz = this.storage.splice(this.storage.findIndex(val => val.id.equals(id)), 1);
+    removedQuiz[0].onRemove();
+    removedQuiz[0].state = 0;
+    MemberDAO.removeMembersOfQuiz(removedQuiz[0]);
   }
 
   public clearStorage(): void {

@@ -1,8 +1,10 @@
 import { ObjectId } from 'bson';
 import { MemberEntity } from '../entities/member/MemberEntity';
+import { QuizEntity } from '../entities/quiz/QuizEntity';
 import { DbCollection, DbEvent } from '../enums/DbOperation';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
+import { IQuizEntity } from '../interfaces/quizzes/IQuizEntity';
 import { AbstractDAO } from './AbstractDAO';
 import DbDAO from './DbDAO';
 import QuizDAO from './quiz/QuizDAO';
@@ -86,6 +88,10 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     return this.storage.find(val => val.token === token);
   }
 
+  public removeMembersOfQuiz(removedQuiz: QuizEntity | IQuizEntity): void {
+    DbDAO.deleteMany(DbCollection.Members, { currentQuizName: removedQuiz.name });
+  }
+
   private notifyQuizDAO(member: MemberEntity): void {
     const quiz = QuizDAO.getQuizByName(member.currentQuizName);
     if (!quiz) {
@@ -98,7 +104,6 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
   private getMemberById(id: ObjectId | string): MemberEntity {
     return this.storage.find(val => val.id.equals(id));
   }
-
 }
 
 export default MemberDAO.getInstance();
