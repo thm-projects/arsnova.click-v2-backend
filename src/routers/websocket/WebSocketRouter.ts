@@ -78,8 +78,13 @@ export class WebSocketRouter {
         WebSocketRouter.sendQuizStatusUpdate(ws, MessageProtocol.Connected, { activeQuizzes: QuizDAO.getJoinableQuizzes().map(val => val.name) });
       };
       const quizSessionUpdateHandler = () => {
-        WebSocketRouter.sendQuizStatusUpdate(ws, MessageProtocol.UpdatedSettings,
-          { sessionConfig: QuizDAO.getQuizBySocket(ws).sessionConfig.serialize() });
+        const quiz = QuizDAO.getQuizBySocket(ws);
+        if (!quiz) {
+          console.error('Cannot publish session update to the socket. Could not find an attached quiz');
+          return;
+        }
+
+        WebSocketRouter.sendQuizStatusUpdate(ws, MessageProtocol.UpdatedSettings, { sessionConfig: quiz.sessionConfig.serialize() });
       };
       ws['isAlive'] = true;
 
