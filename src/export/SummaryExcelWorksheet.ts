@@ -120,7 +120,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       let nextColumnIndex = 3;
       nextStartRow++;
       const targetRow = indexInList + 13;
-      if (this.responsesWithConfidenceValue.length > 0) {
+      if (this.quiz.sessionConfig.confidenceSliderEnabled) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
             horizontal: 'center',
@@ -168,7 +168,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
       let nextColumnIndex = 3;
       const targetRow = indexInList + nextStartRow;
-      if (this.responsesWithConfidenceValue.length > 0) {
+      if (this.quiz.sessionConfig.confidenceSliderEnabled) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
             horizontal: 'center',
@@ -229,16 +229,18 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     }, 0) / numberOfAttendees) || 0);
     currentRowIndex++;
 
-    this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_confidence')}:`);
-    const averageConfidencePercentage = (this.leaderBoardData.filter((x) => {
-      return x.confidenceValue > -1;
-    }).map((x) => {
-      return x.confidenceValue;
-    }).reduce((a, b) => {
-      return a + b;
-    }, 0) / numberOfAttendees);
-    this.ws.cell(currentRowIndex, 3).number((isNaN(averageConfidencePercentage) ? 0 : Math.round(averageConfidencePercentage)));
-    currentRowIndex++;
+    if (this.quiz.sessionConfig.confidenceSliderEnabled) {
+      this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_confidence')}:`);
+      const averageConfidencePercentage = (this.leaderBoardData.filter((x) => {
+        return x.confidenceValue > -1;
+      }).map((x) => {
+        return x.confidenceValue;
+      }).reduce((a, b) => {
+        return a + b;
+      }, 0) / numberOfAttendees);
+      this.ws.cell(currentRowIndex, 3).number((isNaN(averageConfidencePercentage) ? 0 : Math.round(averageConfidencePercentage)));
+      currentRowIndex++;
+    }
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_response_time')}:`);
     this.ws.cell(currentRowIndex, 3).number((Math.round((this.leaderBoardData.map((x) => {
@@ -257,10 +259,13 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_id'));
       this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_email'));
     }
+
     this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.correct_questions'));
-    if (this.responsesWithConfidenceValue.length > 0) {
+
+    if (this.quiz.sessionConfig.confidenceSliderEnabled) {
       this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.average_confidence'));
     }
+
     this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.overall_response_time'));
     this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.average_response_time'));
     currentRowIndex++;
@@ -283,10 +288,14 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail[0]);
       }
       const correctQuestionNumbers = this.leaderBoardData[indexInList].correctQuestions.map((item) => item + 1);
-      this.ws.cell(targetRow, nextColumnIndex++).string(correctQuestionNumbers.join(', '));
-      if (this.responsesWithConfidenceValue.length > 0) {
-        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
+
+      if (this.quiz.sessionConfig.confidenceSliderEnabled) {
+        this.ws.cell(targetRow, nextColumnIndex++).string(correctQuestionNumbers.join(', '));
+        if (this.responsesWithConfidenceValue.length > 0) {
+          this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
+        }
       }
+
       this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime));
       this.ws.cell(targetRow, nextColumnIndex++).number(Math.round((leaderboardItem.responseTime / this.leaderBoardData.length)));
     });
@@ -301,14 +310,18 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     nextStartRow += 2;
 
     this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.attendee'));
+
     if (this._isCasRequired) {
       this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.cas_account_id'));
       this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.cas_account_email'));
     }
+
     this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.correct_questions'));
-    if (this.responsesWithConfidenceValue.length > 0) {
+
+    if (this.quiz.sessionConfig.confidenceSliderEnabled) {
       this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.average_confidence'));
     }
+
     this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.overall_response_time'));
     this.ws.cell(nextStartRow++, nextColumnIndex++).string(this.mf('export.average_response_time'));
 
@@ -329,9 +342,11 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
           const correctQuestionNumbers = this._leaderBoardData[indexInList].correctQuestions.map((item) => item + 1);
           this.ws.cell(targetRow, nextColumnIndex++).string(correctQuestionNumbers.join(', '));
         }
-        if (this.responsesWithConfidenceValue.length > 0) {
+
+        if (this.quiz.sessionConfig.confidenceSliderEnabled) {
           this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(this._leaderBoardData[indexInList].confidenceValue));
         }
+
         this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(this._leaderBoardData[indexInList].responseTime));
         this.ws.cell(targetRow, nextColumnIndex++)
         .number(Math.round(this._leaderBoardData[indexInList].responseTime / this._leaderBoardData[indexInList].correctQuestions.length));
