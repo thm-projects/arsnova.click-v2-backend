@@ -1,10 +1,8 @@
 import * as crypto from 'crypto';
 import { Request, Response } from 'express';
-import fileType from 'file-type';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as mjAPI from 'mathjax-node';
-import * as MessageFormat from 'messageformat';
 import * as path from 'path';
 import {
   BadRequestError, BodyParam, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
@@ -18,7 +16,6 @@ import UserDAO from '../../db/UserDAO';
 import { AbstractAnswerEntity } from '../../entities/answer/AbstractAnswerEntity';
 import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
-import { ILinkImage } from '../../interfaces/assets';
 import { IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 import { ICasData } from '../../interfaces/users/ICasData';
 import { MatchTextToAssetsDb } from '../../lib/cache/assets';
@@ -27,8 +24,6 @@ import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
-const derivates: Array<string> = require('../../assets/imageDerivates');
-const themeData = JSON.parse(fs.readFileSync(path.join(staticStatistics.pathToAssets, 'themeData.json')).toString());
 const casSettings = { base_url: 'https://cas.thm.de/cas' };
 
 @JsonController('/lib')
@@ -88,155 +83,6 @@ export class LibRouter extends AbstractRouter {
         },
       ],
     };
-  }
-
-  @Get('/linkImages/:theme?')
-  public getLinkImages(@Param('theme') theme: string): Array<ILinkImage> {
-
-    if (!theme) {
-      theme = 'theme-Material';
-    }
-
-    const basePath = `/assets/images/theme/${theme}`;
-    const manifestPath = `${staticStatistics.rewriteAssetCacheUrl}/lib/manifest/${theme}`;
-
-    const result: Array<ILinkImage> = [
-      {
-        tagName: 'link',
-        className: 'theme-meta-data',
-        rel: 'manifest',
-        id: 'link-manifest',
-        href: `${manifestPath}`,
-        type: 'image/png',
-      }, {
-        tagName: 'link',
-        className: 'theme-meta-data',
-        rel: 'apple-touch-icon',
-        id: 'link-apple-touch-default',
-        href: `${basePath}/logo_s32x32.png`,
-        type: 'image/png',
-      }, {
-        tagName: 'link',
-        className: 'theme-meta-data',
-        rel: 'apple-touch-icon-precomposed',
-        id: 'link-apple-touch-precomposed-default',
-        href: `${basePath}/logo_s32x32.png`,
-        type: 'image/png',
-      }, {
-        tagName: 'meta',
-        className: 'theme-meta-data',
-        name: 'theme-color',
-        id: 'meta-theme-color',
-        content: `${themeData[theme].exportedAtRowStyle.bg}`,
-      }, {
-        tagName: 'meta',
-        className: 'theme-meta-data',
-        name: 'msapplication-TileColor',
-        id: 'meta-tile-color',
-        content: `${themeData[theme].exportedAtRowStyle.bg}`,
-      }, {
-        tagName: 'meta',
-        className: 'theme-meta-data',
-        name: 'msapplication-TileImage',
-        id: 'meta-tile-image',
-        content: `${basePath}/logo_s144x144.png`,
-        type: 'image/png',
-      },
-    ];
-
-    derivates.forEach(derivate => {
-      result.push({
-        tagName: 'link',
-        className: 'theme-meta-data',
-        rel: 'icon',
-        href: `${basePath}/logo_s${derivate}.png`,
-        id: `link-icon-${derivate}`,
-        sizes: derivate,
-        type: 'image/png',
-      }, {
-        tagName: 'link',
-        className: 'theme-meta-data',
-        rel: 'apple-touch-icon-precomposed',
-        href: `${basePath}/logo_s${derivate}.png`,
-        id: `link-apple-touch-precomposed-${derivate}`,
-        sizes: derivate,
-        type: 'image/png',
-      });
-    });
-
-    result.push({
-      tagName: 'link',
-      className: 'theme-meta-data',
-      rel: 'shortcut icon',
-      sizes: '64x64',
-      id: 'link-favicon',
-      href: `${basePath}/logo_s64x64.png`,
-      type: 'image/png',
-    });
-
-    return result;
-  }
-
-  @Get('/favicon/:theme?')
-  public getFavicon(
-    @Param('theme') theme: string, //
-    @Res() res: Response, //
-  ): Promise<object> {
-
-    if (!theme) {
-      theme = 'theme-Material';
-    }
-
-    let filePath = path.join(staticStatistics.pathToAssets, 'images', 'theme', `${theme}`, `logo_s64x64.png`);
-    const exists = fs.existsSync(filePath);
-
-    if (!exists) {
-      filePath = path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png');
-    }
-
-    return new Promise<Buffer>(resolve => {
-      fs.readFile(filePath, (err, data: Buffer) => {
-        res.contentType(fileType(data).mime);
-        resolve(data);
-      });
-    });
-  }
-
-  @Get('/manifest/:theme?')
-  public getManifest(
-    @Param('theme') theme: string, //
-    @Res() res: ICustomI18nResponse, //
-    @Req() req: Request, //
-  ): object {
-
-    if (!theme) {
-      theme = 'theme-Material';
-    }
-
-    const mf: MessageFormat.Msg = res.__mf;
-    const basePath = req.header('Origin');
-
-    const manifest = {
-      short_name: 'arsnovaClick',
-      name: 'arsnova.click',
-      description: mf('manifest.description'),
-      background_color: themeData[theme].exportedAtRowStyle.bg,
-      theme_color: themeData[theme].exportedAtRowStyle.bg,
-      start_url: `${basePath}`,
-      display: 'standalone',
-      orientation: 'portrait',
-      icons: [],
-    };
-
-    derivates.forEach((derivate) => {
-      manifest.icons.push({
-        src: `${basePath}/assets/images/theme/${theme}/logo_s${derivate}.png`,
-        sizes: derivate,
-        type: 'image/png',
-      });
-    });
-
-    return manifest;
   }
 
   @Get('/mathjax/example/first')
