@@ -204,7 +204,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public getQuizByName(name: string): IQuizEntity {
-    return this.storage.find(val => !!val.name.trim().match(new RegExp(RegExp.escape(`^${name.trim()}$`), 'i')));
+    return this.storage.find(val => !!RegExp.escape(`${val.name.trim()}`).match(new RegExp(`^${RegExp.escape(name.trim())}$`, 'i')));
   }
 
   public getExpiryQuizzes(): Array<IQuizEntity> {
@@ -221,8 +221,8 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     return this.storage;
   }
 
-  public isActiveQuiz(quizname: string): boolean {
-    return !!this.getActiveQuizzes().find(val => !!val.name.match(new RegExp(`^${quizname}$`, 'i')));
+  public isActiveQuiz(quizName: string): boolean {
+    return !!this.getActiveQuizzes().find(val => !!val.name.match(new RegExp(`^${RegExp.escape(quizName)}$`, 'i')));
   }
 
   public setQuizAsInactive(quizName: string): void {
@@ -230,7 +230,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public getActiveQuizByName(quizName: string): IQuizEntity {
-    return this.getActiveQuizzes().find(val => !!val.name.match(new RegExp(`^${quizName}$`, 'i')));
+    return this.getActiveQuizzes().find(val => !!val.name.match(new RegExp(`^${RegExp.escape(quizName)}$`, 'i')));
   }
 
   public getQuizBySocket(ws: WebSocket): IQuizEntity {

@@ -84,7 +84,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
   }
 
   public getMembersOfQuiz(quizName: string): Array<IMemberEntity> {
-    return this.storage.filter(val => !!val.currentQuizName.match(new RegExp(`^${quizName}$`, 'i')));
+    return this.storage.filter(val => !!val.currentQuizName.match(new RegExp(`^${RegExp.escape(quizName)}$`, 'i')));
   }
 
   public getMemberByToken(token: string): MemberEntity {
