@@ -25,6 +25,7 @@ import { staticStatistics } from './statistics';
 import { LoadTester } from './tests/LoadTester';
 
 require('source-map-support').install();
+require('./lib/regExpEscape'); // Installing polyfill for RegExp.escape
 
 Error.stackTraceLimit = Infinity;
 

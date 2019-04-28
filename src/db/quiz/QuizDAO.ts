@@ -204,7 +204,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public getQuizByName(name: string): IQuizEntity {
-    return this.storage.find(val => !!val.name.trim().match(new RegExp(`^${name.trim()}$`, 'i')));
+    return this.storage.find(val => !!val.name.trim().match(new RegExp(RegExp.escape(`^${name.trim()}$`), 'i')));
   }
 
   public getExpiryQuizzes(): Array<IQuizEntity> {

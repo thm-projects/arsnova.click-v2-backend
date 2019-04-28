@@ -76,7 +76,10 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
 
     if (members.length) {
       this.updateEmitter.emit(DbEvent.Delete, members[0]);
-      QuizDAO.getQuizByName(members[0].currentQuizName).onMemberRemoved(members[0]);
+      const quiz = QuizDAO.getQuizByName(members[0].currentQuizName);
+      if (quiz) {
+        quiz.onMemberRemoved(members[0]);
+      }
     }
   }
 
@@ -95,7 +98,8 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
   private notifyQuizDAO(member: MemberEntity): void {
     const quiz = QuizDAO.getQuizByName(member.currentQuizName);
     if (!quiz) {
-      console.error(`The quiz '${member.currentQuizName}' for the member ${member.name} could not be found`);
+      console.error(`The quiz '${member.currentQuizName}' for the member ${member.name} could not be found. Removing member.`);
+      DbDAO.deleteOne(DbCollection.Members, { _id: member.id });
       return;
     }
     QuizDAO.getQuizByName(member.currentQuizName).onMemberAdded(member);
