@@ -58,7 +58,7 @@ class DumpCryptor {
 
   encrypt(plainData, outputFile) {
     if (!plainData) {
-      throw new Error('No data to encrypt specified - use --data=<plain-text>');
+      throw new Error('No data to encrypt specified - use --data=your-text');
     }
     if (!outputFile) {
       const date = new Date();
@@ -77,7 +77,7 @@ class DumpCryptor {
 
   decrypt(inputFile, outputFile) {
     if (!inputFile) {
-      throw new Error('No input file specified - use --input-file=<path-to-file>');
+      throw new Error('No input file specified - use --input-file=path-to-file');
     }
     if (!outputFile) {
       outputFile = inputFile.replace('dump', 'decrypted_dump');

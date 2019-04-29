@@ -96,17 +96,15 @@ if (process.argv.length < 2) {
     return;
   }
 
-  switch (argv.command) {
-    case 'buildServerInfoMail':
-      if (!argv.attachment || !argv.text) {
-        console.log(`> Command ${argv.command} requires missing parameter!`);
-        sendMail.help();
-        break;
-      }
-      sendMail.buildServerInfoMail(argv.attachment, argv.text, argv.header);
-      sendMail.send();
-      break;
-    default:
-      throw new Error(`No command handling specified for ${argv.command}`);
+  if (argv.command === 'buildServerInfoMail') {
+    if (!argv.attachment || !argv.text) {
+      console.log(`> Command ${argv.command} requires missing parameter!`);
+      sendMail.help();
+      return;
+    }
+    sendMail.buildServerInfoMail(argv.attachment, argv.text, argv.header);
+    sendMail.send();
+  } else {
+    throw new Error(`No command handling specified for ${argv.command}`);
   }
 }

@@ -77,11 +77,7 @@ if (process.env.NODE_ENV === 'production') {
 
   if (plainError) {
     if (typeof plainError === 'string') {
-      try {
-        throw new Error(plainError);
-      } catch (e) {
-        plainError = e;
-      }
+      plainError = new Error(plainError);
     }
     error.type = plainError.constructor.name;
     error.code = plainError.code;
@@ -113,7 +109,7 @@ if (process.env.NODE_ENV === 'production') {
     '--command=buildServerInfoMail',
     `--attachment=${insecureDumpAsJson}`,
     `--header=Arsnova.click Server Error Report (${error.type}: ${error.message})`,
-    `--text=${error.stack || JSON.stringify('<unknown> - no stack provided')}`,
+    `--text=${error.stack || JSON.stringify('unknown - no stack provided')}`,
   ];
   const mailInstance = child_process.spawn(`node`, mailParams);
   mailInstance.stderr.on('data', (data) => {

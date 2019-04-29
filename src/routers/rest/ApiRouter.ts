@@ -1,5 +1,5 @@
 import * as Converter from 'api-spec-converter';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import fileType from 'file-type';
 import * as fs from 'fs';
 import { OpenAPIObject } from 'openapi3-ts';
@@ -11,9 +11,6 @@ import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
 declare global {
-  interface IUploadRequest extends Request {
-    busboy: any;
-  }
 
   interface ICustomI18nResponse extends Response {
     __mf: any;
