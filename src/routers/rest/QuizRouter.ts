@@ -461,7 +461,7 @@ export class QuizRouter extends AbstractRouter {
     quiz.currentStartTimestamp = -1;
     quiz.readingConfirmationRequested = false;
     quiz.privateKey = privateKey;
-    quiz.state = QuizState.Active;
+    quiz.state = quiz.questionList.length > 0 ? QuizState.Active : QuizState.Inactive;
 
     QuizDAO.convertLegacyQuiz(quiz);
     const quizValidator = new QuizModel(quiz);
