@@ -44,7 +44,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     this.ws.row(1).setHeight(20);
     this.ws.column(1).setWidth(this.responsesWithConfidenceValue.length > 0 ? 40 : 30);
     this.ws.column(2).setWidth(30);
-    this.ws.column(3).setWidth(35);
+    this.ws.column(3).setWidth(45);
     this.ws.column(4).setWidth(35);
 
     this.ws.cell(1, 1, 1, columnsToFormat).style(defaultStyles.quizNameRowStyle);
@@ -156,7 +156,9 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
        ${this.mf(answerOption.configTrimWhitespaces ? 'global.yes' : 'global.no')}`);
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.length / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
+    const correctResponsesPercentage: number = this.leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
+                                               .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
+                                               / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     this.ws.cell(7, 3).string(`

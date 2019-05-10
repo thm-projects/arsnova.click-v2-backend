@@ -3,8 +3,6 @@ import MemberDAO from '../db/MemberDAO';
 import { QuestionType } from '../enums/QuestionType';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
-import { ILeaderBoardItemBase } from '../interfaces/leaderboard/ILeaderBoardItemBase';
-import { Leaderboard } from '../lib/leaderboard/leaderboard';
 import { staticStatistics } from '../statistics';
 import { ExcelWorksheet } from './ExcelWorksheet';
 
@@ -73,43 +71,52 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     this.ws.cell(1, 1, 2, 1).style({
       alignment: {
-        indent: 7,
+        indent: 5,
       },
     });
 
-    this.ws.cell(4, 1, 8, this.columnsToFormat).style(defaultStyles.statisticsRowStyle);
-    this.ws.cell(4, 3, 8, 3).style({
+    let currentRowIndex = 7;
+    if (this.quiz.sessionConfig.confidenceSliderEnabled) {
+      currentRowIndex++;
+    }
+
+    this.ws.cell(4, 1, currentRowIndex, this.columnsToFormat).style(defaultStyles.statisticsRowStyle);
+    this.ws.cell(4, 3, currentRowIndex, 3).style({
       alignment: {
         horizontal: 'left',
       },
     });
-    this.ws.cell(8, 3).style({
+
+    if (this.quiz.sessionConfig.confidenceSliderEnabled) {
+    }
+    this.ws.cell(this.quiz.sessionConfig.confidenceSliderEnabled ? currentRowIndex - 1 : currentRowIndex, 3, currentRowIndex, 3).style({
       numberFormat: '#,##0',
     });
 
-    this.ws.cell(10, 1, 11, this.columnsToFormat).style(defaultStyles.attendeeHeaderGroupRowStyle);
-    this.ws.cell(12, 1, 12, this.columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
-    this.ws.cell(12, 1).style({
+    currentRowIndex += 2;
+
+    this.ws.cell(currentRowIndex, 1, currentRowIndex, this.columnsToFormat).style(defaultStyles.attendeeHeaderGroupRowStyle);
+    this.ws.cell(++currentRowIndex, 1, currentRowIndex, this.columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
+    this.ws.cell(currentRowIndex, 1).style({
       alignment: {
         horizontal: 'left',
       },
     });
 
-    this.ws.row(12).filter({
-      firstRow: 12,
+    this.ws.row(currentRowIndex).filter({
+      firstRow: currentRowIndex,
       firstColumn: 1,
-      lastRow: 12,
-      lastColumn: this.columnsToFormat,
+      lastRow: currentRowIndex,
+      lastColumn: this.columnsToFormat - 1,
     });
 
-    let nextStartRow = 18;
     let dataWithoutCompleteCorrectQuestions = 0;
     this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
       let hasNotAllQuestionsCorrect = false;
       this.quiz.questionList.forEach((item, index) => {
-        if ([
-              QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion,
-            ].includes(item.TYPE) && leaderboardItem.correctQuestions.indexOf((index)) === -1) {
+        if (![
+          QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion,
+        ].includes(item.TYPE) && leaderboardItem.correctQuestions.indexOf((index)) === -1) {
           hasNotAllQuestionsCorrect = true;
         }
       });
@@ -117,57 +124,59 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         dataWithoutCompleteCorrectQuestions++;
         return;
       }
-      let nextColumnIndex = 3;
-      nextStartRow++;
-      const targetRow = indexInList + 13;
+      let nextColumnIndex = 2;
+      currentRowIndex++;
       if (this.quiz.sessionConfig.confidenceSliderEnabled) {
-        this.ws.cell(targetRow, nextColumnIndex++).style({
+        this.ws.cell(currentRowIndex, nextColumnIndex++).style({
           alignment: {
             horizontal: 'center',
           },
         });
       }
-      this.ws.cell(targetRow, nextColumnIndex++).style({
+      this.ws.cell(currentRowIndex, nextColumnIndex++).style({
         alignment: {
           horizontal: 'center',
         },
         numberFormat: '#,##0;',
       });
-      this.ws.cell(targetRow, nextColumnIndex).style({
+      this.ws.cell(currentRowIndex, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
         },
         numberFormat: '#,##0;',
       });
     });
-    if (nextStartRow === 18) {
-      this.ws.cell(13, 1, 13, this.columnsToFormat, true).style(Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
+
+    if (dataWithoutCompleteCorrectQuestions === this.leaderBoardData.length) {
+      this.ws.cell(++currentRowIndex, 1, currentRowIndex, this.columnsToFormat, true).style(Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
         alignment: {
           horizontal: 'center',
         },
       }));
-      nextStartRow++;
     } else {
-      this.ws.cell(13, 1, (this.leaderBoardData.length + 12 - dataWithoutCompleteCorrectQuestions), this.columnsToFormat)
+      this.ws.cell(currentRowIndex, 1, (this.leaderBoardData.length + currentRowIndex - 1 - dataWithoutCompleteCorrectQuestions),
+        this.columnsToFormat)
       .style(defaultStyles.attendeeEntryRowStyle);
     }
+    currentRowIndex += 6;
 
-    this.ws.cell(nextStartRow++, 1, nextStartRow++, this.columnsToFormat).style(defaultStyles.attendeeHeaderGroupRowStyle);
+    this.ws.cell(currentRowIndex, 1, currentRowIndex, this.columnsToFormat).style(defaultStyles.attendeeHeaderGroupRowStyle);
+    currentRowIndex++;
 
-    this.ws.cell(nextStartRow, 1, nextStartRow, this.columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
-    this.ws.cell(nextStartRow, 1).style({
+    this.ws.cell(currentRowIndex, 1, currentRowIndex, this.columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
+    this.ws.cell(currentRowIndex, 1).style({
       alignment: {
         horizontal: 'left',
       },
     });
-    nextStartRow++;
+    currentRowIndex++;
 
-    this.ws.cell(nextStartRow, 1, (this.leaderBoardData.length + (nextStartRow - 1)), this.columnsToFormat)
+    this.ws.cell(currentRowIndex, 1, (this.leaderBoardData.length + (currentRowIndex - 1)), this.columnsToFormat)
     .style(defaultStyles.attendeeEntryRowStyle);
 
     this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
       let nextColumnIndex = 3;
-      const targetRow = indexInList + nextStartRow;
+      const targetRow = indexInList + currentRowIndex;
       if (this.quiz.sessionConfig.confidenceSliderEnabled) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
@@ -252,15 +261,14 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     let nextColumnIndex = 1;
     this.ws.cell(currentRowIndex, nextColumnIndex).string(this.mf('export.attendee_complete_correct'));
-    currentRowIndex += 2;
+    currentRowIndex += 1;
 
     this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.attendee'));
+
     if (this._isCasRequired) {
       this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_id'));
       this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_email'));
     }
-
-    this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.correct_questions'));
 
     if (this.quiz.sessionConfig.confidenceSliderEnabled) {
       this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.average_confidence'));
@@ -287,13 +295,9 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail[0]);
       }
-      const correctQuestionNumbers = this.leaderBoardData[indexInList].correctQuestions.map((item) => item + 1);
 
-      if (this.quiz.sessionConfig.confidenceSliderEnabled) {
-        this.ws.cell(targetRow, nextColumnIndex++).string(correctQuestionNumbers.join(', '));
-        if (this.responsesWithConfidenceValue.length > 0) {
-          this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
-        }
+      if (this.responsesWithConfidenceValue.length > 0) {
+        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
       }
 
       this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime));
@@ -307,7 +311,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     nextColumnIndex = 1;
     this.ws.cell(nextStartRow, nextColumnIndex).string(this.mf('export.attendee_all_entries'));
-    nextStartRow += 2;
+    nextStartRow++;
 
     this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.attendee'));
 
@@ -330,36 +334,29 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       const targetRow = indexInList + nextStartRow;
       this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile = MemberDAO.getMembersOfQuiz(this.quiz.name).filter((nick: IMemberEntity) => {
+        const profile = MemberDAO.getMembersOfQuiz(this.quiz.name).find((nick: IMemberEntity) => {
           return nick.name === responseItem.name;
-        })[0].casProfile;
+        }).casProfile;
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail[0]);
       }
-      const leaderboardItem = this._leaderBoardData.filter((item) => item.name === responseItem.name)[0];
+      const leaderboardItem = this._leaderBoardData.find((item) => item.name === responseItem.name);
       if (leaderboardItem) {
         if (leaderboardItem.correctQuestions.length > 0) {
-          const correctQuestionNumbers = this._leaderBoardData[indexInList].correctQuestions.map((item) => item + 1);
+          const correctQuestionNumbers = leaderboardItem.correctQuestions.map((item) => item + 1);
           this.ws.cell(targetRow, nextColumnIndex++).string(correctQuestionNumbers.join(', '));
         }
 
         if (this.quiz.sessionConfig.confidenceSliderEnabled) {
-          this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(this._leaderBoardData[indexInList].confidenceValue));
+          this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
         }
 
-        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(this._leaderBoardData[indexInList].responseTime));
-        this.ws.cell(targetRow, nextColumnIndex++)
-        .number(Math.round(this._leaderBoardData[indexInList].responseTime / this._leaderBoardData[indexInList].correctQuestions.length));
+        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime));
+        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime / leaderboardItem.correctQuestions.length));
       } else {
         this.ws.cell(targetRow, nextColumnIndex++).string(this.mf('export.correct_questions_none_available'));
       }
     });
-  }
-
-  protected getLeaderboardData(): Array<ILeaderBoardItemBase> {
-    const leaderBoard = new Leaderboard();
-    const { correctResponses } = leaderBoard.buildLeaderboard(this.quiz);
-    return leaderBoard.sortBy(correctResponses, 'score');
   }
 
   private addLogoImage(): void {

@@ -150,8 +150,12 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     this.ws.cell(2, 1).string(this.mf('export.question'));
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.length / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
+
+    const correctResponsesPercentage: number = this.leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
+                                               .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
+                                               / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
+
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
@@ -160,22 +164,30 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
     }
+
     this.ws.cell(4, 1).string(this._question.questionText.replace(/[#]*[*]*/g, ''));
+
     for (let j = 0; j < answerList.length; j++) {
       this.ws.cell(2, (j + 2)).string(this.mf('export.answer') + ' ' + (j + 1));
       this.ws.cell(4, (j + 2)).string(answerList[j].answerText);
       this.ws.cell(6, (j + 2)).number(calculateNumberOfAnswers(this.quiz, this._questionIndex, j));
     }
+
     let nextColumnIndex = 1;
+
     this.ws.cell(10, nextColumnIndex++).string(this.mf('export.attendee'));
+
     if (this._isCasRequired) {
       this.ws.cell(10, nextColumnIndex++).string(this.mf('export.cas_account_id'));
       this.ws.cell(10, nextColumnIndex++).string(this.mf('export.cas_account_email'));
     }
+
     this.ws.cell(10, nextColumnIndex++).string(this.mf('export.answer'));
+
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(10, nextColumnIndex++).string(this.mf('export.confidence_level'));
     }
+
     this.ws.cell(10, nextColumnIndex++).string(this.mf('export.time'));
 
     let nextStartRow = 10;

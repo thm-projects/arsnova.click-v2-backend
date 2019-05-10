@@ -167,7 +167,9 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.length / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
+    const correctResponsesPercentage: number = this.leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
+                                               .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
+                                               / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     if (this.responsesWithConfidenceValue.length > 0) {

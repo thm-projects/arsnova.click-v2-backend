@@ -1,7 +1,6 @@
 import * as xlsx from 'excel4node';
 import * as MessageFormat from 'messageformat';
 import MemberDAO from '../db/MemberDAO';
-import { AbstractQuestionEntity } from '../entities/question/AbstractQuestionEntity';
 import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { ILeaderBoardItemBase } from '../interfaces/leaderboard/ILeaderBoardItemBase';
 import { IQuizEntity } from '../interfaces/quizzes/IQuizEntity';
@@ -78,7 +77,7 @@ export abstract class ExcelWorksheet {
       });
     } else {
       this._responsesWithConfidenceValue = MemberDAO.getMembersOfQuiz(this._quiz.name).filter(nickname => {
-        return nickname.responses.filter(responseItem => responseItem.confidence > -1);
+        return nickname.responses.some(responseItem => responseItem.confidence > -1);
       });
     }
     if (this._responsesWithConfidenceValue.length > 0) {
@@ -100,27 +99,8 @@ export abstract class ExcelWorksheet {
 
   protected getLeaderboardData(questionIndex: number): Array<ILeaderBoardItemBase> {
     const leaderBoard = new Leaderboard();
-    const correctResponses: any = {};
-
-    const question: AbstractQuestionEntity = this.quiz.questionList[questionIndex];
-    MemberDAO.getMembersOfQuiz(this._quiz.name).forEach(attendee => {
-      if (leaderBoard.isCorrectResponse(attendee.responses[questionIndex], question) === 1) {
-        if (!correctResponses[attendee.name]) {
-          correctResponses[attendee.name] = {
-            responseTime: 0,
-            correctQuestions: [],
-            confidenceValue: 0,
-          };
-        }
-        correctResponses[attendee.name].responseTime += <number>attendee.responses[questionIndex].responseTime;
-        correctResponses[attendee.name].correctQuestions.push(questionIndex);
-        correctResponses[attendee.name].confidenceValue += <number>attendee.responses[questionIndex].confidence;
-      } else {
-        delete correctResponses[attendee.name];
-      }
-    });
-
-    return leaderBoard.objectToArray(correctResponses);
+    const { correctResponses } = leaderBoard.buildLeaderboard(this.quiz);
+    return leaderBoard.sortBy(correctResponses, 'score');
   }
 
   private prefixNumberWithZero(num: number): string {
