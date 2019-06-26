@@ -40,7 +40,7 @@ class DumpCryptor {
 
     let salt = null;
     if (fs.existsSync(this.pathToSalt)) {
-      salt = JSON.parse(fs.readFileSync(this.pathToSalt));
+      salt = JSON.parse(fs.readFileSync(this.pathToSalt, {encoding: 'UTF-8'}));
     } else {
       const bytesInSalt = 128 / 8;
       salt = CryptoJS.lib.WordArray.random(bytesInSalt);

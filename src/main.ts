@@ -52,7 +52,7 @@ interface IInetAddress {
 }
 
 process.on('unhandledRejection', rejectionToCreateDump);
-process.on('uncaughtException', rejectionToCreateDump); // Throws exceptions when debugging with IntelliJ
+// process.on('uncaughtException', rejectionToCreateDump); // Throws exceptions when debugging with IntelliJ
 
 if (process.env.NODE_ENV === 'production') {
 }
