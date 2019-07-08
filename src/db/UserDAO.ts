@@ -94,6 +94,14 @@ class UserDAO extends AbstractDAO<{ [key: string]: IUserEntity }> {
     return this.storage[name];
   }
 
+  public getUserByTokenHash(tokenHash: string): IUserEntity {
+    if (this.isEmptyVars(tokenHash)) {
+      return null;
+    }
+
+    return Object.values(this.storage).find(user => user.tokenHash === tokenHash);
+  }
+
   public getUserById(id: ObjectId): IUserEntity {
     return Object.values(this.storage).find(val => val.id.equals(id));
   }

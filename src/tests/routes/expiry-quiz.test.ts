@@ -28,6 +28,7 @@ class ExpiryQuizTestSuite {
     LoginDAO.initUser({
       name: 'testuser',
       passwordHash: 'hash',
+      tokenHash: 'hash',
       privateKey: 'mysecret',
       gitlabToken: '',
       userAuthorizations: [UserRole.CreateExpiredQuiz],

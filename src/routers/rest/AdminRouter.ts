@@ -42,6 +42,7 @@ export class AdminRouter extends AbstractRouter {
     @BodyParam('name') name: string, //
     @BodyParam('privateKey') privateKey: string, //
     @BodyParam('passwordHash') passwordHash: string, //
+    @BodyParam('passwordHash') tokenHash: string, //
     @BodyParam('userAuthorizations') userAuthorizations: Array<string>, //
     @BodyParam('gitlabToken', { required: false }) gitlabToken: string, //
   ): void {
@@ -49,6 +50,7 @@ export class AdminRouter extends AbstractRouter {
     const userData: IUserSerialized = {
       name,
       passwordHash,
+      tokenHash,
       privateKey,
       userAuthorizations,
       gitlabToken,
