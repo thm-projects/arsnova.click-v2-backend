@@ -41,6 +41,7 @@ export class ExcelTheme {
         alignment: {
           wrapText: true,
           vertical: 'top',
+          horizontal: 'left',
         },
       },
       statisticsRowStyle: {

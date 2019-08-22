@@ -340,14 +340,36 @@ export class LibRouter extends AbstractRouter {
 
   @Post('/authorize/static')
   private async authorizeStatic(
-    @BodyParam('username') username: string,
-    @BodyParam('passwordHash') password: string,
+    @BodyParam('username', { required: false }) username: string,
+    @BodyParam('passwordHash', { required: false }) password: string,
+    @BodyParam('tokenHash', { required: false }) tokenHash: string,
     @BodyParam('token', { required: false }) token: string,
   ): Promise<object> {
 
-    const user = UserDAO.getUser(username);
+    let user;
+    if (username) {
+      user = UserDAO.getUser(username);
 
-    if (!username || !password || !user || !UserDAO.validateUser(username, password)) {
+      if (!password || !user || !UserDAO.validateUser(username, password)) {
+        throw new UnauthorizedError(JSON.stringify({
+          status: StatusProtocol.Failed,
+          step: MessageProtocol.AuthenticateStatic,
+          payload: { reason: 'UNKOWN_LOGIN' },
+        }));
+      }
+
+    } else if (tokenHash) {
+      user = UserDAO.getUserByTokenHash(tokenHash);
+
+      if (!user) {
+        throw new UnauthorizedError(JSON.stringify({
+          status: StatusProtocol.Failed,
+          step: MessageProtocol.AuthenticateStatic,
+          payload: { reason: 'UNKOWN_LOGIN' },
+        }));
+      }
+
+    } else {
       throw new UnauthorizedError(JSON.stringify({
         status: StatusProtocol.Failed,
         step: MessageProtocol.AuthenticateStatic,

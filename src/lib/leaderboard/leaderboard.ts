@@ -37,7 +37,7 @@ export class Leaderboard {
       case QuestionType.SingleChoiceQuestion:
       case QuestionType.YesNoSingleChoiceQuestion:
       case QuestionType.TrueFalseSingleChoiceQuestion:
-        return this.isCorrectSingleChoiceQuestion(<number>response.value, <AbstractChoiceQuestionEntity>question) ? 1 : -1;
+        return this.isCorrectSingleChoiceQuestion(<number>response.value[0], <AbstractChoiceQuestionEntity>question) ? 1 : -1;
       case QuestionType.MultipleChoiceQuestion:
         return this.isCorrectMultipleChoiceQuestion(<Array<number>>response.value, <AbstractChoiceQuestionEntity>question);
       case QuestionType.ABCDSingleChoiceQuestion:

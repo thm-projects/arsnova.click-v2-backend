@@ -63,11 +63,9 @@ class MongoDbConnector {
       this._mongoURL += `${mongoHost}:${mongoPort}/${mongoDatabase}`;
 
       const mongoURLOptions = [];
-      if (process.env.MONGODB_REPLICA_NAME) {
-        mongoURLOptions.push(`replicaSet=${mongoReplSet}`);
-      }
+      mongoURLOptions.push(`replicaSet=${mongoReplSet}`);
       if (process.env.MONGODB_AUTH_SOURCE) {
-        if (Boolean(process.env.MONGODB_AUTH_SOURCE)) {
+        if (process.env.MONGODB_AUTH_SOURCE === 'true') {
           mongoURLOptions.push(`authSource=${process.env.MONGODB_AUTH_SOURCE}`);
         }
       } else {

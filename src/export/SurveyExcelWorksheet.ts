@@ -1,6 +1,5 @@
 import MemberDAO from '../db/MemberDAO';
 import { SurveyQuestionEntity } from '../entities/question/SurveyQuestionEntity';
-import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
 import { ExcelWorksheet } from './ExcelWorksheet';
 import { calculateNumberOfAnswers } from './lib/excel_function_library';
@@ -161,22 +160,17 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(9, nextColumnIndex++).string(this.mf('export.time'));
 
     let nextStartRow = 9;
-    this.leaderBoardData.forEach((leaderboardItem) => {
+    MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem, indexInList) => {
       nextColumnIndex = 1;
       nextStartRow++;
-      this.ws.cell(nextStartRow, nextColumnIndex++).string(leaderboardItem.name);
-      const nickItem = MemberDAO.getMembersOfQuiz(this.quiz.name).find((nick: IMemberEntity) => {
-        return nick.name === leaderboardItem.name;
-      });
+      this.ws.cell(nextStartRow, nextColumnIndex++).string(nickItem.name);
       if (this._isCasRequired) {
         const profile = nickItem.casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
       }
-      const chosenAnswer: Array<string> = <any>nickItem.responses[this._questionIndex].value;
-      chosenAnswer.forEach((answerIndex: string, index: number) => {
-        chosenAnswer[index] = this._question.answerOptionList[parseInt(answerIndex, 10)].answerText;
-      });
+      const chosenAnswer: Array<string> = (<Array<any>>nickItem.responses[this._questionIndex].value).map(
+        answerIndex => this._question.answerOptionList[parseInt(answerIndex, 10)].answerText);
       this.ws.cell(nextStartRow, nextColumnIndex++).string(chosenAnswer.join(', '));
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(nickItem.responses[this._questionIndex].confidence));

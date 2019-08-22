@@ -8,7 +8,8 @@ import LoggerService from '../../services/LoggerService';
 @index({ name: 1 }, { unique: true })
 export class UserModelItem extends Typegoose implements IUserSerialized {
   @prop({ required: true }) public name: string;
-  @prop({ required: true }) public passwordHash: string;
+  @prop({ required: false }) public passwordHash: string;
+  @prop({ required: false }) public tokenHash: string;
   @prop({ required: true }) public userAuthorizations: Array<string>;
   @prop({ required: true }) public privateKey: string;
   @prop() public gitlabToken?: string;

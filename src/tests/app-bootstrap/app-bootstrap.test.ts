@@ -1,4 +1,4 @@
-/// <reference path="../../../node_modules/@types/chai-http/index.d.ts" />
+/// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
 import { suite, test } from 'mocha-typescript';
 

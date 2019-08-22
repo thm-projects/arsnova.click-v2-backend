@@ -6,6 +6,16 @@ import { AuthService } from '../services/AuthService';
 import { AbstractEntity } from './AbstractEntity';
 
 export class UserEntity extends AbstractEntity implements IUserEntity {
+  private _tokenHash: string;
+
+  get tokenHash(): string {
+    return this._tokenHash;
+  }
+
+  set tokenHash(value: string) {
+    this._tokenHash = value;
+  }
+
   private _token: string;
 
   get token(): string {
@@ -73,6 +83,7 @@ export class UserEntity extends AbstractEntity implements IUserEntity {
     this._name = data.name;
     this._privateKey = data.privateKey;
     this._passwordHash = data.passwordHash;
+    this._tokenHash = data.tokenHash;
     this._gitlabToken = data.gitlabToken;
     this._token = data.token;
     this._userAuthorizations = data.userAuthorizations.map(val => UserRole[val]);
@@ -94,6 +105,7 @@ export class UserEntity extends AbstractEntity implements IUserEntity {
       token: this.token,
       name: this.name,
       passwordHash: this.passwordHash,
+      tokenHash: this.tokenHash,
       privateKey: this.privateKey,
       gitlabToken: this.gitlabToken,
       userAuthorizations: this.userAuthorizations,

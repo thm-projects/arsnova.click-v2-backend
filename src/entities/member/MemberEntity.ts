@@ -183,7 +183,7 @@ export class MemberEntity extends AbstractEntity implements IMemberEntity {
       responses[i] = {
         value: [],
         responseTime: -1,
-        confidence: 0,
+        confidence: -1,
         readingConfirmation: false,
       };
     }
