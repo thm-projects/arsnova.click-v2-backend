@@ -261,7 +261,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   private replaceTypeInformationOnLegacyQuiz(obj): object {
-    if (typeof obj !== 'object') {
+    if (obj === null || typeof obj !== 'object') {
       return obj;
     }
 
