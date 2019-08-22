@@ -112,7 +112,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   }
 
   public convertLegacyQuiz(legacyQuiz: any): void {
-    this.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
+    legacyQuiz = this.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
     if (legacyQuiz.hasOwnProperty('configuration')) {
       // Detected old v1 arsnova.click quiz
       // noinspection TypeScriptUnresolvedVariable
@@ -260,24 +260,26 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     return ordered;
   }
 
-  private replaceTypeInformationOnLegacyQuiz(obj): void {
-    if (!obj.hasOwnProperty('type')) {
-      return;
+  private replaceTypeInformationOnLegacyQuiz(obj): object {
+    if (typeof obj !== 'object') {
+      return obj;
     }
+
+    Object.entries(obj).forEach(([key, val]) => {
+      if (Array.isArray(val)) {
+        val.forEach((elem, index) => {
+          obj[key][index] = this.replaceTypeInformationOnLegacyQuiz(val[index]);
+        });
+
+      } else if (typeof val === 'object') {
+        obj[key] = this.replaceTypeInformationOnLegacyQuiz(val);
+      }
+    });
 
     obj.TYPE = obj.type;
     delete obj.type;
 
-    Object.values(obj).forEach((val) => {
-      if (Array.isArray(val)) {
-        val.forEach((elem, index) => {
-          this.replaceTypeInformationOnLegacyQuiz(val[index]);
-        });
-
-      } else if (typeof val === 'object') {
-        this.replaceTypeInformationOnLegacyQuiz(val);
-      }
-    });
+    return obj;
   }
 
   private getLastPersistedNumberForQuizzes(data: Array<IQuizEntity>): number {
