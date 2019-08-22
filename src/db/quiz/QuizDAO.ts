@@ -276,8 +276,10 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
       }
     });
 
-    obj.TYPE = obj.type;
-    delete obj.type;
+    if (obj.hasOwnProperty('type')) {
+      obj.TYPE = obj.type;
+      delete obj.type;
+    }
 
     return obj;
   }
