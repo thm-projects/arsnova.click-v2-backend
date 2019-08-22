@@ -20,6 +20,7 @@ import {
   UnauthorizedError,
   UploadedFiles,
 } from 'routing-controllers';
+import AMQPConnector from '../../db/AMQPConnector';
 import { default as DbDAO } from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
@@ -471,6 +472,14 @@ export class QuizRouter extends AbstractRouter {
       throw result;
     }
 
+    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: quiz.state === QuizState.Active ? MessageProtocol.SetActive : MessageProtocol.SetInactive,
+      payload: {
+        quizName: quiz.name,
+      },
+    })));
+
     const existingQuiz = QuizDAO.getQuizByName(quiz.name);
     if (existingQuiz) {
       if (existingQuiz.privateKey !== privateKey) {
@@ -563,6 +572,14 @@ export class QuizRouter extends AbstractRouter {
 
     DbDAO.updateOne(DbCollection.Quizzes, { _id: quiz.id }, { state: QuizState.Inactive });
     DbDAO.deleteMany(DbCollection.Members, { currentQuizName: quiz.name });
+
+    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.SetInactive,
+      payload: {
+        quizName,
+      },
+    })));
 
     return {
       status: StatusProtocol.Success,

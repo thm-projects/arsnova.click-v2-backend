@@ -4,14 +4,12 @@ import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
-import * as WebSocket from 'ws';
 import app from '../../App';
 import { default as DbDAO } from '../../db/DbDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol } from '../../enums/Message';
 import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
-import { WebSocketRouter } from '../../routers/websocket/WebSocketRouter';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');
@@ -29,7 +27,6 @@ class QuizApiRouterTestSuite {
   private _privateKey = privateKey;
 
   public static before(): void {
-    WebSocketRouter.wss = new WebSocket.Server({ port: staticStatistics.port });
   }
 
   public static after(): void {
@@ -38,7 +35,6 @@ class QuizApiRouterTestSuite {
       quizName: hashtag,
       privateKey: privateKey,
     });
-    WebSocketRouter.wss.close();
   }
 
   @test

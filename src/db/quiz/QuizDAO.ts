@@ -1,5 +1,4 @@
 import { ObjectId } from 'bson';
-import WebSocket from 'ws';
 import { MemberGroupEntity } from '../../entities/member/MemberGroupEntity';
 import { getQuestionForType } from '../../entities/question/QuizValidator';
 import { QuizEntity } from '../../entities/quiz/QuizEntity';
@@ -11,6 +10,7 @@ import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEnti
 import { generateToken } from '../../lib/generateToken';
 import { setPath } from '../../lib/resolveNestedObjectProperty';
 import { AbstractDAO } from '../AbstractDAO';
+import AMQPConnector from '../AMQPConnector';
 import DbDAO from '../DbDAO';
 import MemberDAO from '../MemberDAO';
 
@@ -55,7 +55,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
   public removeQuiz(id: ObjectId): void {
     const removedQuiz = this.storage.splice(this.storage.findIndex(val => val.id.equals(id)), 1);
     removedQuiz[0].onRemove();
-    removedQuiz[0].state = 0;
+    removedQuiz[0].state = QuizState.Inactive;
     MemberDAO.removeMembersOfQuiz(removedQuiz[0]);
   }
 
@@ -151,16 +151,13 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     }
   }
 
-  public joinableQuizzesUpdated(): void {
-    this.updateEmitter.emit(DbEvent.Change, this.getJoinableQuizzes());
-  }
-
   public async addQuiz(quizDoc: IQuizSerialized): Promise<IQuizEntity> {
     if (this.getQuizByName(quizDoc.name)) {
       throw new Error(`Duplicate quiz insertion: ${quizDoc.name}`);
     }
 
     const entity = new QuizEntity(quizDoc);
+    await AMQPConnector.channel.assertExchange(`quiz_${encodeURI(entity.name)}`, 'fanout');
     this.storage.push(entity);
     return entity;
   }
@@ -231,10 +228,6 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
 
   public getActiveQuizByName(quizName: string): IQuizEntity {
     return this.getActiveQuizzes().find(val => !!val.name.match(new RegExp(`^${RegExp.escape(quizName)}$`, 'i')));
-  }
-
-  public getQuizBySocket(ws: WebSocket): IQuizEntity {
-    return this.storage.find(quiz => quiz.containsSocket(ws));
   }
 
   public getQuizByToken(token: string): IQuizEntity {

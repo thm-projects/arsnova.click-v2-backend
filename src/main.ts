@@ -7,7 +7,6 @@ import * as Minimist from 'minimist';
 import * as path from 'path';
 import * as process from 'process';
 import 'reflect-metadata';
-import * as WebSocket from 'ws';
 import App from './App';
 import AssetDAO from './db/AssetDAO';
 import CasDAO from './db/CasDAO';
@@ -19,7 +18,6 @@ import QuizDAO from './db/quiz/QuizDAO';
 import UserDAO from './db/UserDAO';
 import { jsonCensor } from './lib/jsonCensor';
 import { rejectionToCreateDump } from './lib/rejectionToCreateDump';
-import { WebSocketRouter } from './routers/websocket/WebSocketRouter';
 import LoggerService from './services/LoggerService';
 import { staticStatistics } from './statistics';
 import { LoadTester } from './tests/LoadTester';
@@ -174,8 +172,6 @@ function onListening(): void {
   const bind: string = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
   LoggerService.info(`Listening on ${bind}`);
 
-  WebSocketRouter.wss = new WebSocket.Server({ server });
-
   I18nDAO.reloadCache().catch(reason => {
     console.error('Could not reload i18n dao cache', reason);
   });
@@ -193,6 +189,4 @@ function runTest(): void {
   });
 }
 
-function onClose(): void {
-  WebSocketRouter.wss.close();
-}
+function onClose(): void {}

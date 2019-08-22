@@ -2,6 +2,7 @@ import * as mongoose from 'mongoose';
 import { Connection } from 'mongoose';
 import { Database } from '../enums/DbOperation';
 import LoggerService from '../services/LoggerService';
+import AMQPConnector from './AMQPConnector';
 
 class MongoDbConnector {
   get dbName(): string {
@@ -29,6 +30,10 @@ class MongoDbConnector {
       db.once('open', () => {
         LoggerService.info('Successfully connected to the db');
         resolve(db);
+      });
+
+      AMQPConnector.initConnection().then(() => {
+        AMQPConnector.channel.assertExchange('global', 'fanout');
       });
 
       await mongoose.connect(this._mongoURL, {

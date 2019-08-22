@@ -1,4 +1,4 @@
-import { index, prop, Typegoose } from 'typegoose';
+import { arrayProp, index, prop, Typegoose } from 'typegoose';
 import DbDAO from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import { DbCollection, DbEvent, DbWatchStreamOperation } from '../../enums/DbOperation';
@@ -14,7 +14,7 @@ export class MemberModelItem extends Typegoose implements IMemberSerialized {
   @prop() public colorCode: string;
   @prop({ required: false }) public groupName: string;
   @prop() public name: string;
-  @prop() public responses: Array<IQuizResponse>;
+  @arrayProp({ items: Object }) public responses: Array<IQuizResponse>;
   @prop({ required: false }) public ticket: string;
   @prop() public token: string;
   @prop() public currentQuizName: string;

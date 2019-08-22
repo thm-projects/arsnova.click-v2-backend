@@ -21,6 +21,11 @@ const rewriteAssetCacheUrl = process.env.ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CAC
                              || `http://${hostname()}:${portExternal}${routePrefix}`;
 const leaderboardAlgorithm = process.env.LEADERBOARD_ALGORITHM || config.leaderboardAlgorithm || LeaderboardConfiguration.TimeBased;
 
+const amqpProtocol = process.env.AMQP_PROTOCOL || 'amqp';
+const amqpHostname = process.env.AMQP_HOSTNAME || 'localhost';
+const amqpUser = process.env.AMQP_USER || 'guest';
+const amqpPassword = process.env.AMQP_PASSWORD || 'guest';
+
 export const staticStatistics = {
   appName: 'arsnova-click-v2-backend',
   appVersion: '2.0.0',
@@ -53,6 +58,12 @@ export const settings = {
   },
   limitQuizCreationToCasAccounts: [],
   createQuizPassword: 'abc',
+  amqp: {
+    protocol: amqpProtocol,
+    hostname: amqpHostname,
+    user: amqpUser,
+    password: amqpPassword,
+  },
 };
 
 export const availableLangs = Object.values(Language);

@@ -7,6 +7,7 @@ import * as path from 'path';
 import { Get, getMetadataArgsStorage, JsonController, NotFoundError, Param, Res } from 'routing-controllers';
 import { OpenAPI, routingControllersToSpec } from 'routing-controllers-openapi';
 import { routingControllerOptions } from '../../App';
+import QuizDAO from '../../db/quiz/QuizDAO';
 import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
@@ -47,6 +48,7 @@ export class ApiRouter extends AbstractRouter {
   private getAll(): object {
     return {
       serverConfig: settings.public,
+      activeQuizzes: QuizDAO.getJoinableQuizzes().map(quiz => quiz.name),
     };
   }
 

@@ -16,6 +16,15 @@ To send E-Mails it is required to provide additional variables:
 - `ARSNOVA_CLICK_BACKEND_MAIL_FROM [string]`: The `from` header of the E-Mails
 - `ARSNOVA_CLICK_BACKEND_MAIL_TO [string]`: The `to` header of the E-Mails
 
+###### RabbitMQ
+The server uses RabbitMQ to send messages to the frontend. These variables can be adjusted to connect to the RabbitMQ server:
+- `AMQP_PROTOCOL [string]`: Protocol for the connection (defaults to amqp)
+- `AMQP_HOSTNAME [string]`: Hostname of the RabbitMQ Server (defaults to localhost)
+- `AMQP_USER [string]`: The username to use for the connection (defaults to guest)
+- `AMQP_PASSWORD [string]`: The username to use for the connection (defaults to guest)
+
+As mentioned in the RabbitMQ installation guideline, the user should not be an management user!
+
 ###### Dumps
 The server will generate dumps if an Error is thrown.
 The dump will contain the serialized error and the state of the DAOs. 

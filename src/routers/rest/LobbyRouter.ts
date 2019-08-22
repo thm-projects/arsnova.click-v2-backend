@@ -1,4 +1,5 @@
 import { BodyParam, Delete, Get, JsonController, Param, Put } from 'routing-controllers';
+import AMQPConnector from '../../db/AMQPConnector';
 import DbDAO from '../../db/DbDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { DbCollection } from '../../enums/DbOperation';
@@ -6,7 +7,6 @@ import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';
 import { IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 import { QuizModel } from '../../models/quiz/QuizModelItem';
-import { WebSocketRouter } from '../websocket/WebSocketRouter';
 import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/lobby')
@@ -18,14 +18,13 @@ export class LobbyRouter extends AbstractRouter {
     @BodyParam('privateKey') privateKey: string, //
   ): Promise<object> {
 
-    const messageToWSSClients = JSON.stringify({
+    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.SetActive,
       payload: {
         quizName: quiz.name,
       },
-    });
-    WebSocketRouter.wss.clients.forEach(client => client.send(messageToWSSClients));
+    })));
 
     quiz.state = QuizState.Active;
     quiz.currentQuestionIndex = -1;
@@ -72,6 +71,14 @@ export class LobbyRouter extends AbstractRouter {
     if (addedQuiz) {
       DbDAO.updateOne(DbCollection.Quizzes, { _id: addedQuiz.id }, { state: QuizState.Inactive });
     }
+
+    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.SetInactive,
+      payload: {
+        quizName,
+      },
+    })));
 
     return {
       status: StatusProtocol.Success,

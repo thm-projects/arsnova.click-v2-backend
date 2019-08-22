@@ -2,7 +2,6 @@ import { ObjectId } from 'bson';
 import { MemberEntity } from '../entities/member/MemberEntity';
 import { QuizEntity } from '../entities/quiz/QuizEntity';
 import { DbCollection, DbEvent } from '../enums/DbOperation';
-import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizEntity } from '../interfaces/quizzes/IQuizEntity';
 import { AbstractDAO } from './AbstractDAO';
@@ -83,7 +82,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     }
   }
 
-  public getMembersOfQuiz(quizName: string): Array<IMemberEntity> {
+  public getMembersOfQuiz(quizName: string): Array<MemberEntity> {
     return this.storage.filter(val => !!val.currentQuizName.match(new RegExp(`^${RegExp.escape(quizName)}$`, 'i')));
   }
 

@@ -1,6 +1,6 @@
 import { ObjectId } from 'bson';
 import { DeleteWriteOpResultObject } from 'mongodb';
-import * as WebSocket from 'ws';
+import AMQPConnector from '../../db/AMQPConnector';
 import DbDAO from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import { DbCollection } from '../../enums/DbOperation';
@@ -10,7 +10,6 @@ import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
 import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 import { ISessionConfigurationEntity } from '../../interfaces/session_configuration/ISessionConfigurationEntity';
-import { SendSocketMessageService } from '../../services/SendSocketMessageService';
 import { AbstractEntity } from '../AbstractEntity';
 import { MemberEntity } from '../member/MemberEntity';
 import { MemberGroupEntity } from '../member/MemberGroupEntity';
@@ -142,7 +141,8 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
   private _dropEmptyQuizTimeout: any;
   private _quizTimerInterval: any;
   private _quizTimer: number;
-  private _socketChannel: Array<WebSocket> = [];
+
+  private readonly _exchangeName: string;
 
   constructor(quiz: IQuizSerialized) {
     super();
@@ -159,85 +159,50 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._readingConfirmationRequested = !!quiz.readingConfirmationRequested;
     this._visibility = quiz.visibility;
     this._description = quiz.description;
+    this._exchangeName = encodeURI(`quiz_${quiz.name}`);
   }
 
-  public onMemberAdded(member: MemberEntity): void {
-    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+  public async onMemberAdded(member: MemberEntity): Promise<void> {
+    AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Added,
       payload: { member: member.serialize() },
-    }));
+    })));
   }
 
-  public onMemberRemoved(member: MemberEntity): void {
-    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+  public async onMemberRemoved(member: MemberEntity): Promise<void> {
+    AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Removed,
       payload: { name: member.name },
-    }));
+    })));
   }
 
   public onRemove(): void {
-    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+    MemberDAO.getMembersOfQuiz(this.name).forEach(member => {
+      AMQPConnector.channel.deleteQueue(encodeURI(`${member.currentQuizName}_${member.name}`));
+    });
+    AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Closed,
-    }));
+    })));
   }
 
   public reset(): void {
-    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+    AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Reset,
-    }));
+    })));
     clearTimeout(this._quizTimerInterval);
   }
 
   public stop(): void {
-    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+    AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Stop,
-    }));
+    })));
     this.currentStartTimestamp = -1;
     clearTimeout(this._quizTimerInterval);
-  }
-
-  public addSocketToChannel(socket: WebSocket): void {
-    if (this._socketChannel.find(value => value === socket)) {
-      console.error(`Cannot add socket to quiz channel ${this.name} since it is already added`);
-      return;
-    }
-
-    console.log(`Adding socket to quiz channel ${this.name}`);
-    this._socketChannel.push(socket);
-    clearTimeout(this._dropEmptyQuizTimeout);
-    this._dropEmptyQuizTimeout = null;
-  }
-
-  public removeSocketFromChannel(socket: WebSocket): void {
-    const index = this._socketChannel.findIndex(value => value === socket);
-    if (index === -1) {
-      console.log(`Cannot remove socket from quiz channel ${this.name} since it is not found`);
-      return;
-    }
-
-    console.log(`Removing socket from quiz channel ${this.name}`);
-    this._socketChannel.splice(index, 1);
-    if (!this._socketChannel.length) {
-      if (this._dropEmptyQuizTimeout !== null) {
-        clearTimeout(this._dropEmptyQuizTimeout);
-      }
-
-      this._dropEmptyQuizTimeout = setTimeout(() => {
-        if (!this._socketChannel.length) {
-          DbDAO.updateOne(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
-          DbDAO.deleteMany(DbCollection.Members, { currentQuizName: this.name });
-        }
-      }, 300000); // 5 minutes
-    }
-  }
-
-  public containsSocket(socket: WebSocket): boolean {
-    return !!this._socketChannel.find(value => value === socket);
   }
 
   public addQuestion(question: AbstractQuestionEntity, index: number = -1): void {
@@ -306,13 +271,13 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
 
     DbDAO.updateOne(DbCollection.Quizzes, { _id: this.id }, { currentQuestionIndex: nextIndex });
 
-    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+    AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.NextQuestion,
       payload: {
         nextQuestionIndex: nextIndex,
       },
-    }));
+    })));
 
     return nextIndex;
   }
@@ -322,11 +287,11 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
   }
 
   public startNextQuestion(): void {
-    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+    AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Start,
       payload: {},
-    }));
+    })));
 
     this._quizTimer = this._questionList[this._currentQuestionIndex].timer;
     if (this._quizTimer <= 0) {
@@ -338,13 +303,13 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     }
     this._quizTimerInterval = setInterval(() => {
       this._quizTimer--;
-      this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+      AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
         status: StatusProtocol.Success,
         step: MessageProtocol.Countdown,
         payload: {
           value: this._quizTimer,
         },
-      }));
+      })));
 
       if (this._quizTimer <= 0) {
         clearInterval(this._quizTimerInterval);
@@ -356,19 +321,20 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
 
   public requestReadingConfirmation(): void {
     this._readingConfirmationRequested = true;
-    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+    AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.ReadingConfirmationRequested,
       payload: {},
-    }));
+    })));
   }
 
   public updatedMemberResponse(payload: object): void {
-    this._socketChannel.forEach(socket => SendSocketMessageService.sendMessage(socket, {
+    AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.UpdatedResponse,
       payload,
-    }));
+    })));
+
     if (MemberDAO.getMembersOfQuiz(this.name).every(nick => {
       const val = nick.responses[this.currentQuestionIndex].value;
       return typeof val === 'number' ? val > -1 : val.length > 0;
