@@ -157,7 +157,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     }
 
     const entity = new QuizEntity(quizDoc);
-    await AMQPConnector.channel.assertExchange(`quiz_${encodeURI(entity.name)}`, 'fanout');
+    await AMQPConnector.channel.assertExchange(encodeURI(`quiz_${entity.name}`), 'fanout');
     this.storage.push(entity);
     return entity;
   }
