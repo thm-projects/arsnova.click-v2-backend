@@ -1,4 +1,3 @@
-import { Binary } from 'bson';
 import * as Hex from 'crypto-js/enc-hex';
 import * as requestPromise from 'request-promise-native';
 import AssetDAO from '../../db/AssetDAO';
@@ -53,7 +52,7 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
           url: foundUrl,
           digest,
           mimeType: contentType,
-          data: new Binary(buffer),
+          data: Buffer.from(buffer),
         });
 
         const result = assetValidator.validateSync();

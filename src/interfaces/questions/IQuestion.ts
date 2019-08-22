@@ -1,8 +1,9 @@
+import { QuestionType } from '../../enums/QuestionType';
 import { IAnswerBase, IAnswerEntity } from '../answeroptions/IAnswerEntity';
 import { IValidationStackTrace } from '../IValidationStackTrace';
 
 export interface IQuestionBase {
-  readonly TYPE: string;
+  readonly TYPE: QuestionType;
   displayAnswerText: boolean;
   timer: number;
   questionText: string;
