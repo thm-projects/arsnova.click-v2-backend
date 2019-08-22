@@ -1,7 +1,8 @@
+import { AnswerType } from '../../enums/AnswerType';
 import { IValidationStackTrace } from '../IValidationStackTrace';
 
 export interface IAnswerBase {
-  readonly TYPE: string;
+  readonly TYPE: AnswerType;
   isCorrect: boolean;
   answerText: string;
 }
