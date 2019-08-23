@@ -139,15 +139,17 @@ export class MemberEntity extends AbstractEntity implements IMemberEntity {
   }
 
   public addResponseValue(data: Array<number> | string | number): void {
-    const responseTime = new Date().getTime() - this.getCurrentQuiz().currentStartTimestamp;
+    const quiz = this.getCurrentQuiz();
+    const responseTime = new Date().getTime() - quiz.currentStartTimestamp;
 
-    this.responses[this.getCurrentQuiz().currentQuestionIndex].value = data;
-    this.responses[this.getCurrentQuiz().currentQuestionIndex].responseTime = responseTime;
+    this.responses[quiz.currentQuestionIndex].value = data;
+    this.responses[quiz.currentQuestionIndex].responseTime = responseTime;
     DbDAO.updateOne(DbCollection.Members, {
       _id: this.id,
     }, { responses: this.responses });
-    this.getCurrentQuiz().updatedMemberResponse({
+    quiz.updatedMemberResponse({
       nickname: this.name,
+      questionIndex: quiz.currentQuestionIndex,
       update: {
         value: data,
         responseTime,
@@ -156,23 +158,27 @@ export class MemberEntity extends AbstractEntity implements IMemberEntity {
   }
 
   public setConfidenceValue(confidence: number): void {
-    this.responses[this.getCurrentQuiz().currentQuestionIndex].confidence = confidence;
+    const quiz = this.getCurrentQuiz();
+    this.responses[quiz.currentQuestionIndex].confidence = confidence;
     DbDAO.updateOne(DbCollection.Members, {
       _id: this.id,
     }, { responses: this.responses });
-    this.getCurrentQuiz().updatedMemberResponse({
+    quiz.updatedMemberResponse({
       nickname: this.name,
+      questionIndex: quiz.currentQuestionIndex,
       update: { confidence: confidence },
     });
   }
 
   public setReadingConfirmation(): void {
-    this.responses[this.getCurrentQuiz().currentQuestionIndex].readingConfirmation = true;
+    const quiz = this.getCurrentQuiz();
+    this.responses[quiz.currentQuestionIndex].readingConfirmation = true;
     DbDAO.updateOne(DbCollection.Members, {
       _id: this.id,
     }, { responses: this.responses });
-    this.getCurrentQuiz().updatedMemberResponse({
+    quiz.updatedMemberResponse({
       nickname: this.name,
+      questionIndex: quiz.currentQuestionIndex,
       update: { readingConfirmation: true },
     });
   }
