@@ -148,7 +148,7 @@ export class QuizRouter extends AbstractRouter {
     uploadedFiles.forEach(file => {
       quizData.push({
         fileName: file.originalname,
-        quiz: JSON.parse(file.buffer.toString('UTF-8')),
+        quiz: QuizDAO.convertLegacyQuiz(JSON.parse(file.buffer.toString('UTF-8'))),
       });
     });
 
@@ -178,7 +178,10 @@ export class QuizRouter extends AbstractRouter {
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.UploadFile,
-      payload: { duplicateQuizzes },
+      payload: {
+        duplicateQuizzes,
+        quizData: quizData.filter(insertedQuiz => !duplicateQuizzes.find(duplicateQuiz => duplicateQuiz.fileName === insertedQuiz.fileName)),
+      },
     };
   }
 

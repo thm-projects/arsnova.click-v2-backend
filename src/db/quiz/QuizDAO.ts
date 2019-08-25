@@ -111,11 +111,18 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     });
   }
 
-  public convertLegacyQuiz(legacyQuiz: any): void {
+  public convertLegacyQuiz(legacyQuiz: any): QuizEntity {
     legacyQuiz = this.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
     if (legacyQuiz.hasOwnProperty('configuration')) {
       // Detected old v1 arsnova.click quiz
-      // noinspection TypeScriptUnresolvedVariable
+      legacyQuiz.name = legacyQuiz.hashtag;
+      delete legacyQuiz.hashtag;
+
+      legacyQuiz.currentQuestionIndex = 0;
+      legacyQuiz.expiry = null;
+      legacyQuiz.currentStartTimestamp = -1;
+      legacyQuiz.readingConfirmationRequested = false;
+
       legacyQuiz.sessionConfig = {
         music: {
           titleConfig: {
@@ -149,6 +156,8 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
       };
       delete legacyQuiz.configuration;
     }
+
+    return legacyQuiz;
   }
 
   public async addQuiz(quizDoc: IQuizSerialized): Promise<IQuizEntity> {
