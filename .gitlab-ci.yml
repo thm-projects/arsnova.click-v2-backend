@@ -3,6 +3,7 @@ stages:
   - test
   - build
   - deploy
+  - deploy-beta
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -37,6 +38,7 @@ build:
   stage: build
   only:
     - master
+    - beta
   tags:
     - nodejs
   script:
@@ -66,7 +68,22 @@ deploy:
     - ssh-keyscan "$STAGING_BACKEND_URL" >> ~/.ssh/known_hosts
     - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY")
     - rsync -rltgoDqv --delete -e "ssh" dist/* "$STAGING_BACKEND_SSH_URL"
-    - rsync -rltgoDqv --delete -e "ssh" dist/* "$BETA_BACKEND_SSH_URL"
     - ssh $NEW_PRODUCTION_SSH 'touch /home/arsnova/arsnova.click-v2/backend/deploy.touch'
+
+deploy-beta:
+  stage: deploy-beta
+  only:
+    - beta
+  tags:
+    - rsync
+  dependencies:
+    - build
+  script:
+    - chmod -R a+rX,ug+w .
+    - eval $(ssh-agent -s)
+    - mkdir ~/.ssh
+    - ssh-keyscan "$STAGING_BACKEND_URL" >> ~/.ssh/known_hosts
+    - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY")
+    - rsync -rltgoDqv --delete -e "ssh" dist/* "$BETA_BACKEND_SSH_URL"
     - ssh $NEW_PRODUCTION_SSH 'touch /home/arsnova/arsnova.click-v2-beta/backend/deploy.touch'
 
