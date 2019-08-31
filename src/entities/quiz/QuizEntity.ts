@@ -179,13 +179,11 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
   }
 
   public onRemove(): void {
-    MemberDAO.getMembersOfQuiz(this.name).forEach(member => {
-      AMQPConnector.channel.deleteQueue(encodeURI(`${member.currentQuizName}_${member.name}`));
-    });
     AMQPConnector.channel.publish(this._exchangeName, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Closed,
     })));
+    AMQPConnector.channel.deleteExchange(this._exchangeName);
   }
 
   public reset(): void {
