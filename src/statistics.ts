@@ -23,6 +23,7 @@ const leaderboardAlgorithm = process.env.LEADERBOARD_ALGORITHM || config.leaderb
 
 const amqpProtocol = process.env.AMQP_PROTOCOL || 'amqp';
 const amqpHostname = process.env.AMQP_HOSTNAME || 'localhost';
+const amqpVhost = process.env.AMQP_VHOST || '/';
 const amqpUser = process.env.AMQP_USER || 'guest';
 const amqpPassword = process.env.AMQP_PASSWORD || 'guest';
 
@@ -61,6 +62,7 @@ export const settings = {
   amqp: {
     protocol: amqpProtocol,
     hostname: amqpHostname,
+    vhost: amqpVhost,
     user: amqpUser,
     password: amqpPassword,
   },

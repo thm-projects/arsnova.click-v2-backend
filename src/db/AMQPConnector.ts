@@ -29,6 +29,7 @@ class AMQPConnector {
       hostname: settings.amqp.hostname,
       username: settings.amqp.user,
       password: settings.amqp.password,
+      vhost: settings.amqp.vhost,
     });
     this._channel = await this._connection.createChannel();
   }
