@@ -33,6 +33,7 @@ import { QuizVisibility } from '../../enums/QuizVisibility';
 import { ExcelWorkbook } from '../../export/ExcelWorkbook';
 import { IQuizStatusPayload } from '../../interfaces/IQuizStatusPayload';
 import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
+import { asyncForEach } from '../../lib/async-for-each';
 import { MatchTextToAssetsDb } from '../../lib/cache/assets';
 import { Leaderboard } from '../../lib/leaderboard/leaderboard';
 import { QuizModel } from '../../models/quiz/QuizModelItem';
@@ -140,10 +141,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/upload')
-  public uploadQuiz(
+  public async uploadQuiz(
     @HeaderParam('authorization') privateKey: string, //
     @UploadedFiles('uploadFiles[]') uploadedFiles: any, //
-  ): object {
+  ): Promise<object> {
 
     const duplicateQuizzes = [];
     const quizData = [];
@@ -155,7 +156,7 @@ export class QuizRouter extends AbstractRouter {
       });
     });
 
-    quizData.forEach((data: { fileName: string, quiz: IQuizEntity }) => {
+    await asyncForEach(quizData, async (data: { fileName: string, quiz: IQuizEntity }) => {
       const existingQuiz = QuizDAO.getQuizByName(data.quiz.name);
       if (existingQuiz) {
         duplicateQuizzes.push({
@@ -174,7 +175,7 @@ export class QuizRouter extends AbstractRouter {
           throw result;
         }
 
-        quizValidator.save();
+        await quizValidator.save();
       }
     });
 
