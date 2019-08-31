@@ -170,10 +170,18 @@ export class Leaderboard {
   }
 
   private isCorrectSingleChoiceQuestion(response: number, question: AbstractChoiceQuestionEntity): boolean {
+    if (typeof response === 'undefined' || typeof response !== 'number' || !question.answerOptionList[response]) {
+      return false;
+    }
+
     return question.answerOptionList[response] && question.answerOptionList[response].isCorrect;
   }
 
   private isCorrectMultipleChoiceQuestion(response: Array<number>, question: AbstractChoiceQuestionEntity): number {
+    if (!Array.isArray(response)) {
+      return -1;
+    }
+
     let hasCorrectAnswers = 0;
     let hasWrongAnswers = 0;
     question.answerOptionList.forEach((answeroption, answerIndex) => {
@@ -193,11 +201,15 @@ export class Leaderboard {
   }
 
   private isCorrectRangedQuestion(response: number, question: RangedQuestionEntity): number {
+    if (typeof response === 'undefined' || typeof response !== 'number') {
+      return -1;
+    }
+
     return response === question.correctValue ? 1 : response >= question.rangeMin && response <= question.rangeMax ? 0 : -1;
   }
 
   private isCorrectFreeTextQuestion(response: string, question: FreeTextQuestionEntity): boolean {
-    if (!response) {
+    if (typeof response === 'undefined' || typeof response !== 'string') {
       return false;
     }
 
