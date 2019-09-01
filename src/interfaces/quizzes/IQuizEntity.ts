@@ -37,6 +37,8 @@ export interface IQuizEntity extends IQuizBase {
 
   stop(): void;
 
+  setInactive(): void;
+
   onRemove(): void;
 
   onMemberAdded(member: MemberEntity): Promise<void>;

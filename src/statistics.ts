@@ -26,6 +26,11 @@ const amqpHostname = process.env.AMQP_HOSTNAME || 'localhost';
 const amqpVhost = process.env.AMQP_VHOST || '/';
 const amqpUser = process.env.AMQP_USER || 'guest';
 const amqpPassword = process.env.AMQP_PASSWORD || 'guest';
+const amqpManagementApiProtocol = process.env.AMQP_MANAGEMENT_API_PROTOCOL || 'http:';
+const amqpManagementApiHost = process.env.AMQP_MANAGEMENT_API_HOST || 'localhost';
+const amqpManagementApiPort = process.env.AMQP_MANAGEMENT_API_PORT || '15672';
+const amqpManagementUser = process.env.AMQP_MANAGEMENT_USER || amqpUser;
+const amqpManagementPassword = process.env.AMQP_MANAGEMENT_PASSWORD || amqpPassword;
 
 export const staticStatistics = {
   appName: 'arsnova-click-v2-backend',
@@ -65,6 +70,13 @@ export const settings = {
     vhost: amqpVhost,
     user: amqpUser,
     password: amqpPassword,
+    managementApi: {
+      host: amqpManagementApiHost,
+      protocol: amqpManagementApiProtocol,
+      port: amqpManagementApiPort,
+      user: amqpManagementUser,
+      password: amqpManagementPassword,
+    },
   },
 };
 

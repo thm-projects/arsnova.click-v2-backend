@@ -577,16 +577,7 @@ export class QuizRouter extends AbstractRouter {
       return;
     }
 
-    DbDAO.updateOne(DbCollection.Quizzes, { _id: quiz.id }, { state: QuizState.Inactive });
-    DbDAO.deleteMany(DbCollection.Members, { currentQuizName: quiz.name });
-
-    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
-      status: StatusProtocol.Success,
-      step: MessageProtocol.SetInactive,
-      payload: {
-        quizName,
-      },
-    })));
+    quiz.setInactive();
 
     return {
       status: StatusProtocol.Success,

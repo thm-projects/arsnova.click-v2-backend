@@ -1,4 +1,6 @@
 import { ObjectId } from 'bson';
+import * as http from 'http';
+import * as https from 'https';
 import { DeleteWriteOpResultObject } from 'mongodb';
 import AMQPConnector from '../../db/AMQPConnector';
 import DbDAO from '../../db/DbDAO';
@@ -10,6 +12,7 @@ import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
 import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 import { ISessionConfigurationEntity } from '../../interfaces/session_configuration/ISessionConfigurationEntity';
+import { settings } from '../../statistics';
 import { AbstractEntity } from '../AbstractEntity';
 import { MemberEntity } from '../member/MemberEntity';
 import { MemberGroupEntity } from '../member/MemberGroupEntity';
@@ -138,7 +141,11 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._description = value;
   }
 
-  private _dropEmptyQuizTimeout: any;
+  private _dropEmptyQuizSettings = {
+    interval: 30000,
+    intervalInstance: null,
+    isEmpty: false,
+  };
   private _quizTimerInterval: any;
   private _quizTimer: number;
 
@@ -160,6 +167,25 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._visibility = quiz.visibility;
     this._description = quiz.description;
     this._exchangeName = encodeURI(`quiz_${quiz.name}`);
+
+    this._dropEmptyQuizSettings.intervalInstance = setInterval(() => {
+      this.checkExistingConnection();
+    }, this._dropEmptyQuizSettings.interval);
+  }
+
+  public setInactive(): void {
+    clearInterval(this._dropEmptyQuizSettings.intervalInstance);
+
+    DbDAO.updateOne(DbCollection.Quizzes, { _id: this.id }, { state: QuizState.Inactive });
+    DbDAO.deleteMany(DbCollection.Members, { currentQuizName: this.name });
+
+    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.SetInactive,
+      payload: {
+        quizName: this.name,
+      },
+    })));
   }
 
   public async onMemberAdded(member: MemberEntity): Promise<void> {
@@ -343,5 +369,47 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
         DbDAO.updateOne(DbCollection.Quizzes, { _id: this.id }, { currentStartTimestamp: -1 });
       }
     }
+  }
+
+  private checkExistingConnection(): void {
+    const reqOptions: http.RequestOptions = {
+      protocol: settings.amqp.managementApi.protocol,
+      host: settings.amqp.managementApi.host,
+      port: settings.amqp.managementApi.port,
+      path: `/api/exchanges/${encodeURIComponent(settings.amqp.vhost)}/quiz_${encodeURIComponent(encodeURIComponent(this.name))}/bindings/source`,
+      auth: `${settings.amqp.managementApi.user}:${settings.amqp.managementApi.password}`,
+    };
+
+    (settings.amqp.managementApi.host.startsWith('https') ? https : http).get(reqOptions, response => {
+      let data = '';
+
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      response.on('end', () => {
+        const parsedData = JSON.parse(data);
+        if (Array.isArray(parsedData) && parsedData.length) {
+          this._dropEmptyQuizSettings.isEmpty = false;
+          return;
+        }
+
+        if (this._dropEmptyQuizSettings.isEmpty) {
+          this.setInactive();
+          return;
+        }
+
+        this._dropEmptyQuizSettings.isEmpty = true;
+      });
+
+      response.on('error', () => {
+        if (this._dropEmptyQuizSettings.isEmpty) {
+          this.setInactive();
+          return;
+        }
+
+        this._dropEmptyQuizSettings.isEmpty = true;
+      });
+    });
   }
 }
