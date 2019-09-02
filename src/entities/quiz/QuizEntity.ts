@@ -78,6 +78,13 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
   }
 
   set state(value: QuizState) {
+    if (this._state === QuizState.Inactive && value !== QuizState.Inactive) {
+      clearInterval(this._dropEmptyQuizSettings.intervalInstance);
+      this._dropEmptyQuizSettings.intervalInstance = setInterval(() => {
+        this.checkExistingConnection();
+      }, this._dropEmptyQuizSettings.interval);
+    }
+
     this._state = value;
   }
 
