@@ -383,7 +383,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       auth: `${settings.amqp.managementApi.user}:${settings.amqp.managementApi.password}`,
     };
 
-    (settings.amqp.managementApi.host.startsWith('https') ? https : http).get(reqOptions, response => {
+    (settings.amqp.managementApi.protocol === 'https:' ? https : http).get(reqOptions, response => {
       let data = '';
 
       response.on('data', (chunk) => {
