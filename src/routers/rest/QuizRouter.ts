@@ -24,13 +24,16 @@ import AMQPConnector from '../../db/AMQPConnector';
 import { default as DbDAO } from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
+import UserDAO from '../../db/UserDAO';
 import { AbstractAnswerEntity } from '../../entities/answer/AbstractAnswerEntity';
 import { QuizEntity } from '../../entities/quiz/QuizEntity';
 import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
+import { UserRole } from '../../enums/UserRole';
 import { ExcelWorkbook } from '../../export/ExcelWorkbook';
+import { IMessage } from '../../interfaces/communication/IMessage';
 import { IQuizStatusPayload } from '../../interfaces/IQuizStatusPayload';
 import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 import { asyncForEach } from '../../lib/async-for-each';
@@ -48,7 +51,7 @@ export class QuizRouter extends AbstractRouter {
   public getIsAvailableQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
-  ): object {
+  ): IMessage {
 
     const quizName = params.quizName;
     const member = MemberDAO.getMemberByToken(token);
@@ -87,6 +90,24 @@ export class QuizRouter extends AbstractRouter {
             MessageProtocol.AlreadyTaken : //
             MessageProtocol.Unavailable, //
       payload,
+    };
+  }
+
+  @Get('/full-status/:quizName?')
+  public getFullQuizStatusData(
+    @Params() params: { [key: string]: any }, //
+    @HeaderParam('authorization', { required: false }) token: string, //
+  ): object {
+    const status = this.getIsAvailableQuiz(params, token);
+    const quiz = this.getQuiz(params, token);
+    return {
+      status: status.status === StatusProtocol.Success && quiz.status === StatusProtocol.Success ? StatusProtocol.Success : StatusProtocol.Failed,
+      step: status.step === MessageProtocol.Available && quiz.step === MessageProtocol.Available ? MessageProtocol.Available
+                                                                                                 : MessageProtocol.Unavailable,
+      payload: {
+        status: status.payload,
+        quiz: quiz.payload,
+      },
     };
   }
 
@@ -268,6 +289,7 @@ export class QuizRouter extends AbstractRouter {
       quiz.readingConfirmationRequested = false;
       quiz.currentStartTimestamp = currentStartTimestamp;
       quiz.startNextQuestion();
+
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.Start,
@@ -727,6 +749,56 @@ export class QuizRouter extends AbstractRouter {
     return QuizDAO.getAllPublicQuizzes().filter(quiz => quiz.privateKey !== privateKey).map(quiz => quiz.serialize());
   }
 
+  @Post('/public/init')
+  private async initQuizInstance(
+    @BodyParam('name') quizName: string,
+    @HeaderParam('X-Access-Token') loginToken: string,
+    @HeaderParam('authorization') privateKey: string,
+  ): Promise<IMessage> {
+    const user = UserDAO.getUserByToken(loginToken);
+    if (!user || !user.userAuthorizations.includes(UserRole.CreateQuiz)) {
+      throw new UnauthorizedError('Unauthorized to create quiz');
+    }
+
+    const quiz = QuizDAO.getAllPublicQuizzes().find(q => q.name === quizName);
+    if (!quiz) {
+      throw new NotFoundError('Quiz name not found');
+    }
+    const serializedQuiz = quiz.serialize();
+
+    delete quiz.id;
+    serializedQuiz.name = QuizDAO.getRenameAsToken(serializedQuiz.name);
+    serializedQuiz.privateKey = privateKey;
+    serializedQuiz.state = QuizState.Active;
+    serializedQuiz.visibility = QuizVisibility.Account;
+    serializedQuiz.currentQuestionIndex = -1;
+    serializedQuiz.currentStartTimestamp = -1;
+    serializedQuiz.readingConfirmationRequested = false;
+
+    const quizValidator = new QuizModel(serializedQuiz);
+    const result = quizValidator.validateSync();
+    if (result) {
+      throw result;
+    }
+    await quizValidator.save();
+
+    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.SetActive,
+      payload: {
+        quizName: serializedQuiz.name,
+      },
+    })));
+
+    return {
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Init,
+      payload: {
+        quiz: serializedQuiz,
+      },
+    };
+  }
+
   @Get('/public/amount')
   private getPublicQuizAmount(@HeaderParam('authorization') privateKey: string): number {
     return this.getPublicQuizzes(privateKey).length;
@@ -751,7 +823,7 @@ export class QuizRouter extends AbstractRouter {
   private getQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
-  ): object {
+  ): IMessage {
 
     const quizName = params.quizName;
     const member = MemberDAO.getMemberByToken(token);

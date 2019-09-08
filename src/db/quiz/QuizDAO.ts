@@ -255,6 +255,14 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     return this.storage.find(val => val.id.equals(id));
   }
 
+  public getRenameAsToken(name: string): string {
+    let token;
+    do {
+      token = generateToken(name, new Date().getTime()).substr(0, 10);
+    } while (this.getQuizByName(token));
+    return token;
+  }
+
   private checkABCDOrdering(quizname: string): boolean {
     let ordered = true;
     if (!quizname || quizname.length < 2 || quizname.charAt(0) !== 'a') {

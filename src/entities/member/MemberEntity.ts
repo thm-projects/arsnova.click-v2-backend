@@ -1,5 +1,4 @@
 import { ObjectId } from 'bson';
-import * as WebSocket from 'ws';
 import CasDAO from '../../db/CasDAO';
 import DbDAO from '../../db/DbDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
@@ -12,16 +11,6 @@ import { ICasData } from '../../interfaces/users/ICasData';
 import { AbstractEntity } from '../AbstractEntity';
 
 export class MemberEntity extends AbstractEntity implements IMemberEntity {
-  private _webSocket: WebSocket;
-
-  get webSocket(): WebSocket {
-    return this._webSocket;
-  }
-
-  set webSocket(value: WebSocket) {
-    this._webSocket = value;
-  }
-
   private _currentQuizName: string;
 
   get currentQuizName(): string {

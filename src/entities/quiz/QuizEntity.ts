@@ -78,7 +78,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
   }
 
   set state(value: QuizState) {
-    if (this._state === QuizState.Inactive && value !== QuizState.Inactive) {
+    if (this._state !== value && value !== QuizState.Inactive) {
       clearInterval(this._dropEmptyQuizSettings.intervalInstance);
       this._dropEmptyQuizSettings.intervalInstance = setInterval(() => {
         this.checkExistingConnection();
@@ -166,7 +166,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._questionList = (quiz.questionList || []).map(val => getQuestionForType(val.TYPE, val));
     this._sessionConfig = quiz.sessionConfig ? new SessionConfigurationEntity(quiz.sessionConfig) : null;
     this._expiry = quiz.expiry;
-    this._state = quiz.state || QuizState.Inactive;
+    this.state = quiz.state || QuizState.Inactive;
     this._currentStartTimestamp = quiz.currentStartTimestamp || -1;
     this._currentQuestionIndex = typeof quiz.currentQuestionIndex !== 'undefined' ? quiz.currentQuestionIndex : -1;
     this._privateKey = quiz.privateKey;
@@ -174,10 +174,6 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
     this._visibility = quiz.visibility;
     this._description = quiz.description;
     this._exchangeName = encodeURI(`quiz_${quiz.name}`);
-
-    this._dropEmptyQuizSettings.intervalInstance = setInterval(() => {
-      this.checkExistingConnection();
-    }, this._dropEmptyQuizSettings.interval);
   }
 
   public setInactive(): void {
@@ -216,7 +212,7 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       status: StatusProtocol.Success,
       step: MessageProtocol.Closed,
     })));
-    AMQPConnector.channel.deleteExchange(this._exchangeName);
+    AMQPConnector.channel.deleteExchange(this._exchangeName).catch(() => {});
   }
 
   public reset(): void {
@@ -401,15 +397,6 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
           return;
         }
 
-        if (this._dropEmptyQuizSettings.isEmpty) {
-          this.setInactive();
-          return;
-        }
-
-        this._dropEmptyQuizSettings.isEmpty = true;
-      });
-
-      response.on('error', () => {
         if (this._dropEmptyQuizSettings.isEmpty) {
           this.setInactive();
           return;
