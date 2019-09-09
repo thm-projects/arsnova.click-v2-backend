@@ -34,6 +34,7 @@ class AMQPConnector {
     this._channel = await this._connection.createChannel();
     this._channel.on('error', error => {
       console.error('Exception in amqp channel occured', error);
+      this.initConnection();
     });
   }
 }
