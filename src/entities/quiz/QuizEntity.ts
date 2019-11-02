@@ -212,7 +212,10 @@ export class QuizEntity extends AbstractEntity implements IQuizEntity {
       status: StatusProtocol.Success,
       step: MessageProtocol.Closed,
     })));
-    AMQPConnector.channel.deleteExchange(this._exchangeName);
+    try {
+      AMQPConnector.channel.deleteExchange(this._exchangeName);
+    } catch {
+    }
   }
 
   public reset(): void {
