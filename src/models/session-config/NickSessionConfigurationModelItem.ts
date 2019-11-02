@@ -1,7 +1,7 @@
-import { prop, Typegoose } from 'typegoose';
+import { prop } from '@typegoose/typegoose';
 import { INickSessionConfigurationSerialized } from '../../interfaces/session_configuration/nicks/INickSessionConfigurationSerialized';
 
-export class NickSessionConfigurationModelItem extends Typegoose implements INickSessionConfigurationSerialized {
+export class NickSessionConfigurationModelItem implements INickSessionConfigurationSerialized {
   @prop() public autoJoinToGroup: boolean;
   @prop() public blockIllegalNicks: boolean;
   @prop() public maxMembersPerGroup: number;

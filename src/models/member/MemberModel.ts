@@ -1,4 +1,4 @@
-import { arrayProp, index, prop, Typegoose } from 'typegoose';
+import { arrayProp, getModelForClass, index, prop } from '@typegoose/typegoose';
 import DbDAO from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import { DbCollection, DbEvent, DbWatchStreamOperation } from '../../enums/DbOperation';
@@ -10,7 +10,7 @@ import LoggerService from '../../services/LoggerService';
   name: 1,
   currentQuizName: 1,
 }, { unique: true })
-export class MemberModelItem extends Typegoose implements IMemberSerialized {
+export class MemberModelItem implements IMemberSerialized {
   @prop() public colorCode: string;
   @prop({ required: false }) public groupName: string;
   @prop() public name: string;
@@ -20,7 +20,7 @@ export class MemberModelItem extends Typegoose implements IMemberSerialized {
   @prop() public currentQuizName: string;
 }
 
-export const MemberModel = new MemberModelItem().getModelForClass(MemberModelItem, {
+export const MemberModel = getModelForClass(MemberModelItem, {
   schemaOptions: {
     collection: DbCollection.Members,
     timestamps: true,

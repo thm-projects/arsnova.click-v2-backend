@@ -7,7 +7,7 @@ export enum Branch {
   TargetBranch = 'master', //
 }
 
-export enum CommitAction {
+export enum GitlabCommitAction {
   Create = 'create', //
   Delete = 'delete', //
   Move   = 'move', //

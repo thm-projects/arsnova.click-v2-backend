@@ -38,7 +38,7 @@ class DbDAO extends AbstractDAO<object> {
     return this.instance;
   }
 
-  public create(collection: string, elem: IDbObject | object): Promise<InsertOneWriteOpResult> {
+  public create(collection: string, elem: IDbObject | object): Promise<InsertOneWriteOpResult<any>> {
     if (!this._isConnected || !this._dbCon) {
       return;
     }

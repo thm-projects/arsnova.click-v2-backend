@@ -25,7 +25,7 @@ export class ApiRouter extends AbstractRouter {
 
   private openAPISpec(): OpenAPIObject {
     const storage = getMetadataArgsStorage();
-    return routingControllersToSpec(storage, routingControllerOptions, {
+    return routingControllersToSpec(storage as any, routingControllerOptions, {
       info: {
         title: staticStatistics.appName,
         version: staticStatistics.appVersion,

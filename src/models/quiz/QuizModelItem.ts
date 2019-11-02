@@ -1,4 +1,4 @@
-import { arrayProp, index, prop, Typegoose } from 'typegoose';
+import { arrayProp, getModelForClass, index, prop } from '@typegoose/typegoose';
 import DbDAO from '../../db/DbDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { AbstractQuestionEntity } from '../../entities/question/AbstractQuestionEntity';
@@ -10,7 +10,7 @@ import { ISessionConfigurationSerialized } from '../../interfaces/session_config
 import LoggerService from '../../services/LoggerService';
 
 @index({ name: 1 }, { unique: true })
-export class QuizModelItem extends Typegoose implements IQuizSerialized {
+export class QuizModelItem implements IQuizSerialized {
   @prop({ required: false }) public expiry?: Date;
   @prop({
     required: false,
@@ -34,7 +34,7 @@ export class QuizModelItem extends Typegoose implements IQuizSerialized {
   @prop() public readingConfirmationRequested: boolean;
 }
 
-export const QuizModel = new QuizModelItem().getModelForClass(QuizModelItem, {
+export const QuizModel = getModelForClass(QuizModelItem, {
   schemaOptions: {
     collection: DbCollection.Quizzes,
     timestamps: true,

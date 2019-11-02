@@ -1,6 +1,6 @@
-const Gitlab = require('gitlab/dist/es5').default;
-import { Branch, CommitAction, GitlabProject, Language } from '../enums/Enums';
-import { ICommitAction, IGitlabCommitAction } from '../interfaces/gitlab/apiv4';
+import { Gitlab } from 'gitlab';
+import { Branch, GitlabCommitAction, GitlabProject, Language } from '../enums/Enums';
+import { IGitlabCommitAction } from '../interfaces/gitlab/apiv11';
 import { generateToken } from '../lib/generateToken';
 import LoggerService from '../services/LoggerService';
 import { availableLangs } from '../statistics';
@@ -46,7 +46,7 @@ class I18nDAO extends AbstractDAO<object> {
       since: this.storage[project].lastUpdate.toISOString(),
     });
 
-    return commits.length > 0;
+    return (commits as any).length > 0;
   }
 
   public reloadCache(): Promise<void> {
@@ -137,10 +137,10 @@ class I18nDAO extends AbstractDAO<object> {
 
     const filter = /\.(ts|html|js)$/;
     const negativeFilter = /(spec|test|po|mock|pipe|module|config|conf|karma|environment|assets|adapter)\./;
-    const fileContents = ((await gitlabService.Repositories.tree(project, {
+    const fileContents = (((await gitlabService.Repositories.tree(project, {
       recursive: true,
       ref: Branch.TargetBranch,
-    })).filter(val => val.type === 'blob' && val.name.match(filter)).filter(val => !val.name.match(negativeFilter)));
+    })) as any).filter(val => val.type === 'blob' && val.name.match(filter)).filter(val => !val.name.match(negativeFilter)));
 
     let fileData = [];
     while (fileContents.length > 0) {
@@ -162,12 +162,12 @@ class I18nDAO extends AbstractDAO<object> {
       const langData = [];
 
       availableLangs.forEach(async (langRef, index) => {
-        const dataNode = await gitlabService.RepositoryFiles.showRaw(project, `${this.buildI18nBasePath(project)}/${langRef.toLowerCase()}.json`,
-          Branch.TargetBranch);
+        const dataNode = (await gitlabService.RepositoryFiles.showRaw(project, `${this.buildI18nBasePath(project)}/${langRef.toLowerCase()}.json`,
+          Branch.TargetBranch)) as unknown as string;
 
         this.buildKeys({
           root: '',
-          dataNode,
+          dataNode: JSON.parse(dataNode),
           langRef: langRef.toLowerCase(),
           langData,
         });
@@ -187,7 +187,7 @@ class I18nDAO extends AbstractDAO<object> {
       return false;
     }
 
-    return remoteProject.permissions.project_access.access_level >= 30;
+    return (remoteProject as any).permissions.project_access.access_level >= 30;
   }
 
   public createObjectFromKeys({ data, result }): void {
@@ -215,9 +215,9 @@ class I18nDAO extends AbstractDAO<object> {
     }
   }
 
-  private prepareGitlabConnection(token?: string): any {
+  private prepareGitlabConnection(token?: string): InstanceType<typeof Gitlab> {
     return new Gitlab({
-      url: 'https://git.thm.de',
+      host: 'https://git.thm.de',
       token: token || this.gitlabAccessToken,
     });
   }
@@ -228,8 +228,8 @@ class I18nDAO extends AbstractDAO<object> {
 
   private generateCommitActionForFile(project: GitlabProject, langKey: string, data: object): IGitlabCommitAction {
     return {
-      action: <ICommitAction>CommitAction.Update,
-      file_path: `${this.buildI18nBasePath(project)}/${langKey.toLowerCase()}.json`,
+      action: GitlabCommitAction.Update,
+      filePath: `${this.buildI18nBasePath(project)}/${langKey.toLowerCase()}.json`,
       content: JSON.stringify(data),
     };
   }

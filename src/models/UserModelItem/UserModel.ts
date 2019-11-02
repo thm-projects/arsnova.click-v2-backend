@@ -1,4 +1,4 @@
-import { arrayProp, index, prop, Typegoose } from 'typegoose';
+import { arrayProp, getModelForClass, index, prop } from '@typegoose/typegoose';
 import DbDAO from '../../db/DbDAO';
 import UserDAO from '../../db/UserDAO';
 import { DbCollection, DbEvent, DbWatchStreamOperation } from '../../enums/DbOperation';
@@ -6,7 +6,7 @@ import { IUserSerialized } from '../../interfaces/users/IUserSerialized';
 import LoggerService from '../../services/LoggerService';
 
 @index({ name: 1 }, { unique: true })
-export class UserModelItem extends Typegoose implements IUserSerialized {
+export class UserModelItem implements IUserSerialized {
   @prop({ required: true }) public name: string;
   @prop({ required: false }) public passwordHash: string;
   @prop({ required: false }) public tokenHash: string;
@@ -19,7 +19,7 @@ export class UserModelItem extends Typegoose implements IUserSerialized {
   @prop() public token?: string;
 }
 
-export const UserModel = new UserModelItem().getModelForClass(UserModelItem, {
+export const UserModel = getModelForClass(UserModelItem, {
   schemaOptions: {
     collection: DbCollection.Users,
     timestamps: true,

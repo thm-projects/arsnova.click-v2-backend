@@ -1,4 +1,4 @@
-import { index, prop, Typegoose } from 'typegoose';
+import { getModelForClass, index, prop } from '@typegoose/typegoose';
 import AssetDAO from '../db/AssetDAO';
 import DbDAO from '../db/DbDAO';
 import { DbCollection, DbEvent, DbWatchStreamOperation } from '../enums/DbOperation';
@@ -6,14 +6,14 @@ import { IAssetSerialized } from '../interfaces/IAsset';
 import LoggerService from '../services/LoggerService';
 
 @index({ digest: 1 }, { unique: true })
-export class AssetModelItem extends Typegoose implements IAssetSerialized {
+export class AssetModelItem implements IAssetSerialized {
   @prop({ required: true }) public data: Uint8Array;
   @prop() public digest: string;
   @prop() public url: string;
   @prop() public mimeType: string;
 }
 
-export const AssetModel = new AssetModelItem().getModelForClass(AssetModelItem, {
+export const AssetModel = getModelForClass(AssetModelItem, {
   schemaOptions: {
     collection: DbCollection.Assets,
     timestamps: true,

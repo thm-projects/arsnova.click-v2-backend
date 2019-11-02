@@ -40,6 +40,7 @@ class MongoDbConnector {
         useCreateIndex: true,
         autoIndex: true,
         useNewUrlParser: true,
+        useUnifiedTopology: true,
       } as any);
     });
   }
