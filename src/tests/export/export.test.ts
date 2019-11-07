@@ -92,13 +92,13 @@ class ExcelExportTestSuite {
 
   @test
   public async initQuiz(): Promise<void> {
-    QuizDAO.initQuiz(new QuizEntity({
+    QuizDAO.addQuiz(new QuizEntity({
       name: this._hashtag,
       questionList: [],
       sessionConfig: new SessionConfigurationEntity(),
       privateKey: 'test',
       readingConfirmationRequested: false,
-    }));
+    }).serialize());
     await assert.equal(!QuizDAO.isActiveQuiz(this._hashtag), true, 'Expected to find an inactive quiz item');
 
     const quiz: IQuizEntity = JSON.parse(

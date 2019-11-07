@@ -18,7 +18,7 @@ class UserDAO extends AbstractDAO<{ [key: string]: IUserEntity }> {
         const cursor = DbDAO.readMany(DbCollection.Users, {});
         cursor.forEach(doc => {
           this.initUser(doc);
-        });
+        }).then(() => LoggerService.info(`${this.constructor.name} initialized with ${Object.keys(this.storage).length} entries`));
       }
     });
   }

@@ -4,11 +4,22 @@ import * as cors from 'cors';
 import * as express from 'express';
 import { Request, Response, Router } from 'express';
 import * as logger from 'morgan';
-import * as path from 'path';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
 import options from './lib/cors.config';
+import { ErrorHandlerMiddleware } from './routers/middleware/customErrorHandler';
+import { I18nMiddleware } from './routers/middleware/i18n';
 import { roleAuthorizationChecker } from './routers/middleware/roleAuthorizationChecker';
+import { AdminRouter } from './routers/rest/AdminRouter';
+import { ApiRouter } from './routers/rest/ApiRouter';
+import { ExpiryQuizRouter } from './routers/rest/ExpiryQuizRouter';
+import { I18nApiRouter } from './routers/rest/I18nApiRouter';
+import { LegacyApiRouter } from './routers/rest/LegacyApi';
+import { LibRouter } from './routers/rest/LibRouter';
+import { LobbyRouter } from './routers/rest/LobbyRouter';
+import { MemberRouter } from './routers/rest/MemberRouter';
+import { NicksRouter } from './routers/rest/NicksRouter';
+import { QuizRouter } from './routers/rest/QuizRouter';
 
 import { dynamicStatistics, staticStatistics } from './statistics';
 
@@ -25,8 +36,10 @@ export const routingControllerOptions: RoutingControllersOptions = {
   authorizationChecker: roleAuthorizationChecker,
   defaultErrorHandler: false,
   cors: options,
-  controllers: [path.join(__dirname, 'routers', '/rest/*.js')],
-  middlewares: [path.join(__dirname, 'routers', '/middleware/*.js')],
+  controllers: [
+    AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LegacyApiRouter, LibRouter, LobbyRouter, MemberRouter, NicksRouter, QuizRouter,
+  ],
+  middlewares: [ErrorHandlerMiddleware, I18nMiddleware],
 };
 
 // Creates and configures an ExpressJS web server.

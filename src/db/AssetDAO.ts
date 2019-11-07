@@ -2,6 +2,7 @@ import { ObjectID, ObjectId } from 'bson';
 import { AssetEntity } from '../entities/AssetEntity';
 import { DbCollection, DbEvent } from '../enums/DbOperation';
 import { IAsset, IAssetSerialized } from '../interfaces/IAsset';
+import LoggerService from '../services/LoggerService';
 import { AbstractDAO } from './AbstractDAO';
 import DbDAO from './DbDAO';
 
@@ -15,7 +16,7 @@ class AssetDAO extends AbstractDAO<Array<AssetEntity>> {
         const cursor = DbDAO.readMany(DbCollection.Assets, {});
         cursor.forEach(doc => {
           this.addAsset(doc);
-        });
+        }).then(() => LoggerService.info(`${this.constructor.name} initialized with ${this.storage.length} entries`));
       }
     });
   }

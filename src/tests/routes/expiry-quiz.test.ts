@@ -36,11 +36,10 @@ class ExpiryQuizTestSuite {
     const user = LoginDAO.getUser('testuser');
     const token = await AuthService.generateToken(user);
     LoginDAO.setTokenForUser('testuser', token);
-    const res = await chai.request(app).post(`${this._baseApiRoute}/quiz`).send({
+    const res = await chai.request(app).post(`${this._baseApiRoute}/quiz`).set('authorization', token).send({
       quiz: {},
       expiry: new Date(),
       username: 'testuser',
-      token: token,
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');

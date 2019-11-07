@@ -1,9 +1,12 @@
+///<reference path="../lib/regExpEscape.ts" />
+
 import { ObjectId } from 'bson';
 import { MemberEntity } from '../entities/member/MemberEntity';
 import { QuizEntity } from '../entities/quiz/QuizEntity';
 import { DbCollection, DbEvent } from '../enums/DbOperation';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizEntity } from '../interfaces/quizzes/IQuizEntity';
+import LoggerService from '../services/LoggerService';
 import { AbstractDAO } from './AbstractDAO';
 import DbDAO from './DbDAO';
 import QuizDAO from './quiz/QuizDAO';
@@ -18,7 +21,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
         const cursor = DbDAO.readMany(DbCollection.Members, {});
         cursor.forEach(doc => {
           this.addMember(doc);
-        });
+        }).then(() => LoggerService.info(`${this.constructor.name} initialized with ${this.storage.length} entries`));
       }
     });
   }

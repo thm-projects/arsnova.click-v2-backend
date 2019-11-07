@@ -5,7 +5,7 @@ import * as https from 'https';
 import * as mjAPI from 'mathjax-node';
 import * as path from 'path';
 import {
-  BadRequestError, BodyParam, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
+  BadRequestError, BodyParam, ContentType, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
 } from 'routing-controllers';
 import * as xml2js from 'xml2js';
 import CasDAO from '../../db/CasDAO';
@@ -160,7 +160,7 @@ export class LibRouter extends AbstractRouter {
     });
   }
 
-  @Get('/mathjax/example/third')
+  @Get('/mathjax/example/third') @ContentType('image/svg+xml')
   public getThirdMathjaxExample(): Promise<Buffer> {
     return new Promise<Buffer>(resolve => {
       fs.readFile(path.join(staticStatistics.pathToAssets, 'images', 'mathjax', 'example_3.svg'), (err, data: Buffer) => {

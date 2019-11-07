@@ -2,15 +2,19 @@
 
 import * as chai from 'chai';
 import * as fs from 'fs';
-import { suite, test } from 'mocha-typescript';
+import { slow, suite, test } from 'mocha-typescript';
 import * as path from 'path';
+import * as sinon from 'sinon';
 
 import router from '../../App';
+import AMQPConnector from '../../db/AMQPConnector';
+import MongoDBConnector from '../../db/MongoDBConnector';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { QuizEntity } from '../../entities/quiz/QuizEntity';
-import { SessionConfigurationEntity } from '../../entities/session-configuration/SessionConfigurationEntity';
-import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
+import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 import { staticStatistics } from '../../statistics';
+
+require('../../lib/regExpEscape'); // Installing polyfill for RegExp.escape
 
 chai.use(require('chai-http'));
 const expect = chai.expect;
@@ -26,15 +30,6 @@ class LibRouterTestSuite {
     const res = await chai.request(router).get(`${this._baseApiRoute}`);
     expect(res.type).to.eql('application/json');
   }
-
-  /*
-   This Test will fail or not fail depending if the backend has been able to generate the frontend favicons before
-   */
-  @test
-  public async faviconExists(): Promise<void> {
-    const res = await chai.request(router).get(`${this._baseApiRoute}/favicon`);
-    expect(res.type).to.eql('image/png');
-  }
 }
 
 @suite
@@ -44,7 +39,7 @@ class MathjaxLibRouterTestSuite {
   @test
   public async mathjaxExists(): Promise<void> {
     const res = await chai.request(router).post(`${this._baseApiRoute}`).send({
-      mathjax: JSON.stringify('\\begin a_1 = b_1 + c_1 a_2 = b_2 + c_2 - d_2 + e_2 \\end'),
+      mathjax: JSON.stringify(`\\begin{align} a_1& =b_1+c_1\\\\ a_2& =b_2+c_2-d_2+e_2 \\end{align}`),
       format: 'TeX',
       output: 'svg',
     });
@@ -66,7 +61,7 @@ class MathjaxLibRouterTestSuite {
   @test
   public async mathjaxExampleThirdExists(): Promise<void> {
     const res = await chai.request(router).get(`${this._baseApiRoute}/example/third`);
-    expect(res.type).to.eql('text/html');
+    expect(res.type).to.eql('image/svg+xml');
   }
 }
 
@@ -74,40 +69,41 @@ class MathjaxLibRouterTestSuite {
 class CacheQuizAssetsLibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/cache/quiz/assets`;
   private _hashtag = hashtag;
-  private _quiz: IQuizEntity = JSON.parse(
+  private _quiz: IQuizSerialized = JSON.parse(
     fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
 
-  public static before(): void {
-    QuizDAO.initQuiz(new QuizEntity({
-      name: hashtag,
-      questionList: [],
-      sessionConfig: new SessionConfigurationEntity(),
-      privateKey: 'test',
-      readingConfirmationRequested: false,
-    }));
+  public async before(): Promise<void> {
+    const sandbox = sinon.createSandbox();
+    sandbox.stub(AMQPConnector, 'channel').value({ assertExchange: () => {} });
+    sandbox.stub(MongoDBConnector, 'connect').value({ assertExchange: () => {} });
+
+    this._quiz.name = this._hashtag;
+    await QuizDAO.addQuiz(this._quiz);
+    QuizDAO.initQuiz(new QuizEntity(this._quiz));
+
+    sandbox.restore();
   }
 
-  public static after(): void {
+  public after(): void {
     QuizDAO.removeQuiz(QuizDAO.getQuizByName(hashtag).id);
   }
 
-  @test
+  @test @slow(5000)
   public async postNewAssetExists(): Promise<void> {
-    this._quiz.name = this._hashtag;
     const res = await chai.request(router).post(`${this._baseApiRoute}/`).send({ quiz: this._quiz });
     expect(res.type).to.eql('application/json');
   }
 
   @test.skip
   public async quizWithAssetUrlsExists(): Promise<void> {
-    this._quiz.name = this._hashtag;
-    const parsedQuiz: IQuizEntity = QuizDAO.initQuiz(this._quiz);
+    const parsedQuiz: IQuizEntity = QuizDAO.initQuiz(new QuizEntity(this._quiz));
+
     expect(parsedQuiz.questionList.map(question => question.questionText)
     .filter(questionText => questionText.indexOf(staticStatistics.rewriteAssetCacheUrl) > -1).length).to.be
     .greaterThan(0, 'Expect to find the rewritten assets storage url');
   }
 
-  @test
+  @test @slow(5000)
   public async getByDigestExists(): Promise<void> {
     const res = await chai.request(router).get(`${this._baseApiRoute}/7b354ef246ea570c0cc360c1eb2bda4061aec31d1012b2011077de11b9b28898`);
     expect(res.type).to.eql('text/html');

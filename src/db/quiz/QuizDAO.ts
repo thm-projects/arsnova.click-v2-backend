@@ -1,3 +1,5 @@
+///<reference path="../../lib/regExpEscape.ts" />
+
 import { ObjectId } from 'bson';
 import { MemberGroupEntity } from '../../entities/member/MemberGroupEntity';
 import { getQuestionForType } from '../../entities/question/QuizValidator';
@@ -9,6 +11,7 @@ import { QuizVisibility } from '../../enums/QuizVisibility';
 import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
 import { generateToken } from '../../lib/generateToken';
 import { setPath } from '../../lib/resolveNestedObjectProperty';
+import LoggerService from '../../services/LoggerService';
 import { AbstractDAO } from '../AbstractDAO';
 import AMQPConnector from '../AMQPConnector';
 import DbDAO from '../DbDAO';
@@ -27,6 +30,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
         }).then(() => {
           this._isInitialized = true;
           this.updateEmitter.emit(DbEvent.Initialized);
+          LoggerService.info(`${this.constructor.name} initialized with ${Object.keys(this.storage).length} entries`);
         });
       }
     });
