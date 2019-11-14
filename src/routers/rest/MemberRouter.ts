@@ -1,7 +1,5 @@
 import { DeleteWriteOpResultObject } from 'mongodb';
-import {
-  BadRequestError, BodyParam, Delete, Get, HeaderParam, InternalServerError, JsonController, Param, Post, Put, UnauthorizedError,
-} from 'routing-controllers';
+import { BadRequestError, BodyParam, Delete, Get, HeaderParam, JsonController, Param, Post, Put, UnauthorizedError } from 'routing-controllers';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { MemberEntity } from '../../entities/member/MemberEntity';
@@ -47,15 +45,15 @@ export class MemberRouter extends AbstractRouter {
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(member.currentQuizName);
 
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
+      return {
         status: StatusProtocol.Failed,
         step: MessageProtocol.IsInactive,
         payload: {},
-      }));
+      };
     }
 
     if (!member.name || (activeQuiz.sessionConfig.nicks.restrictToCasLogin && !member.ticket)) {
-      throw new InternalServerError(JSON.stringify({
+      throw new BadRequestError(JSON.stringify({
         status: StatusProtocol.Failed,
         step: MessageProtocol.InvalidParameters,
         payload: {},
@@ -86,7 +84,7 @@ export class MemberRouter extends AbstractRouter {
 
     } catch (ex) {
       LoggerService.error('Cannot add member', ex.message);
-      throw new InternalServerError(JSON.stringify({
+      throw new BadRequestError(JSON.stringify({
         status: StatusProtocol.Failed,
         step: MessageProtocol.Added,
         payload: { message: ex.message },
@@ -198,11 +196,13 @@ export class MemberRouter extends AbstractRouter {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
-        status: StatusProtocol.Failed,
-        step: MessageProtocol.IsInactive,
-        payload: {},
-      }));
+      return {
+        status: StatusProtocol.Success,
+        step: MessageProtocol.GetPlayers,
+        payload: {
+          members: [],
+        },
+      };
     }
 
     return {
@@ -220,11 +220,11 @@ export class MemberRouter extends AbstractRouter {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
-        status: StatusProtocol.Failed,
-        step: MessageProtocol.IsInactive,
-        payload: {},
-      }));
+      return {
+        status: StatusProtocol.Success,
+        step: MessageProtocol.GetRemainingNicks,
+        payload: { nicknames: [] },
+      };
     }
     const names: Array<string> = activeQuiz.sessionConfig.nicks.selectedNicks.filter((nick) => {
       return !MemberDAO.getMembersOfQuiz(activeQuiz.name).find(member => member.name === nick);

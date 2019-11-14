@@ -64,8 +64,6 @@ export class QuizRouter extends AbstractRouter {
     const payload: IQuizStatusPayload = {};
 
     if (quiz) {
-      const members = MemberDAO.getMembersOfQuiz(quiz.name);
-
       if ([QuizState.Active, QuizState.Running].includes(quiz.state)) {
         payload.provideNickSelection = quiz.sessionConfig.nicks.selectedNicks.length > 0;
         payload.authorizeViaCas = quiz.sessionConfig.nicks.restrictToCasLogin;
@@ -217,8 +215,11 @@ export class QuizRouter extends AbstractRouter {
   ): Promise<object> {
     const quiz = QuizDAO.getQuizByName(quizName);
     if (!quiz || ![QuizState.Active, QuizState.Running].includes(quiz.state)) {
-      console.error('No quiz found or not active', JSON.stringify(quiz));
-      throw new InternalServerError(MessageProtocol.IsInactive);
+      return {
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.IsInactive,
+        payload: {},
+      };
     }
 
     if (quiz.privateKey !== token) {
@@ -307,11 +308,7 @@ export class QuizRouter extends AbstractRouter {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
-        status: StatusProtocol.Failed,
-        step: MessageProtocol.IsInactive,
-        payload: {},
-      }));
+      return;
     }
 
     DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quizName).id }, { currentStartTimestamp: -1 });
@@ -348,11 +345,11 @@ export class QuizRouter extends AbstractRouter {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
+      return {
         status: StatusProtocol.Failed,
         step: MessageProtocol.IsInactive,
         payload: {},
-      }));
+      };
     }
     const index = activeQuiz.currentQuestionIndex < 0 ? 0 : activeQuiz.currentQuestionIndex;
     return {
@@ -373,11 +370,11 @@ export class QuizRouter extends AbstractRouter {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
+      return {
         status: StatusProtocol.Failed,
-        step: MessageProtocol.IsInactive,
+        step: MessageProtocol.ReadingConfirmationRequested,
         payload: {},
-      }));
+      };
     }
     activeQuiz.nextQuestion();
     activeQuiz.requestReadingConfirmation();
@@ -394,11 +391,11 @@ export class QuizRouter extends AbstractRouter {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
+      return {
         status: StatusProtocol.Failed,
-        step: MessageProtocol.IsInactive,
+        step: MessageProtocol.GetStartTime,
         payload: {},
-      }));
+      };
     }
     return {
       status: StatusProtocol.Success,
@@ -413,11 +410,11 @@ export class QuizRouter extends AbstractRouter {
 
     const activeQuiz: IQuizEntity = QuizDAO.getQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
+      return {
         status: StatusProtocol.Failed,
-        step: MessageProtocol.Unavailable,
+        step: MessageProtocol.UpdatedSettings,
         payload: {},
-      }));
+      };
     }
 
     return {
@@ -436,10 +433,14 @@ export class QuizRouter extends AbstractRouter {
 
     const activeQuiz: IQuizEntity = QuizDAO.getQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(MessageProtocol.IsInactive);
+      return {
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.UpdatedSettings,
+        payload: {},
+      };
     }
     if (activeQuiz.privateKey !== token) {
-      throw new InternalServerError(MessageProtocol.InsufficientPermissions);
+      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
     DbDAO.updateOne(DbCollection.Quizzes, { _id: activeQuiz.id }, { ['sessionConfig.' + quizSettings.target]: quizSettings.state });
@@ -462,7 +463,7 @@ export class QuizRouter extends AbstractRouter {
     }
     const activeQuizzesAmount = QuizDAO.getActiveQuizzes();
     if (activeQuizzesAmount.length >= settings.public.limitActiveQuizzes) {
-      throw new InternalServerError(MessageProtocol.TooMuchActiveQuizzes);
+      throw new BadRequestError(MessageProtocol.TooMuchActiveQuizzes);
     }
     if (settings.public.createQuizPasswordRequired) {
       if (!serverPassword) {
@@ -661,13 +662,8 @@ export class QuizRouter extends AbstractRouter {
   ): Promise<Buffer> {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
-
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
-        status: StatusProtocol.Failed,
-        step: MessageProtocol.IsInactive,
-        payload: {},
-      }));
+      return;
     }
 
     // TODO: The quiz contains the rewritten cached asset urls. Restore them to the original value!
@@ -700,11 +696,11 @@ export class QuizRouter extends AbstractRouter {
 
     const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
-      throw new InternalServerError(JSON.stringify({
+      return {
         status: StatusProtocol.Failed,
-        step: MessageProtocol.IsInactive,
+        step: MessageProtocol.GetLeaderboardData,
         payload: {},
-      }));
+      };
     }
     const member = MemberDAO.getMemberByToken(authorization);
 
