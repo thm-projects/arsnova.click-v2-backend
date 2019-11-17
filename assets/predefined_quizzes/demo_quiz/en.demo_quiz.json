@@ -80,7 +80,7 @@
       "TYPE": "SingleChoiceQuestion"
     },
     {
-      "questionText": "### Distance between Earth and Moon\n![Größenverhältnis Erde zu Mond](https://upload.wikimedia.org/wikipedia/commons/f/f6/Moon_Earth_Comparison.png)\n\n**Estimate the median distance between Earth and Moon in whole Earth diameters $ø_{Earth}$!**\n\n$ø_{Earth} = 12,756 $ km\n$ø_{Moon} = 3,476$ km\n\nSource: [Wikipedia](https://de.wikipedia.org/wiki/Mond)\n\n",
+      "questionText": "### Distance between Earth and Moon\n![Relative size difference between Earth and Moon](https://upload.wikimedia.org/wikipedia/commons/f/f6/Moon_Earth_Comparison.png)\n\n**Estimate the median distance between Earth and Moon in whole Earth diameters $ø_{Earth}$!**\n\n$ø_{Earth} = 12,756 $ km\n\n$ø_{Moon} = 3,476$ km\n___\nSource: [Wikipedia](https://de.wikipedia.org/wiki/Mond)\n\n",
       "timer": 120,
       "displayAnswerText": true,
       "answerOptionList": [
@@ -91,7 +91,7 @@
       "correctValue": 30
     },
     {
-      "questionText": "### Enter  $\\pi$ with an accuracy of 2 digits after the decimal point!\n![Kreiszahl Pi](https://upload.wikimedia.org/wikipedia/commons/2/2a/Pi-unrolled-720.gif)\n\nLeonhard Euler:\n \n$$e^{i \\pi} +1 = 0$$\n\nKarl Weierstraß: \n\n$$\\pi = \\int_{-\\infty}^\\infty \\frac{\\mathrm{d} x}{1 + x^2} = 2\\cdot \\int_{-1}^1 \\frac{\\mathrm{d} x}{1 + x^2}$$",
+      "questionText": "### Enter  $\\pi$ with an accuracy of 2 digits after the decimal point!\n![Kreiszahl Pi](https://upload.wikimedia.org/wikipedia/commons/2/2a/Pi-unrolled-720.gif)\n___\nLeonhard Euler:\n$$e^{i \\pi} +1 = 0$$\n___\nKarl Weierstraß:\n$$\\pi = \\int_{-\\infty}^\\infty \\frac{\\mathrm{d} x}{1 + x^2} = 2\\cdot \\int_{-1}^1 \\frac{\\mathrm{d} x}{1 + x^2}$$",
       "timer": 120,
       "displayAnswerText": true,
       "answerOptionList": [
