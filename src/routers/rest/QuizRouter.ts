@@ -699,8 +699,10 @@ export class QuizRouter extends AbstractRouter {
 
     let groupName = 'Default';
     if (activeQuiz.sessionConfig.nicks.memberGroups.length > 1) {
-      const memberGroupLoad = MemberDAO.getMemberAmountPerQuizGroup(activeQuiz.name);
-      groupName = Object.entries(memberGroupLoad).sort((a, b) => a[1] - b[1])[0][0];
+      const memberGroupLoad = MemberDAO.getMemberAmountPerQuizGroup(activeQuiz.name, activeQuiz.sessionConfig.nicks.memberGroups);
+      if (memberGroupLoad) {
+        groupName = Object.entries(memberGroupLoad).sort((a, b) => a[1] - b[1])[0][0];
+      }
     }
 
     return {
