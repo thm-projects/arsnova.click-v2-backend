@@ -97,7 +97,7 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     DbDAO.deleteMany(DbCollection.Members, { currentQuizName: removedQuiz.name });
   }
 
-  public getMembersByQuizGroup(name: string): object {
+  public getMemberAmountPerQuizGroup(name: string): object {
     const result = {};
 
     this.getMembersOfQuiz(name).forEach(member => {
