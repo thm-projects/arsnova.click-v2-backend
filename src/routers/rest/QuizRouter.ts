@@ -686,9 +686,9 @@ export class QuizRouter extends AbstractRouter {
     return buffer;
   }
 
-  @Get('/member-group')
-  public getFreeMemberGroup(@HeaderParam('authorization') authorization: string): object {
-    const activeQuiz: IQuizEntity = QuizDAO.getQuizByToken(authorization);
+  @Get('/member-group/:quizName')
+  public getFreeMemberGroup(@Param('quizName') quizName: string): object {
+    const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
       return {
         status: StatusProtocol.Failed,
