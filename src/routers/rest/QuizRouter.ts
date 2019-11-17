@@ -686,6 +686,31 @@ export class QuizRouter extends AbstractRouter {
     return buffer;
   }
 
+  @Get('/member-group')
+  public getFreeMemberGroup(@HeaderParam('authorization') authorization: string): object {
+    const activeQuiz: IQuizEntity = QuizDAO.getQuizByToken(authorization);
+    if (!activeQuiz) {
+      return {
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.GetFreeMemberGroup,
+        payload: {},
+      };
+    }
+
+    let groupName = 'Default';
+    if (activeQuiz.sessionConfig.nicks.memberGroups.length > 1) {
+      groupName = Object.values(MemberDAO.getMembersByQuizGroup(activeQuiz.name)).sort()[0];
+    }
+
+    return {
+      status: StatusProtocol.Success,
+      step: MessageProtocol.GetFreeMemberGroup,
+      payload: {
+        groupName,
+      },
+    };
+  }
+
   @Get('/leaderboard/:quizName/:amount/:questionIndex?')
   public getLeaderBoardData(
     @Param('quizName') quizName: string, //

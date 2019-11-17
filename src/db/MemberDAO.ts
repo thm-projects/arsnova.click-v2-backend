@@ -13,6 +13,14 @@ import QuizDAO from './quiz/QuizDAO';
 
 class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
 
+  public static getInstance(): MemberDAO {
+    if (!this.instance) {
+      this.instance = new MemberDAO();
+    }
+
+    return this.instance;
+  }
+
   constructor() {
     super([]);
 
@@ -24,14 +32,6 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
         }).then(() => LoggerService.info(`${this.constructor.name} initialized with ${this.storage.length} entries`));
       }
     });
-  }
-
-  public static getInstance(): MemberDAO {
-    if (!this.instance) {
-      this.instance = new MemberDAO();
-    }
-
-    return this.instance;
   }
 
   public getMemberByName(name: string): MemberEntity {
@@ -95,6 +95,22 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
 
   public removeMembersOfQuiz(removedQuiz: QuizEntity | IQuizEntity): void {
     DbDAO.deleteMany(DbCollection.Members, { currentQuizName: removedQuiz.name });
+  }
+
+  public getMembersByQuizGroup(name: string): object {
+    const result = {};
+
+    this.getMembersOfQuiz(name).forEach(member => {
+      const targetResult = result[member.groupName];
+      if (!targetResult) {
+        result[member.groupName] = 1;
+        return;
+      }
+
+      result[member.groupName]++;
+    });
+
+    return result;
   }
 
   private notifyQuizDAO(member: MemberEntity): void {
