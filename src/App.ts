@@ -39,7 +39,7 @@ export const routingControllerOptions: RoutingControllersOptions = {
   controllers: [
     AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LegacyApiRouter, LibRouter, LobbyRouter, MemberRouter, NicksRouter, QuizRouter,
   ],
-  middlewares: [Handlers.errorHandler(), I18nMiddleware],
+  middlewares: [I18nMiddleware],
 };
 
 // Creates and configures an ExpressJS web server.
@@ -61,6 +61,8 @@ class App {
 
     this.middleware();
     this.routes();
+
+    this._express.use(Handlers.errorHandler());
 
     useExpressServer(this._express, routingControllerOptions);
   }
