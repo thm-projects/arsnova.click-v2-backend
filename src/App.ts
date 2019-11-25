@@ -8,7 +8,6 @@ import * as logger from 'morgan';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
 import options from './lib/cors.config';
-import { ErrorHandlerMiddleware } from './routers/middleware/customErrorHandler';
 import { I18nMiddleware } from './routers/middleware/i18n';
 import { roleAuthorizationChecker } from './routers/middleware/roleAuthorizationChecker';
 import { AdminRouter } from './routers/rest/AdminRouter';
@@ -39,7 +38,7 @@ export const routingControllerOptions: RoutingControllersOptions = {
   controllers: [
     AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LegacyApiRouter, LibRouter, LobbyRouter, MemberRouter, NicksRouter, QuizRouter,
   ],
-  middlewares: [Handlers.errorHandler(), ErrorHandlerMiddleware, I18nMiddleware],
+  middlewares: [Handlers.errorHandler(), I18nMiddleware],
 };
 
 // Creates and configures an ExpressJS web server.
