@@ -1,6 +1,5 @@
 declare function require(name: string): any;
 
-import { init as sentryInit, Integrations } from '@sentry/node';
 import * as http from 'http';
 import { Server } from 'http';
 import * as Minimist from 'minimist';
@@ -37,15 +36,6 @@ interface IInetAddress {
   family: string;
   address: string;
 }
-
-sentryInit({
-  dsn: process.env.SENTRY_DSN,
-  integrations: [
-    new Integrations.OnUncaughtException(), new Integrations.OnUnhandledRejection(),
-  ],
-  enabled: process.env.NODE_ENV === 'production',
-  debug: true,
-});
 
 (<IGlobal>global).DAO = {
   AssetDAO,

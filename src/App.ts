@@ -1,10 +1,11 @@
-import { Handlers } from '@sentry/node';
+import { Handlers, init as sentryInit, Integrations } from '@sentry/node';
 import * as bodyParser from 'body-parser';
 import * as compress from 'compression';
 import * as cors from 'cors';
 import * as express from 'express';
 import { Request, Response, Router } from 'express';
 import * as logger from 'morgan';
+import * as process from 'process';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
 import options from './lib/cors.config';
@@ -53,6 +54,8 @@ class App {
 
   // Run configuration methods on the Express instance.
   constructor() {
+    App.initializeSentry();
+
     this._express = express();
     this._express.use(Handlers.requestHandler());
 
@@ -89,6 +92,17 @@ class App {
     });
 
     this._express.use(`${staticStatistics.routePrefix}/`, router);
+  }
+
+  private static initializeSentry(): void {
+    sentryInit({
+      dsn: process.env.SENTRY_DSN,
+      integrations: [
+        new Integrations.OnUncaughtException(), new Integrations.OnUnhandledRejection(),
+      ],
+      enabled: process.env.NODE_ENV === 'production',
+      debug: true,
+    });
   }
 }
 
