@@ -1,6 +1,6 @@
 declare function require(name: string): any;
 
-import { init as sentryInit } from '@sentry/node';
+import { init as sentryInit, Integrations } from '@sentry/node';
 import * as http from 'http';
 import { Server } from 'http';
 import * as Minimist from 'minimist';
@@ -25,13 +25,6 @@ require('./lib/regExpEscape'); // Installing polyfill for RegExp.escape
 Error.stackTraceLimit = Infinity;
 
 declare var global: any;
-declare var module: any;
-
-interface IHotModule extends NodeModule {
-  hot: {
-    accept: Function
-  };
-}
 
 export interface IGlobal extends NodeJS.Global {
   DAO: {
@@ -46,7 +39,12 @@ interface IInetAddress {
 }
 
 if (process.env.NODE_ENV === 'production') {
-  sentryInit({ dsn: process.env.SENTRY_DSN });
+  sentryInit({
+    dsn: process.env.SENTRY_DSN,
+    integrations: [
+      new Integrations.OnUncaughtException(), new Integrations.OnUnhandledRejection(),
+    ],
+  });
 }
 
 (<IGlobal>global).DAO = {
