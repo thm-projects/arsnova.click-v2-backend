@@ -1,3 +1,4 @@
+import { Handlers } from '@sentry/node';
 import * as bodyParser from 'body-parser';
 import * as compress from 'compression';
 import * as cors from 'cors';
@@ -20,7 +21,6 @@ import { LobbyRouter } from './routers/rest/LobbyRouter';
 import { MemberRouter } from './routers/rest/MemberRouter';
 import { NicksRouter } from './routers/rest/NicksRouter';
 import { QuizRouter } from './routers/rest/QuizRouter';
-
 import { dynamicStatistics, staticStatistics } from './statistics';
 
 declare var global: any;
@@ -55,10 +55,12 @@ class App {
   // Run configuration methods on the Express instance.
   constructor() {
     this._express = express();
+    this._express.use(Handlers.requestHandler());
 
     this.middleware();
     this.routes();
 
+    this._express.use(Handlers.errorHandler());
     useExpressServer(this._express, routingControllerOptions);
   }
 

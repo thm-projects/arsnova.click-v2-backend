@@ -1,5 +1,6 @@
 declare function require(name: string): any;
 
+import { init as sentryInit } from '@sentry/node';
 import * as http from 'http';
 import { Server } from 'http';
 import * as Minimist from 'minimist';
@@ -45,8 +46,7 @@ interface IInetAddress {
 }
 
 if (process.env.NODE_ENV === 'production') {
-  const Sentry = require('@sentry/node');
-  Sentry.init({ dsn: process.env.SENTRY_DSN });
+  sentryInit({ dsn: process.env.SENTRY_DSN });
 }
 
 (<IGlobal>global).DAO = {
