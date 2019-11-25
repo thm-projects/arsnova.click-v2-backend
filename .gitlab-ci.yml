@@ -44,6 +44,7 @@ build:
   script:
     - npm install
     - export NODE_ENV='production'
+    - export SENTRY_DSN='https://c8d694a532814105b667236ffb2181e4@sentry.io/1833051'
     - export ARSNOVA_CLICK_BACKEND_PORT_INTERNAL='3000'
     - export ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX='/backend'
     - export LEADERBOARD_ALGORITHM='PointBased'

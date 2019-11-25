@@ -15,6 +15,9 @@
     "dependency-check": "npx --ignore-existing madge --circular --extensions ts src"
   },
   "dependencies": {
+    "@sentry/node": "^5.9.0",
+    "@typegoose/typegoose": "^6.1.0",
+    "amqplib": "^0.5.5",
     "api-spec-converter": "^2.10.1",
     "body-parser": "^1.19.0",
     "bunyan": "^1.8.12",
@@ -45,9 +48,7 @@
     "routing-controllers-openapi": "^1.7.0",
     "source-map-support": "^0.5.16",
     "swagger-ui-express": "^4.1.2",
-    "@typegoose/typegoose": "^6.1.0",
-    "xml2js": "^0.4.22",
-    "amqplib": "^0.5.5"
+    "xml2js": "^0.4.22"
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.13",

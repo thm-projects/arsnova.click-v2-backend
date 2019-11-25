@@ -1,10 +1,8 @@
 declare function require(name: string): any;
 
-import * as child_process from 'child_process';
 import * as http from 'http';
 import { Server } from 'http';
 import * as Minimist from 'minimist';
-import * as path from 'path';
 import * as process from 'process';
 import 'reflect-metadata';
 import App from './App';
@@ -16,8 +14,6 @@ import MathjaxDAO from './db/MathjaxDAO';
 import MemberDAO from './db/MemberDAO';
 import QuizDAO from './db/quiz/QuizDAO';
 import UserDAO from './db/UserDAO';
-import { jsonCensor } from './lib/jsonCensor';
-import { rejectionToCreateDump } from './lib/rejectionToCreateDump';
 import LoggerService from './services/LoggerService';
 import { staticStatistics } from './statistics';
 import { LoadTester } from './tests/LoadTester';
@@ -40,7 +36,6 @@ export interface IGlobal extends NodeJS.Global {
   DAO: {
     AssetDAO: {}, CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizDAO: {}, DbDAO: {}, UserDAO: {}, MemberDAO: {},
   };
-  createDump: Function;
 }
 
 interface IInetAddress {
@@ -49,10 +44,9 @@ interface IInetAddress {
   address: string;
 }
 
-process.on('unhandledRejection', rejectionToCreateDump);
-// process.on('uncaughtException', rejectionToCreateDump); // Throws exceptions when debugging with IntelliJ
-
 if (process.env.NODE_ENV === 'production') {
+  const Sentry = require('@sentry/node');
+  Sentry.init({ dsn: process.env.SENTRY_DSN });
 }
 
 (<IGlobal>global).DAO = {
@@ -64,61 +58,6 @@ if (process.env.NODE_ENV === 'production') {
   DbDAO,
   UserDAO,
   MemberDAO,
-};
-(<IGlobal>global).createDump = (plainError) => {
-  const error = {
-    type: '',
-    code: '',
-    message: '',
-    stack: '',
-  };
-
-  if (plainError) {
-    if (typeof plainError === 'string') {
-      plainError = new Error(plainError);
-    }
-    error.type = plainError.constructor.name;
-    error.code = plainError.code;
-    error.message = plainError.message;
-    error.stack = plainError.stack;
-  }
-
-  const daoDump = { error };
-
-  Object.keys((<IGlobal>global).DAO).forEach((dao) => {
-    daoDump[dao] = (<IGlobal>global).DAO[dao].createDump();
-  });
-
-  const insecureDumpAsJson = JSON.stringify(daoDump, jsonCensor(daoDump));
-
-  const dumpCryptorParams: ReadonlyArray<string> = [
-    path.join(staticStatistics.pathToJobs, 'DumpCryptor.js'), `--base-path=${__dirname}`, '--command=encrypt', `--data=${insecureDumpAsJson}`,
-  ];
-  const dumpCryptorInstance = child_process.spawn(`node`, dumpCryptorParams);
-  dumpCryptorInstance.stderr.on('data', (data) => {
-    LoggerService.error(`DumpCryptor (stderr): ${data.toString().replace('\n', '')}`);
-  });
-  dumpCryptorInstance.on('exit', () => {
-    LoggerService.error(`DumpCryptor (exit): Dump generated`);
-  });
-
-  const mailParams: ReadonlyArray<string> = [
-    path.join(staticStatistics.pathToJobs, 'SendMail.js'),
-    '--command=buildServerInfoMail',
-    `--attachment=${insecureDumpAsJson}`,
-    `--header=Arsnova.click Server Error Report (${error.type}: ${error.message})`,
-    `--text=${error.stack || JSON.stringify('unknown - no stack provided')}`,
-  ];
-  const mailInstance = child_process.spawn(`node`, mailParams);
-  mailInstance.stderr.on('data', (data) => {
-    LoggerService.error(`SendMail (stderr): ${data.toString().replace('\n', '')}`);
-  });
-  mailInstance.stdout.on('data', (data) => {
-    LoggerService.error(`SendMail (stdout): ${data.toString().replace('\n', '')}`);
-  });
-  mailInstance.on('exit', () => {
-    LoggerService.error(`SendMail (exit): Done`);
-  });
 };
 
 const port: string | number | boolean = normalizePort(staticStatistics.port);
