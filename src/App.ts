@@ -62,9 +62,9 @@ class App {
     this.middleware();
     this.routes();
 
-    this._express.use(Handlers.errorHandler());
-
     useExpressServer(this._express, routingControllerOptions);
+
+    this._express.use(Handlers.errorHandler());
   }
 
   // Configure Express middleware.
