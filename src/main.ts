@@ -38,14 +38,14 @@ interface IInetAddress {
   address: string;
 }
 
-if (process.env.NODE_ENV === 'production') {
-  sentryInit({
-    dsn: process.env.SENTRY_DSN,
-    integrations: [
-      new Integrations.OnUncaughtException(), new Integrations.OnUnhandledRejection(),
-    ],
-  });
-}
+sentryInit({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    new Integrations.OnUncaughtException(), new Integrations.OnUnhandledRejection(),
+  ],
+  enabled: process.env.NODE_ENV === 'production',
+  debug: true,
+});
 
 (<IGlobal>global).DAO = {
   AssetDAO,
