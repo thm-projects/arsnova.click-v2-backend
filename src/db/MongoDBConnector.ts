@@ -33,7 +33,7 @@ class MongoDbConnector {
       });
 
       AMQPConnector.initConnection().then(() => {
-        AMQPConnector.channel.assertExchange('global', 'fanout');
+        AMQPConnector.channel.assertExchange(AMQPConnector.globalExchange, 'fanout');
       });
 
       await mongoose.connect(this._mongoURL, {
@@ -41,6 +41,7 @@ class MongoDbConnector {
         autoIndex: true,
         useNewUrlParser: true,
         useUnifiedTopology: true,
+        useFindAndModify: false,
       } as any);
     });
   }

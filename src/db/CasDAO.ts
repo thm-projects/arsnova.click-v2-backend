@@ -1,10 +1,11 @@
 import { ICasData } from '../interfaces/users/ICasData';
 import { AbstractDAO } from './AbstractDAO';
 
-class CasDAO extends AbstractDAO<{ [key: string]: ICasData }> {
+class CasDAO extends AbstractDAO {
+  private _storage: object = {};
 
-  constructor() {
-    super({});
+  get storage(): object {
+    return this._storage;
   }
 
   public static getInstance(): CasDAO {

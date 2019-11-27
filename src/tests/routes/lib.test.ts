@@ -10,8 +10,10 @@ import router from '../../App';
 import AMQPConnector from '../../db/AMQPConnector';
 import MongoDBConnector from '../../db/MongoDBConnector';
 import QuizDAO from '../../db/quiz/QuizDAO';
-import { QuizEntity } from '../../entities/quiz/QuizEntity';
-import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
+import UserDAO from '../../db/UserDAO';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
+import { IUserSerialized } from '../../interfaces/users/IUserSerialized';
+import { QuizModelItem } from '../../models/quiz/QuizModelItem';
 import { staticStatistics } from '../../statistics';
 
 require('../../lib/regExpEscape'); // Installing polyfill for RegExp.escape
@@ -43,7 +45,7 @@ class MathjaxLibRouterTestSuite {
       format: 'TeX',
       output: 'svg',
     });
-    expect(res.type).to.eql('text/html');
+    expect(res.type).to.eql('application/json');
   }
 
   @test
@@ -69,7 +71,7 @@ class MathjaxLibRouterTestSuite {
 class CacheQuizAssetsLibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/cache/quiz/assets`;
   private _hashtag = hashtag;
-  private _quiz: IQuizSerialized = JSON.parse(
+  private _quiz: IQuiz = JSON.parse(
     fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
 
   public async before(): Promise<void> {
@@ -78,14 +80,14 @@ class CacheQuizAssetsLibRouterTestSuite {
     sandbox.stub(MongoDBConnector, 'connect').value({ assertExchange: () => {} });
 
     this._quiz.name = this._hashtag;
-    await QuizDAO.addQuiz(this._quiz);
-    QuizDAO.initQuiz(new QuizEntity(this._quiz));
+    const doc = await QuizDAO.addQuiz(this._quiz);
+    await QuizDAO.initQuiz(doc);
 
     sandbox.restore();
   }
 
-  public after(): void {
-    QuizDAO.removeQuiz(QuizDAO.getQuizByName(hashtag).id);
+  public async after(): Promise<void> {
+    await QuizDAO.removeQuiz((await QuizDAO.getQuizByName(hashtag)).id);
   }
 
   @test @slow(5000)
@@ -96,7 +98,7 @@ class CacheQuizAssetsLibRouterTestSuite {
 
   @test.skip
   public async quizWithAssetUrlsExists(): Promise<void> {
-    const parsedQuiz: IQuizEntity = QuizDAO.initQuiz(new QuizEntity(this._quiz));
+    const parsedQuiz: QuizModelItem = await QuizDAO.getQuizByName(this._hashtag);
 
     expect(parsedQuiz.questionList.map(question => question.questionText)
     .filter(questionText => questionText.indexOf(staticStatistics.rewriteAssetCacheUrl) > -1).length).to.be
@@ -124,6 +126,10 @@ class AuthorizeLibRouterTestSuite {
 
   @test
   public async authorizeStaticExists(): Promise<void> {
+    await UserDAO.addUser({
+      name: 'testuser',
+      passwordHash: 'testpasshash',
+    } as IUserSerialized);
     const res = await chai.request(router)
     .post(`${this._baseApiRoute}/static`).send({
       username: 'testuser',

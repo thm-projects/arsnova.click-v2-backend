@@ -1,81 +1,57 @@
-///<reference path="../../lib/regExpEscape.ts" />
-
 import { ObjectId } from 'bson';
-import { MemberGroupEntity } from '../../entities/member/MemberGroupEntity';
-import { getQuestionForType } from '../../entities/question/QuizValidator';
-import { QuizEntity } from '../../entities/quiz/QuizEntity';
-import { SessionConfigurationEntity } from '../../entities/session-configuration/SessionConfigurationEntity';
-import { DbCollection, DbEvent } from '../../enums/DbOperation';
+import { Document } from 'mongoose';
+import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
-import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { generateToken } from '../../lib/generateToken';
-import { setPath } from '../../lib/resolveNestedObjectProperty';
-import LoggerService from '../../services/LoggerService';
+import { QuizModel, QuizModelItem } from '../../models/quiz/QuizModelItem';
 import { AbstractDAO } from '../AbstractDAO';
 import AMQPConnector from '../AMQPConnector';
-import DbDAO from '../DbDAO';
 import MemberDAO from '../MemberDAO';
 
-class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
+class QuizDAO extends AbstractDAO {
+  private readonly _storage: { [key: string]: { quizTimer: number, quizTimerInterval: NodeJS.Timeout } };
 
-  constructor() {
-    super([]);
-
-    DbDAO.isDbAvailable.on(DbEvent.Connected, async (isConnected) => {
-      if (isConnected) {
-        const cursor = DbDAO.readMany(DbCollection.Quizzes, {});
-        cursor.forEach(doc => {
-          this.addQuiz(doc);
-        }).then(() => {
-          this._isInitialized = true;
-          this.updateEmitter.emit(DbEvent.Initialized);
-          LoggerService.info(`${this.constructor.name} initialized with ${Object.keys(this.storage).length} entries`);
-        });
-      }
-    });
+  constructor(storage) {
+    super();
+    this._storage = storage;
   }
 
   public static getInstance(): QuizDAO {
     if (!this.instance) {
-      this.instance = new QuizDAO();
+      this.instance = new QuizDAO({});
     }
 
     return this.instance;
   }
 
-  public getInactiveQuizzes(): Array<IQuizEntity> {
+  public getInactiveQuizzes(): Promise<Array<Document & QuizModelItem>> {
     return this.getQuizByState([QuizState.Inactive]);
   }
 
-  public getActiveQuizzes(): Array<IQuizEntity> {
+  public getActiveQuizzes(): Promise<Array<Document & QuizModelItem>> {
     return this.getQuizByState([QuizState.Active, QuizState.Finished, QuizState.Running]);
   }
 
-  public getJoinableQuizzes(): Array<IQuizEntity> {
+  public getJoinableQuizzes(): Promise<Array<Document & QuizModelItem>> {
     return this.getQuizByState([QuizState.Active]);
   }
 
-  public removeQuiz(id: ObjectId): void {
-    const removedQuiz = this.storage.splice(this.storage.findIndex(val => val.id.equals(id)), 1);
-    removedQuiz[0].onRemove();
-    removedQuiz[0].state = QuizState.Inactive;
-    MemberDAO.removeMembersOfQuiz(removedQuiz[0]);
+  public async removeQuiz(id: ObjectId): Promise<void> {
+    const removedQuiz = await this.getQuizById(id);
+    await QuizModel.deleteOne({ _id: id }).exec();
+    await MemberDAO.removeMembersOfQuiz(removedQuiz.name);
+    await this.cleanupQuiz(removedQuiz.name);
   }
 
-  public clearStorage(): void {
-    this.storage.splice(0, this.storage.length);
-  }
-
-  public getRenameRecommendations(quizName: string): Array<string> {
+  public async getRenameRecommendations(quizName: string): Promise<Array<string>> {
     const result = [];
     if (!quizName) {
       return result;
     }
 
-    const count = this.storage.filter((value: IQuizEntity) => {
-      return value.name.trim().toLowerCase().startsWith(quizName.trim().toLowerCase());
-    }).length;
+    const count = await QuizModel.find({ name: this.buildQuiznameQuery(quizName) }).count().exec();
     const date = new Date();
     const dateYearPart = `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}`;
     const dateFormatted = `${dateYearPart}-${date.getHours()}_${date.getMinutes()}_${date.getSeconds()}`;
@@ -85,37 +61,38 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     return result;
   }
 
-  public getLastPersistedDemoQuizNumber(): number {
-    return this.getLastPersistedNumberForQuizzes(this.getAllPersistedDemoQuizzes());
+  public async getLastPersistedDemoQuizNumber(): Promise<number> {
+    return this.getLastPersistedNumberForQuizzes(await this.getAllPersistedDemoQuizzes());
   }
 
-  public getLastPersistedAbcdQuizNumberByLength(length: number): number {
-    return this.getLastPersistedNumberForQuizzes(this.getAllPersistedAbcdQuizzesByLength(length));
+  public async getLastPersistedAbcdQuizNumberByLength(length: number): Promise<number> {
+    return this.getLastPersistedNumberForQuizzes(await this.getAllPersistedAbcdQuizzesByLength(length));
   }
 
-  public getAllPersistedDemoQuizzes(): Array<IQuizEntity> {
-    return this.storage.filter((value) => {
-      return value.name.toLowerCase().startsWith('demo quiz');
-    });
+  public getAllPersistedDemoQuizzes(): Promise<Array<Document & QuizModelItem>> {
+    return QuizModel.find({ name: /^demo quiz/i }).exec();
   }
 
-  public getAllPersistedAbcdQuizzes(): Array<IQuizEntity> {
-    return this.storage.filter((value) => {
+  public async getAllPersistedAbcdQuizzes(): Promise<Array<Document & QuizModelItem>> {
+    const quizzes = await QuizModel.find({ name: /([a-zA-Z]*)(\s[0-9]*)/i }).exec();
+    return quizzes.filter((value) => {
       return this.checkABCDOrdering(value.name.toLowerCase());
     });
   }
 
-  public getAllPersistedAbcdQuizzesByLength(length: number): Array<IQuizEntity> {
-    return this.storage.filter((value) => {
-      const abcdString = value.name.toLowerCase().match(/([a-zA-Z]*)(\s[0-9]*)/i);
+  public async getAllPersistedAbcdQuizzesByLength(length: number): Promise<Array<Document & QuizModelItem>> {
+    const quizzes = await QuizModel.find({ name: { $gte: length } }).exec();
+    return quizzes.filter(val => {
+      const abcdString = val.name.toLowerCase().match(/([a-zA-Z]*)(\s[0-9]*)/i);
       if (!abcdString || abcdString.length < 2) {
         return false;
       }
-      return this.checkABCDOrdering(abcdString[1]) && value.questionList[0].answerOptionList.length === length;
+
+      return this.checkABCDOrdering(abcdString[1]) && val.questionList[0].answerOptionList.length === length;
     });
   }
 
-  public convertLegacyQuiz(legacyQuiz: any): QuizEntity {
+  public convertLegacyQuiz(legacyQuiz: any): Document & QuizModelItem {
     legacyQuiz = this.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
     if (legacyQuiz.hasOwnProperty('configuration')) {
       // Detected old v1 arsnova.click quiz
@@ -164,107 +141,215 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     return legacyQuiz;
   }
 
-  public async addQuiz(quizDoc: IQuizSerialized): Promise<IQuizEntity> {
-    if (this.getQuizByName(quizDoc.name)) {
-      throw new Error(`Duplicate quiz insertion: ${quizDoc.name}`);
-    }
-
-    const entity = new QuizEntity(quizDoc);
-    await AMQPConnector.channel.assertExchange(encodeURI(`quiz_${entity.name}`), 'fanout');
-    this.storage.push(entity);
-    return entity;
+  public async addQuiz(quizDoc: IQuiz): Promise<Document & QuizModelItem> {
+    await AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quizDoc.name), 'fanout');
+    return QuizModel.create(quizDoc);
   }
 
-  public updateQuiz(id: ObjectId, updatedFields: any): IQuizEntity {
-    const quiz = this.getQuizById(id);
-    if (!quiz) {
-      throw new Error(`Unknown updated quiz: ${id.toHexString()}`);
-    }
-
-    if (updatedFields.sessionConfig) {
-      updatedFields.sessionConfig = new SessionConfigurationEntity(updatedFields.sessionConfig);
-    }
-
-    if (updatedFields.questionList) {
-      updatedFields.questionList = updatedFields.questionList.map(val => getQuestionForType(val.TYPE, val));
-    }
-
-    if (updatedFields.memberGroups) {
-      updatedFields.memberGroups = updatedFields.memberGroups.map(val => new MemberGroupEntity(val));
-    }
-
-    if (updatedFields.id) {
-      updatedFields.id = new ObjectId(updatedFields.id);
-    }
-
-    Object.keys(updatedFields).forEach(key => {
-      setPath(quiz, key, updatedFields[key]);
-    });
-
-    if (typeof updatedFields.state !== 'undefined') {
-      this.updateEmitter.emit(DbEvent.StateChanged, quiz);
-    }
-
-    if (updatedFields.sessionConfig || Object.keys(updatedFields).find(field => field.startsWith('sessionConfig'))) {
-      this.updateEmitter.emit(DbEvent.SessionConfigChanged);
-    }
-
-    this.updateEmitter.emit(DbEvent.Change, quiz);
-    return quiz;
+  public updateQuiz(id: ObjectId, updatedFields: any): Promise<void> {
+    return QuizModel.updateOne({ _id: new ObjectId(id) }, updatedFields).exec();
   }
 
-  public getQuizByName(name: string): IQuizEntity {
-    return this.storage.find(val => !!RegExp.escape(`${val.name.trim()}`).match(new RegExp(`^${RegExp.escape(name.trim())}$`, 'i')));
+  public getQuizByName(name: string): Promise<Document & QuizModelItem> {
+    return QuizModel.findOne({ name: this.buildQuiznameQuery(name) }).exec();
   }
 
-  public getExpiryQuizzes(): Array<IQuizEntity> {
-    return this.storage.filter(val => {
-      return val.expiry instanceof Date && val.expiry.getTime() > new Date().getTime();
+  public getExpiryQuizzes(): Promise<Array<Document & QuizModelItem>> {
+    return QuizModel.find({ expiry: { $gte: new Date() } }).exec();
+  }
+
+  public async initQuiz(quiz: Document & QuizModelItem): Promise<void> {
+    quiz.state = QuizState.Active;
+    this.initTimerData(quiz);
+    return this.updateQuiz(new ObjectId(quiz._id), quiz);
+  }
+
+  public getAllQuizzes(): Promise<Array<Document & QuizModelItem>> {
+    return QuizModel.find().exec();
+  }
+
+  public isActiveQuiz(quizName: string): Promise<boolean> {
+    return QuizModel.exists({
+      name: this.buildQuiznameQuery(name),
+      state: { $in: [QuizState.Active, QuizState.Running, QuizState.Finished] },
     });
   }
 
-  public initQuiz(quiz: IQuizEntity): IQuizEntity {
-    return this.updateQuiz(this.getQuizByName(quiz.name).id, quiz.serialize());
+  public async setQuizAsInactive(quizName: string, privateKey: string): Promise<Document & QuizModelItem> {
+    const doc = await QuizModel.updateOne({
+      name: this.buildQuiznameQuery(quizName),
+      privateKey,
+    }, { state: QuizState.Inactive }).exec();
+
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.SetInactive,
+      payload: {
+        quizName,
+      },
+    })));
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Closed,
+    })));
+
+    return doc;
   }
 
-  public getAllQuizzes(): Array<IQuizEntity> {
-    return this.storage;
+  public getActiveQuizByName(quizName: string): Promise<Document & QuizModelItem> {
+    return QuizModel.findOne({
+      name: this.buildQuiznameQuery(quizName),
+      state: { $in: [QuizState.Active, QuizState.Running, QuizState.Finished] },
+    }).exec();
   }
 
-  public isActiveQuiz(quizName: string): boolean {
-    return !!this.getActiveQuizzes().find(val => !!val.name.match(new RegExp(`^${RegExp.escape(quizName)}$`, 'i')));
+  public getQuizByToken(privateKey: string): Promise<Document & QuizModelItem> {
+    return QuizModel.findOne({ privateKey }).exec();
   }
 
-  public setQuizAsInactive(quizName: string): void {
-    this.getQuizByName(quizName).state = QuizState.Inactive;
+  public getAllPublicQuizzes(): Promise<Array<Document & QuizModelItem>> {
+    return QuizModel.find({
+      visibility: QuizVisibility.Any,
+      expiry: { $gte: new Date() },
+    }).exec();
   }
 
-  public getActiveQuizByName(quizName: string): IQuizEntity {
-    return this.getActiveQuizzes().find(val => !!val.name.match(new RegExp(`^${RegExp.escape(quizName)}$`, 'i')));
-  }
-
-  public getQuizByToken(token: string): IQuizEntity {
-    return this.storage.find(quiz => quiz.privateKey === token);
-  }
-
-  public getAllPublicQuizzes(): Array<IQuizEntity> {
-    const currentTime = new Date().getTime();
-    return this.storage.filter(val => {
-      const quizExpiry = new Date(val.expiry || '').getTime();
-      return val.visibility === QuizVisibility.Any && (!val.expiry || !quizExpiry || quizExpiry > currentTime);
-    });
-  }
-
-  public getQuizById(id: ObjectId | string): IQuizEntity {
-    return this.storage.find(val => val.id.equals(id));
-  }
-
-  public getRenameAsToken(name: string): string {
+  public async getRenameAsToken(name: string): Promise<string> {
     let token;
     do {
       token = generateToken(name, new Date().getTime()).substr(0, 10);
-    } while (this.getQuizByName(token));
+    } while (await this.getQuizByName(token));
     return token;
+  }
+
+  public async removeQuizByName(quizName: string): Promise<void> {
+    await QuizModel.deleteOne({ name: this.buildQuiznameQuery(quizName) }).exec();
+    await MemberDAO.removeMembersOfQuiz(quizName);
+
+    await this.cleanupQuiz(quizName);
+  }
+
+  public async resetQuiz(name: string, privateKey: string): Promise<any> {
+    await QuizModel.updateOne({
+      name: this.buildQuiznameQuery(name),
+      privateKey,
+    }, {
+      state: QuizState.Active,
+      currentQuestionIndex: -1,
+      currentStartTimestamp: -1,
+      readingConfirmationRequested: false,
+    }).exec();
+
+    const doc = await this.getQuizByName(name);
+    await MemberDAO.resetMembersOfQuiz(name, doc.questionList.length);
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(name), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Reset,
+    })));
+
+    this._storage[name].quizTimer = 1;
+
+    return doc;
+  }
+
+  public async nextQuestion(quiz: Document & QuizModelItem): Promise<number> {
+    const nextIndex = quiz.currentQuestionIndex + 1;
+    if (nextIndex > quiz.questionList.length) {
+      return -1;
+    }
+    quiz.currentQuestionIndex = nextIndex;
+
+    await QuizModel.updateOne({ _id: quiz._id }, { currentQuestionIndex: nextIndex }).exec();
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.NextQuestion,
+      payload: {
+        nextQuestionIndex: nextIndex,
+      },
+    })));
+
+    return nextIndex;
+  }
+
+  public async requestReadingConfirmation(quiz: Document & QuizModelItem): Promise<void> {
+    quiz.readingConfirmationRequested = true;
+
+    await QuizModel.updateOne({ _id: quiz._id }, { readingConfirmationRequested: true }).exec();
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.ReadingConfirmationRequested,
+      payload: {},
+    })));
+  }
+
+  public async startNextQuestion(quiz: Document & QuizModelItem): Promise<void> {
+    if (this._storage[quiz.name]) {
+      clearInterval(this._storage[quiz.name].quizTimerInterval);
+    }
+
+    this.initTimerData(quiz);
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Start,
+      payload: {},
+    })));
+
+    const quizTimer = quiz.questionList[quiz.currentQuestionIndex].timer;
+    if (quizTimer <= 0) {
+      return;
+    }
+
+    this._storage[quiz.name].quizTimer = quizTimer;
+    this._storage[quiz.name].quizTimerInterval = setInterval(() => {
+      this._storage[quiz.name].quizTimer--;
+      AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+        status: StatusProtocol.Success,
+        step: MessageProtocol.Countdown,
+        payload: {
+          value: this._storage[quiz.name].quizTimer,
+        },
+      })));
+
+      if (this._storage[quiz.name].quizTimer <= 0) {
+        clearInterval(this._storage[quiz.name].quizTimerInterval);
+        QuizModel.updateOne({ _id: quiz._id }, { currentStartTimestamp: -1 }).exec();
+      }
+
+    }, 1000);
+
+  }
+
+  public async stopQuiz(quiz: Document & QuizModelItem): Promise<void> {
+    if (this._storage[quiz.name].quizTimer) {
+      this._storage[quiz.name].quizTimer = 1;
+    }
+
+    quiz.currentStartTimestamp = -1;
+    await QuizModel.updateOne({ _id: quiz._id }, { currentStartTimestamp: -1 }).exec();
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Stop,
+    })));
+  }
+
+  public getQuizzesByPrivateKey(privateKey: string): Promise<Array<Document & QuizModelItem>> {
+    return QuizModel.find({ privateKey }).exec();
+  }
+
+  public getQuizById(id: ObjectId): Promise<Document & QuizModelItem> {
+    return QuizModel.findOne({ _id: new ObjectId(id) }).exec();
+  }
+
+  private initTimerData(quiz: QuizModelItem): void {
+    this._storage[quiz.name] = {
+      quizTimer: -1,
+      quizTimerInterval: null,
+    };
   }
 
   private checkABCDOrdering(quizname: string): boolean {
@@ -305,7 +390,7 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     return obj;
   }
 
-  private getLastPersistedNumberForQuizzes(data: Array<IQuizEntity>): number {
+  private getLastPersistedNumberForQuizzes(data: Array<Document & QuizModelItem>): number {
     let maxNumber = 0;
     data.forEach((quiz => {
       const name = quiz.name;
@@ -317,8 +402,18 @@ class QuizDAO extends AbstractDAO<Array<IQuizEntity>> {
     return maxNumber;
   }
 
-  private getQuizByState(states: Array<QuizState>): Array<IQuizEntity> {
-    return this.storage.filter(val => states.includes(val.state));
+  private getQuizByState(states: Array<QuizState>): Promise<Array<Document & QuizModelItem>> {
+    return QuizModel.find({ state: { $in: states } }).exec();
+  }
+
+  private buildQuiznameQuery(quizName: string): RegExp {
+    return new RegExp(`^${quizName.trim()}$`, 'i');
+  }
+
+  private async cleanupQuiz(quizName: string): Promise<void> {
+    delete this._storage[quizName];
+
+    await AMQPConnector.channel.deleteExchange(AMQPConnector.buildQuizExchange(quizName));
   }
 }
 

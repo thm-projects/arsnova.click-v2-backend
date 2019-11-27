@@ -1,7 +1,7 @@
 import { prop } from '@typegoose/typegoose';
-import { IVolumeMusicSessionConfigurationSerialized } from '../../interfaces/session_configuration/music/IVolumeMusicSessionConfigurationSerialized';
+import { IVolumeMusicSessionConfiguration } from '../../interfaces/session_configuration/music/IVolumeMusicSessionConfiguration';
 
-export class VolumeMusicSessionConfigurationModelItem implements IVolumeMusicSessionConfigurationSerialized {
+export class VolumeMusicSessionConfigurationModelItem implements IVolumeMusicSessionConfiguration {
   @prop() public countdownEnd: number;
   @prop() public countdownRunning: number;
   @prop() public global: number;

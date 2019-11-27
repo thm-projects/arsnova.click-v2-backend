@@ -1,59 +1,17 @@
-import { ObjectId } from 'bson';
-import { DeleteWriteOpResultObject } from 'mongodb';
-import { MemberEntity } from '../../entities/member/MemberEntity';
-import { AbstractQuestionEntity } from '../../entities/question/AbstractQuestionEntity';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
-import { IQuestionSerialized } from '../questions/IQuestion';
-import { ISessionConfigurationEntity } from '../session_configuration/ISessionConfigurationEntity';
-import { ISessionConfigurationSerialized } from '../session_configuration/ISessionConfigurationSerialized';
+import { IQuestion, IQuestionBase } from '../questions/IQuestion';
+import { ISessionConfiguration } from '../session_configuration/ISessionConfiguration';
 
-export interface IQuizEntity extends IQuizBase {
-  id?: ObjectId;
-  sessionConfig: ISessionConfigurationEntity;
-  questionList: Array<AbstractQuestionEntity>;
-
-  serialize(): IQuizSerialized;
-
-  removeMember(name: string): Promise<DeleteWriteOpResultObject>;
-
-  requestReadingConfirmation(): void;
-
-  nextQuestion(): number;
-
-  addDefaultQuestion(index: number, type: string): void;
-
-  isValid(): boolean;
-
-  removeQuestion(index: number): void;
-
-  addQuestion(question: AbstractQuestionEntity, index: number): void;
-
-  updatedMemberResponse(payload: object): void;
-
-  startNextQuestion(): void;
-
-  reset(): void;
-
-  stop(): void;
-
-  setInactive(): void;
-
-  onRemove(): void;
-
-  onMemberAdded(member: MemberEntity): Promise<void>;
-
-  onMemberRemoved(memberEntity: MemberEntity): Promise<void>;
-}
-
-export interface IQuizSerialized extends IQuizBase {
-  _id?: string;
-  id?: string;
-  sessionConfig: ISessionConfigurationSerialized;
-  questionList: Array<IQuestionSerialized>;
+export interface IQuiz extends IQuizBase {
+  questionList: Array<IQuestion>;
 }
 
 export interface IQuizBase {
+  questionList: Array<IQuestionBase>;
+  _id?: string;
+  id?: string;
+  sessionConfig: ISessionConfiguration;
   readingConfirmationRequested: boolean;
   name: string;
   currentQuestionIndex?: number;

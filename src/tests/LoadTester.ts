@@ -1,11 +1,8 @@
 import { EventEmitter } from 'events';
 import MemberDAO from '../db/MemberDAO';
 import QuizDAO from '../db/quiz/QuizDAO';
-import { DefaultAnswerEntity } from '../entities/answer/DefaultAnswerEntity';
-import { SingleChoiceQuestionEntity } from '../entities/question/SingleChoiceQuestionEntity';
-import { QuizEntity } from '../entities/quiz/QuizEntity';
-import { SessionConfigurationEntity } from '../entities/session-configuration/SessionConfigurationEntity';
-import { LeaderboardConfiguration } from '../enums/LeaderboardConfiguration';
+import { IQuiz } from '../interfaces/quizzes/IQuizEntity';
+import { generateQuiz } from './fixtures';
 
 export class LoadTester {
   private static readonly QUIZ_AMOUNT = 1000;
@@ -14,22 +11,21 @@ export class LoadTester {
   public done = new EventEmitter();
 
   constructor() {
-    this.loadQuizzes();
-    this.addAttendees();
-    this.startQuizzes();
+    this.loadQuizzes().then(() => this.addAttendees()).then(() => this.startQuizzes());
   }
 
   private startQuizzes(): void {
     for (let i = 0; i < LoadTester.QUIZ_AMOUNT; i++) {
-      setTimeout(() => {
-        const quiz = QuizDAO.getQuizByName(`loadquiz_${i}`);
-        quiz.nextQuestion();
+      setTimeout(async () => {
+        const quiz = await QuizDAO.getQuizByName(`loadquiz_${i}`);
+        await QuizDAO.nextQuestion(quiz);
 
         for (let j = 0; j < LoadTester.ATTENDEE_AMOUNT_PER_QUIZ; j++) {
-          setTimeout(() => {
-            MemberDAO.getMemberByName(`attendee_${j}`).setReadingConfirmation();
-            MemberDAO.getMemberByName(`attendee_${j}`).addResponseValue([0]);
-            MemberDAO.getMemberByName(`attendee_${j}`).setConfidenceValue(100);
+          setTimeout(async () => {
+            const member = await MemberDAO.getMemberByName(`attendee_${j}`);
+            await MemberDAO.setReadingConfirmation(member);
+            await MemberDAO.addResponseValue(member, [0]);
+            await MemberDAO.setConfidenceValue(member, 100);
 
             if (j === LoadTester.ATTENDEE_AMOUNT_PER_QUIZ - 1) {
               this.done.emit('done');
@@ -40,11 +36,11 @@ export class LoadTester {
     }
   }
 
-  private addAttendees(): void {
+  private async addAttendees(): Promise<void> {
     for (let i = 0; i < LoadTester.QUIZ_AMOUNT; i++) {
-      const quiz = QuizDAO.getQuizByName(`loadquiz_${i}`);
+      const quiz = await QuizDAO.getQuizByName(`loadquiz_${i}`);
       for (let j = 0; j < LoadTester.ATTENDEE_AMOUNT_PER_QUIZ; j++) {
-        MemberDAO.addMember({
+        await MemberDAO.addMember({
           name: `attendee_${j}`,
           groupName: 'Default',
           token: 'token',
@@ -54,61 +50,11 @@ export class LoadTester {
     }
   }
 
-  private loadQuizzes(): void {
+  private async loadQuizzes(): Promise<void> {
     for (let i = 0; i < LoadTester.QUIZ_AMOUNT; i++) {
-      const quiz = new QuizEntity({
-        name: `loadquiz_${i}`,
-        readingConfirmationRequested: false,
-        privateKey: 'test',
-        sessionConfig: new SessionConfigurationEntity({
-          leaderboardAlgorithm: LeaderboardConfiguration.TimeBased,
-          music: {
-            enabled: {
-              lobby: true,
-              countdownRunning: true,
-              countdownEnd: true,
-            },
-            volumeConfig: {
-              global: 60,
-              lobby: 60,
-              countdownRunning: 60,
-              countdownEnd: 60,
-              useGlobalVolume: true,
-            },
-            titleConfig: {
-              lobby: 'Song0',
-              countdownRunning: 'Song0',
-              countdownEnd: 'Song0',
-            },
-          },
-          nicks: {
-            memberGroups: ['Default'],
-            maxMembersPerGroup: 10,
-            autoJoinToGroup: false,
-            blockIllegalNicks: true,
-            restrictToCasLogin: false,
-            selectedNicks: [],
-          },
-          theme: 'theme-Material',
-          readingConfirmationEnabled: true,
-          showResponseProgress: true,
-          confidenceSliderEnabled: true,
-        }),
-        questionList: [
-          new SingleChoiceQuestionEntity({
-            answerOptionList: [
-              new DefaultAnswerEntity({
-                answerText: 'answer1',
-                isCorrect: true,
-              }), new DefaultAnswerEntity({
-                answerText: 'answer2',
-                isCorrect: false,
-              }),
-            ],
-          }),
-        ],
-      });
-      QuizDAO.initQuiz(quiz);
+      const quiz: IQuiz = generateQuiz(`loadquiz_${i}`);
+      const doc = await QuizDAO.addQuiz(quiz);
+      await QuizDAO.initQuiz(doc);
     }
   }
 }

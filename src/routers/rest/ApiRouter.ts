@@ -45,10 +45,10 @@ export class ApiRouter extends AbstractRouter {
   @OpenAPI({
     description: 'Returns the current server settings',
   })
-  private getAll(): object {
+  private async getAll(): Promise<object> {
     return {
       serverConfig: settings.public,
-      activeQuizzes: QuizDAO.getJoinableQuizzes().map(quiz => quiz.name),
+      activeQuizzes: (await QuizDAO.getJoinableQuizzes()).map(quiz => quiz.name),
     };
   }
 

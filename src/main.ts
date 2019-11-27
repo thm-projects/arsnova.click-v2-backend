@@ -1,5 +1,6 @@
 declare function require(name: string): any;
 
+import { setGlobalOptions } from '@typegoose/typegoose';
 import * as http from 'http';
 import { Server } from 'http';
 import * as Minimist from 'minimist';
@@ -17,6 +18,12 @@ import UserDAO from './db/UserDAO';
 import LoggerService from './services/LoggerService';
 import { staticStatistics } from './statistics';
 import { LoadTester } from './tests/LoadTester';
+
+setGlobalOptions({
+  globalOptions: {
+    useNewEnum: true,
+  },
+});
 
 require('source-map-support').install();
 require('./lib/regExpEscape'); // Installing polyfill for RegExp.escape

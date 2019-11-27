@@ -1,4 +1,4 @@
-export interface IVolumeMusicSessionConfigurationSerialized {
+export interface IVolumeMusicSessionConfiguration {
   global: number;
   lobby: number;
   countdownRunning: number;

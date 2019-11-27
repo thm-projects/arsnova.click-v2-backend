@@ -1,12 +1,12 @@
 import MemberDAO from '../db/MemberDAO';
-import { SurveyQuestionEntity } from '../entities/question/SurveyQuestionEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
+import { IQuestionSurvey } from '../interfaces/questions/IQuestionSurvey';
 import { ExcelWorksheet } from './ExcelWorksheet';
 import { calculateNumberOfAnswers } from './lib/excel_function_library';
 
 export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
-  private _question: SurveyQuestionEntity;
+  private _question: IQuestionSurvey;
   private readonly _questionIndex: number;
 
   constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
@@ -19,12 +19,12 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     });
     this._ws = wb.addWorksheet(`${this.mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
-    this._question = <SurveyQuestionEntity>this.quiz.questionList[questionIndex];
+    this._question = this.quiz.questionList[questionIndex] as IQuestionSurvey;
     this.formatSheet();
     this.addSheetData();
   }
 
-  public formatSheet(): void {
+  public async formatSheet(): Promise<void> {
     const defaultStyles = this._theme.getStyles();
     const answerList = this._question.answerOptionList;
     let minColums = 3;
@@ -81,8 +81,8 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       lastColumn: minColums,
     });
 
-    const hasEntries = MemberDAO.getMembersOfQuiz(this.quiz.name).length > 0;
-    const attendeeEntryRows = hasEntries ? (MemberDAO.getMembersOfQuiz(this.quiz.name).length) : 1;
+    const hasEntries = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length > 0;
+    const attendeeEntryRows = hasEntries ? ((await MemberDAO.getMembersOfQuiz(this.quiz.name)).length) : 1;
     const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
       alignment: {
         horizontal: 'center',
@@ -90,7 +90,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     });
     this.ws.cell(10, 1, attendeeEntryRows + 9, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
-    MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((responseItem, indexInList) => {
+    (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((responseItem, indexInList) => {
       let nextColumnIndex = 3;
       const targetRow = indexInList + 10;
       if (this._isCasRequired) {
@@ -112,7 +112,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     });
   }
 
-  public addSheetData(): void {
+  public async addSheetData(): Promise<void> {
     const answerList = this._question.answerOptionList;
 
     /*
@@ -141,7 +141,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(7, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem) => {
+      (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(7, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -160,7 +160,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(9, nextColumnIndex++).string(this.mf('export.time'));
 
     let nextStartRow = 9;
-    MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem, indexInList) => {
+    (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem, indexInList) => {
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(nickItem.name);

@@ -1,4 +1,4 @@
-export interface ITitleMusicSessionConfigurationSerialized {
+export interface ITitleMusicSessionConfiguration {
   lobby: string;
   countdownRunning: string;
   countdownEnd: string;

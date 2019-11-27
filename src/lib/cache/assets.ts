@@ -1,12 +1,13 @@
 import * as Hex from 'crypto-js/enc-hex';
 import * as requestPromise from 'request-promise-native';
 import AssetDAO from '../../db/AssetDAO';
-import { IAnswerEntity } from '../../interfaces/answeroptions/IAnswerEntity';
+import { IAnswer } from '../../interfaces/answeroptions/IAnswerEntity';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
 
 import { AssetModel } from '../../models/AssetModel';
 import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
+import { asyncForEach } from '../async-for-each';
 
 const sha256 = require('crypto-js/sha256');
 
@@ -48,21 +49,15 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
         }
 
         const buffer = Buffer.from(response.body, 'utf8');
-        const assetValidator = new AssetModel({
+
+        return AssetModel.create({
           url: foundUrl,
           digest,
           mimeType: contentType,
           data: Buffer.from(buffer),
         });
 
-        const result = assetValidator.validateSync();
-        if (result) {
-          throw result;
-        }
-
-        assetValidator.save();
-        resolve(parsedResult);
-      }).catch((err) => {
+      }).then(() => resolve(parsedResult)).catch((err) => {
         LoggerService.error('error at requesting asset url', err);
         resolve(value);
       });
@@ -70,13 +65,13 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
   });
 }
 
-export function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>): void {
+export async function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>): Promise<void> {
   const assetsBasePath = `${staticStatistics.rewriteAssetCacheUrl}/lib/cache/quiz/assets`;
-  cacheAwareQuestions.forEach((question: IQuestion) => {
+  await asyncForEach(cacheAwareQuestions, async (question: IQuestion) => {
     const matchedQuestionText = question.questionText.match(assetsUrlRegex);
     if (matchedQuestionText) {
-      matchedQuestionText.forEach((matchedValueElement: string) => {
-        const existing = AssetDAO.getAssetByUrl(matchedValueElement);
+      await asyncForEach(matchedQuestionText, async (matchedValueElement: string) => {
+        const existing = await AssetDAO.getAssetByUrl(matchedValueElement);
         if (!existing) {
           return;
         }
@@ -84,18 +79,19 @@ export function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>): voi
         question.questionText = question.questionText.replace(matchedValueElement, cachedUrl);
       });
     }
-    question.answerOptionList.forEach((answerOption: IAnswerEntity) => {
+
+    await asyncForEach(question.answerOptionList, (async (answerOption: IAnswer) => {
       const matchedAnswerText = answerOption.answerText.match(assetsUrlRegex);
       if (matchedAnswerText) {
-        matchedAnswerText.forEach((matchedValueElement: string) => {
-          const existing = AssetDAO.getAssetByUrl(matchedValueElement);
+        await asyncForEach(matchedAnswerText, (async (matchedValueElement: string) => {
+          const existing = await AssetDAO.getAssetByUrl(matchedValueElement);
           if (!existing) {
             return;
           }
           const cachedUrl = `${assetsBasePath}/${existing.digest}`;
           answerOption.answerText = answerOption.answerText.replace(matchedValueElement, cachedUrl);
-        });
+        }));
       }
-    });
+    }));
   });
 }

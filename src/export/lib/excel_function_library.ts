@@ -1,9 +1,9 @@
 import MemberDAO from '../../db/MemberDAO';
-import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
+import { IQuizBase } from '../../interfaces/quizzes/IQuizEntity';
 
-export function calculateNumberOfAnswers(quiz: IQuizEntity, questionIndex: number, answerNumber: number): number {
+export async function calculateNumberOfAnswers(quiz: IQuizBase, questionIndex: number, answerNumber: number): Promise<number> {
   let numberOfAnswers = 0;
-  MemberDAO.getMembersOfQuiz(quiz.name).forEach(nickname => {
+  (await MemberDAO.getMembersOfQuiz(quiz.name)).forEach(nickname => {
     const response = nickname.responses[questionIndex].value;
     // noinspection SuspiciousInstanceOfGuard
     if (Array.isArray(response)) {
@@ -15,18 +15,18 @@ export function calculateNumberOfAnswers(quiz: IQuizEntity, questionIndex: numbe
   return numberOfAnswers;
 }
 
-export function calculateNumberOfRangedAnswers(
-  quiz: IQuizEntity,
+export async function calculateNumberOfRangedAnswers(
+  quiz: IQuizBase,
   questionIndex: number,
   minRange,
   correctValue,
   maxRange,
-): { minRange: number, correctValue: number, maxRange: number } {
+): Promise<{ minRange: number, correctValue: number, maxRange: number }> {
 
   let numberOfAnswersInMinRange = 0;
   let numberOfAnswersInMaxRange = 0;
   let numberOfCorrectAnswers = 0;
-  MemberDAO.getMembersOfQuiz(quiz.name).forEach((nickname) => {
+  (await MemberDAO.getMembersOfQuiz(quiz.name)).forEach((nickname) => {
     if (nickname.responses[questionIndex].value <= maxRange && nickname.responses[questionIndex].value > correctValue) {
       numberOfAnswersInMaxRange++;
     } else if (nickname.responses[questionIndex].value === correctValue) {

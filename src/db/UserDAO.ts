@@ -1,27 +1,13 @@
 import { ObjectId } from 'bson';
-import { UserEntity } from '../entities/UserEntity';
-import { DbCollection, DbEvent } from '../enums/DbOperation';
+import { DeleteWriteOpResultObject } from 'mongodb';
+import { Document } from 'mongoose';
 import { UserRole } from '../enums/UserRole';
-import { IUserEntity } from '../interfaces/users/IUserEntity';
 import { IUserSerialized } from '../interfaces/users/IUserSerialized';
-import LoggerService from '../services/LoggerService';
+import { UserModel, UserModelItem } from '../models/UserModelItem/UserModel';
+import { AuthService } from '../services/AuthService';
 import { AbstractDAO } from './AbstractDAO';
-import { default as DbDAO } from './DbDAO';
 
-class UserDAO extends AbstractDAO<{ [key: string]: IUserEntity }> {
-
-  constructor() {
-    super({});
-
-    DbDAO.isDbAvailable.on(DbEvent.Connected, isConnected => {
-      if (isConnected) {
-        const cursor = DbDAO.readMany(DbCollection.Users, {});
-        cursor.forEach(doc => {
-          this.initUser(doc);
-        }).then(() => LoggerService.info(`${this.constructor.name} initialized with ${Object.keys(this.storage).length} entries`));
-      }
-    });
-  }
+class UserDAO extends AbstractDAO {
 
   public static getInstance(): UserDAO {
     if (typeof this.instance === 'undefined') {
@@ -30,111 +16,82 @@ class UserDAO extends AbstractDAO<{ [key: string]: IUserEntity }> {
     return this.instance;
   }
 
-  public initUser(user: IUserSerialized): void {
-    if (typeof this.storage[user.name] !== 'undefined') {
+  public async initUser(user: IUserSerialized): Promise<Document & UserModelItem> {
+    if (await UserModel.findOne({ name: user.name }).exec()) {
       throw new Error(`Trying to initiate a duplicate login`);
     }
 
-    this.storage[user.name] = new UserEntity(user);
+    return UserModel.create(user);
   }
 
-  public validateUser(name: string, passwordHash: string): boolean {
-    if (this.isEmptyVars(name, passwordHash, this.storage[name])) {
-      return false;
-    }
-
-    return this.storage[name].passwordHash === passwordHash;
-  }
-
-  public createDump(): Array<IUserSerialized> {
-    return Object.keys(this.storage).map(name => {
-      return this.storage[name].serialize();
+  public validateUser(name: string, passwordHash: string): Promise<boolean> {
+    return UserModel.exists({
+      name,
+      passwordHash,
     });
   }
 
-  public setTokenForUser(name: string, token: string): void {
-    this.storage[name].token = token;
+  public setTokenForUser(name: string, token: string): Promise<Document & UserModelItem> {
+    return UserModel.updateOne({ name }, { token }).exec();
   }
 
-  public validateTokenForUser(name: string, token: string): boolean {
-    if (this.isEmptyVars(name, token, this.storage[name])) {
-      return false;
-    }
+  public validateTokenForUser(name: string, token: string): Promise<boolean> {
+    return UserModel.exists({
+      name,
+      token,
+      $where: function (): boolean {
+        const decodedToken = AuthService.decodeToken(token);
 
-    try {
-      this.storage[name].validateToken(token);
-      return true;
-    } catch (ex) {
-      LoggerService.error(ex.message);
-      return false;
-    }
+        if (typeof decodedToken !== 'object' || !(decodedToken as any).name) {
+          return false;
+        }
+
+        return (decodedToken as any).name === name;
+      },
+    });
   }
 
-  public getGitlabTokenForUser(name: string, token: string): string {
-    if (this.isEmptyVars(name, token, this.storage[name])) {
-      return null;
-    }
-
-    return this.storage[name].gitlabToken;
+  public async getGitlabTokenForUser(name: string): Promise<string> {
+    return (await UserModel.findOne({ name }).exec()).gitlabToken;
   }
 
-  public isUserAuthorizedFor(name: string, userAuthorization: UserRole): boolean {
-    if (this.isEmptyVars(name, userAuthorization, this.storage[name])) {
-      return null;
-    }
-
-    return this.storage[name].userAuthorizations.includes(userAuthorization);
+  public isUserAuthorizedFor(name: string, userAuthorization: UserRole): Promise<boolean> {
+    return UserModel.exists({
+      name,
+      userAuthorizations: { $all: userAuthorization },
+    });
   }
 
-  public getUser(name: string): IUserEntity {
-    if (this.isEmptyVars(name, this.storage[name])) {
-      return null;
-    }
-
-    return this.storage[name];
+  public getUser(name: string): Promise<Document & UserModelItem> {
+    return UserModel.findOne({ name }).exec();
   }
 
-  public getUserByTokenHash(tokenHash: string): IUserEntity {
-    if (this.isEmptyVars(tokenHash)) {
-      return null;
-    }
-
-    return Object.values(this.storage).find(user => user.tokenHash === tokenHash);
+  public getUserByTokenHash(tokenHash: string): Promise<Document & UserModelItem> {
+    return UserModel.findOne({ tokenHash }).exec();
   }
 
-  public getUserById(id: ObjectId): IUserEntity {
-    return Object.values(this.storage).find(val => val.id.equals(id));
+  public getUserById(id: ObjectId): Promise<Document & UserModelItem> {
+    return UserModel.findOne({ _id: id }).exec();
   }
 
-  public clearStorage(): void {
-    Object.keys(this.storage).forEach(name => delete this.storage[name]);
+  public clearStorage(): Promise<DeleteWriteOpResultObject['result'] & { deletedCount?: number }> {
+    return UserModel.deleteMany({}).exec();
   }
 
-  public removeUser(id: ObjectId): void {
-    delete this.storage[Object.values(this.storage).find(val => val.id.equals(id)).name];
+  public removeUser(id: ObjectId): Promise<DeleteWriteOpResultObject['result'] & { deletedCount?: number }> {
+    return UserModel.deleteOne({ _id: id }).exec();
   }
 
-  public addUser(user: IUserSerialized): void {
-    this.storage[user.name] = new UserEntity(user);
+  public addUser(user: IUserSerialized): Promise<Document & UserModelItem> {
+    return UserModel.create(user);
   }
 
-  public updateUser(id: ObjectId, changedFields: IUserSerialized): void {
-    const originalUser = this.getUserById(id);
-    if (!originalUser) {
-      return;
-    }
-    const userEntity = new UserEntity(Object.assign({}, originalUser.serialize(), changedFields));
-
-    if (changedFields.name && originalUser.name !== changedFields.name) {
-      this.storage[changedFields.name] = userEntity;
-      delete this.storage[originalUser.name];
-    } else {
-      this.storage[originalUser.name] = userEntity;
-    }
+  public updateUser(id: ObjectId, changedFields: object): Promise<Document & UserModelItem> {
+    return UserModel.updateOne({ _id: new ObjectId(id) }, changedFields).exec();
   }
 
-  public getUserByToken(token: string): IUserEntity {
-    return Object.values(this.storage).find(val => val.token === token);
+  public getUserByToken(token: string): Promise<Document & UserModelItem> {
+    return UserModel.findOne({ token }).exec();
   }
 }
 

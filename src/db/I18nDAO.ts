@@ -6,14 +6,20 @@ import LoggerService from '../services/LoggerService';
 import { availableLangs } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 
-class I18nDAO extends AbstractDAO<object> {
+class I18nDAO extends AbstractDAO {
+  private _storage: object;
+
+  get storage(): object {
+    return this._storage;
+  }
 
   private readonly mergeRequestTitle = 'WIP: Update i18n keys';
   private readonly commitMessage = 'Updates i18n keys';
   private readonly gitlabAccessToken = process.env.GITLAB_TOKEN;
 
   constructor(storage: object) {
-    super(storage);
+    super();
+    this._storage = storage;
   }
 
   public static getInstance(): I18nDAO {

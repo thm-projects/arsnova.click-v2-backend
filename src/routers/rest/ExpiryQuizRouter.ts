@@ -1,18 +1,17 @@
 import { Authorized, BadRequestError, BodyParam, Get, JsonController, Post } from 'routing-controllers';
-import { default as DbDAO } from '../../db/DbDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
-import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { UserRole } from '../../enums/UserRole';
-import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
+import { QuizModelItem } from '../../models/quiz/QuizModelItem';
 import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/expiry-quiz')
 export class ExpiryQuizRouter extends AbstractRouter {
 
   @Get('/')
-  private getAll(): object {
-    const quiz: Array<IQuizEntity> = QuizDAO.getExpiryQuizzes();
+  private async getAll(): Promise<object> {
+    const quiz: Array<QuizModelItem> = (await QuizDAO.getExpiryQuizzes()).map(quiz => quiz.toJSON());
 
     return {
       quiz,
@@ -21,29 +20,29 @@ export class ExpiryQuizRouter extends AbstractRouter {
 
   @Post('/init') //
   @Authorized(UserRole.CreateQuizFromExpired)
-  private initQuiz(
+  private async initQuiz(
     @BodyParam('quizname') quizname: string, //
     @BodyParam('username') username: string, //
     @BodyParam('privateKey') privateKey: string,
-  ): object {
+  ): Promise<object> {
 
-    const baseQuiz = QuizDAO.getExpiryQuizzes().find(val => val.name === quizname);
-    baseQuiz.name = baseQuiz.name + (QuizDAO.getExpiryQuizzes().length + 1);
-    QuizDAO.initQuiz(baseQuiz);
-    const readyQuiz = QuizDAO.getQuizByName(baseQuiz.name);
+    const expiryQuizzes = await QuizDAO.getExpiryQuizzes();
+    const baseQuiz: any = expiryQuizzes.find(val => val.name === quizname);
+    baseQuiz.name = baseQuiz.name + (expiryQuizzes.length + 1);
+    delete baseQuiz._id;
 
-    DbDAO.create(DbCollection.Quizzes, readyQuiz.serialize());
+    const doc = await QuizDAO.addQuiz(baseQuiz);
 
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.Init,
-      payload: { questionGroup: readyQuiz.serialize() },
+      payload: { questionGroup: doc.toJSON() },
     };
   }
 
   @Post('/quiz') //
   @Authorized(UserRole.CreateExpiredQuiz)
-  private postQuiz(@BodyParam('quiz') quiz: IQuizEntity): object {
+  private postQuiz(@BodyParam('quiz') quiz: IQuiz): object {
 
     if (!quiz) {
       throw new BadRequestError(JSON.stringify({

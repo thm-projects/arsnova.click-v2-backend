@@ -1,9 +1,10 @@
 import { AbstractDAO } from './AbstractDAO';
 
-class MathjaxDAO extends AbstractDAO<object> {
+class MathjaxDAO extends AbstractDAO {
+  private _storage: object = {};
 
-  constructor() {
-    super({});
+  get storage(): object {
+    return this._storage;
   }
 
   public static getInstance(): MathjaxDAO {

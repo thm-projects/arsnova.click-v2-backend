@@ -1,6 +1,5 @@
 import { Response } from 'express';
 import * as fs from 'fs';
-import { DeleteWriteOpResultObject } from 'mongodb';
 import * as path from 'path';
 import {
   BadRequestError,
@@ -21,13 +20,9 @@ import {
   UploadedFiles,
 } from 'routing-controllers';
 import AMQPConnector from '../../db/AMQPConnector';
-import { default as DbDAO } from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import UserDAO from '../../db/UserDAO';
-import { AbstractAnswerEntity } from '../../entities/answer/AbstractAnswerEntity';
-import { QuizEntity } from '../../entities/quiz/QuizEntity';
-import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
@@ -35,11 +30,11 @@ import { UserRole } from '../../enums/UserRole';
 import { ExcelWorkbook } from '../../export/ExcelWorkbook';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { IQuizStatusPayload } from '../../interfaces/IQuizStatusPayload';
-import { IQuizEntity, IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { asyncForEach } from '../../lib/async-for-each';
 import { MatchTextToAssetsDb } from '../../lib/cache/assets';
 import { Leaderboard } from '../../lib/leaderboard/leaderboard';
-import { QuizModel } from '../../models/quiz/QuizModelItem';
+import { QuizModelItem } from '../../models/quiz/QuizModelItem';
 import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
@@ -48,19 +43,19 @@ export class QuizRouter extends AbstractRouter {
   private readonly _leaderboard: Leaderboard = new Leaderboard();
 
   @Get('/status/:quizName?')
-  public getIsAvailableQuiz(
+  public async getIsAvailableQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
-  ): IMessage {
+  ): Promise<IMessage> {
 
     const quizName = params.quizName;
-    const member = MemberDAO.getMemberByToken(token);
+    const member = await MemberDAO.getMemberByToken(token);
 
     if (!quizName && (!token || !member)) {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
-    const quiz: IQuizEntity = QuizDAO.getQuizByName(quizName || member.currentQuizName);
+    const quiz = await QuizDAO.getQuizByName(quizName || member.currentQuizName);
     const payload: IQuizStatusPayload = {};
 
     if (quiz) {
@@ -92,12 +87,12 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/full-status/:quizName?')
-  public getFullQuizStatusData(
+  public async getFullQuizStatusData(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
-  ): object {
-    const status = this.getIsAvailableQuiz(params, token);
-    const quiz = this.getQuiz(params, token);
+  ): Promise<object> {
+    const status = await this.getIsAvailableQuiz(params, token);
+    const quiz = await this.getQuiz(params, token);
     return {
       status: status.status === StatusProtocol.Success && quiz.status === StatusProtocol.Success ? StatusProtocol.Success : StatusProtocol.Failed,
       step: status.step === MessageProtocol.Available && quiz.step === MessageProtocol.Available ? MessageProtocol.Available
@@ -110,10 +105,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/generate/demo/:languageId')
-  public generateDemoQuiz(
+  public async generateDemoQuiz(
     @Param('languageId') languageId: string, //
     @Res() res: Response, //
-  ): object {
+  ): Promise<IQuiz> {
 
     try {
       const basePath = path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz');
@@ -121,8 +116,8 @@ export class QuizRouter extends AbstractRouter {
       if (!fs.existsSync(demoQuizPath)) {
         demoQuizPath = path.join(basePath, 'en.demo_quiz.json');
       }
-      const result: IQuizEntity = JSON.parse(fs.readFileSync(demoQuizPath).toString());
-      result.name = 'Demo Quiz ' + (QuizDAO.getLastPersistedDemoQuizNumber() + 1);
+      const result: IQuiz = JSON.parse(fs.readFileSync(demoQuizPath).toString());
+      result.name = 'Demo Quiz ' + ((await QuizDAO.getLastPersistedDemoQuizNumber()) + 1);
       QuizDAO.convertLegacyQuiz(result);
       res.setHeader('Response-Type', 'application/json');
       return result;
@@ -132,11 +127,11 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/generate/abcd/:languageId/:answerLength?')
-  public generateAbcdQuiz(
+  public async generateAbcdQuiz(
     @Param('languageId') languageId: string, //
     @Param('answerLength') answerLength: number, //
     @Res() res: Response, //
-  ): object {
+  ): Promise<IQuiz> {
 
     try {
       answerLength = answerLength || 4;
@@ -145,15 +140,15 @@ export class QuizRouter extends AbstractRouter {
       if (!fs.existsSync(abcdQuizPath)) {
         abcdQuizPath = path.join(basePath, 'en.abcd_quiz.json');
       }
-      const result: IQuizSerialized = JSON.parse(fs.readFileSync(abcdQuizPath).toString());
+      const result: IQuiz = JSON.parse(fs.readFileSync(abcdQuizPath).toString());
       let abcdName = '';
       for (let i = 0; i < answerLength; i++) {
         abcdName += String.fromCharCode(65 + i);
       }
-      result.name = `${abcdName} ${(QuizDAO.getLastPersistedAbcdQuizNumberByLength(answerLength) + 1)}`;
+      result.name = `${abcdName} ${((await QuizDAO.getLastPersistedAbcdQuizNumberByLength(answerLength)) + 1)}`;
       QuizDAO.convertLegacyQuiz(result);
       res.setHeader('Response-Type', 'application/json');
-      return new QuizEntity(result).serialize();
+      return result;
     } catch (ex) {
       throw new InternalServerError(`File IO Error: ${ex}`);
     }
@@ -163,7 +158,7 @@ export class QuizRouter extends AbstractRouter {
   public async uploadQuiz(
     @HeaderParam('authorization') privateKey: string, //
     @UploadedFiles('uploadFiles[]') uploadedFiles: any, //
-  ): Promise<object> {
+  ): Promise<IMessage> {
 
     const duplicateQuizzes = [];
     const quizData = [];
@@ -175,26 +170,19 @@ export class QuizRouter extends AbstractRouter {
       });
     });
 
-    await asyncForEach(quizData, async (data: { fileName: string, quiz: IQuizEntity }) => {
-      const existingQuiz = QuizDAO.getQuizByName(data.quiz.name);
+    await asyncForEach(quizData, async (data: { fileName: string, quiz: QuizModelItem }) => {
+      const existingQuiz = await QuizDAO.getQuizByName(data.quiz.name);
       if (existingQuiz) {
         duplicateQuizzes.push({
           quizName: data.quiz.name,
           fileName: data.fileName,
-          renameRecommendation: QuizDAO.getRenameRecommendations(data.quiz.name),
+          renameRecommendation: await QuizDAO.getRenameRecommendations(data.quiz.name),
         });
       } else {
         data.quiz.privateKey = privateKey;
         data.quiz.visibility = QuizVisibility.Account;
 
-        const quizValidator = new QuizModel(data.quiz);
-        const result = quizValidator.validateSync();
-
-        if (result) {
-          throw result;
-        }
-
-        await quizValidator.save();
+        await QuizDAO.addQuiz(data.quiz);
       }
     });
 
@@ -213,7 +201,7 @@ export class QuizRouter extends AbstractRouter {
     @HeaderParam('authorization') token: string, //
     @BodyParam('quizName') quizName: string, //
   ): Promise<object> {
-    const quiz = QuizDAO.getQuizByName(quizName);
+    const quiz = await QuizDAO.getQuizByName(quizName);
     if (!quiz || ![QuizState.Active, QuizState.Running].includes(quiz.state)) {
       return {
         status: StatusProtocol.Failed,
@@ -226,22 +214,20 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
+    const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
+
     if (quiz.sessionConfig.readingConfirmationEnabled && !quiz.readingConfirmationRequested) {
-      const nextQuestionIndex = quiz.nextQuestion();
+      const nextQuestionIndex = await QuizDAO.nextQuestion(quiz);
       if (nextQuestionIndex === -1) {
         throw new BadRequestError(MessageProtocol.EndOfQuestions);
       }
 
-      quiz.requestReadingConfirmation();
+      await QuizDAO.requestReadingConfirmation(quiz);
 
-      try {
-        await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
-          readingConfirmationRequested: true,
-          state: QuizState.Running,
-        });
-      } catch (e) {
-        throw new InternalServerError(e);
-      }
+      await QuizDAO.updateQuiz(existingQuiz._id, {
+        readingConfirmationRequested: true,
+        state: QuizState.Running,
+      });
 
       return {
         status: StatusProtocol.Success,
@@ -250,18 +236,16 @@ export class QuizRouter extends AbstractRouter {
     } else if (quiz.readingConfirmationRequested) {
       const currentStartTimestamp: number = new Date().getTime();
 
-      try {
-        await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
-          currentStartTimestamp,
-          readingConfirmationRequested: false,
-          state: QuizState.Running,
-        });
-      } catch (e) {
-        throw new InternalServerError(e);
-      }
+      await QuizDAO.updateQuiz(existingQuiz._id, {
+        currentStartTimestamp,
+        readingConfirmationRequested: false,
+        state: QuizState.Running,
+      });
 
       quiz.readingConfirmationRequested = false;
-      quiz.startNextQuestion();
+
+      await QuizDAO.nextQuestion(quiz);
+
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.Start,
@@ -271,25 +255,22 @@ export class QuizRouter extends AbstractRouter {
         },
       };
     } else {
-      const nextQuestionIndex = quiz.nextQuestion();
+      const nextQuestionIndex = await QuizDAO.nextQuestion(quiz);
       if (nextQuestionIndex === -1) {
         throw new BadRequestError(MessageProtocol.EndOfQuestions);
       }
       const currentStartTimestamp: number = new Date().getTime();
 
-      try {
-        await DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quiz.name).id }, {
-          currentStartTimestamp,
-          readingConfirmationRequested: false,
-          state: QuizState.Running,
-        });
-      } catch (e) {
-        throw new InternalServerError(e);
-      }
+      await QuizDAO.updateQuiz(existingQuiz._id, {
+        currentStartTimestamp,
+        readingConfirmationRequested: false,
+        state: QuizState.Running,
+      });
 
       quiz.readingConfirmationRequested = false;
       quiz.currentStartTimestamp = currentStartTimestamp;
-      quiz.startNextQuestion();
+
+      await QuizDAO.startNextQuestion(quiz);
 
       return {
         status: StatusProtocol.Success,
@@ -303,17 +284,15 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/stop')
-  public stopQuiz(@BodyParam('quizName') quizName: string, //
-  ): object {
+  public async stopQuiz(@BodyParam('quizName') quizName: string, //
+  ): Promise<IMessage> {
 
-    const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
+    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
       return;
     }
 
-    DbDAO.updateOne(DbCollection.Quizzes, { _id: QuizDAO.getQuizByName(quizName).id }, { currentStartTimestamp: -1 });
-
-    activeQuiz.stop();
+    await QuizDAO.stopQuiz(activeQuiz);
 
     return {
       status: StatusProtocol.Success,
@@ -323,14 +302,14 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/start-time')
-  public getStartTime(@HeaderParam('authorization') token: string): number {
-    const member = MemberDAO.getMemberByToken(token);
+  public async getStartTime(@HeaderParam('authorization') token: string): Promise<number> {
+    const member = await MemberDAO.getMemberByToken(token);
     if (!member) {
       console.error('Unknown member');
       throw new BadRequestError('Unknown member');
     }
 
-    const quiz = QuizDAO.getQuizByName(member.currentQuizName);
+    const quiz = await QuizDAO.getQuizByName(member.currentQuizName);
     if (!quiz || ![QuizState.Active, QuizState.Running].includes(quiz.state)) {
       console.error('Quiz is not active and not running');
       throw new BadRequestError('Quiz is not active and not running');
@@ -340,10 +319,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/currentState/:quizName')
-  public getCurrentQuizState(@Param('quizName') quizName: string, //
-  ): object {
+  public async getCurrentQuizState(@Param('quizName') quizName: string, //
+  ): Promise<IMessage> {
 
-    const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
+    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
       return {
         status: StatusProtocol.Failed,
@@ -356,7 +335,7 @@ export class QuizRouter extends AbstractRouter {
       status: StatusProtocol.Success,
       step: MessageProtocol.CurrentState,
       payload: {
-        questions: activeQuiz.questionList.slice(0, index + 1).map(question => question.serialize()),
+        questions: activeQuiz.questionList.slice(0, index + 1),
         questionIndex: index,
         startTimestamp: activeQuiz.currentStartTimestamp,
         numberOfQuestions: activeQuiz.questionList.length,
@@ -365,10 +344,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/reading-confirmation')
-  public showReadingConfirmation(@BodyParam('quizName') quizName: string, //
-  ): object {
+  public async showReadingConfirmation(@BodyParam('quizName') quizName: string, //
+  ): Promise<IMessage> {
 
-    const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
+    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
       return {
         status: StatusProtocol.Failed,
@@ -376,8 +355,11 @@ export class QuizRouter extends AbstractRouter {
         payload: {},
       };
     }
-    activeQuiz.nextQuestion();
-    activeQuiz.requestReadingConfirmation();
+
+    await Promise.all([
+      QuizDAO.nextQuestion(activeQuiz), QuizDAO.requestReadingConfirmation(activeQuiz),
+    ]);
+
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.ReadingConfirmationRequested,
@@ -386,10 +368,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/startTime/:quizName')
-  public getQuizStartTime(@Param('quizName') quizName: string, //
-  ): object {
+  public async getQuizStartTime(@Param('quizName') quizName: string, //
+  ): Promise<IMessage> {
 
-    const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
+    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
       return {
         status: StatusProtocol.Failed,
@@ -397,6 +379,7 @@ export class QuizRouter extends AbstractRouter {
         payload: {},
       };
     }
+
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.GetStartTime,
@@ -405,10 +388,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/settings/:quizName')
-  public getQuizSettings(@Param('quizName') quizName: string, //
-  ): object {
+  public async getQuizSettings(@Param('quizName') quizName: string, //
+  ): Promise<IMessage> {
 
-    const activeQuiz: IQuizEntity = QuizDAO.getQuizByName(quizName);
+    const activeQuiz = await QuizDAO.getQuizByName(quizName);
     if (!activeQuiz) {
       return {
         status: StatusProtocol.Failed,
@@ -420,18 +403,18 @@ export class QuizRouter extends AbstractRouter {
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.UpdatedSettings,
-      payload: { settings: activeQuiz.sessionConfig.serialize() },
+      payload: { settings: activeQuiz.sessionConfig },
     };
   }
 
   @Post('/settings')
-  public updateQuizSettings(
+  public async updateQuizSettings(
     @HeaderParam('authorization') token: string, //
     @BodyParam('quizName') quizName: string, //
     @BodyParam('settings') quizSettings: { state: boolean, target: string }, //
-  ): object {
+  ): Promise<IMessage> {
 
-    const activeQuiz: IQuizEntity = QuizDAO.getQuizByName(quizName);
+    const activeQuiz = await QuizDAO.getQuizByName(quizName);
     if (!activeQuiz) {
       return {
         status: StatusProtocol.Failed,
@@ -443,7 +426,7 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
-    DbDAO.updateOne(DbCollection.Quizzes, { _id: activeQuiz.id }, { ['sessionConfig.' + quizSettings.target]: quizSettings.state });
+    await QuizDAO.updateQuiz(activeQuiz._id, { ['sessionConfig.' + quizSettings.target]: quizSettings.state });
 
     return {
       status: StatusProtocol.Success,
@@ -455,13 +438,13 @@ export class QuizRouter extends AbstractRouter {
   @Put('/')
   public async addQuiz(
     @HeaderParam('authorization') privateKey: string, //
-    @BodyParam('quiz') quiz: IQuizSerialized, //
+    @BodyParam('quiz') quiz: IQuiz, //
     @BodyParam('serverPassword', { required: settings.public.createQuizPasswordRequired }) serverPassword: string, //
-  ): Promise<IQuizSerialized> {
+  ): Promise<QuizModelItem> {
     if (!quiz) {
       throw new BadRequestError(MessageProtocol.InvalidParameters);
     }
-    const activeQuizzesAmount = QuizDAO.getActiveQuizzes();
+    const activeQuizzesAmount = await QuizDAO.getActiveQuizzes();
     if (activeQuizzesAmount.length >= settings.public.limitActiveQuizzes) {
       throw new BadRequestError(MessageProtocol.TooMuchActiveQuizzes);
     }
@@ -475,12 +458,11 @@ export class QuizRouter extends AbstractRouter {
     }
 
     if (settings.public.cacheQuizAssets) {
-
       const promises: Array<Promise<any>> = [];
 
       quiz.questionList.forEach(question => {
         promises.push(MatchTextToAssetsDb(question.questionText).then(val => question.questionText = val));
-        question.answerOptionList.forEach((answerOption: AbstractAnswerEntity) => {
+        question.answerOptionList.forEach(answerOption => {
           promises.push(MatchTextToAssetsDb(answerOption.answerText).then(val => answerOption.answerText = val));
         });
       });
@@ -495,14 +477,8 @@ export class QuizRouter extends AbstractRouter {
     quiz.state = quiz.questionList.length > 0 ? QuizState.Active : QuizState.Inactive;
 
     QuizDAO.convertLegacyQuiz(quiz);
-    const quizValidator = new QuizModel(quiz);
-    const result = quizValidator.validateSync();
 
-    if (result) {
-      throw result;
-    }
-
-    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: quiz.state === QuizState.Active ? MessageProtocol.SetActive : MessageProtocol.SetInactive,
       payload: {
@@ -510,35 +486,32 @@ export class QuizRouter extends AbstractRouter {
       },
     })));
 
-    const existingQuiz = QuizDAO.getQuizByName(quiz.name);
+    const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
     if (existingQuiz) {
       if (existingQuiz.privateKey !== privateKey) {
         throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
       }
-      const newQuiz = Object.assign({}, existingQuiz.serialize(), quiz);
-      await DbDAO.updateOne(DbCollection.Quizzes, { _id: existingQuiz.id }, newQuiz);
-      return new QuizEntity(newQuiz).serialize();
 
+      await QuizDAO.updateQuiz(existingQuiz.id, quiz);
+      return (await QuizDAO.getQuizByName(quiz.name)).toJSON();
     } else {
-      const doc = await quizValidator.save();
-      return new QuizEntity(doc).serialize();
+      return (await QuizDAO.addQuiz(quiz)).toJSON();
     }
   }
 
   @Put('/save')
-  public saveQuiz(
+  public async saveQuiz(
     @HeaderParam('authorization') privateKey: string, //
-    @BodyParam('quiz') quiz: IQuizSerialized, //
-  ): void {
-    const existingQuiz = QuizDAO.getQuizByName(quiz.name);
+    @BodyParam('quiz') quiz: QuizModelItem, //
+  ): Promise<QuizModelItem> {
+    const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
     if (existingQuiz) {
       if (existingQuiz.privateKey !== privateKey) {
         throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
       }
-      QuizDAO.convertLegacyQuiz(quiz);
 
-      DbDAO.updateOne(DbCollection.Quizzes, { _id: existingQuiz.id }, quiz);
-      return;
+      await QuizDAO.updateQuiz(existingQuiz._id, quiz);
+      return quiz;
     }
 
     quiz.privateKey = privateKey;
@@ -546,61 +519,37 @@ export class QuizRouter extends AbstractRouter {
     quiz.state = QuizState.Inactive;
 
     QuizDAO.convertLegacyQuiz(quiz);
-    const quizValidator = new QuizModel(quiz);
-    const result = quizValidator.validateSync();
-
-    if (result) {
-      throw result;
-    }
-
-    quizValidator.save();
+    return (await QuizDAO.addQuiz(quiz)).toJSON();
   }
 
   @Delete('/:quizName')
   public async deleteQuiz(
     @Param('quizName') quizName: string, //
     @HeaderParam('authorization') privateKey: string, //
-  ): Promise<object> {
-    const quiz = QuizDAO.getQuizByName(quizName);
-    if (!quiz || quiz.privateKey !== privateKey) {
-      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
-    }
-    const dbResult: DeleteWriteOpResultObject = await DbDAO.deleteOne(DbCollection.Quizzes, {
-      name: quizName,
-      privateKey: privateKey,
-    });
-    if (dbResult && dbResult.result.ok) {
-      quiz.onRemove();
+  ): Promise<IMessage> {
+    try {
+      await QuizDAO.removeQuizByName(quizName);
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.Removed,
         payload: {},
       };
-    } else {
+    } catch {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
   }
 
   @Delete('/active/:quizName')
-  public deleteActiveQuiz(
+  public async deleteActiveQuiz(
     @Param('quizName') quizName: string, //
     @HeaderParam('authorization') privateKey: string, //
-  ): object {
+  ): Promise<IMessage> {
+    try {
+      await QuizDAO.setQuizAsInactive(quizName, privateKey);
 
-    if (!quizName || !privateKey) {
-      throw new BadRequestError(JSON.stringify({
-        status: StatusProtocol.Failed,
-        step: MessageProtocol.InvalidParameters,
-        payload: {},
-      }));
+    } catch {
+      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
-
-    const quiz = QuizDAO.getQuizByName(quizName);
-    if (!quiz || quiz.privateKey !== privateKey) {
-      return;
-    }
-
-    quiz.setInactive();
 
     return {
       status: StatusProtocol.Success,
@@ -610,39 +559,19 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/reset/:quizName')
-  public resetQuiz(
+  public async resetQuiz(
     @Param('quizName') quizName: string, //
     @HeaderParam('authorization') privateKey: string, //
-  ): object {
-
-    if (!quizName || !privateKey) {
-      throw new BadRequestError(JSON.stringify({
-        status: StatusProtocol.Failed,
-        step: MessageProtocol.InvalidParameters,
-        payload: {},
-      }));
-    }
-
-    const quiz = QuizDAO.getQuizByName(quizName);
+  ): Promise<IMessage> {
+    const quiz = await QuizDAO.getQuizByName(quizName);
     if (!quiz || quiz.privateKey !== privateKey) {
       return;
     }
 
-    DbDAO.updateOne(DbCollection.Quizzes, { _id: quiz.id }, {
-      state: QuizState.Active,
-      currentQuestionIndex: -1,
-      currentStartTimestamp: -1,
-      readingConfirmationRequested: false,
-    });
-
-    const members = MemberDAO.getMembersOfQuiz(quizName);
-    if (members.length > 0) {
-      DbDAO.updateMany(DbCollection.Members, { currentQuizName: quizName }, {
-        responses: members[0].generateResponseForQuiz(quiz.questionList.length),
-      });
+    const doc = await QuizDAO.resetQuiz(quizName, privateKey);
+    if (!doc) {
+      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
-
-    quiz.reset();
 
     return {
       status: StatusProtocol.Success,
@@ -661,7 +590,7 @@ export class QuizRouter extends AbstractRouter {
     @Res() res: ICustomI18nResponse, //
   ): Promise<Buffer> {
 
-    const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
+    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
       return;
     }
@@ -687,8 +616,8 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/member-group/:quizName')
-  public getFreeMemberGroup(@Param('quizName') quizName: string): object {
-    const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
+  public async getFreeMemberGroup(@Param('quizName') quizName: string): Promise<IMessage> {
+    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
       return {
         status: StatusProtocol.Failed,
@@ -715,14 +644,14 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/leaderboard/:quizName/:amount/:questionIndex?')
-  public getLeaderBoardData(
+  public async getLeaderBoardData(
     @Param('quizName') quizName: string, //
     @Param('amount') amount: number, //
     @Param('questionIndex') questionIndex: number, //
     @HeaderParam('authorization') authorization: string, //
-  ): object {
+  ): Promise<IMessage> {
 
-    const activeQuiz: IQuizEntity = QuizDAO.getActiveQuizByName(quizName);
+    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
       return {
         status: StatusProtocol.Failed,
@@ -730,9 +659,9 @@ export class QuizRouter extends AbstractRouter {
         payload: {},
       };
     }
-    const member = MemberDAO.getMemberByToken(authorization);
+    const member = await MemberDAO.getMemberByToken(authorization);
 
-    const { correctResponses, memberGroupResults } = this._leaderboard.buildLeaderboard(activeQuiz, questionIndex);
+    const { correctResponses, memberGroupResults } = await this._leaderboard.buildLeaderboard(activeQuiz, questionIndex);
 
     const sortedCorrectResponses = this._leaderboard.sortBy(correctResponses, 'score');
     const ownResponse: { [key: string]: any } = {};
@@ -756,8 +685,8 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/private')
-  private setQuizAsPrivate(@BodyParam('name') quizName: string, @HeaderParam('authorization') privateKey: string): void {
-    const existingQuiz = QuizDAO.getQuizByName(quizName);
+  private async setQuizAsPrivate(@BodyParam('name') quizName: string, @HeaderParam('authorization') privateKey: string): Promise<void> {
+    const existingQuiz = await QuizDAO.getQuizByName(quizName);
     if (!existingQuiz) {
       throw new NotFoundError(MessageProtocol.QuizNotFound);
     }
@@ -765,12 +694,12 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
-    DbDAO.updateOne(DbCollection.Quizzes, { _id: existingQuiz.id }, { visibility: QuizVisibility.Account });
+    await QuizDAO.updateQuiz(existingQuiz._id, { visibility: QuizVisibility.Account });
   }
 
   @Get('/public')
-  private getPublicQuizzes(@HeaderParam('authorization') privateKey: string): Array<IQuizSerialized> {
-    return QuizDAO.getAllPublicQuizzes().filter(quiz => quiz.privateKey !== privateKey).map(quiz => quiz.serialize());
+  private async getPublicQuizzes(@HeaderParam('authorization') privateKey: string): Promise<Array<QuizModelItem>> {
+    return (await QuizDAO.getAllPublicQuizzes()).filter(quiz => quiz.privateKey !== privateKey).map(quiz => quiz.toJSON());
   }
 
   @Post('/public/init')
@@ -779,38 +708,32 @@ export class QuizRouter extends AbstractRouter {
     @HeaderParam('X-Access-Token') loginToken: string,
     @HeaderParam('authorization') privateKey: string,
   ): Promise<IMessage> {
-    const user = UserDAO.getUserByToken(loginToken);
+    const user = await UserDAO.getUserByToken(loginToken);
     if (!user || !user.userAuthorizations.includes(UserRole.CreateQuiz)) {
       throw new UnauthorizedError('Unauthorized to create quiz');
     }
 
-    const quiz = QuizDAO.getAllPublicQuizzes().find(q => q.name === quizName);
+    const quiz = (await QuizDAO.getAllPublicQuizzes()).find(q => q.name === quizName);
     if (!quiz) {
       throw new NotFoundError('Quiz name not found');
     }
-    const serializedQuiz = quiz.serialize();
 
     delete quiz.id;
-    serializedQuiz.name = QuizDAO.getRenameAsToken(serializedQuiz.name);
-    serializedQuiz.privateKey = privateKey;
-    serializedQuiz.state = QuizState.Active;
-    serializedQuiz.visibility = QuizVisibility.Account;
-    serializedQuiz.currentQuestionIndex = -1;
-    serializedQuiz.currentStartTimestamp = -1;
-    serializedQuiz.readingConfirmationRequested = false;
+    quiz.name = await QuizDAO.getRenameAsToken(quiz.name);
+    quiz.privateKey = privateKey;
+    quiz.state = QuizState.Active;
+    quiz.visibility = QuizVisibility.Account;
+    quiz.currentQuestionIndex = -1;
+    quiz.currentStartTimestamp = -1;
+    quiz.readingConfirmationRequested = false;
 
-    const quizValidator = new QuizModel(serializedQuiz);
-    const result = quizValidator.validateSync();
-    if (result) {
-      throw result;
-    }
-    await quizValidator.save();
+    const doc = await QuizDAO.addQuiz(quiz);
 
-    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.SetActive,
       payload: {
-        quizName: serializedQuiz.name,
+        quizName: quiz.name,
       },
     })));
 
@@ -818,24 +741,24 @@ export class QuizRouter extends AbstractRouter {
       status: StatusProtocol.Success,
       step: MessageProtocol.Init,
       payload: {
-        quiz: serializedQuiz,
+        quiz: doc.toJSON(),
       },
     };
   }
 
   @Get('/public/amount')
-  private getPublicQuizAmount(@HeaderParam('authorization') privateKey: string): number {
-    return this.getPublicQuizzes(privateKey).length;
+  private async getPublicQuizAmount(@HeaderParam('authorization') privateKey: string): Promise<number> {
+    return (await this.getPublicQuizzes(privateKey)).length;
   }
 
   @Get('/public/own')
-  private getOwnPublicQuizzes(@HeaderParam('authorization') privateKey: string): Array<IQuizSerialized> {
-    return QuizDAO.getAllPublicQuizzes().filter(quiz => quiz.privateKey === privateKey).map(quiz => quiz.serialize());
+  private async getOwnPublicQuizzes(@HeaderParam('authorization') privateKey: string): Promise<Array<QuizModelItem>> {
+    return (await QuizDAO.getAllPublicQuizzes()).filter(quiz => quiz.privateKey === privateKey).map(quiz => quiz.toJSON());
   }
 
   @Get('/public/amount/own')
-  private getOwnPublicQuizAmount(@HeaderParam('authorization') privateKey: string): number {
-    return this.getOwnPublicQuizzes(privateKey).length;
+  private async getOwnPublicQuizAmount(@HeaderParam('authorization') privateKey: string): Promise<number> {
+    return (await this.getOwnPublicQuizzes(privateKey)).length;
   }
 
   @Get('/')
@@ -844,24 +767,24 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/quiz/:quizName?')
-  private getQuiz(
+  private async getQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
-  ): IMessage {
+  ): Promise<IMessage> {
 
     const quizName = params.quizName;
-    const member = MemberDAO.getMemberByToken(token);
+    const member = await MemberDAO.getMemberByToken(token);
 
     if (!quizName && (!token || !member)) {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
-    const quiz: IQuizEntity = QuizDAO.getQuizByName(quizName || member.currentQuizName);
+    const quiz = await QuizDAO.getQuizByName(quizName || member.currentQuizName);
     const payload: IQuizStatusPayload = {};
 
     if (quiz) {
       payload.state = quiz.state;
-      payload.quiz = quiz.serialize();
+      payload.quiz = quiz.toJSON();
     }
 
     return {

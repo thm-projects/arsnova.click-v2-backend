@@ -1,24 +1,21 @@
 import * as xlsx from 'excel4node';
 import * as MessageFormat from 'messageformat';
+import { Document } from 'mongoose';
 import MemberDAO from '../db/MemberDAO';
-import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { ILeaderBoardItemBase } from '../interfaces/leaderboard/ILeaderBoardItemBase';
-import { IQuizEntity } from '../interfaces/quizzes/IQuizEntity';
+import { IQuizBase } from '../interfaces/quizzes/IQuizEntity';
 import { Leaderboard } from '../lib/leaderboard/leaderboard';
+import { MemberModelItem } from '../models/member/MemberModel';
 import { excelDefaultWorksheetOptions } from './lib/excel_default_options';
 
 import { ExcelTheme } from './lib/excel_default_styles';
 
 export abstract class ExcelWorksheet {
-  get responsesWithConfidenceValue(): Array<IMemberEntity> {
-    return this._responsesWithConfidenceValue;
-  }
-
   get columnsToFormat(): number {
     return this._columnsToFormat;
   }
 
-  get quiz(): IQuizEntity {
+  get quiz(): IQuizBase {
     return this._quiz;
   }
 
@@ -42,14 +39,19 @@ export abstract class ExcelWorksheet {
     return this._ws;
   }
 
+  private _responsesWithConfidenceValue: Array<Document & MemberModelItem>;
+
+  get responsesWithConfidenceValue(): Array<Document & MemberModelItem> {
+    return this._responsesWithConfidenceValue;
+  }
+
   protected _options: Object;
   protected _theme: ExcelTheme;
   protected _translation: string;
   private readonly _mf: MessageFormat.Msg;
   private readonly _createdAt: string;
-  private readonly _quiz: IQuizEntity;
-  private readonly _columnsToFormat: number;
-  private readonly _responsesWithConfidenceValue: Array<IMemberEntity>;
+  private readonly _quiz: IQuizBase;
+  private _columnsToFormat: number;
 
   protected constructor({ theme, translation, quiz, mf, questionIndex }) {
     this._theme = theme;
@@ -71,23 +73,28 @@ export abstract class ExcelWorksheet {
     });
 
     this._columnsToFormat = 4;
-    if (questionIndex) {
-      this._responsesWithConfidenceValue = MemberDAO.getMembersOfQuiz(this._quiz.name).filter(nickname => {
-        return nickname.responses[questionIndex].confidence > -1;
-      });
-    } else {
-      this._responsesWithConfidenceValue = MemberDAO.getMembersOfQuiz(this._quiz.name).filter(nickname => {
-        return nickname.responses.some(responseItem => responseItem.confidence > -1);
-      });
-    }
-    if (this._responsesWithConfidenceValue.length > 0) {
-      this._columnsToFormat++;
-    }
+
+    MemberDAO.getMembersOfQuiz(this._quiz.name).then(members => {
+      if (questionIndex) {
+        this._responsesWithConfidenceValue = members.filter(nickname => {
+          return nickname.responses[questionIndex].confidence > -1;
+        });
+      } else {
+        this._responsesWithConfidenceValue = members.filter(nickname => {
+          return nickname.responses.some(responseItem => responseItem.confidence > -1);
+        });
+      }
+
+      if (this._responsesWithConfidenceValue.length > 0) {
+        this._columnsToFormat++;
+      }
+    });
+
     if (this._quiz.sessionConfig.nicks.restrictToCasLogin) {
       this._columnsToFormat += 2;
     }
 
-    this._leaderBoardData = this.getLeaderboardData(questionIndex);
+    this.getLeaderboardData(questionIndex).then(data => this._leaderBoardData = data);
   }
 
   protected generateCreatedAtString(): string {
@@ -97,9 +104,9 @@ export abstract class ExcelWorksheet {
     return `${dateYMD} ${this._mf('export.exported_at')} ${dateHM} ${this._mf('export.exported_at_time')}`;
   }
 
-  protected getLeaderboardData(questionIndex: number): Array<ILeaderBoardItemBase> {
+  protected async getLeaderboardData(questionIndex: number): Promise<Array<ILeaderBoardItemBase>> {
     const leaderBoard = new Leaderboard();
-    const { correctResponses } = leaderBoard.buildLeaderboard(this.quiz);
+    const { correctResponses } = await leaderBoard.buildLeaderboard(this.quiz);
     return leaderBoard.sortBy(correctResponses, 'score');
   }
 

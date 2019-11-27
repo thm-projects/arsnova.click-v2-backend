@@ -1,6 +1,6 @@
-import { IQuestionSerialized } from './IQuestion';
+import { IQuestion } from './IQuestion';
 
-export interface IQuestionRangedBase extends IQuestionSerialized {
+export interface IQuestionRanged extends IQuestion {
   rangeMax: number;
   rangeMin: number;
   correctValue: number;

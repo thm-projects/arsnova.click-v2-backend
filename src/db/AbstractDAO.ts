@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
-import { IStorageDAO } from '../interfaces/database/IStorageDAO';
 
-export abstract class AbstractDAO<T> implements IStorageDAO<T> {
+export abstract class AbstractDAO {
   protected static instance;
 
   protected _isInitialized: boolean;
@@ -10,24 +9,10 @@ export abstract class AbstractDAO<T> implements IStorageDAO<T> {
     return this._isInitialized;
   }
 
-  protected _storage: T;
-
-  get storage(): T {
-    return this._storage;
-  }
-
   private _updateEmitter = new EventEmitter();
 
   get updateEmitter(): NodeJS.EventEmitter {
     return this._updateEmitter;
-  }
-
-  protected constructor(storage: T) {
-    this._storage = storage;
-  }
-
-  public createDump(): any {
-    return this.storage;
   }
 
   protected isEmptyVars(...variables): boolean {

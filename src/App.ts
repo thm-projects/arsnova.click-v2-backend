@@ -15,15 +15,12 @@ import { AdminRouter } from './routers/rest/AdminRouter';
 import { ApiRouter } from './routers/rest/ApiRouter';
 import { ExpiryQuizRouter } from './routers/rest/ExpiryQuizRouter';
 import { I18nApiRouter } from './routers/rest/I18nApiRouter';
-import { LegacyApiRouter } from './routers/rest/LegacyApi';
 import { LibRouter } from './routers/rest/LibRouter';
 import { LobbyRouter } from './routers/rest/LobbyRouter';
 import { MemberRouter } from './routers/rest/MemberRouter';
 import { NicksRouter } from './routers/rest/NicksRouter';
 import { QuizRouter } from './routers/rest/QuizRouter';
 import { dynamicStatistics, staticStatistics } from './statistics';
-
-declare var global: any;
 
 export const routingControllerOptions: RoutingControllersOptions = {
   defaults: {
@@ -37,7 +34,7 @@ export const routingControllerOptions: RoutingControllersOptions = {
   defaultErrorHandler: false,
   cors: options,
   controllers: [
-    AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LegacyApiRouter, LibRouter, LobbyRouter, MemberRouter, NicksRouter, QuizRouter,
+    AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LibRouter, LobbyRouter, MemberRouter, NicksRouter, QuizRouter,
   ],
   middlewares: [I18nMiddleware],
 };
@@ -103,7 +100,6 @@ class App {
         new Integrations.OnUncaughtException(), new Integrations.OnUnhandledRejection(),
       ],
       enabled: process.env.NODE_ENV === 'production',
-      debug: true,
     });
   }
 }

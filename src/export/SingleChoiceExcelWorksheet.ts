@@ -1,14 +1,16 @@
 import MemberDAO from '../db/MemberDAO';
-import { AbstractAnswerEntity } from '../entities/answer/AbstractAnswerEntity';
-import { SingleChoiceQuestionEntity } from '../entities/question/SingleChoiceQuestionEntity';
-import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
+import { IAnswer } from '../interfaces/answeroptions/IAnswerEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
+import { IQuestionChoice } from '../interfaces/questions/IQuestionChoice';
+import { ICasData } from '../interfaces/users/ICasData';
+import { asyncForEach } from '../lib/async-for-each';
+import { MemberModelItem } from '../models/member/MemberModel';
 import { ExcelWorksheet } from './ExcelWorksheet';
 import { calculateNumberOfAnswers } from './lib/excel_function_library';
 
 export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
-  private _question: SingleChoiceQuestionEntity;
+  private _question: IQuestionChoice;
   private readonly _questionIndex: number;
 
   constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
@@ -21,12 +23,12 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     });
     this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
-    this._question = <SingleChoiceQuestionEntity>this.quiz.questionList[questionIndex];
+    this._question = this.quiz.questionList[questionIndex] as IQuestionChoice;
     this.formatSheet();
     this.addSheetData();
   }
 
-  public formatSheet(): void {
+  public async formatSheet(): Promise<void> {
     const defaultStyles = this._theme.getStyles();
     const answerCellStyle: any = {
       alignment: {
@@ -101,7 +103,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       lastColumn: minColums,
     });
 
-    const responses = MemberDAO.getMembersOfQuiz(this.quiz.name).map(nickname => nickname.responses[this._questionIndex]);
+    const responses = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).map(nickname => nickname.responses[this._questionIndex]);
     const hasEntries: boolean = responses.length > 0;
     const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
     const attendeeEntryRowStyle: any = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
@@ -147,9 +149,9 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     });
   }
 
-  public addSheetData(): void {
+  public async addSheetData(): Promise<void> {
     const answerList = this._question.answerOptionList;
-    const allResponses: Array<IMemberEntity> = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => {
+    const allResponses: Array<MemberModelItem> = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickname => {
       return nickname.responses.map(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
@@ -169,13 +171,13 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = this.leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
-                                               / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
+                                               / (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem) => {
+      (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -194,23 +196,24 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     this.ws.cell(10, nextColumnIndex++).string(this.mf('export.time'));
 
     let nextStartRow = 10;
-    allResponses.forEach((responseItem): void => {
+    await asyncForEach(allResponses, async responseItem => {
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile: any = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => nickname.name === responseItem.name)[0].casProfile;
+        const profile: ICasData = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(
+          nickname => nickname.name === responseItem.name)[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
-        // noinspection SuspiciousInstanceOfGuard
         this.ws.cell(nextStartRow, nextColumnIndex++).string(Array.isArray(profile.mail) ? profile.mail.slice(-1)[0] : profile.mail);
       }
-      const chosenAnswer: AbstractAnswerEntity = this._question.answerOptionList[responseItem.responses[this._questionIndex].value[0]];
-      this.ws.cell(nextStartRow, nextColumnIndex++).string(chosenAnswer.answerText);
+      const chosenAnswer: IAnswer = this._question.answerOptionList[responseItem.responses[this._questionIndex].value[0]];
+      this.ws.cell(nextStartRow, nextColumnIndex++).string(chosenAnswer ? chosenAnswer.answerText : '');
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(responseItem.responses[this._questionIndex].confidence));
       }
       this.ws.cell(nextStartRow, nextColumnIndex++).number(responseItem.responses[this._questionIndex].responseTime);
     });
+
     if (nextStartRow === 10) {
       this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));
     }

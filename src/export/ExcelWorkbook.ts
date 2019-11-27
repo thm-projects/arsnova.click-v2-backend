@@ -3,7 +3,7 @@ import * as http from 'http';
 import * as MessageFormat from 'messageformat';
 import { QuestionType } from '../enums/QuestionType';
 import { IExcelWorkbook, IExcelWorksheet } from '../interfaces/iExcel';
-import { IQuizEntity } from '../interfaces/quizzes/IQuizEntity';
+import { IQuizBase } from '../interfaces/quizzes/IQuizEntity';
 import { FreeTextExcelWorksheet } from './FreeTextExcelWorksheet';
 
 import { ExcelTheme } from './lib/excel_default_styles';
@@ -23,9 +23,9 @@ export class ExcelWorkbook implements IExcelWorkbook {
   private readonly _theme: ExcelTheme;
   private readonly _translation: string;
   private readonly _mf: MessageFormat;
-  private readonly _quiz: IQuizEntity;
+  private readonly _quiz: IQuizBase;
 
-  constructor({ themeName, quiz, translation, mf }: { themeName: string, quiz: IQuizEntity, translation: string, mf: MessageFormat }) {
+  constructor({ themeName, quiz, translation, mf }: { themeName: string, quiz: IQuizBase, translation: string, mf: MessageFormat }) {
     this._wb = new xlsx.Workbook({
       jszip: {
         compression: 'DEFLATE',

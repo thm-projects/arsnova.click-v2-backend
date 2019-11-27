@@ -1,17 +1,14 @@
-///<reference path="../lib/regExpEscape.ts" />
-
 import { ObjectId } from 'bson';
-import { MemberEntity } from '../entities/member/MemberEntity';
-import { QuizEntity } from '../entities/quiz/QuizEntity';
-import { DbCollection, DbEvent } from '../enums/DbOperation';
+import { Document } from 'mongoose';
+import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
-import { IQuizEntity } from '../interfaces/quizzes/IQuizEntity';
-import LoggerService from '../services/LoggerService';
+import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
+import { MemberModel, MemberModelItem } from '../models/member/MemberModel';
 import { AbstractDAO } from './AbstractDAO';
-import DbDAO from './DbDAO';
+import AMQPConnector from './AMQPConnector';
 import QuizDAO from './quiz/QuizDAO';
 
-class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
+class MemberDAO extends AbstractDAO {
 
   public static getInstance(): MemberDAO {
     if (!this.instance) {
@@ -21,105 +18,192 @@ class MemberDAO extends AbstractDAO<Array<MemberEntity>> {
     return this.instance;
   }
 
-  constructor() {
-    super([]);
-
-    DbDAO.isDbAvailable.on(DbEvent.Connected, async (isConnected) => {
-      if (isConnected) {
-        const cursor = DbDAO.readMany(DbCollection.Members, {});
-        cursor.forEach(doc => {
-          this.addMember(doc);
-        }).then(() => LoggerService.info(`${this.constructor.name} initialized with ${this.storage.length} entries`));
-      }
-    });
+  public getMemberByName(name: string): Promise<Document & MemberModelItem> {
+    return MemberModel.findOne({ name }).exec();
   }
 
-  public getMemberByName(name: string): MemberEntity {
-    return this.storage.find(val => val.name === name);
-  }
-
-  public addMember(memberSerialized: IMemberSerialized): void {
-    if (this.getMemberById(memberSerialized.id)) {
+  public async addMember(memberSerialized: IMemberSerialized): Promise<Document & MemberModelItem> {
+    if (memberSerialized.id && this.getMemberById(memberSerialized.id)) {
       throw new Error(`Duplicate member insertion: (name: ${memberSerialized.name}, id: ${memberSerialized.id})`);
     }
 
-    const member = new MemberEntity(memberSerialized);
-    this.storage.push(member);
-    this.updateEmitter.emit(DbEvent.Create, member);
+    const doc = await MemberModel.create(memberSerialized);
 
-    if (QuizDAO.isInitialized) {
-      this.notifyQuizDAO(member);
-    } else {
-      QuizDAO.updateEmitter.once(DbEvent.Initialized, () => this.notifyQuizDAO(member));
-    }
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(memberSerialized.currentQuizName), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Added,
+      payload: { member: doc.toJSON() },
+    })));
+
+    return doc;
   }
 
-  public updateMember(id: ObjectId, updatedFields: { [key: string]: any }): void {
-    const member = this.getMemberById(id);
-    if (!member) {
-      throw new Error(`Unknown updated member: ${id.toHexString()}`);
-    }
-
-    Object.keys(updatedFields).forEach(key => member[key] = updatedFields[key]);
-
-    this.updateEmitter.emit(DbEvent.Change, member);
-  }
-
-  public removeAllMembers(): void {
-    this.storage.forEach(member => {
-      this.updateEmitter.emit(DbEvent.Delete, member);
-      QuizDAO.getQuizByName(member.currentQuizName).onMemberRemoved(member);
+  public async removeAllMembers(): Promise<void> {
+    const members = await MemberModel.find().exec();
+    members.forEach(member => {
+      AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(member.currentQuizName), '.*', Buffer.from(JSON.stringify({
+        status: StatusProtocol.Success,
+        step: MessageProtocol.Removed,
+        payload: { name: member.name },
+      })));
     });
-    this.storage.splice(0, this.storage.length);
+
+    await MemberModel.deleteMany({}).exec();
   }
 
-  public removeMember(id: ObjectId | string): void {
-    const members = this.storage.splice(this.storage.findIndex(val => val.id.equals(id)), 1);
-
-    if (members.length) {
-      this.updateEmitter.emit(DbEvent.Delete, members[0]);
-      const quiz = QuizDAO.getQuizByName(members[0].currentQuizName);
-      if (quiz) {
-        quiz.onMemberRemoved(members[0]);
-      }
-    }
+  public async removeMember(id: ObjectId | string): Promise<void> {
+    const member = await MemberModel.findByIdAndRemove(id).exec();
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(member.currentQuizName), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Removed,
+      payload: { name: member.name },
+    })));
   }
 
-  public getMembersOfQuiz(quizName: string): Array<MemberEntity> {
-    return this.storage.filter(val => !!val.currentQuizName.match(new RegExp(`^${RegExp.escape(quizName)}$`, 'i')));
+  public getMembersOfQuiz(quizName: string): Promise<Array<Document & MemberModelItem>> {
+    return MemberModel.find({ currentQuizName: quizName }).exec();
   }
 
-  public getMemberByToken(token: string): MemberEntity {
-    return this.storage.find(val => val.token === token);
+  public getMemberByToken(token: string): Promise<Document & MemberModelItem> {
+    return MemberModel.findOne({ token }).exec();
   }
 
-  public removeMembersOfQuiz(removedQuiz: QuizEntity | IQuizEntity): void {
-    DbDAO.deleteMany(DbCollection.Members, { currentQuizName: removedQuiz.name });
+  public async removeMembersOfQuiz(quizName: string): Promise<void> {
+    const members = await MemberModel.find({ currentQuizName: quizName }).exec();
+    members.forEach(member => {
+      AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(member.currentQuizName), '.*', Buffer.from(JSON.stringify({
+        status: StatusProtocol.Success,
+        step: MessageProtocol.Removed,
+        payload: { name: member.name },
+      })));
+    });
+
+    await MemberModel.deleteMany({ currentQuizName: quizName }).exec();
   }
 
-  public getMemberAmountPerQuizGroup(name: string, groups: Array<string>): object {
+  public async getMemberAmountPerQuizGroup(name: string, groups: Array<string>): Promise<object> {
     const result = {};
     groups.forEach(g => result[g] = 0);
 
-    this.getMembersOfQuiz(name).forEach(member => {
+    (await this.getMembersOfQuiz(name)).forEach(member => {
       result[member.groupName]++;
     });
 
     return result;
   }
 
-  private notifyQuizDAO(member: MemberEntity): void {
-    const quiz = QuizDAO.getQuizByName(member.currentQuizName);
-    if (!quiz) {
-      console.error(`The quiz '${member.currentQuizName}' for the member ${member.name} could not be found. Removing member.`);
-      DbDAO.deleteOne(DbCollection.Members, { _id: member.id });
-      return;
-    }
-    QuizDAO.getQuizByName(member.currentQuizName).onMemberAdded(member);
+  public resetMembersOfQuiz(name: string, questionAmount: number): Promise<any> {
+    return MemberModel.updateMany({ currentQuizName: name }, {
+      responses: this.generateResponseForQuiz(questionAmount),
+    }).exec();
   }
 
-  private getMemberById(id: ObjectId | string): MemberEntity {
-    return this.storage.find(val => val.id.equals(id));
+  public async setReadingConfirmation(member: Document & MemberModelItem): Promise<void> {
+    const quiz = await QuizDAO.getQuizByName(member.currentQuizName);
+
+    member.responses[quiz.currentQuestionIndex].readingConfirmation = true;
+
+    const queryPath = `responses.${quiz.currentQuestionIndex}.readingConfirmation`;
+    await MemberModel.updateOne({ _id: member._id }, { [queryPath]: true }).exec();
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.UpdatedResponse,
+      payload: {
+        nickname: member.name,
+        questionIndex: quiz.currentQuestionIndex,
+        update: { readingConfirmation: true },
+      },
+    })));
+  }
+
+  public async setConfidenceValue(member: Document & MemberModelItem, confidenceValue: number): Promise<void> {
+    const quiz = await QuizDAO.getQuizByName(member.currentQuizName);
+
+    member.responses[quiz.currentQuestionIndex].confidence = confidenceValue;
+
+    const queryPath = `responses.${quiz.currentQuestionIndex}.confidence`;
+    await MemberModel.updateOne({ _id: member._id }, { [queryPath]: confidenceValue }).exec();
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.UpdatedResponse,
+      payload: {
+        nickname: member.name,
+        questionIndex: quiz.currentQuestionIndex,
+        update: { confidence: confidenceValue },
+      },
+    })));
+  }
+
+  public async addResponseValue(member: Document & MemberModelItem, data: string | number | Array<number>): Promise<void> {
+    const quiz = await QuizDAO.getQuizByName(member.currentQuizName);
+    const responseTime = new Date().getTime() - quiz.currentStartTimestamp;
+
+    member.responses[quiz.currentQuestionIndex].value = data;
+
+    const queryPathValue = `responses.${quiz.currentQuestionIndex}.value`;
+    const queryPathResponseTime = `responses.${quiz.currentQuestionIndex}.responseTime`;
+    await MemberModel.updateOne({ _id: member._id }, {
+      [queryPathValue]: data,
+      [queryPathResponseTime]: responseTime,
+    }).exec();
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.UpdatedResponse,
+      payload: {
+        nickname: member.name,
+        questionIndex: quiz.currentQuestionIndex,
+        update: {
+          value: data,
+          responseTime,
+        },
+      },
+    })));
+
+    if ((await this.getMembersOfQuiz(quiz.name)).every(nick => {
+      const val = nick.responses[quiz.currentQuestionIndex].value;
+      return typeof val === 'number' ? val > -1 : val.length > 0;
+    })) {
+      await QuizDAO.stopQuiz(quiz);
+    }
+  }
+
+  public removeMemberByName(quizName: string, nickname: string): Promise<Document & MemberModelItem> {
+    const doc = MemberModel.findOneAndRemove({
+      currentQuizName: quizName,
+      name: nickname,
+    }).exec();
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Removed,
+      payload: { name: nickname },
+    })));
+
+    return doc;
+  }
+
+  public getMembers(): Promise<Array<Document & MemberModelItem>> {
+    return MemberModel.find().exec();
+  }
+
+  public generateResponseForQuiz(questionAmount: number): Array<IQuizResponse> {
+    const responses: Array<IQuizResponse> = [];
+    for (let i = 0; i < questionAmount; i++) {
+      responses[i] = {
+        value: [],
+        responseTime: -1,
+        confidence: -1,
+        readingConfirmation: false,
+      };
+    }
+    return responses;
+  }
+
+  private getMemberById(id: ObjectId | string): Promise<Document & MemberModelItem> {
+    return MemberModel.findById(id).exec();
   }
 }
 

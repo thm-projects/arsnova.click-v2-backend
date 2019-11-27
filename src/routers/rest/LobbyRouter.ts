@@ -1,12 +1,9 @@
 import { BodyParam, Delete, Get, JsonController, Param, Put } from 'routing-controllers';
 import AMQPConnector from '../../db/AMQPConnector';
-import DbDAO from '../../db/DbDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
-import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';
-import { IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
-import { QuizModel } from '../../models/quiz/QuizModelItem';
+import { QuizModelItem } from '../../models/quiz/QuizModelItem';
 import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/lobby')
@@ -14,11 +11,11 @@ export class LobbyRouter extends AbstractRouter {
 
   @Put('/')
   private async putOpenLobby( //
-    @BodyParam('quiz') quiz: IQuizSerialized, //
+    @BodyParam('quiz') quiz: QuizModelItem, //
     @BodyParam('privateKey') privateKey: string, //
   ): Promise<object> {
 
-    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.SetActive,
       payload: {
@@ -29,16 +26,12 @@ export class LobbyRouter extends AbstractRouter {
     quiz.state = QuizState.Active;
     quiz.currentQuestionIndex = -1;
     quiz.currentStartTimestamp = -1;
-    const addedQuiz = QuizDAO.getQuizByName(quiz.name);
+
+    const addedQuiz = await QuizDAO.getQuizByName(quiz.name);
     if (addedQuiz) {
-      DbDAO.updateOne(DbCollection.Quizzes, { _id: addedQuiz.id }, quiz);
+      await QuizDAO.updateQuiz(addedQuiz._id, quiz);
     } else {
-      const quizValidator = new QuizModel(quiz);
-      const result = quizValidator.validateSync();
-      if (result) {
-        throw result;
-      }
-      await quizValidator.save();
+      await QuizDAO.addQuiz(quiz);
     }
 
     return {
@@ -48,11 +41,11 @@ export class LobbyRouter extends AbstractRouter {
   }
 
   @Get('/:quizName')
-  private getLobbyData(@Param('quizName') quizName: string, //
-  ): object {
+  private async getLobbyData(@Param('quizName') quizName: string, //
+  ): Promise<object> {
 
     const isActive = QuizDAO.isActiveQuiz(quizName);
-    const quiz = isActive ? QuizDAO.getActiveQuizByName(quizName).serialize() : null;
+    const quiz = isActive ? (await QuizDAO.getActiveQuizByName(quizName)).toJSON() : null;
 
     return {
       status: StatusProtocol.Success,
@@ -64,15 +57,15 @@ export class LobbyRouter extends AbstractRouter {
   }
 
   @Delete('/')
-  private deleteLobby(@BodyParam('quizName') quizName: string, //
-  ): object {
+  private async deleteLobby(@BodyParam('quizName') quizName: string, //
+  ): Promise<object> {
 
-    const addedQuiz = QuizDAO.getQuizByName(quizName);
+    const addedQuiz = await QuizDAO.getQuizByName(quizName);
     if (addedQuiz) {
-      DbDAO.updateOne(DbCollection.Quizzes, { _id: addedQuiz.id }, { state: QuizState.Inactive });
+      await QuizDAO.updateQuiz(addedQuiz._id, { state: QuizState.Inactive });
     }
 
-    AMQPConnector.channel.publish('global', '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.SetInactive,
       payload: {

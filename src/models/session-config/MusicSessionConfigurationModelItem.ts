@@ -1,10 +1,10 @@
 import { prop } from '@typegoose/typegoose';
-import { IMusicSessionConfigurationSerialized } from '../../interfaces/session_configuration/music/IMusicSessionConfigurationSerialized';
+import { IMusicSessionConfiguration } from '../../interfaces/session_configuration/music/IMusicSessionConfiguration';
 import { TitleMusicSessionConfigurationModelItem } from './TitleMusicSessionConfigurationModelItem';
 import { VolumeMusicSessionConfigurationModelItem } from './VolumeMusicSessionConfigurationModelItem';
 
-export class MusicSessionConfigurationModelItem implements IMusicSessionConfigurationSerialized {
+export class MusicSessionConfigurationModelItem implements IMusicSessionConfiguration {
   @prop() public enabled: { lobby: boolean; countdownRunning: boolean; countdownEnd: boolean };
-  @prop() public titleConfig: TitleMusicSessionConfigurationModelItem;
-  @prop() public volumeConfig: VolumeMusicSessionConfigurationModelItem;
+  @prop({ _id: false }) public titleConfig: TitleMusicSessionConfigurationModelItem;
+  @prop({ _id: false }) public volumeConfig: VolumeMusicSessionConfigurationModelItem;
 }

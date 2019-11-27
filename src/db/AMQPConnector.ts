@@ -3,6 +3,7 @@ import { settings } from '../statistics';
 
 class AMQPConnector {
   private static _instance: AMQPConnector;
+  public readonly globalExchange: string = 'global';
 
   private _channel: Channel;
 
@@ -36,6 +37,13 @@ class AMQPConnector {
       console.error('Exception in amqp channel occured', error);
       this.initConnection();
     });
+  }
+
+  public buildQuizExchange(quizname: string): string {
+    if (!quizname) {
+      throw new Error(`Could not build exchange name. Quizname '${quizname}' is not supported.`);
+    }
+    return encodeURI(`quiz_${quizname.trim()}`);
   }
 }
 

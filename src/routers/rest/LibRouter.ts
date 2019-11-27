@@ -1,24 +1,24 @@
-import * as crypto from 'crypto';
 import { Request, Response } from 'express';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as mjAPI from 'mathjax-node';
+import { Document } from 'mongoose';
 import * as path from 'path';
 import {
   BadRequestError, BodyParam, ContentType, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
 } from 'routing-controllers';
 import * as xml2js from 'xml2js';
+import AssetDAO from '../../db/AssetDAO';
 import CasDAO from '../../db/CasDAO';
-import DbDAO from '../../db/DbDAO';
 import MathjaxDAO from '../../db/MathjaxDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import UserDAO from '../../db/UserDAO';
-import { AbstractAnswerEntity } from '../../entities/answer/AbstractAnswerEntity';
-import { DbCollection } from '../../enums/DbOperation';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
-import { IQuizSerialized } from '../../interfaces/quizzes/IQuizEntity';
+import { IMessage } from '../../interfaces/communication/IMessage';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { ICasData } from '../../interfaces/users/ICasData';
 import { MatchTextToAssetsDb } from '../../lib/cache/assets';
+import { UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
@@ -231,7 +231,7 @@ export class LibRouter extends AbstractRouter {
   }
 
   @Post('/cache/quiz/assets')
-  public async cacheQuizAssets(@BodyParam('quiz') quiz: IQuizSerialized): Promise<object> {
+  public async cacheQuizAssets(@BodyParam('quiz') quiz: IQuiz): Promise<IMessage> {
 
     if (!quiz) {
       throw new BadRequestError(`Malformed request received -> ${quiz}`);
@@ -241,7 +241,7 @@ export class LibRouter extends AbstractRouter {
 
     quiz.questionList.forEach(question => {
       promises.push(MatchTextToAssetsDb(question.questionText).then(val => question.questionText = val));
-      question.answerOptionList.forEach((answerOption: AbstractAnswerEntity) => {
+      question.answerOptionList.forEach(answerOption => {
         promises.push(MatchTextToAssetsDb(answerOption.answerText).then(val => answerOption.answerText = val));
       });
     });
@@ -258,9 +258,8 @@ export class LibRouter extends AbstractRouter {
   }
 
   @Get('/cache/quiz/assets/:digest')
-  public async getCache(@Param('digest') digest: string, @Res() response: Response): Promise<Buffer> {
-
-    const doc = await DbDAO.readOne(DbCollection.Assets, { digest });
+  public async getCache(@Param('digest') digest: string, @Res() response: Response): Promise<ArrayBufferLike> {
+    const doc = await AssetDAO.getAssetByDigest(digest);
     if (!doc || !doc.data) {
       throw new NotFoundError(`Malformed request received -> ${digest}`);
     }
@@ -344,13 +343,13 @@ export class LibRouter extends AbstractRouter {
     @BodyParam('passwordHash', { required: false }) password: string,
     @BodyParam('tokenHash', { required: false }) tokenHash: string,
     @BodyParam('token', { required: false }) token: string,
-  ): Promise<object> {
+  ): Promise<IMessage> {
 
-    let user;
+    let user: Document & UserModelItem;
     if (username) {
-      user = UserDAO.getUser(username);
+      user = await UserDAO.getUser(username);
 
-      if (!password || !user || !UserDAO.validateUser(username, password)) {
+      if (!password || !user || !(await UserDAO.validateUser(username, password))) {
         throw new UnauthorizedError(JSON.stringify({
           status: StatusProtocol.Failed,
           step: MessageProtocol.AuthenticateStatic,
@@ -359,7 +358,7 @@ export class LibRouter extends AbstractRouter {
       }
 
     } else if (tokenHash) {
-      user = UserDAO.getUserByTokenHash(tokenHash);
+      user = await UserDAO.getUserByTokenHash(tokenHash);
 
       if (!user) {
         throw new UnauthorizedError(JSON.stringify({
@@ -379,19 +378,20 @@ export class LibRouter extends AbstractRouter {
 
     if (!token || typeof token !== 'string' || token.length === 0) {
       token = await AuthService.generateToken(user);
-      DbDAO.updateOne(DbCollection.Users, { _id: user.id }, { token });
+      await UserDAO.updateUser(user.id, { token });
+      const quizzes = (await QuizDAO.getQuizzesByPrivateKey(user.privateKey)).map(quiz => quiz.toJSON());
 
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.AuthenticateStatic,
         payload: {
           token,
-          quizzes: QuizDAO.getAllQuizzes().filter(quiz => quiz.privateKey === user.privateKey).map(quiz => quiz.serialize()),
+          quizzes,
         },
       };
     }
 
-    const isTokenValid = UserDAO.validateTokenForUser(username, token);
+    const isTokenValid = await UserDAO.validateTokenForUser(username, token);
     if (!isTokenValid) {
       throw new UnauthorizedError(JSON.stringify({
         status: StatusProtocol.Failed,
@@ -408,9 +408,9 @@ export class LibRouter extends AbstractRouter {
   }
 
   @Get('/authorize/validate/:username/:token')
-  private validateToken(@Param('username') username: string, @Param('token') token: string): object {
+  private async validateToken(@Param('username') username: string, @Param('token') token: string): Promise<IMessage> {
 
-    if (!UserDAO.validateTokenForUser(username, token)) {
+    if (!(await UserDAO.validateTokenForUser(username, token))) {
       return {
         status: StatusProtocol.Failed,
         step: MessageProtocol.AuthenticateStatic,
@@ -422,12 +422,5 @@ export class LibRouter extends AbstractRouter {
       status: StatusProtocol.Success,
       step: MessageProtocol.AuthenticateStatic,
     };
-  }
-
-  private randomValueHex(len: number = 40): string {
-    return crypto.randomBytes( //
-      Math.ceil((len) / 2), //
-    ).toString('hex') // convert to hexadecimal format
-    .slice(0, len);   // return required number of characters
   }
 }

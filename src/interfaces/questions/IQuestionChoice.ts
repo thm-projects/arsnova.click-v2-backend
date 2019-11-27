@@ -1,13 +1,6 @@
-import { IQuestionSerialized } from './IQuestion';
+import { IQuestion } from './IQuestion';
 
-export interface IQuestionChoiceBase extends IQuestionSerialized {
+export interface IQuestionChoice extends IQuestion {
   displayAnswerText: boolean;
   showOneAnswerPerRow: boolean;
-}
-
-export interface IQuestionChoice extends IQuestionChoiceBase {
-  displayAnswerText: boolean;
-  showOneAnswerPerRow: boolean;
-
-  addDefaultAnswerOption(index?: number): void;
 }

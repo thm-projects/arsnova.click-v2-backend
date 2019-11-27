@@ -25,7 +25,7 @@ class ExpiryQuizTestSuite {
 
   @test
   public async postQuizApiExists(): Promise<void> {
-    LoginDAO.initUser({
+    await LoginDAO.initUser({
       name: 'testuser',
       passwordHash: 'hash',
       tokenHash: 'hash',
@@ -33,9 +33,9 @@ class ExpiryQuizTestSuite {
       gitlabToken: '',
       userAuthorizations: [UserRole.CreateExpiredQuiz],
     });
-    const user = LoginDAO.getUser('testuser');
+    const user = await LoginDAO.getUser('testuser');
     const token = await AuthService.generateToken(user);
-    LoginDAO.setTokenForUser('testuser', token);
+    await LoginDAO.setTokenForUser('testuser', token);
     const res = await chai.request(app).post(`${this._baseApiRoute}/quiz`).set('authorization', token).send({
       quiz: {},
       expiry: new Date(),

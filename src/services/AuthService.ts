@@ -3,21 +3,22 @@ import { UnauthorizedError } from 'routing-controllers';
 import UserDAO from '../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { UserRole } from '../enums/UserRole';
-import { IUserEntity } from '../interfaces/users/IUserEntity';
+import { UserModelItem } from '../models/UserModelItem/UserModel';
 import { staticStatistics } from '../statistics';
 
 export class AuthService {
 
-  public static authenticate({ username, password, searchRoles }: { username: any; password: any; searchRoles: UserRole[] }): boolean {
-    const user = UserDAO.getUser(username);
-    if (!user || !UserDAO.validateUser(username, password)) {
+  public static async authenticate({ username, password, searchRoles }: { username: any; password: any; searchRoles: UserRole[] }): Promise<boolean> {
+    const user = await UserDAO.getUser(username);
+    if (!user || !(await UserDAO.validateUser(username, password))) {
       throw new UnauthorizedError(JSON.stringify({
         status: StatusProtocol.Failed,
         message: MessageProtocol.NotAuthorized,
       }));
     }
-    const token = UserDAO.getUser(username).token;
-    if (!token || !UserDAO.validateTokenForUser(username, token)) {
+
+    const token = (await UserDAO.getUser(username)).token;
+    if (!token || !(await UserDAO.validateTokenForUser(username, token))) {
       throw new UnauthorizedError(JSON.stringify({
         status: StatusProtocol.Failed,
         message: MessageProtocol.NotAuthorized,
@@ -39,7 +40,7 @@ export class AuthService {
     });
   }
 
-  public static generateToken(user: IUserEntity): string {
+  public static generateToken(user: UserModelItem): string {
     const availableRoles: Array<string> = [];
     Object.keys(UserRole).forEach(role => {
       if (user.userAuthorizations.includes(UserRole[role])) {

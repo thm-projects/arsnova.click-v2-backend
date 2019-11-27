@@ -1,5 +1,5 @@
-import { IQuestionChoiceBase } from './IQuestionChoice';
+import { IQuestionChoice } from './IQuestionChoice';
 
-export interface IQuestionSurveyBase extends IQuestionChoiceBase {
+export interface IQuestionSurvey extends IQuestionChoice {
   multipleSelectionEnabled: boolean;
 }

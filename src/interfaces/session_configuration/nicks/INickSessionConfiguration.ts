@@ -1,4 +1,4 @@
-export interface INickSessionConfigurationSerialized {
+export interface INickSessionConfiguration {
   memberGroups: Array<string>;
   maxMembersPerGroup: number;
   autoJoinToGroup: boolean;

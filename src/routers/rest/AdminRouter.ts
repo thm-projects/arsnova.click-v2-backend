@@ -1,15 +1,14 @@
+import { ObjectId } from 'bson';
 import { Authorized, BodyParam, Delete, Get, JsonController, Param, Post, Put } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
-import { default as DbDAO } from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import UserDAO from '../../db/UserDAO';
-import { DbCollection } from '../../enums/DbOperation';
 import { QuizState } from '../../enums/QuizState';
 import { UserRole } from '../../enums/UserRole';
 import { IAdminQuiz } from '../../interfaces/quizzes/IAdminQuiz';
 import { IUserSerialized } from '../../interfaces/users/IUserSerialized';
-import { UserModel } from '../../models/UserModelItem/UserModel';
+import { UserModel, UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/admin')
@@ -19,8 +18,8 @@ export class AdminRouter extends AbstractRouter {
   @OpenAPI({
     description: 'Returns all available users',
   })
-  private getUsers(): object {
-    return Object.values(UserDAO.storage).map(user => user.serialize());
+  private getUsers(): Promise<Array<UserModelItem>> {
+    return UserModel.find().lean().exec();
   }
 
   @Delete('/user/:username') //
@@ -28,8 +27,8 @@ export class AdminRouter extends AbstractRouter {
     description: 'Removes a given user',
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
-  private deleteUser(@Param('username') username: string): void {
-    UserDAO.removeUser(UserDAO.getUser(username).id);
+  private async deleteUser(@Param('username') username: string): Promise<void> {
+    await UserDAO.removeUser((await UserDAO.getUser(username)).id);
   }
 
   @Put('/user') //
@@ -45,7 +44,7 @@ export class AdminRouter extends AbstractRouter {
     @BodyParam('passwordHash') tokenHash: string, //
     @BodyParam('userAuthorizations') userAuthorizations: Array<string>, //
     @BodyParam('gitlabToken', { required: false }) gitlabToken: string, //
-  ): void {
+  ): Promise<UserModelItem> {
 
     const userData: IUserSerialized = {
       name,
@@ -55,26 +54,19 @@ export class AdminRouter extends AbstractRouter {
       userAuthorizations,
       gitlabToken,
     };
-    const userValidator = new UserModel(userData);
-    const result = userValidator.validateSync();
-    if (result) {
-      throw result;
-    }
 
-    if (originalUser && UserDAO.getUser(originalUser)) {
-      DbDAO.updateOne(DbCollection.Users, { name: originalUser }, userData);
-      return;
-    }
-
-    userValidator.save();
+    return UserModel.updateOne({ name: originalUser }, userData, {
+      upsert: true,
+      setDefaultsOnInsert: true,
+    }).lean().exec();
   }
 
   @Get('/quizzes') //
   @OpenAPI({
     description: 'Returns all available quizzes',
   })
-  private getQuizzes(): Array<IAdminQuiz> {
-    return QuizDAO.getAllQuizzes().map(quiz => {
+  private async getQuizzes(): Promise<Array<IAdminQuiz>> {
+    return Promise.all((await QuizDAO.getAllQuizzes()).map(async quiz => {
       let questionAmount = 0;
       let answerAmount = 0;
       if (Array.isArray(quiz.questionList) && quiz.questionList.length) {
@@ -82,18 +74,19 @@ export class AdminRouter extends AbstractRouter {
         answerAmount = quiz.questionList.map(question => question.answerOptionList.length)
         .reduce((previousValue, currentValue) => previousValue + currentValue);
       }
+      const memberAmount = await MemberDAO.getMembersOfQuiz(quiz.name);
 
       return {
         state: quiz.state,
-        id: quiz.id.toHexString(),
+        id: quiz._id.toHexString(),
         name: quiz.name,
         expiry: quiz.expiry,
         visibility: quiz.visibility,
         questionAmount,
         answerAmount,
-        memberAmount: MemberDAO.getMembersOfQuiz(quiz.name).map(member => member.serialize()),
+        memberAmount,
       };
-    });
+    }));
   }
 
   @Post('/quiz') //
@@ -102,23 +95,21 @@ export class AdminRouter extends AbstractRouter {
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   private async updateQuizState(@BodyParam('quizname') quizname: string): Promise<void> {
-    const quiz = QuizDAO.getQuizByName(quizname);
+    const quiz = await QuizDAO.getQuizByName(quizname);
     if (!quiz) {
       return;
     }
 
-    DbDAO.updateOne(DbCollection.Quizzes, { _id: quiz.id }, { state: QuizState.Inactive });
-    DbDAO.deleteMany(DbCollection.Members, { currentQuizName: quiz.name });
-
-    quiz.onRemove();
+    await QuizDAO.updateQuiz(quiz._id, { state: QuizState.Inactive });
+    await MemberDAO.removeMembersOfQuiz(quiz.name);
   }
 
   @Get('/quiz/:id') //
   @OpenAPI({
     description: 'Returns an available quiz by the id',
   })
-  private getQuiz(@Param('id') quizId: string): object {
-    return QuizDAO.getQuizById(quizId).serialize();
+  private async getQuiz(@Param('id') quizId: string): Promise<object> {
+    return (await QuizDAO.getQuizById(new ObjectId(quizId))).toJSON();
   }
 
   @Delete('/quiz/:quizName') //
@@ -127,8 +118,6 @@ export class AdminRouter extends AbstractRouter {
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   private async deleteQuiz(@Param('quizName') quizName: string): Promise<void> {
-    await DbDAO.deleteOne(DbCollection.Quizzes, {
-      name: quizName,
-    });
+    await QuizDAO.removeQuizByName(quizName);
   }
 }

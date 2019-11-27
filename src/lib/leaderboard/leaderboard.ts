@@ -1,13 +1,12 @@
 import MemberDAO from '../../db/MemberDAO';
-import { FreeTextAnswerEntity } from '../../entities/answer/FreetextAnwerEntity';
-import { AbstractChoiceQuestionEntity } from '../../entities/question/AbstractChoiceQuestionEntity';
-import { AbstractQuestionEntity } from '../../entities/question/AbstractQuestionEntity';
-import { FreeTextQuestionEntity } from '../../entities/question/FreeTextQuestionEntity';
-import { RangedQuestionEntity } from '../../entities/question/RangedQuestionEntity';
 import { LeaderboardConfiguration } from '../../enums/LeaderboardConfiguration';
 import { QuestionType } from '../../enums/QuestionType';
 import { ILeaderBoardItemBase } from '../../interfaces/leaderboard/ILeaderBoardItemBase';
-import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
+import { IQuestionBase } from '../../interfaces/questions/IQuestion';
+import { IQuestionChoice } from '../../interfaces/questions/IQuestionChoice';
+import { IQuestionFreetext } from '../../interfaces/questions/IQuestionFreetext';
+import { IQuestionRanged } from '../../interfaces/questions/IQuestionRanged';
+import { IQuizBase } from '../../interfaces/quizzes/IQuizEntity';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
 import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
@@ -32,21 +31,21 @@ export class Leaderboard {
     }
   }
 
-  public isCorrectResponse(response: IQuizResponse, question: AbstractQuestionEntity): number {
+  public isCorrectResponse(response: IQuizResponse, question: IQuestionBase): number {
     switch (question.TYPE) {
       case QuestionType.SingleChoiceQuestion:
       case QuestionType.YesNoSingleChoiceQuestion:
       case QuestionType.TrueFalseSingleChoiceQuestion:
-        return this.isCorrectSingleChoiceQuestion(<number>response.value[0], <AbstractChoiceQuestionEntity>question) ? 1 : -1;
+        return this.isCorrectSingleChoiceQuestion(<number>response.value[0], question as IQuestionChoice) ? 1 : -1;
       case QuestionType.MultipleChoiceQuestion:
-        return this.isCorrectMultipleChoiceQuestion(<Array<number>>response.value, <AbstractChoiceQuestionEntity>question);
+        return this.isCorrectMultipleChoiceQuestion(<Array<number>>response.value, question as IQuestionChoice);
       case QuestionType.ABCDSingleChoiceQuestion:
       case QuestionType.SurveyQuestion:
         return 1;
       case QuestionType.RangedQuestion:
-        return this.isCorrectRangedQuestion(<number>response.value, <RangedQuestionEntity>question);
+        return this.isCorrectRangedQuestion(<number>response.value, question as IQuestionRanged);
       case QuestionType.FreeTextQuestion:
-        return this.isCorrectFreeTextQuestion(<string>response.value, <FreeTextQuestionEntity>question) ? 1 : -1;
+        return this.isCorrectFreeTextQuestion(<string>response.value, question as IQuestionFreetext) ? 1 : -1;
       default:
         throw new Error(`Unsupported question type while checking correct response. Received type ${question.TYPE}`);
     }
@@ -68,7 +67,7 @@ export class Leaderboard {
     }).filter(value => value.score > 0);
   }
 
-  public buildLeaderboard(activeQuiz: IQuizEntity, questionIndex?: number): any {
+  public async buildLeaderboard(activeQuiz: IQuizBase, questionIndex?: number): Promise<any> {
     let scoringLeaderboard: AbstractLeaderboardScore;
 
     if (activeQuiz.sessionConfig.leaderboardAlgorithm === LeaderboardConfiguration.TimeBased) {
@@ -85,7 +84,7 @@ export class Leaderboard {
 
     const orderByGroups = activeQuiz.sessionConfig.nicks.memberGroups.length > 1;
     const memberGroupResults = {};
-    const members = MemberDAO.getMembersOfQuiz(activeQuiz.name);
+    const members = await MemberDAO.getMembersOfQuiz(activeQuiz.name);
 
     activeQuiz.sessionConfig.nicks.memberGroups.forEach((memberGroup) => {
       const membersOfGroup = members.filter(member => member.groupName === memberGroup);
@@ -104,7 +103,7 @@ export class Leaderboard {
         }
 
         for (let i = 0; i < endIndex; i++) {
-          const question: AbstractQuestionEntity = activeQuiz.questionList[i];
+          const question = activeQuiz.questionList[i] as IQuestionChoice;
           if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
             continue;
           }
@@ -169,7 +168,7 @@ export class Leaderboard {
     }
   }
 
-  private isCorrectSingleChoiceQuestion(response: number, question: AbstractChoiceQuestionEntity): boolean {
+  private isCorrectSingleChoiceQuestion(response: number, question: IQuestionChoice): boolean {
     if (typeof response === 'undefined' || typeof response !== 'number' || !question.answerOptionList[response]) {
       return false;
     }
@@ -177,7 +176,7 @@ export class Leaderboard {
     return question.answerOptionList[response] && question.answerOptionList[response].isCorrect;
   }
 
-  private isCorrectMultipleChoiceQuestion(response: Array<number>, question: AbstractChoiceQuestionEntity): number {
+  private isCorrectMultipleChoiceQuestion(response: Array<number>, question: IQuestionChoice): number {
     if (!Array.isArray(response)) {
       return -1;
     }
@@ -200,7 +199,7 @@ export class Leaderboard {
     return !hasWrongAnswers && hasCorrectAnswers ? 1 : hasWrongAnswers && hasCorrectAnswers ? 0 : -1;
   }
 
-  private isCorrectRangedQuestion(response: number, question: RangedQuestionEntity): number {
+  private isCorrectRangedQuestion(response: number, question: IQuestionRanged): number {
     if (typeof response === 'undefined' || typeof response !== 'number') {
       return -1;
     }
@@ -208,12 +207,12 @@ export class Leaderboard {
     return response === question.correctValue ? 1 : response >= question.rangeMin && response <= question.rangeMax ? 0 : -1;
   }
 
-  private isCorrectFreeTextQuestion(response: string, question: FreeTextQuestionEntity): boolean {
+  private isCorrectFreeTextQuestion(response: string, question: IQuestionFreetext): boolean {
     if (typeof response === 'undefined' || typeof response !== 'string') {
       return false;
     }
 
-    const answerOption: FreeTextAnswerEntity = <FreeTextAnswerEntity>question.answerOptionList[0];
+    const answerOption = question.answerOptionList[0];
     let refValue = answerOption.answerText;
     let result = false;
 

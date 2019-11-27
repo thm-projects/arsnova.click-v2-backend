@@ -4,13 +4,11 @@ import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
-
 import app from '../../App';
 import QuizDAO from '../../db/quiz/QuizDAO';
-import { QuizEntity } from '../../entities/quiz/QuizEntity';
-import { SessionConfigurationEntity } from '../../entities/session-configuration/SessionConfigurationEntity';
-import { IQuizEntity } from '../../interfaces/quizzes/IQuizEntity';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { staticStatistics } from '../../statistics';
+import { generateQuiz } from '../fixtures';
 
 const chaiHttp = require('chai-http');
 
@@ -24,18 +22,14 @@ class LobbyApiRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/lobby`;
   private _hashtag = hashtag;
 
-  public static before(): void {
-    QuizDAO.initQuiz(new QuizEntity({
-      name: hashtag,
-      questionList: [],
-      sessionConfig: new SessionConfigurationEntity(),
-      privateKey: 'test',
-      readingConfirmationRequested: false,
-    }));
+  public async before(): Promise<void> {
+    const quiz: IQuiz = generateQuiz(hashtag);
+    const doc = await QuizDAO.addQuiz(quiz);
+    await QuizDAO.initQuiz(doc);
   }
 
-  public static after(): void {
-    QuizDAO.removeQuiz(QuizDAO.getQuizByName(hashtag).id);
+  public async after(): Promise<void> {
+    await QuizDAO.removeQuiz((await QuizDAO.getQuizByName(hashtag)).id);
   }
 
   @test
@@ -47,7 +41,7 @@ class LobbyApiRouterTestSuite {
 
   @test
   public async putOpenLobby(): Promise<void> {
-    const quiz: IQuizEntity = JSON.parse(
+    const quiz: IQuiz = JSON.parse(
       fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
     quiz.name = this._hashtag;
     const res = await chai.request(app).put(`${this._baseApiRoute}/`).send({ quiz });
@@ -68,6 +62,6 @@ class LobbyApiRouterTestSuite {
     const res = await chai.request(app).del(`${this._baseApiRoute}/`).send({ quizName: this._hashtag });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    await expect(!QuizDAO.isActiveQuiz(this._hashtag)).to.be.true;
+    await expect(await QuizDAO.isActiveQuiz(this._hashtag)).to.be.false;
   }
 }

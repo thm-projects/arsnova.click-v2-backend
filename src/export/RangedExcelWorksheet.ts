@@ -1,13 +1,14 @@
 import MemberDAO from '../db/MemberDAO';
-import { RangedQuestionEntity } from '../entities/question/RangedQuestionEntity';
-import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
+import { IQuestionRanged } from '../interfaces/questions/IQuestionRanged';
+import { asyncForEach } from '../lib/async-for-each';
+import { MemberModelItem } from '../models/member/MemberModel';
 import { ExcelWorksheet } from './ExcelWorksheet';
 import { calculateNumberOfRangedAnswers } from './lib/excel_function_library';
 
 export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
   private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
-  private readonly _question: RangedQuestionEntity;
+  private readonly _question: IQuestionRanged;
   private readonly _questionIndex: number;
 
   constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
@@ -20,12 +21,12 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     });
     this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
-    this._question = <RangedQuestionEntity>this.quiz.questionList[questionIndex];
+    this._question = this.quiz.questionList[questionIndex] as IQuestionRanged;
     this.formatSheet();
     this.addSheetData();
   }
 
-  public formatSheet(): void {
+  public async formatSheet(): Promise<void> {
     const defaultStyles = this._theme.getStyles();
     const answerCellStyle = {
       alignment: {
@@ -146,16 +147,16 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     });
     this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
-    this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
+    await asyncForEach(this.leaderBoardData, async (leaderboardItem, indexInList) => {
       let nextColumnIndex = 2;
       const targetRow = indexInList + 11;
       if (this._isCasRequired) {
         nextColumnIndex += 2;
       }
-      const responseItem = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickitem => {
+      const responseItem = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickitem => {
         return nickitem.name === leaderboardItem.name;
       })[0].responses[this._questionIndex];
-      const castedQuestion = <RangedQuestionEntity>this._question;
+      const castedQuestion = this._question as IQuestionRanged;
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
           horizontal: 'center',
@@ -188,9 +189,9 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     });
   }
 
-  public addSheetData(): void {
-    const castedQuestion = <RangedQuestionEntity>this._question;
-    const numberOfInputValuesPerGroup = calculateNumberOfRangedAnswers(this.quiz, this._questionIndex, castedQuestion.rangeMin,
+  public async addSheetData(): Promise<void> {
+    const castedQuestion = this._question as IQuestionRanged;
+    const numberOfInputValuesPerGroup = await calculateNumberOfRangedAnswers(this.quiz, this._questionIndex, castedQuestion.rangeMin,
       castedQuestion.correctValue, castedQuestion.rangeMax);
 
     this.ws.cell(1, 1).string(`${this.mf('export.question_type')}: ${this.mf(`export.type.${this._question.TYPE}`)}`);
@@ -213,13 +214,13 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = this.leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
-                                               / MemberDAO.getMembersOfQuiz(this.quiz.name).length * 100;
+                                               / (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      MemberDAO.getMembersOfQuiz(this.quiz.name).forEach((nickItem) => {
+      (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -238,8 +239,8 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(10, nextColumnIndex++).string(this.mf('export.time'));
 
     let nextStartRow = 10;
-    this.leaderBoardData.forEach((leaderboardItem) => {
-      const responseItem = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickitem => {
+    await asyncForEach(this.leaderBoardData, async leaderboardItem => {
+      const responseItem = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickitem => {
         return nickitem.name === leaderboardItem.name;
       })[0].responses[this._questionIndex];
 
@@ -247,7 +248,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(leaderboardItem.name);
       if (this._isCasRequired) {
-        const profile = MemberDAO.getMembersOfQuiz(this.quiz.name).filter((nick: IMemberEntity) => {
+        const profile = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter((nick: MemberModelItem) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
@@ -259,6 +260,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       }
       this.ws.cell(nextStartRow, nextColumnIndex++).number(leaderboardItem.responseTime);
     });
+
     if (nextStartRow === 10) {
       this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));
     }

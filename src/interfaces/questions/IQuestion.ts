@@ -1,6 +1,5 @@
 import { QuestionType } from '../../enums/QuestionType';
-import { IAnswerBase, IAnswerEntity } from '../answeroptions/IAnswerEntity';
-import { IValidationStackTrace } from '../IValidationStackTrace';
+import { IAnswer } from '../answeroptions/IAnswerEntity';
 
 export interface IQuestionBase {
   readonly TYPE: QuestionType;
@@ -9,22 +8,6 @@ export interface IQuestionBase {
   questionText: string;
 }
 
-export interface IQuestionSerialized extends IQuestionBase {
-  answerOptionList: Array<IAnswerBase>;
-}
-
 export interface IQuestion extends IQuestionBase {
-  answerOptionList: Array<IAnswerEntity>;
-
-  isValid(): boolean;
-
-  equals(question: IQuestion): boolean;
-
-  serialize(): any;
-
-  getValidationStackTrace(): Array<IValidationStackTrace>;
-
-  translationReferrer(): string;
-
-  translationDescription(): string;
+  answerOptionList: Array<IAnswer>;
 }

@@ -1,8 +1,9 @@
 import * as path from 'path';
 import MemberDAO from '../db/MemberDAO';
 import { QuestionType } from '../enums/QuestionType';
-import { IMemberEntity } from '../interfaces/entities/Member/IMemberEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
+import { asyncForEach } from '../lib/async-for-each';
+import { MemberModelItem } from '../models/member/MemberModel';
 import { staticStatistics } from '../statistics';
 import { ExcelWorksheet } from './ExcelWorksheet';
 
@@ -199,15 +200,15 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     });
   }
 
-  public addSheetData(): void {
+  public async addSheetData(): Promise<void> {
     let currentRowIndex = 1;
-    const numberOfResponses = MemberDAO.getMembersOfQuiz(this.quiz.name).filter(nickname => {
+    const numberOfResponses = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickname => {
       return nickname.responses.filter(response => {
         return !!response.value && response.value !== -1;
       }).length;
     }).length;
-    const allResponses: Array<IMemberEntity> = MemberDAO.getMembersOfQuiz(this.quiz.name);
-    const numberOfAttendees = MemberDAO.getMembersOfQuiz(this.quiz.name).length;
+    const allResponses: Array<MemberModelItem> = await MemberDAO.getMembersOfQuiz(this.quiz.name);
+    const numberOfAttendees = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length;
     const numberOfQuestions = this.quiz.questionList.length;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.quiz_name')}: ${this.quiz.name}`);
@@ -217,13 +218,13 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     this.ws.cell(currentRowIndex, 1).string(this.createdAt);
     this.ws.cell(currentRowIndex, this.columnsToFormat - 1, currentRowIndex, this.columnsToFormat, true)
-    .string(JSON.stringify(this.quiz.serialize()));
+    .string(JSON.stringify(this.quiz));
     currentRowIndex += 2;
 
     this.addLogoImage();
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.number_attendees')}:`);
-    this.ws.cell(currentRowIndex, 3).number(MemberDAO.getMembersOfQuiz(this.quiz.name).length);
+    this.ws.cell(currentRowIndex, 3).number((await MemberDAO.getMembersOfQuiz(this.quiz.name)).length);
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_number_attendees_participated')}:`);
@@ -279,7 +280,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     currentRowIndex++;
 
     let nextStartRow = currentRowIndex + 5;
-    this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
+    await asyncForEach(this.leaderBoardData, async (leaderboardItem, indexInList) => {
       if (this.quiz.questionList.some((item, index) => ![QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(item.TYPE)
                                                        && leaderboardItem.correctQuestions.indexOf((index)) === -1)) {
         return;
@@ -289,7 +290,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       const targetRow = indexInList + currentRowIndex;
       this.ws.cell(targetRow, nextColumnIndex++).string(leaderboardItem.name);
       if (this._isCasRequired) {
-        const profile = MemberDAO.getMembersOfQuiz(this.quiz.name).filter((nick: IMemberEntity) => {
+        const profile = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter((nick: MemberModelItem) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
@@ -329,12 +330,12 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.overall_response_time'));
     this.ws.cell(nextStartRow++, nextColumnIndex++).string(this.mf('export.average_response_time'));
 
-    allResponses.forEach((responseItem, indexInList) => {
+    await asyncForEach(allResponses, async (responseItem, indexInList) => {
       nextColumnIndex = 1;
       const targetRow = indexInList + nextStartRow;
       this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile = MemberDAO.getMembersOfQuiz(this.quiz.name).find((nick: IMemberEntity) => {
+        const profile = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).find((nick: MemberModelItem) => {
           return nick.name === responseItem.name;
         }).casProfile;
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);

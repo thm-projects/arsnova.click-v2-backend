@@ -1,9 +1,9 @@
 import { QuizState } from '../enums/QuizState';
-import { IQuizSerialized } from './quizzes/IQuizEntity';
+import { IQuiz } from './quizzes/IQuizEntity';
 
 export interface IQuizStatusPayload {
   startTimestamp?: number;
-  quiz?: IQuizSerialized;
+  quiz?: IQuiz;
   name?: string;
   state?: QuizState;
   available?: boolean;
