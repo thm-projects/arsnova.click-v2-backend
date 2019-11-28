@@ -11,7 +11,7 @@ export class ExpiryQuizRouter extends AbstractRouter {
 
   @Get('/')
   private async getAll(): Promise<object> {
-    const quiz: Array<QuizModelItem> = (await QuizDAO.getExpiryQuizzes()).map(quiz => quiz.toJSON());
+    const quiz: Array<QuizModelItem> = (await QuizDAO.getExpiryQuizzes()).map(expiryQuiz => expiryQuiz.toJSON());
 
     return {
       quiz,
