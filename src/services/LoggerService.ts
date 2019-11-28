@@ -6,6 +6,7 @@ import { staticStatistics } from '../statistics';
 class LoggerService {
 
   private static instance: LoggerService;
+  public useLog = true;
 
   private _logger: bunyan;
 

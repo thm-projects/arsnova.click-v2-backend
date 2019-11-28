@@ -3,6 +3,7 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
+import * as mongoUnit from 'mongo-unit';
 import * as path from 'path';
 import app from '../../App';
 import QuizDAO from '../../db/quiz/QuizDAO';
@@ -23,13 +24,14 @@ class LobbyApiRouterTestSuite {
   private _hashtag = hashtag;
 
   public async before(): Promise<void> {
+    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
     const quiz: IQuiz = generateQuiz(hashtag);
     const doc = await QuizDAO.addQuiz(quiz);
     await QuizDAO.initQuiz(doc);
   }
 
   public async after(): Promise<void> {
-    await QuizDAO.removeQuiz((await QuizDAO.getQuizByName(hashtag)).id);
+    return mongoUnit.drop();
   }
 
   @test
@@ -44,10 +46,13 @@ class LobbyApiRouterTestSuite {
     const quiz: IQuiz = JSON.parse(
       fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
     quiz.name = this._hashtag;
-    const res = await chai.request(app).put(`${this._baseApiRoute}/`).send({ quiz });
+    const res = await chai.request(app).put(`${this._baseApiRoute}/`).send({
+      quiz,
+      privateKey: 'privateKey',
+    });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    await expect(QuizDAO.isActiveQuiz(this._hashtag)).to.be.true;
+    await expect((await QuizDAO.isActiveQuiz(this._hashtag))).to.be.true;
   }
 
   @test

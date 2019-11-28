@@ -1,8 +1,7 @@
-import { arrayProp, getModelForClass, index, prop } from '@typegoose/typegoose';
+import { arrayProp, getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { IUserSerialized } from '../../interfaces/users/IUserSerialized';
-import LoggerService from '../../services/LoggerService';
 
 @index({ name: 1 }, { unique: true })
 export class UserModelItem implements IUserSerialized {
@@ -24,12 +23,8 @@ export const UserModel = getModelForClass(UserModelItem, {
     timestamps: true,
   },
   existingConnection: DbDAO.dbCon,
+  options: {
+    runSyncIndexes: true,
+    allowMixed: Severity.ALLOW,
+  },
 });
-
-UserModel.collection.dropIndexes().then(() => UserModel.createIndexes(err => {
-  if (!err) {
-    return;
-  }
-
-  LoggerService.error('Unique index for UserModel created with error', err);
-}));

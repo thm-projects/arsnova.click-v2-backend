@@ -1,6 +1,7 @@
 import MemberDAO from '../db/MemberDAO';
 import { IExcelWorksheet } from '../interfaces/iExcel';
 import { IQuestionFreetext } from '../interfaces/questions/IQuestionFreetext';
+import { asyncForEach } from '../lib/async-for-each';
 import { MemberModelItem } from '../models/member/MemberModel';
 import { ExcelWorksheet } from './ExcelWorksheet';
 
@@ -28,8 +29,10 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       });
     }));
 
-    this.formatSheet();
-    this.addSheetData();
+    this.loaded.on('load', () => {
+      this.formatSheet();
+      this.addSheetData();
+    });
   }
 
   public async formatSheet(): Promise<void> {
@@ -104,8 +107,8 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     });
     this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
-    this.allResponses.forEach((responseItem, indexInList) => {
-      const leaderboardItem = this.leaderBoardData.filter(lbItem => lbItem.name === responseItem.name)[0];
+    await asyncForEach(this.allResponses, async (responseItem, indexInList) => {
+      const leaderboardItem = (await this.getLeaderboardData()).filter(lbItem => lbItem.name === responseItem.name)[0];
       let nextColumnIndex = 2;
       const targetRow = indexInList + 11;
       if (this._isCasRequired) {
@@ -158,7 +161,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
        ${this.mf(answerOption.configTrimWhitespaces ? 'global.yes' : 'global.no')}`);
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = this.leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
+    const correctResponsesPercentage: number = (await this.getLeaderboardData()).map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
                                                / (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));

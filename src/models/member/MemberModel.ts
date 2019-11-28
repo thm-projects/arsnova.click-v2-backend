@@ -1,10 +1,9 @@
-import { arrayProp, getModelForClass, index, pre, prop } from '@typegoose/typegoose';
+import { arrayProp, getModelForClass, index, pre, prop, Severity } from '@typegoose/typegoose';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSerialized';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
 import { ICasData } from '../../interfaces/users/ICasData';
-import LoggerService from '../../services/LoggerService';
 
 @index({
   name: 1,
@@ -58,12 +57,9 @@ export const MemberModel = getModelForClass(MemberModelItem, {
     timestamps: true,
   },
   existingConnection: DbDAO.dbCon,
+  options: {
+    runSyncIndexes: true,
+    allowMixed: Severity.ALLOW,
+  },
 });
 
-MemberModel.collection.dropIndexes().then(() => MemberModel.createIndexes(err => {
-  if (!err) {
-    return;
-  }
-
-  LoggerService.error('Unique index for MemberModel created with error', err);
-}));

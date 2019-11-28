@@ -24,8 +24,11 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
     this._question = this.quiz.questionList[questionIndex] as IQuestionChoice;
-    this.formatSheet();
-    this.addSheetData();
+
+    this.loaded.on('load', () => {
+      this.formatSheet();
+      this.addSheetData();
+    });
   }
 
   public async formatSheet(): Promise<void> {
@@ -152,7 +155,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
 
-    const correctResponsesPercentage: number = this.leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
+    const correctResponsesPercentage: number = (await this.getLeaderboardData()).map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
                                                / (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
@@ -171,7 +174,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     for (let j = 0; j < answerList.length; j++) {
       this.ws.cell(2, (j + 2)).string(this.mf('export.answer') + ' ' + (j + 1));
       this.ws.cell(4, (j + 2)).string(answerList[j].answerText);
-      this.ws.cell(6, (j + 2)).number(calculateNumberOfAnswers(this.quiz, this._questionIndex, j));
+      this.ws.cell(6, (j + 2)).number(await calculateNumberOfAnswers(this.quiz, this._questionIndex, j));
     }
 
     let nextColumnIndex = 1;

@@ -2,6 +2,7 @@
 
 import * as chai from 'chai';
 import { suite, test } from 'mocha-typescript';
+import * as mongoUnit from 'mongo-unit';
 
 import app from '../../App';
 import LoginDAO from '../../db/UserDAO';
@@ -15,6 +16,14 @@ const expect = chai.expect;
 @suite
 class ExpiryQuizTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/expiry-quiz`;
+
+  public async before(): Promise<void> {
+    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
+  }
+
+  public async after(): Promise<void> {
+    return mongoUnit.drop();
+  }
 
   @test
   public async baseApiExists(): Promise<void> {

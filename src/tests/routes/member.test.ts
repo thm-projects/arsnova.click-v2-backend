@@ -1,17 +1,15 @@
 /// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
 import * as chai from 'chai';
-import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
-import * as path from 'path';
+import * as mongoUnit from 'mongo-unit';
 import * as sinon from 'sinon';
-import { SuperAgentRequest } from 'superagent';
 import app from '../../App';
 import AMQPConnector from '../../db/AMQPConnector';
+import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
-import { QuizState } from '../../enums/QuizState';
-import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { staticStatistics } from '../../statistics';
+import { generateQuiz } from '../fixtures';
 
 const chaiHttp = require('chai-http');
 
@@ -30,16 +28,11 @@ class MemberApiRouterTestSuite {
       assertExchange: () => {},
       publish: () => {},
     });
-
-    const quiz: IQuiz = JSON.parse(
-      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
-    quiz.name = this._hashtag;
-    quiz.state = QuizState.Active;
-    await QuizDAO.addQuiz(quiz);
+    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
   }
 
   public async after(): Promise<void> {
-    await QuizDAO.removeQuiz((await QuizDAO.getQuizByName(this._hashtag)).id);
+    return mongoUnit.drop();
   }
 
   @test
@@ -90,18 +83,9 @@ class MemberApiRouterTestSuite {
 
   @test
   public async addResponse(): Promise<void> {
-    await chai.request(app).put(`${this._baseApiRoute}/`).set('authorization', 'testtoken').send({
-      member: {
-        name: this._nickname,
-        groupName: 'Default',
-        token: 'testtoken',
-        currentQuizName: this._hashtag,
-      },
-    });
+    await this.initUser();
     const res = await chai.request(app).put(`${this._baseApiRoute}/response`).set('authorization', 'testtoken').send({
-      quizName: this._hashtag,
-      nickname: this._nickname,
-      value: [0],
+      response: [0],
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
@@ -114,13 +98,19 @@ class MemberApiRouterTestSuite {
     expect(res.type).to.equal('application/json');
   }
 
-  private initUser(): SuperAgentRequest {
+  private async initUser(): Promise<any> {
+    const quiz = generateQuiz(this._hashtag);
+    quiz.currentQuestionIndex = 0;
+    const doc = await QuizDAO.addQuiz(quiz);
+    await QuizDAO.initQuiz(doc);
+
     return chai.request(app).put(`${this._baseApiRoute}/`).set('authorization', 'testtoken').send({
       member: {
         name: this._nickname,
         groupName: 'Default',
         token: 'testtoken',
         currentQuizName: this._hashtag,
+        responses: MemberDAO.generateResponseForQuiz(quiz.questionList.length),
       },
     });
   }

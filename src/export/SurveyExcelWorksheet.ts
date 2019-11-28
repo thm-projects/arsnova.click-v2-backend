@@ -20,8 +20,11 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this._ws = wb.addWorksheet(`${this.mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
     this._question = this.quiz.questionList[questionIndex] as IQuestionSurvey;
-    this.formatSheet();
-    this.addSheetData();
+
+    this.loaded.on('load', () => {
+      this.formatSheet();
+      this.addSheetData();
+    });
   }
 
   public async formatSheet(): Promise<void> {
@@ -133,7 +136,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     for (let j = 0; j < answerList.length; j++) {
       this.ws.cell(2, (j + 2)).string(this.mf('export.answer') + ' ' + (j + 1));
       this.ws.cell(4, (j + 2)).string(answerList[j].answerText);
-      this.ws.cell(6, (j + 2)).number(calculateNumberOfAnswers(this.quiz, this._questionIndex, j));
+      this.ws.cell(6, (j + 2)).number(await calculateNumberOfAnswers(this.quiz, this._questionIndex, j));
     }
 
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');

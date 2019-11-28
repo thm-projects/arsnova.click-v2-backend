@@ -16,17 +16,6 @@ declare global {
 
       setWidth(width: number): void;
     }
-
-    interface IWorksheet {
-      cell: Function;
-      addImage: Function;
-
-      row(index: number): IRow;
-    }
-
-    interface IWorkbook {
-      addWorksheet: Function;
-    }
   }
 }
 
@@ -42,12 +31,14 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       questionIndex: null,
     });
     this._ws = wb.addWorksheet(mf('export.summary'), this._options);
-    this.formatSheet();
-    this.addSheetData();
+    Promise.all([
+      this.formatSheet(), this.addSheetData(),
+    ]);
   }
 
-  public formatSheet(): void {
+  public async formatSheet(): Promise<void> {
     const defaultStyles = this._theme.getStyles();
+    const leaderBoardData = await this.getLeaderboardData();
 
     this.ws.row(1).setHeight(20);
     this.ws.column(1).setWidth(30);
@@ -112,7 +103,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     });
 
     let dataWithoutCompleteCorrectQuestions = 0;
-    this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
+    await asyncForEach(leaderBoardData, (leaderboardItem, indexInList) => {
       let hasNotAllQuestionsCorrect = false;
       this.quiz.questionList.forEach((item, index) => {
         if (![
@@ -148,15 +139,14 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       });
     });
 
-    if (dataWithoutCompleteCorrectQuestions === this.leaderBoardData.length) {
+    if (dataWithoutCompleteCorrectQuestions === leaderBoardData.length) {
       this.ws.cell(++currentRowIndex, 1, currentRowIndex, this.columnsToFormat, true).style(Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
         alignment: {
           horizontal: 'center',
         },
       }));
     } else {
-      this.ws.cell(currentRowIndex, 1, (this.leaderBoardData.length + currentRowIndex - 1 - dataWithoutCompleteCorrectQuestions),
-        this.columnsToFormat)
+      this.ws.cell(currentRowIndex, 1, (leaderBoardData.length + currentRowIndex - 1 - dataWithoutCompleteCorrectQuestions), this.columnsToFormat)
       .style(defaultStyles.attendeeEntryRowStyle);
     }
     currentRowIndex += 6;
@@ -172,10 +162,10 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     });
     currentRowIndex++;
 
-    this.ws.cell(currentRowIndex, 1, (this.leaderBoardData.length + (currentRowIndex - 1)), this.columnsToFormat)
+    this.ws.cell(currentRowIndex, 1, (leaderBoardData.length + (currentRowIndex - 1)), this.columnsToFormat)
     .style(defaultStyles.attendeeEntryRowStyle);
 
-    this.leaderBoardData.forEach((leaderboardItem, indexInList) => {
+    leaderBoardData.forEach((leaderboardItem, indexInList) => {
       let nextColumnIndex = 3;
       const targetRow = indexInList + currentRowIndex;
       if (this.quiz.sessionConfig.confidenceSliderEnabled) {
@@ -201,6 +191,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
   }
 
   public async addSheetData(): Promise<void> {
+    const leaderBoardData = await this.getLeaderboardData();
     let currentRowIndex = 1;
     const numberOfResponses = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickname => {
       return nickname.responses.filter(response => {
@@ -232,7 +223,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_correct_answered_questions')}:`);
-    this.ws.cell(currentRowIndex, 3).number((this.leaderBoardData.map((x) => {
+    this.ws.cell(currentRowIndex, 3).number((leaderBoardData.map((x) => {
       return x.correctQuestions.length;
     }).reduce((a, b) => {
       return a + b;
@@ -241,7 +232,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     if (this.quiz.sessionConfig.confidenceSliderEnabled) {
       this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_confidence')}:`);
-      const averageConfidencePercentage = (this.leaderBoardData.filter((x) => {
+      const averageConfidencePercentage = (leaderBoardData.filter((x) => {
         return x.confidenceValue > -1;
       }).map((x) => {
         return x.confidenceValue;
@@ -253,7 +244,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     }
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_response_time')}:`);
-    this.ws.cell(currentRowIndex, 3).number((Math.round((this.leaderBoardData.map((x) => {
+    this.ws.cell(currentRowIndex, 3).number((Math.round((leaderBoardData.map((x) => {
       return x.responseTime;
     }).reduce((a, b) => {
       return a + b;
@@ -280,7 +271,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     currentRowIndex++;
 
     let nextStartRow = currentRowIndex + 5;
-    await asyncForEach(this.leaderBoardData, async (leaderboardItem, indexInList) => {
+    await asyncForEach(leaderBoardData, async (leaderboardItem, indexInList) => {
       if (this.quiz.questionList.some((item, index) => ![QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(item.TYPE)
                                                        && leaderboardItem.correctQuestions.indexOf((index)) === -1)) {
         return;
@@ -302,7 +293,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       }
 
       this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime));
-      this.ws.cell(targetRow, nextColumnIndex++).number(Math.round((leaderboardItem.responseTime / this.leaderBoardData.length)));
+      this.ws.cell(targetRow, nextColumnIndex++).number(Math.round((leaderboardItem.responseTime / leaderBoardData.length)));
     });
 
     if (nextStartRow === currentRowIndex + 5) {
@@ -341,7 +332,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail[0]);
       }
-      const leaderboardItem = this._leaderBoardData.find((item) => item.name === responseItem.name);
+      const leaderboardItem = leaderBoardData.find((item) => item.name === responseItem.name);
       if (leaderboardItem) {
         if (leaderboardItem.correctQuestions.length > 0) {
           const correctQuestionNumbers = leaderboardItem.correctQuestions.map((item) => item + 1);

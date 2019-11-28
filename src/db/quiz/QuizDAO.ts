@@ -170,7 +170,7 @@ class QuizDAO extends AbstractDAO {
 
   public isActiveQuiz(quizName: string): Promise<boolean> {
     return QuizModel.exists({
-      name: this.buildQuiznameQuery(name),
+      name: this.buildQuiznameQuery(quizName),
       state: { $in: [QuizState.Active, QuizState.Running, QuizState.Finished] },
     });
   }

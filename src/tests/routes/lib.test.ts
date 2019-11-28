@@ -1,31 +1,31 @@
 /// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
 import * as chai from 'chai';
-import * as fs from 'fs';
 import { slow, suite, test } from 'mocha-typescript';
-import * as path from 'path';
+import * as mongoUnit from 'mongo-unit';
 import * as sinon from 'sinon';
-
 import router from '../../App';
 import AMQPConnector from '../../db/AMQPConnector';
-import MongoDBConnector from '../../db/MongoDBConnector';
-import QuizDAO from '../../db/quiz/QuizDAO';
 import UserDAO from '../../db/UserDAO';
-import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
-import { IUserSerialized } from '../../interfaces/users/IUserSerialized';
-import { QuizModelItem } from '../../models/quiz/QuizModelItem';
 import { staticStatistics } from '../../statistics';
-
-require('../../lib/regExpEscape'); // Installing polyfill for RegExp.escape
 
 chai.use(require('chai-http'));
 const expect = chai.expect;
 
 const hashtag = 'mocha-test-lib';
+const privateKey = Math.random().toString(10);
 
 @suite
 class LibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib`;
+
+  public async before(): Promise<void> {
+    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
+  }
+
+  public async after(): Promise<void> {
+    return mongoUnit.drop();
+  }
 
   @test
   public async baseApiExists(): Promise<void> {
@@ -70,45 +70,33 @@ class MathjaxLibRouterTestSuite {
 @suite
 class CacheQuizAssetsLibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/cache/quiz/assets`;
-  private _hashtag = hashtag;
-  private _quiz: IQuiz = JSON.parse(
-    fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
 
   public async before(): Promise<void> {
     const sandbox = sinon.createSandbox();
     sandbox.stub(AMQPConnector, 'channel').value({ assertExchange: () => {} });
-    sandbox.stub(MongoDBConnector, 'connect').value({ assertExchange: () => {} });
+    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, {
+      assets: [
+        {
+          url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Sixteen_faces_expressing_the_human_passions._Wellcome_L0068375.jpg/620px-Sixteen_faces_expressing_the_human_passions._Wellcome_L0068375.jpg',
+          digest: 'e5cf0e52c29860e10b80617d794e5aee0f6620701ab487591881e6635f142ef0',
+          mimeType: 'image/jpeg',
+          data: Buffer.from([]),
+        },
+      ],
+    });
 
-    this._quiz.name = this._hashtag;
-    const doc = await QuizDAO.addQuiz(this._quiz);
-    await QuizDAO.initQuiz(doc);
 
     sandbox.restore();
   }
 
   public async after(): Promise<void> {
-    await QuizDAO.removeQuiz((await QuizDAO.getQuizByName(hashtag)).id);
-  }
-
-  @test @slow(5000)
-  public async postNewAssetExists(): Promise<void> {
-    const res = await chai.request(router).post(`${this._baseApiRoute}/`).send({ quiz: this._quiz });
-    expect(res.type).to.eql('application/json');
-  }
-
-  @test.skip
-  public async quizWithAssetUrlsExists(): Promise<void> {
-    const parsedQuiz: QuizModelItem = await QuizDAO.getQuizByName(this._hashtag);
-
-    expect(parsedQuiz.questionList.map(question => question.questionText)
-    .filter(questionText => questionText.indexOf(staticStatistics.rewriteAssetCacheUrl) > -1).length).to.be
-    .greaterThan(0, 'Expect to find the rewritten assets storage url');
+    return mongoUnit.drop();
   }
 
   @test @slow(5000)
   public async getByDigestExists(): Promise<void> {
-    const res = await chai.request(router).get(`${this._baseApiRoute}/7b354ef246ea570c0cc360c1eb2bda4061aec31d1012b2011077de11b9b28898`);
-    expect(res.type).to.eql('text/html');
+    const res = await chai.request(router).get(`${this._baseApiRoute}/e5cf0e52c29860e10b80617d794e5aee0f6620701ab487591881e6635f142ef0`);
+    expect(res.type).to.eql('image/jpeg');
   }
 }
 
@@ -117,19 +105,14 @@ class AuthorizeLibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/authorize`;
 
   @test
-  public async authorizeExists(): Promise<void> {
-    const res = await chai.request(router)
-    .get(`${this._baseApiRoute}`)
-    .set('referer', staticStatistics.rewriteAssetCacheUrl);
-    expect(res.type).to.eql('text/html');
-  }
-
-  @test
   public async authorizeStaticExists(): Promise<void> {
     await UserDAO.addUser({
       name: 'testuser',
       passwordHash: 'testpasshash',
-    } as IUserSerialized);
+      userAuthorizations: [],
+      privateKey: 'privateKey',
+      tokenHash: 'tokenHash',
+    });
     const res = await chai.request(router)
     .post(`${this._baseApiRoute}/static`).send({
       username: 'testuser',

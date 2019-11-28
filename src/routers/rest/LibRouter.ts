@@ -17,7 +17,7 @@ import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { ICasData } from '../../interfaces/users/ICasData';
-import { MatchAssetCachedQuiz, MatchTextToAssetsDb } from '../../lib/cache/assets';
+import { MatchAssetCachedQuiz } from '../../lib/cache/assets';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
@@ -228,33 +228,6 @@ export class LibRouter extends AbstractRouter {
         }
       });
     });
-  }
-
-  @Post('/cache/quiz/assets')
-  public async cacheQuizAssets(@BodyParam('quiz') quiz: IQuiz): Promise<IMessage> {
-
-    if (!quiz) {
-      throw new BadRequestError(`Malformed request received -> ${quiz}`);
-    }
-
-    const promises: Array<Promise<any>> = [];
-
-    quiz.questionList.forEach(question => {
-      promises.push(MatchTextToAssetsDb(question.questionText).then(val => question.questionText = val));
-      question.answerOptionList.forEach(answerOption => {
-        promises.push(MatchTextToAssetsDb(answerOption.answerText).then(val => answerOption.answerText = val));
-      });
-    });
-
-    await Promise.all<any>(promises);
-
-    return {
-      status: StatusProtocol.Success,
-      step: MessageProtocol.QuizAssets,
-      payload: {
-        quiz,
-      },
-    };
   }
 
   @Get('/cache/quiz/assets/:digest')

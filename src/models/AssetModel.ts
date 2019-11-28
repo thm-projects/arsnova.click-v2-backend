@@ -1,8 +1,7 @@
-import { getModelForClass, index, prop } from '@typegoose/typegoose';
+import { getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
 import DbDAO from '../db/DbDAO';
 import { DbCollection } from '../enums/DbOperation';
 import { IAssetSerialized } from '../interfaces/IAsset';
-import LoggerService from '../services/LoggerService';
 
 @index({ digest: 1 }, { unique: true })
 export class AssetModelItem implements IAssetSerialized {
@@ -21,12 +20,8 @@ export const AssetModel = getModelForClass(AssetModelItem, {
     timestamps: true,
   },
   existingConnection: DbDAO.dbCon,
+  options: {
+    runSyncIndexes: true,
+    allowMixed: Severity.ALLOW,
+  },
 });
-
-AssetModel.collection.dropIndexes().then(() => AssetModel.createIndexes(err => {
-  if (!err) {
-    return;
-  }
-
-  LoggerService.error('Unique index for AssetModel created with error', err);
-}));

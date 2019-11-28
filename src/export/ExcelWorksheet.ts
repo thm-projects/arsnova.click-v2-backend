@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import * as xlsx from 'excel4node';
 import * as MessageFormat from 'messageformat';
 import { Document } from 'mongoose';
@@ -7,7 +8,6 @@ import { IQuizBase } from '../interfaces/quizzes/IQuizEntity';
 import { Leaderboard } from '../lib/leaderboard/leaderboard';
 import { MemberModelItem } from '../models/member/MemberModel';
 import { excelDefaultWorksheetOptions } from './lib/excel_default_options';
-
 import { ExcelTheme } from './lib/excel_default_styles';
 
 export abstract class ExcelWorksheet {
@@ -25,12 +25,6 @@ export abstract class ExcelWorksheet {
 
   get mf(): MessageFormat.Msg {
     return this._mf;
-  }
-
-  protected _leaderBoardData: Array<ILeaderBoardItemBase>;
-
-  get leaderBoardData(): Array<ILeaderBoardItemBase> {
-    return this._leaderBoardData;
   }
 
   protected _ws: xlsx.Worksheet;
@@ -52,6 +46,7 @@ export abstract class ExcelWorksheet {
   private readonly _createdAt: string;
   private readonly _quiz: IQuizBase;
   private _columnsToFormat: number;
+  protected readonly loaded = new EventEmitter();
 
   protected constructor({ theme, translation, quiz, mf, questionIndex }) {
     this._theme = theme;
@@ -88,13 +83,13 @@ export abstract class ExcelWorksheet {
       if (this._responsesWithConfidenceValue.length > 0) {
         this._columnsToFormat++;
       }
+
+      this.loaded.emit('load');
     });
 
     if (this._quiz.sessionConfig.nicks.restrictToCasLogin) {
       this._columnsToFormat += 2;
     }
-
-    this.getLeaderboardData(questionIndex).then(data => this._leaderBoardData = data);
   }
 
   protected generateCreatedAtString(): string {
@@ -104,7 +99,7 @@ export abstract class ExcelWorksheet {
     return `${dateYMD} ${this._mf('export.exported_at')} ${dateHM} ${this._mf('export.exported_at_time')}`;
   }
 
-  protected async getLeaderboardData(questionIndex: number): Promise<Array<ILeaderBoardItemBase>> {
+  protected async getLeaderboardData(): Promise<Array<ILeaderBoardItemBase>> {
     const leaderBoard = new Leaderboard();
     const { correctResponses } = await leaderBoard.buildLeaderboard(this.quiz);
     return leaderBoard.sortBy(correctResponses, 'score');

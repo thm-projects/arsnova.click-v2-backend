@@ -4,16 +4,15 @@ import * as assert from 'assert';
 import * as fs from 'fs';
 import * as i18n from 'i18n';
 import * as MessageFormat from 'messageformat';
-import { skip, slow, suite, test } from 'mocha-typescript';
+import { slow, suite, test } from 'mocha-typescript';
+import * as mongoUnit from 'mongo-unit';
 import { Document } from 'mongoose';
 import * as path from 'path';
 import * as sinon from 'sinon';
 import AMQPConnector from '../../db/AMQPConnector';
 import MemberDAO from '../../db/MemberDAO';
-import MongoDBConnector from '../../db/MongoDBConnector';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { QuestionType } from '../../enums/QuestionType';
-import { QuizState } from '../../enums/QuizState';
 import { ExcelWorkbook } from '../../export/ExcelWorkbook';
 import { IQuestionRanged } from '../../interfaces/questions/IQuestionRanged';
 import { IQuestionSurvey } from '../../interfaces/questions/IQuestionSurvey';
@@ -22,7 +21,7 @@ import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
 import { generateQuiz } from '../fixtures';
 
-@suite @skip
+@suite
 class ExcelExportTestSuite {
   private readonly _hashtag = 'mocha-export-test';
   private _memberCount = 20;
@@ -33,7 +32,7 @@ class ExcelExportTestSuite {
   private _dateFormatted = `${this._dateDay}-${this._date.getHours()}_${this._date.getMinutes()}`;
   private _exportLocation = path.join(__dirname, '..', '..', '..', 'test-generated', `Export-${this._hashtag}-${this._dateFormatted}.xlsx`);
 
-  public static before(): void {
+  public static async before(): Promise<void> {
     i18n.configure({
       locales: ['en'],
       defaultLocale: 'en',
@@ -61,7 +60,7 @@ class ExcelExportTestSuite {
   }
 
   public async after(): Promise<void> {
-    await QuizDAO.removeQuiz((await QuizDAO.getQuizByName(this._hashtag)).id);
+    return mongoUnit.drop();
   }
 
   public async before(): Promise<void> {
@@ -70,17 +69,8 @@ class ExcelExportTestSuite {
       assertExchange: () => {},
       publish: () => {},
     });
-    sandbox.stub(MongoDBConnector, 'connect').value({ assertExchange: () => {} });
+    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
 
-    const doc = await QuizDAO.addQuiz(generateQuiz(this._hashtag));
-    assert.equal(QuizDAO.isActiveQuiz(this._hashtag), false, 'Expected to find an inactive quiz item');
-
-    const quiz: Document & QuizModelItem = JSON.parse(
-      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
-    quiz.name = this._hashtag;
-    quiz._id = doc._id;
-    quiz.state = QuizState.Active;
-    await QuizDAO.initQuiz(quiz);
   }
 
   public randomIntFromInterval(min: number, max: number): number {
@@ -88,13 +78,28 @@ class ExcelExportTestSuite {
   }
 
   @test
-  public initQuiz(): void {
-    assert.equal(QuizDAO.isActiveQuiz(this._hashtag), true, 'Expected to find an active quiz item');
+  public async initQuiz(): Promise<void> {
+    const doc = await QuizDAO.addQuiz(generateQuiz(this._hashtag));
+    assert.equal((await QuizDAO.isActiveQuiz(this._hashtag)), false, 'Expected to find an inactive quiz item');
+
+    const quiz: Document & QuizModelItem = JSON.parse(
+      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
+    quiz.name = this._hashtag;
+    quiz._id = doc._id;
+    await QuizDAO.initQuiz(quiz);
+
+    assert.equal((await QuizDAO.isActiveQuiz(this._hashtag)), true, 'Expected to find an active quiz item');
   }
 
   @test
   public async addMembers(): Promise<void> {
-    const quiz = await QuizDAO.getActiveQuizByName(this._hashtag);
+    const doc = await QuizDAO.addQuiz(generateQuiz(this._hashtag));
+    const quiz: Document & QuizModelItem = JSON.parse(
+      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
+    quiz.name = this._hashtag;
+    quiz._id = doc._id;
+    await QuizDAO.initQuiz(quiz);
+
     for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
       await MemberDAO.addMember({
         name: `testnick${memberIndex + 1}`,
@@ -109,7 +114,13 @@ class ExcelExportTestSuite {
 
   @test
   public async addResponses(): Promise<void> {
-    const quiz = await QuizDAO.getActiveQuizByName(this._hashtag);
+    const doc = await QuizDAO.addQuiz(generateQuiz(this._hashtag));
+    const quiz: Document & QuizModelItem = JSON.parse(
+      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
+    quiz.name = this._hashtag;
+    quiz._id = doc._id;
+    await QuizDAO.initQuiz(quiz);
+
     for (let questionIndex = 0; questionIndex < quiz.questionList.length; questionIndex++) {
       const question = quiz.questionList[questionIndex];
       for (let memberIndex = 0; memberIndex < this._memberCount; memberIndex++) {
@@ -185,7 +196,13 @@ class ExcelExportTestSuite {
 
   @test(slow(500))
   public async generateExcelWorkbook(): Promise<void> {
-    const quiz = await QuizDAO.getActiveQuizByName(this._hashtag);
+    const doc = await QuizDAO.addQuiz(generateQuiz(this._hashtag));
+    const quiz: Document & QuizModelItem = JSON.parse(
+      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
+    quiz.name = this._hashtag;
+    quiz._id = doc._id;
+    await QuizDAO.initQuiz(quiz);
+
     const wb = new ExcelWorkbook({
       themeName: this._theme,
       translation: this._language,

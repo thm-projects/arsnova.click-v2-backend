@@ -3,6 +3,7 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
+import * as mongoUnit from 'mongo-unit';
 import * as path from 'path';
 import app from '../../App';
 import QuizDAO from '../../db/quiz/QuizDAO';
@@ -24,8 +25,16 @@ class QuizApiRouterTestSuite {
   private _hashtag = hashtag;
   private _privateKey = privateKey;
 
+  public static before(): void {
+    staticStatistics.pathToAssets = path.join(__dirname, '..', '..', '..', 'assets');
+  }
+
+  public async before(): Promise<void> {
+    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
+  }
+
   public async after(): Promise<void> {
-    await QuizDAO.removeQuiz((await QuizDAO.getQuizByName(hashtag)).id);
+    return mongoUnit.drop();
   }
 
   @test
@@ -37,35 +46,25 @@ class QuizApiRouterTestSuite {
 
   @test
   public async generateDemoQuiz(): Promise<void> {
-    staticStatistics.pathToAssets = path.join('..', '..', '..', 'assets');
     const res = await chai.request(app).get(`${this._baseApiRoute}/generate/demo/en`);
     expect(res.type).to.equal('application/json');
     expect(res.status).to.equal(200);
-    expect(res.body.hashtag).to.equal('Demo Quiz ' + ((await QuizDAO.getLastPersistedDemoQuizNumber()) + 1));
+    expect(res.body.name).to.equal('Demo Quiz ' + ((await QuizDAO.getLastPersistedDemoQuizNumber()) + 1));
   }
 
   @test
   public async generateAbcdQuiz(): Promise<void> {
-    staticStatistics.pathToAssets = path.join('..', '..', '..', 'assets');
     const res = await chai.request(app).get(`${this._baseApiRoute}/generate/abcd/en/5`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
   }
 
   @test
-  public async getStatusWhenUndefined(): Promise<void> {
+  public async getStatusWhenUnavailable(): Promise<void> {
     const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    expect(res.body.step).to.equal(MessageProtocol.Undefined);
-  }
-
-  @test
-  public async getStatusWhenExists(): Promise<void> {
-    const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
-    expect(res.status).to.equal(200);
-    expect(res.type).to.equal('application/json');
-    expect(res.body.step).to.equal(MessageProtocol.Exists);
+    expect(res.body.step).to.equal(MessageProtocol.Unavailable);
   }
 
   @test
@@ -105,13 +104,6 @@ class QuizApiRouterTestSuite {
   }
 
   @test
-  public async upload(): Promise<void> {
-    const res = await chai.request(app).post(`${this._baseApiRoute}/upload`);
-    expect(res.status).to.equal(200);
-    expect(res.type).to.equal('application/json');
-  }
-
-  @test
   public async readingConfirmation(): Promise<void> {
     const res = await chai.request(app).post(`${this._baseApiRoute}/reading-confirmation`).send({
       quizName: this._hashtag,
@@ -122,10 +114,7 @@ class QuizApiRouterTestSuite {
 
   @test
   public async deleteActiveQuiz(): Promise<void> {
-    const res = await chai.request(app).del(`${this._baseApiRoute}/active`).send({
-      quizName: this._hashtag,
-      privateKey: this._privateKey,
-    });
+    const res = await chai.request(app).del(`${this._baseApiRoute}/active/${this._hashtag}`).set('authorization', this._privateKey).send();
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
   }

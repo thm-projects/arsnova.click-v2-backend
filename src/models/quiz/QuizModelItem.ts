@@ -1,10 +1,9 @@
-import { arrayProp, getModelForClass, index, prop } from '@typegoose/typegoose';
+import { arrayProp, getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
-import LoggerService from '../../services/LoggerService';
 import { SessionConfigurationModelItem } from '../session-config/SessionConfigurationModelItem';
 
 @index({ name: 1 }, {
@@ -44,12 +43,8 @@ export const QuizModel = getModelForClass(QuizModelItem, {
     timestamps: true,
   },
   existingConnection: DbDAO.dbCon,
+  options: {
+    runSyncIndexes: true,
+    allowMixed: Severity.ALLOW,
+  },
 });
-
-QuizModel.collection.dropIndexes().then(() => QuizModel.createIndexes(err => {
-  if (!err) {
-    return;
-  }
-
-  LoggerService.error('Unique index for QuizModel created with error', err);
-}));

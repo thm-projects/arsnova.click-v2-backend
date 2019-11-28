@@ -2,4 +2,6 @@
 --exit
 --require source-map-support/register
 --require ts-node/register
+--require src/tests/mongo-mock.js
+--recursive
 src/tests/**/*.test.ts
