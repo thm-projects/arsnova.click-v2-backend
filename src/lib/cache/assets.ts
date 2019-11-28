@@ -1,10 +1,10 @@
 import * as Hex from 'crypto-js/enc-hex';
+import { Document } from 'mongoose';
 import * as requestPromise from 'request-promise-native';
 import AssetDAO from '../../db/AssetDAO';
-import { IAnswer } from '../../interfaces/answeroptions/IAnswerEntity';
-import { IQuestion } from '../../interfaces/questions/IQuestion';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 
-import { AssetModel } from '../../models/AssetModel';
+import { AssetModel, AssetModelItem } from '../../models/AssetModel';
 import LoggerService from '../../services/LoggerService';
 import { staticStatistics } from '../../statistics';
 import { asyncForEach } from '../async-for-each';
@@ -12,6 +12,49 @@ import { asyncForEach } from '../async-for-each';
 const sha256 = require('crypto-js/sha256');
 
 export const assetsUrlRegex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
+const assetsPathUrlRegex = '(' + staticStatistics.rewriteAssetCacheUrl + '[\/a-z]*([0-9a-z]*))';
+
+export function GetAssetUrlByDigest(digest: string): Promise<Document & AssetModelItem> {
+  return AssetModel.findOne({ digest }, {
+    _id: 0,
+    url: 1,
+  }).exec();
+}
+
+export async function MatchAssetCachedQuiz(quiz: IQuiz): Promise<IQuiz> {
+  quiz.questionList = await Promise.all(quiz.questionList.map(async question => {
+
+    question.answerOptionList = await Promise.all(question.answerOptionList.map(async answer => {
+      const answerMatched = answer.answerText.matchAll(new RegExp(assetsPathUrlRegex, 'gi'));
+      let answerTextMatcher = answerMatched.next();
+      while (!answerTextMatcher.done) {
+        const answerTextDbResult = (await GetAssetUrlByDigest(answerTextMatcher.value[2]));
+        if (answerTextDbResult) {
+          const url = answerTextDbResult.url;
+          answer.answerText = answer.answerText.replace(answerTextMatcher.value[0], url);
+        }
+        answerTextMatcher = answerMatched.next();
+      }
+
+      return answer;
+    }));
+
+    const questionTextMatched = question.questionText.matchAll(new RegExp(assetsPathUrlRegex, 'gi'));
+    let questionTextMatcher = questionTextMatched.next();
+    while (!questionTextMatcher.done) {
+      const quesitonTextDbResult = (await GetAssetUrlByDigest(questionTextMatcher.value[2]));
+      if (quesitonTextDbResult) {
+        const url = quesitonTextDbResult.url;
+        question.questionText = question.questionText.replace(questionTextMatcher.value[0], url);
+      }
+      questionTextMatcher = questionTextMatched.next();
+    }
+
+    return question;
+  }));
+
+  return quiz;
+}
 
 export function MatchTextToAssetsDb(value: string): Promise<string> {
   const acceptedFileTypes = [/image\/*/];
@@ -21,12 +64,13 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
   return new Promise<string>(resolve => {
     if (!foundUrls) {
       resolve(value);
+      return;
     }
 
-    foundUrls.forEach((foundUrl: string) => {
+    return asyncForEach(foundUrls, async (foundUrl: string) => {
       const digest = Hex.stringify(sha256(foundUrl));
       const parsedResult = value.replace(foundUrl, `${assetsBasePath}/${digest}`);
-      const exists = AssetDAO.getAssetByDigest(digest);
+      const exists = await AssetDAO.getAssetByDigest(digest);
       if (exists) {
         resolve(parsedResult);
         return;
@@ -50,11 +94,11 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
 
         const buffer = Buffer.from(response.body, 'utf8');
 
-        return AssetModel.create({
+        return AssetDAO.addAsset({
           url: foundUrl,
           digest,
           mimeType: contentType,
-          data: Buffer.from(buffer),
+          data: buffer,
         });
 
       }).then(() => resolve(parsedResult)).catch((err) => {
@@ -62,36 +106,5 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
         resolve(value);
       });
     });
-  });
-}
-
-export async function parseCachedAssetQuiz(cacheAwareQuestions: Array<IQuestion>): Promise<void> {
-  const assetsBasePath = `${staticStatistics.rewriteAssetCacheUrl}/lib/cache/quiz/assets`;
-  await asyncForEach(cacheAwareQuestions, async (question: IQuestion) => {
-    const matchedQuestionText = question.questionText.match(assetsUrlRegex);
-    if (matchedQuestionText) {
-      await asyncForEach(matchedQuestionText, async (matchedValueElement: string) => {
-        const existing = await AssetDAO.getAssetByUrl(matchedValueElement);
-        if (!existing) {
-          return;
-        }
-        const cachedUrl = `${assetsBasePath}/${existing.digest}`;
-        question.questionText = question.questionText.replace(matchedValueElement, cachedUrl);
-      });
-    }
-
-    await asyncForEach(question.answerOptionList, (async (answerOption: IAnswer) => {
-      const matchedAnswerText = answerOption.answerText.match(assetsUrlRegex);
-      if (matchedAnswerText) {
-        await asyncForEach(matchedAnswerText, (async (matchedValueElement: string) => {
-          const existing = await AssetDAO.getAssetByUrl(matchedValueElement);
-          if (!existing) {
-            return;
-          }
-          const cachedUrl = `${assetsBasePath}/${existing.digest}`;
-          answerOption.answerText = answerOption.answerText.replace(matchedValueElement, cachedUrl);
-        }));
-      }
-    }));
   });
 }

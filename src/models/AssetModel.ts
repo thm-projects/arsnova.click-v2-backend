@@ -6,7 +6,10 @@ import LoggerService from '../services/LoggerService';
 
 @index({ digest: 1 }, { unique: true })
 export class AssetModelItem implements IAssetSerialized {
-  @prop({ required: true }) public data: Uint8Array;
+  @prop({
+    required: true,
+    _id: false,
+  }) public data: Buffer;
   @prop() public digest: string;
   @prop() public url: string;
   @prop() public mimeType: string;

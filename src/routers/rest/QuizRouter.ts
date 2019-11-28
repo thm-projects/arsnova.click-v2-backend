@@ -32,7 +32,7 @@ import { IMessage } from '../../interfaces/communication/IMessage';
 import { IQuizStatusPayload } from '../../interfaces/IQuizStatusPayload';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { asyncForEach } from '../../lib/async-for-each';
-import { MatchTextToAssetsDb } from '../../lib/cache/assets';
+import { MatchAssetCachedQuiz, MatchTextToAssetsDb } from '../../lib/cache/assets';
 import { Leaderboard } from '../../lib/leaderboard/leaderboard';
 import { QuizModelItem } from '../../models/quiz/QuizModelItem';
 import { settings, staticStatistics } from '../../statistics';
@@ -444,10 +444,17 @@ export class QuizRouter extends AbstractRouter {
     if (!quiz) {
       throw new BadRequestError(MessageProtocol.InvalidParameters);
     }
+
+    const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
+    if (existingQuiz && existingQuiz.privateKey !== privateKey) {
+      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
+    }
+
     const activeQuizzesAmount = await QuizDAO.getActiveQuizzes();
     if (activeQuizzesAmount.length >= settings.public.limitActiveQuizzes) {
       throw new BadRequestError(MessageProtocol.TooMuchActiveQuizzes);
     }
+
     if (settings.public.createQuizPasswordRequired) {
       if (!serverPassword) {
         throw new UnauthorizedError(MessageProtocol.ServerPasswordRequired);
@@ -486,12 +493,7 @@ export class QuizRouter extends AbstractRouter {
       },
     })));
 
-    const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
     if (existingQuiz) {
-      if (existingQuiz.privateKey !== privateKey) {
-        throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
-      }
-
       await QuizDAO.updateQuiz(existingQuiz.id, quiz);
       return (await QuizDAO.getQuizByName(quiz.name)).toJSON();
     } else {
@@ -595,12 +597,12 @@ export class QuizRouter extends AbstractRouter {
       return;
     }
 
-    // TODO: The quiz contains the rewritten cached asset urls. Restore them to the original value!
+    const parsedQuiz = await MatchAssetCachedQuiz(activeQuiz.toJSON());
 
     const wb = new ExcelWorkbook({
       themeName,
       translation,
-      quiz: activeQuiz,
+      quiz: parsedQuiz,
       mf: res.__mf,
     });
     const date: Date = new Date();

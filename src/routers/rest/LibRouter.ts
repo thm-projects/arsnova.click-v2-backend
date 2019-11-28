@@ -17,7 +17,7 @@ import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { ICasData } from '../../interfaces/users/ICasData';
-import { MatchTextToAssetsDb } from '../../lib/cache/assets';
+import { MatchAssetCachedQuiz, MatchTextToAssetsDb } from '../../lib/cache/assets';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
@@ -259,7 +259,7 @@ export class LibRouter extends AbstractRouter {
 
   @Get('/cache/quiz/assets/:digest')
   public async getCache(@Param('digest') digest: string, @Res() response: Response): Promise<ArrayBufferLike> {
-    const doc = await AssetDAO.getAssetByDigest(digest);
+    const doc = await AssetDAO.getAssetByDigestAsLean(digest);
     if (!doc || !doc.data) {
       throw new NotFoundError(`Malformed request received -> ${digest}`);
     }
@@ -379,7 +379,9 @@ export class LibRouter extends AbstractRouter {
     if (!token || typeof token !== 'string' || token.length === 0) {
       token = await AuthService.generateToken(user);
       await UserDAO.updateUser(user.id, { token });
-      const quizzes = (await QuizDAO.getQuizzesByPrivateKey(user.privateKey)).map(quiz => quiz.toJSON());
+      const quizzes: Array<IQuiz> = await Promise.all((await QuizDAO.getQuizzesByPrivateKey(user.privateKey)).map(quiz => quiz.toJSON()).map(quiz => {
+        return MatchAssetCachedQuiz(quiz);
+      }));
 
       return {
         status: StatusProtocol.Success,

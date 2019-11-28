@@ -6,6 +6,7 @@
     "experimentalDecorators": true,
     "lib": [
       "esnext",
+      "es2020",
       "dom"
     ],
     "module": "commonjs",

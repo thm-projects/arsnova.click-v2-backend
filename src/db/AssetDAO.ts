@@ -6,15 +6,6 @@ import { AssetModel, AssetModelItem } from '../models/AssetModel';
 import { AbstractDAO } from './AbstractDAO';
 
 class AssetDAO extends AbstractDAO {
-
-  constructor() {
-    super();
-
-    AssetModel.find().exec().then(assets => {
-      assets.forEach(asset => this.addAsset(asset));
-    });
-  }
-
   public static getInstance(): AssetDAO {
     if (!this.instance) {
       this.instance = new AssetDAO();
@@ -45,6 +36,10 @@ class AssetDAO extends AbstractDAO {
 
   public getAssetByUrl(url: string): Promise<AssetModelItem> {
     return AssetModel.findOne({ url }).exec();
+  }
+
+  public async getAssetByDigestAsLean(digest: string): Promise<IAssetSerialized> {
+    return AssetModel.findOne({ digest }).lean().exec();
   }
 
   private getAssetById(id: ObjectID): Promise<AssetModelItem> {
