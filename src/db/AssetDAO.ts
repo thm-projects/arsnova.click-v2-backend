@@ -39,7 +39,7 @@ class AssetDAO extends AbstractDAO {
   }
 
   public async getAssetByDigestAsLean(digest: string): Promise<IAssetSerialized> {
-    return AssetModel.findOne({ digest }).lean().exec();
+    return AssetModel.findOne({ digest }).lean().exec() as Promise<IAssetSerialized>;
   }
 
   private getAssetById(id: ObjectID): Promise<AssetModelItem> {

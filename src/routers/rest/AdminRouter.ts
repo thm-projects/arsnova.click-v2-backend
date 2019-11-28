@@ -18,8 +18,8 @@ export class AdminRouter extends AbstractRouter {
   @OpenAPI({
     description: 'Returns all available users',
   })
-  private getUsers(): Promise<Array<UserModelItem>> {
-    return UserModel.find().lean().exec();
+  private getUsers(): Promise<Array<IUserSerialized>> {
+    return UserModel.find().lean().exec() as Promise<Array<IUserSerialized>>;
   }
 
   @Delete('/user/:username') //
@@ -36,7 +36,7 @@ export class AdminRouter extends AbstractRouter {
     description: 'Adds a new user or updates an existing one',
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
-  private putUser(
+  private async putUser(
     @BodyParam('originalUser', { required: false }) originalUser: string, //
     @BodyParam('name') name: string, //
     @BodyParam('privateKey') privateKey: string, //
@@ -55,10 +55,12 @@ export class AdminRouter extends AbstractRouter {
       gitlabToken,
     };
 
-    return UserModel.updateOne({ name: originalUser }, userData, {
+    await UserModel.updateOne({ name: originalUser }, userData, {
       upsert: true,
       setDefaultsOnInsert: true,
-    }).lean().exec();
+    }).exec();
+
+    return UserDAO.getUser(originalUser);
   }
 
   @Get('/quizzes') //
