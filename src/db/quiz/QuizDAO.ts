@@ -161,7 +161,7 @@ class QuizDAO extends AbstractDAO {
   public async initQuiz(quiz: Document & QuizModelItem): Promise<void> {
     quiz.state = QuizState.Active;
     this.initTimerData(quiz);
-    return this.updateQuiz(new ObjectId(quiz._id), quiz);
+    await this.updateQuiz(new ObjectId(quiz._id), quiz);
   }
 
   public getAllQuizzes(): Promise<Array<Document & QuizModelItem>> {
