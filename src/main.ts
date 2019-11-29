@@ -26,7 +26,6 @@ setGlobalOptions({
 });
 
 require('source-map-support').install();
-require('./lib/regExpEscape'); // Installing polyfill for RegExp.escape
 
 Error.stackTraceLimit = Infinity;
 
