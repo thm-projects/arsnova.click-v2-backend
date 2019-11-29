@@ -175,8 +175,8 @@ class QuizDAO extends AbstractDAO {
     });
   }
 
-  public async setQuizAsInactive(quizName: string, privateKey: string): Promise<Document & QuizModelItem> {
-    const doc = await QuizModel.updateOne({
+  public async setQuizAsInactive(quizName: string, privateKey: string): Promise<void> {
+    await QuizModel.updateOne({
       name: this.buildQuiznameQuery(quizName),
       privateKey,
     }, { state: QuizState.Inactive }).exec();
@@ -194,7 +194,7 @@ class QuizDAO extends AbstractDAO {
       step: MessageProtocol.Closed,
     })));
 
-    return doc;
+    await MemberDAO.removeMembersOfQuiz(quizName);
   }
 
   public getActiveQuizByName(quizName: string): Promise<Document & QuizModelItem> {

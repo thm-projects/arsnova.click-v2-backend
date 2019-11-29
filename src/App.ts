@@ -16,7 +16,6 @@ import { ApiRouter } from './routers/rest/ApiRouter';
 import { ExpiryQuizRouter } from './routers/rest/ExpiryQuizRouter';
 import { I18nApiRouter } from './routers/rest/I18nApiRouter';
 import { LibRouter } from './routers/rest/LibRouter';
-import { LobbyRouter } from './routers/rest/LobbyRouter';
 import { MemberRouter } from './routers/rest/MemberRouter';
 import { NicksRouter } from './routers/rest/NicksRouter';
 import { QuizRouter } from './routers/rest/QuizRouter';
@@ -34,7 +33,7 @@ export const routingControllerOptions: RoutingControllersOptions = {
   defaultErrorHandler: false,
   cors: options,
   controllers: [
-    AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LibRouter, LobbyRouter, MemberRouter, NicksRouter, QuizRouter,
+    AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LibRouter, MemberRouter, NicksRouter, QuizRouter,
   ],
   middlewares: [I18nMiddleware],
 };
