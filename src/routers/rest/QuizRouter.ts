@@ -356,9 +356,8 @@ export class QuizRouter extends AbstractRouter {
       };
     }
 
-    await Promise.all([
-      QuizDAO.nextQuestion(activeQuiz), QuizDAO.requestReadingConfirmation(activeQuiz),
-    ]);
+    await QuizDAO.nextQuestion(activeQuiz);
+    await QuizDAO.requestReadingConfirmation(activeQuiz);
 
     return {
       status: StatusProtocol.Success,
@@ -504,8 +503,8 @@ export class QuizRouter extends AbstractRouter {
   @Put('/save')
   public async saveQuiz(
     @HeaderParam('authorization') privateKey: string, //
-    @BodyParam('quiz') quiz: QuizModelItem, //
-  ): Promise<QuizModelItem> {
+    @BodyParam('quiz') quiz: IQuiz, //
+  ): Promise<IQuiz> {
     const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
     if (existingQuiz) {
       if (existingQuiz.privateKey !== privateKey) {
@@ -630,7 +629,7 @@ export class QuizRouter extends AbstractRouter {
 
     let groupName = 'Default';
     if (activeQuiz.sessionConfig.nicks.memberGroups.length > 1) {
-      const memberGroupLoad = MemberDAO.getMemberAmountPerQuizGroup(activeQuiz.name, activeQuiz.sessionConfig.nicks.memberGroups);
+      const memberGroupLoad = await MemberDAO.getMemberAmountPerQuizGroup(activeQuiz.name, activeQuiz.sessionConfig.nicks.memberGroups);
       if (memberGroupLoad) {
         groupName = Object.entries(memberGroupLoad).sort((a, b) => a[1] - b[1])[0][0];
       }
