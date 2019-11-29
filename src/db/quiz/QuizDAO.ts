@@ -249,7 +249,11 @@ class QuizDAO extends AbstractDAO {
       step: MessageProtocol.Reset,
     })));
 
-    this._storage[name].quizTimer = 1;
+    if (this._storage[name]) {
+      this._storage[name].quizTimer = 1;
+    } else {
+      await QuizModel.updateOne({ _id: doc._id }, { currentStartTimestamp: -1 }).exec();
+    }
 
     return doc;
   }
@@ -324,7 +328,7 @@ class QuizDAO extends AbstractDAO {
   }
 
   public async stopQuiz(quiz: Document & QuizModelItem): Promise<void> {
-    if (this._storage[quiz.name].quizTimer) {
+    if (this._storage[quiz.name]) {
       this._storage[quiz.name].quizTimer = 1;
     }
 

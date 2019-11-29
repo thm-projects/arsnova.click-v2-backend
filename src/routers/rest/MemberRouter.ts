@@ -1,4 +1,4 @@
-import { BadRequestError, BodyParam, Delete, Get, HeaderParam, JsonController, Param, Post, Put, UnauthorizedError } from 'routing-controllers';
+import { BadRequestError, Body, BodyParam, Delete, Get, HeaderParam, JsonController, Param, Post, Put, UnauthorizedError } from 'routing-controllers';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
@@ -134,10 +134,10 @@ export class MemberRouter extends AbstractRouter {
   @Put('/response')
   public async addResponse(
     @HeaderParam('authorization') token: string, //
-    @BodyParam('response', { required: false }) value: any, //
+    @Body() body: any, // Must use body since string value '3,14' of body.response results in a JSON.parse error if using BodyParam
   ): Promise<IMessage> {
 
-    if (!Array.isArray(value) && !['string', 'number'].includes(typeof value)) {
+    if (!Array.isArray(body.response) && !['string', 'number'].includes(typeof body.response)) {
       throw new BadRequestError(MessageProtocol.InvalidData);
     }
 
@@ -161,7 +161,10 @@ export class MemberRouter extends AbstractRouter {
       throw new BadRequestError(MessageProtocol.DuplicateResponse);
     }
 
-    await MemberDAO.addResponseValue(member, value);
+    if (typeof body.response === 'number') {
+      body.response = String(body.response);
+    }
+    await MemberDAO.addResponseValue(member, body.response);
 
     return {
       status: StatusProtocol.Success,
