@@ -36,16 +36,16 @@ export class Leaderboard {
       case QuestionType.SingleChoiceQuestion:
       case QuestionType.YesNoSingleChoiceQuestion:
       case QuestionType.TrueFalseSingleChoiceQuestion:
-        return this.isCorrectSingleChoiceQuestion(<number>response.value[0], question as IQuestionChoice) ? 1 : -1;
+        return this.isCorrectSingleChoiceQuestion(response.value[0] as number, question as IQuestionChoice) ? 1 : -1;
       case QuestionType.MultipleChoiceQuestion:
-        return this.isCorrectMultipleChoiceQuestion(<Array<number>>response.value, question as IQuestionChoice);
+        return this.isCorrectMultipleChoiceQuestion(response.value as Array<number>, question as IQuestionChoice);
       case QuestionType.ABCDSingleChoiceQuestion:
       case QuestionType.SurveyQuestion:
         return 1;
       case QuestionType.RangedQuestion:
-        return this.isCorrectRangedQuestion(<number>response.value, question as IQuestionRanged);
+        return this.isCorrectRangedQuestion(parseInt(String(response.value), 10), question as IQuestionRanged);
       case QuestionType.FreeTextQuestion:
-        return this.isCorrectFreeTextQuestion(<string>response.value, question as IQuestionFreetext) ? 1 : -1;
+        return this.isCorrectFreeTextQuestion(response.value as string, question as IQuestionFreetext) ? 1 : -1;
       default:
         throw new Error(`Unsupported question type while checking correct response. Received type ${question.TYPE}`);
     }
