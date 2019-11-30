@@ -4,7 +4,6 @@ import { OpenAPI } from 'routing-controllers-openapi';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/quiz/QuizDAO';
 import UserDAO from '../../db/UserDAO';
-import { QuizState } from '../../enums/QuizState';
 import { UserRole } from '../../enums/UserRole';
 import { IAdminQuiz } from '../../interfaces/quizzes/IAdminQuiz';
 import { IUserSerialized } from '../../interfaces/users/IUserSerialized';
@@ -102,8 +101,7 @@ export class AdminRouter extends AbstractRouter {
       return;
     }
 
-    await QuizDAO.updateQuiz(quiz._id, { state: QuizState.Inactive });
-    await MemberDAO.removeMembersOfQuiz(quiz.name);
+    await QuizDAO.setQuizAsInactive(quizname, quiz.privateKey);
   }
 
   @Get('/quiz/:id') //
