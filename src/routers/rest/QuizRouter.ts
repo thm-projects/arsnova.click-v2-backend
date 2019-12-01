@@ -51,7 +51,9 @@ export class QuizRouter extends AbstractRouter {
     const quizName = params.quizName;
     const member = await MemberDAO.getMemberByToken(token);
 
-    if (!quizName && (!token || !member)) {
+    if (!quizName && (
+      !token || !member
+    )) {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
@@ -104,7 +106,8 @@ export class QuizRouter extends AbstractRouter {
     };
   }
 
-  @Get('/generate/demo/:languageId')
+  @Get('/generate/demo/:languageId') //
+  @ContentType('application/json')
   public async generateDemoQuiz(
     @Param('languageId') languageId: string, //
     @Res() res: Response, //
@@ -116,17 +119,24 @@ export class QuizRouter extends AbstractRouter {
       if (!fs.existsSync(demoQuizPath)) {
         demoQuizPath = path.join(basePath, 'en.demo_quiz.json');
       }
+
       const result: IQuiz = JSON.parse(fs.readFileSync(demoQuizPath).toString());
-      result.name = 'Demo Quiz ' + ((await QuizDAO.getLastPersistedDemoQuizNumber()) + 1);
+      result.name = 'Demo Quiz ' + (
+                    (
+                      await QuizDAO.getLastPersistedDemoQuizNumber()
+                    ) + 1
+      );
       QuizDAO.convertLegacyQuiz(result);
-      res.setHeader('Response-Type', 'application/json');
+
       return result;
+
     } catch (ex) {
       throw new InternalServerError(`File IO Error: ${ex}`);
     }
   }
 
-  @Get('/generate/abcd/:languageId/:answerLength?')
+  @Get('/generate/abcd/:languageId/:answerLength?') //
+  @ContentType('application/json')
   public async generateAbcdQuiz(
     @Param('languageId') languageId: string, //
     @Param('answerLength') answerLength: number, //
@@ -134,21 +144,25 @@ export class QuizRouter extends AbstractRouter {
   ): Promise<IQuiz> {
 
     try {
-      answerLength = answerLength || 4;
+      answerLength = parseInt(String(answerLength), 10) || 4;
       const basePath = path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'abcd_quiz');
       let abcdQuizPath = path.join(basePath, `${languageId.toLowerCase()}.abcd_quiz.json`);
       if (!fs.existsSync(abcdQuizPath)) {
         abcdQuizPath = path.join(basePath, 'en.abcd_quiz.json');
       }
+
       const result: IQuiz = JSON.parse(fs.readFileSync(abcdQuizPath).toString());
-      let abcdName = '';
-      for (let i = 0; i < answerLength; i++) {
-        abcdName += String.fromCharCode(65 + i);
-      }
-      result.name = `${abcdName} ${((await QuizDAO.getLastPersistedAbcdQuizNumberByLength(answerLength)) + 1)}`;
+      const abcdName = new Array(answerLength).fill('').map((val, index) => `${String.fromCharCode(65 + index)}`).join('');
+
+      result.name = `${abcdName} ${(
+        (
+          await QuizDAO.getLastPersistedAbcdQuizNumberByLength(answerLength)
+        ) + 1
+      )}`;
       QuizDAO.convertLegacyQuiz(result);
-      res.setHeader('Response-Type', 'application/json');
+
       return result;
+
     } catch (ex) {
       throw new InternalServerError(`File IO Error: ${ex}`);
     }
@@ -494,9 +508,13 @@ export class QuizRouter extends AbstractRouter {
 
     if (existingQuiz) {
       await QuizDAO.updateQuiz(existingQuiz.id, quiz);
-      return (await QuizDAO.getQuizByName(quiz.name)).toJSON();
+      return (
+        await QuizDAO.getQuizByName(quiz.name)
+      ).toJSON();
     } else {
-      return (await QuizDAO.addQuiz(quiz)).toJSON();
+      return (
+        await QuizDAO.addQuiz(quiz)
+      ).toJSON();
     }
   }
 
@@ -520,7 +538,9 @@ export class QuizRouter extends AbstractRouter {
     quiz.state = QuizState.Inactive;
 
     QuizDAO.convertLegacyQuiz(quiz);
-    return (await QuizDAO.addQuiz(quiz)).toJSON();
+    return (
+      await QuizDAO.addQuiz(quiz)
+    ).toJSON();
   }
 
   @Delete('/:quizName')
@@ -700,7 +720,9 @@ export class QuizRouter extends AbstractRouter {
 
   @Get('/public')
   private async getPublicQuizzes(@HeaderParam('authorization') privateKey: string): Promise<Array<QuizModelItem>> {
-    return (await QuizDAO.getAllPublicQuizzes()).filter(quiz => quiz.privateKey !== privateKey).map(quiz => quiz.toJSON());
+    return (
+      await QuizDAO.getAllPublicQuizzes()
+    ).filter(quiz => quiz.privateKey !== privateKey).map(quiz => quiz.toJSON());
   }
 
   @Post('/public/init')
@@ -714,7 +736,9 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError('Unauthorized to create quiz');
     }
 
-    const quiz = (await QuizDAO.getAllPublicQuizzes()).find(q => q.name === quizName);
+    const quiz = (
+      await QuizDAO.getAllPublicQuizzes()
+    ).find(q => q.name === quizName);
     if (!quiz) {
       throw new NotFoundError('Quiz name not found');
     }
@@ -749,17 +773,23 @@ export class QuizRouter extends AbstractRouter {
 
   @Get('/public/amount')
   private async getPublicQuizAmount(@HeaderParam('authorization') privateKey: string): Promise<number> {
-    return (await this.getPublicQuizzes(privateKey)).length;
+    return (
+      await this.getPublicQuizzes(privateKey)
+    ).length;
   }
 
   @Get('/public/own')
   private async getOwnPublicQuizzes(@HeaderParam('authorization') privateKey: string): Promise<Array<QuizModelItem>> {
-    return (await QuizDAO.getAllPublicQuizzes()).filter(quiz => quiz.privateKey === privateKey).map(quiz => quiz.toJSON());
+    return (
+      await QuizDAO.getAllPublicQuizzes()
+    ).filter(quiz => quiz.privateKey === privateKey).map(quiz => quiz.toJSON());
   }
 
   @Get('/public/amount/own')
   private async getOwnPublicQuizAmount(@HeaderParam('authorization') privateKey: string): Promise<number> {
-    return (await this.getOwnPublicQuizzes(privateKey)).length;
+    return (
+      await this.getOwnPublicQuizzes(privateKey)
+    ).length;
   }
 
   @Get('/')
@@ -776,7 +806,9 @@ export class QuizRouter extends AbstractRouter {
     const quizName = params.quizName;
     const member = await MemberDAO.getMemberByToken(token);
 
-    if (!quizName && (!token || !member)) {
+    if (!quizName && (
+      !token || !member
+    )) {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 

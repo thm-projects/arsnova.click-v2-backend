@@ -62,34 +62,30 @@ class QuizDAO extends AbstractDAO {
   }
 
   public async getLastPersistedDemoQuizNumber(): Promise<number> {
-    return this.getLastPersistedNumberForQuizzes(await this.getAllPersistedDemoQuizzes());
+    const quizzes = await QuizModel.find({ name: { $regex: new RegExp(`^(demo quiz) ([0-9]*)$`, 'i') } }).sort({
+      name: -1,
+      $natural: -1,
+    }).limit(1).exec();
+    if (!quizzes.length) {
+      return 0;
+    }
+
+    const splitted = quizzes[0].name.split(' ');
+    return parseInt(splitted[2], 10);
   }
 
   public async getLastPersistedAbcdQuizNumberByLength(length: number): Promise<number> {
-    return this.getLastPersistedNumberForQuizzes(await this.getAllPersistedAbcdQuizzesByLength(length));
-  }
+    const regexMatchString = new Array(length).fill('').map((val, index) => `${String.fromCharCode(65 + index)}{1}`).join('');
+    const quizzes = await QuizModel.find({ name: { $regex: new RegExp(`^(${regexMatchString}) ([0-9]*)$`, 'i') } }).sort({
+      name: -1,
+      $natural: -1,
+    }).limit(1).exec();
+    if (!quizzes.length) {
+      return 0;
+    }
 
-  public getAllPersistedDemoQuizzes(): Promise<Array<Document & QuizModelItem>> {
-    return QuizModel.find({ name: /^demo quiz/i }).exec();
-  }
-
-  public async getAllPersistedAbcdQuizzes(): Promise<Array<Document & QuizModelItem>> {
-    const quizzes = await QuizModel.find({ name: /([a-zA-Z]*)(\s[0-9]*)/i }).exec();
-    return quizzes.filter((value) => {
-      return this.checkABCDOrdering(value.name.toLowerCase());
-    });
-  }
-
-  public async getAllPersistedAbcdQuizzesByLength(length: number): Promise<Array<Document & QuizModelItem>> {
-    const quizzes = await QuizModel.find({ name: { $gte: length } }).exec();
-    return quizzes.filter(val => {
-      const abcdString = val.name.toLowerCase().match(/([a-zA-Z]*)(\s[0-9]*)/i);
-      if (!abcdString || abcdString.length < 2) {
-        return false;
-      }
-
-      return this.checkABCDOrdering(abcdString[1]) && val.questionList[0].answerOptionList.length === length;
-    });
+    const splitted = quizzes[0].name.split(' ');
+    return parseInt(splitted[1], 10);
   }
 
   public convertLegacyQuiz(legacyQuiz: any): Document & QuizModelItem {
@@ -356,20 +352,6 @@ class QuizDAO extends AbstractDAO {
     };
   }
 
-  private checkABCDOrdering(quizname: string): boolean {
-    let ordered = true;
-    if (!quizname || quizname.length < 2 || quizname.charAt(0) !== 'a') {
-      return false;
-    }
-    for (let i = 1; i < quizname.length; i++) {
-      if (quizname.charCodeAt(i) !== quizname.charCodeAt(i - 1) + 1) {
-        ordered = false;
-        break;
-      }
-    }
-    return ordered;
-  }
-
   private replaceTypeInformationOnLegacyQuiz(obj): object {
     if (obj === null || typeof obj !== 'object') {
       return obj;
@@ -392,18 +374,6 @@ class QuizDAO extends AbstractDAO {
     }
 
     return obj;
-  }
-
-  private getLastPersistedNumberForQuizzes(data: Array<Document & QuizModelItem>): number {
-    let maxNumber = 0;
-    data.forEach((quiz => {
-      const name = quiz.name;
-      const currentNumber = parseInt(name.substring(name.lastIndexOf(' '), name.length), 10);
-      if (currentNumber > maxNumber) {
-        maxNumber = currentNumber;
-      }
-    }));
-    return maxNumber;
   }
 
   private getQuizByState(states: Array<QuizState>): Promise<Array<Document & QuizModelItem>> {
