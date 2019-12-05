@@ -139,6 +139,7 @@ class QuizDAO extends AbstractDAO {
 
   public async addQuiz(quizDoc: IQuiz): Promise<Document & QuizModelItem> {
     await AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quizDoc.name), 'fanout');
+    delete quizDoc._id;
     return QuizModel.create(quizDoc);
   }
 

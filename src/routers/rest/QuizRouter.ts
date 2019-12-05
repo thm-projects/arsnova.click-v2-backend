@@ -175,16 +175,17 @@ export class QuizRouter extends AbstractRouter {
   ): Promise<IMessage> {
 
     const duplicateQuizzes = [];
-    const quizData = [];
+    const savedQuizzes = [];
+    const uploadedQuizzes = [];
 
     uploadedFiles.forEach(file => {
-      quizData.push({
+      uploadedQuizzes.push({
         fileName: file.originalname,
         quiz: QuizDAO.convertLegacyQuiz(JSON.parse(file.buffer.toString('UTF-8'))),
       });
     });
 
-    await asyncForEach(quizData, async (data: { fileName: string, quiz: QuizModelItem }) => {
+    await asyncForEach(uploadedQuizzes, async (data: { fileName: string, quiz: QuizModelItem }) => {
       const existingQuiz = await QuizDAO.getQuizByName(data.quiz.name);
       if (existingQuiz) {
         duplicateQuizzes.push({
@@ -196,7 +197,9 @@ export class QuizRouter extends AbstractRouter {
         data.quiz.privateKey = privateKey;
         data.quiz.visibility = QuizVisibility.Account;
 
-        await QuizDAO.addQuiz(data.quiz);
+        savedQuizzes.push((
+          await QuizDAO.addQuiz(data.quiz)
+        ).toJSON());
       }
     });
 
@@ -205,7 +208,7 @@ export class QuizRouter extends AbstractRouter {
       step: MessageProtocol.UploadFile,
       payload: {
         duplicateQuizzes,
-        quizData: quizData.filter(insertedQuiz => !duplicateQuizzes.find(duplicateQuiz => duplicateQuiz.fileName === insertedQuiz.fileName)),
+        quizData: savedQuizzes,
       },
     };
   }
@@ -743,7 +746,6 @@ export class QuizRouter extends AbstractRouter {
       throw new NotFoundError('Quiz name not found');
     }
 
-    delete quiz.id;
     quiz.name = await QuizDAO.getRenameAsToken(quiz.name);
     quiz.privateKey = privateKey;
     quiz.state = QuizState.Active;

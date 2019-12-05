@@ -29,7 +29,6 @@ export class ExpiryQuizRouter extends AbstractRouter {
     const expiryQuizzes = await QuizDAO.getExpiryQuizzes();
     const baseQuiz: any = expiryQuizzes.find(val => val.name === quizname);
     baseQuiz.name = baseQuiz.name + (expiryQuizzes.length + 1);
-    delete baseQuiz._id;
 
     const doc = await QuizDAO.addQuiz(baseQuiz);
 
