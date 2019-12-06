@@ -15,7 +15,6 @@ import QuizDAO from '../../db/quiz/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { IMessage } from '../../interfaces/communication/IMessage';
-import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { ICasData } from '../../interfaces/users/ICasData';
 import { MatchAssetCachedQuiz } from '../../lib/cache/assets';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
@@ -352,16 +351,15 @@ export class LibRouter extends AbstractRouter {
     if (!token || typeof token !== 'string' || token.length === 0) {
       token = await AuthService.generateToken(user);
       await UserDAO.updateUser(user.id, { token });
-      const quizzes: Array<IQuiz> = await Promise.all((await QuizDAO.getQuizzesByPrivateKey(user.privateKey)).map(quiz => quiz.toJSON()).map(quiz => {
-        return MatchAssetCachedQuiz(quiz);
-      }));
+      const quizzes = await QuizDAO.getQuizzesByPrivateKey(user.privateKey);
+      const parsedQuizzes = await Promise.all(quizzes.map(quiz => MatchAssetCachedQuiz(quiz.toJSON())));
 
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.AuthenticateStatic,
         payload: {
           token,
-          quizzes,
+          quizzes: parsedQuizzes,
         },
       };
     }
