@@ -11,9 +11,7 @@ import { excelDefaultWorksheetOptions } from './lib/excel_default_options';
 import { ExcelTheme } from './lib/excel_default_styles';
 
 export abstract class ExcelWorksheet {
-  get columnsToFormat(): number {
-    return this._columnsToFormat;
-  }
+  public readonly renderingFinished = new EventEmitter();
 
   get quiz(): IQuizBase {
     return this._quiz;
@@ -39,16 +37,19 @@ export abstract class ExcelWorksheet {
     return this._responsesWithConfidenceValue;
   }
 
-  public readonly renderingFinished = new EventEmitter();
+  private _columnsToFormat: number;
+
+  get columnsToFormat(): number {
+    return this._columnsToFormat;
+  }
 
   protected _options: Object;
   protected _theme: ExcelTheme;
   protected _translation: string;
+  protected readonly loaded = new EventEmitter();
   private readonly _mf: MessageFormat.Msg;
   private readonly _createdAt: string;
   private readonly _quiz: IQuizBase;
-  private _columnsToFormat: number;
-  protected readonly loaded = new EventEmitter();
 
   protected constructor({ theme, translation, quiz, mf, questionIndex }) {
     this._theme = theme;
