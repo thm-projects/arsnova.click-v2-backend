@@ -627,6 +627,8 @@ export class QuizRouter extends AbstractRouter {
       quiz: parsedQuiz,
       mf: res.__mf,
     });
+    await new Promise(resolve => wb.renderingFinished.on('done', () => resolve()));
+
     const date: Date = new Date();
     const dateFormatted = `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}-${date.getHours()}_${date.getMinutes()}`;
     const name = `Export-${quizName}-${dateFormatted}.xlsx`;

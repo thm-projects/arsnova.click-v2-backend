@@ -30,10 +30,12 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       mf,
       questionIndex: null,
     });
+
     this._ws = wb.addWorksheet(mf('export.summary'), this._options);
-    Promise.all([
+
+    this.loaded.on('load', () => Promise.all([
       this.formatSheet(), this.addSheetData(),
-    ]);
+    ]).then(() => this.renderingFinished.emit('done')));
   }
 
   public async formatSheet(): Promise<void> {

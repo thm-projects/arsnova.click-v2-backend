@@ -25,10 +25,9 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     this._questionIndex = questionIndex;
     this._question = this.quiz.questionList[questionIndex] as IQuestionChoice;
 
-    this.loaded.on('load', () => {
-      this.formatSheet();
-      this.addSheetData();
-    });
+    this.loaded.on('load', () => Promise.all([
+      this.formatSheet(), this.addSheetData(),
+    ]).then(() => this.renderingFinished.emit('done')));
   }
 
   public async formatSheet(): Promise<void> {

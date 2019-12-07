@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import * as xlsx from 'excel4node';
 import * as http from 'http';
 import * as MessageFormat from 'messageformat';
@@ -14,6 +15,8 @@ import { SummaryExcelWorksheet } from './SummaryExcelWorksheet';
 import { SurveyExcelWorksheet } from './SurveyExcelWorksheet';
 
 export class ExcelWorkbook implements IExcelWorkbook {
+  public readonly renderingFinished = new EventEmitter();
+
   get theme(): ExcelTheme {
     return this._theme;
   }
@@ -42,7 +45,7 @@ export class ExcelWorkbook implements IExcelWorkbook {
     this._mf = mf;
     this._quiz = quiz;
 
-    this.generateSheets();
+    this.generateSheets().then(() => this.renderingFinished.emit('done'));
   }
 
   public write(name: string, handler?: http.ServerResponse | Function): void {
@@ -53,7 +56,7 @@ export class ExcelWorkbook implements IExcelWorkbook {
     return this._wb.writeToBuffer();
   }
 
-  private generateSheets(): void {
+  private async generateSheets(): Promise<Array<any>> {
     const worksheetOptions: any = {
       wb: this._wb,
       theme: this._theme,
@@ -89,5 +92,7 @@ export class ExcelWorkbook implements IExcelWorkbook {
           throw new Error(`Unsupported question type '${this._quiz.questionList[i].TYPE}' while exporting`);
       }
     }
+
+    return await Promise.all(this._worksheets.map(val => new Promise(resolve => val.renderingFinished.on('done', () => resolve()))));
   }
 }

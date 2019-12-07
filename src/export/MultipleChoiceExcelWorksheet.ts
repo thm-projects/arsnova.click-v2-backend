@@ -25,10 +25,9 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     this._questionIndex = questionIndex;
     this._question = this.quiz.questionList[questionIndex] as IQuestionChoice;
 
-    this.loaded.on('load', () => {
-      this.formatSheet();
-      this.addSheetData();
-    });
+    this.loaded.on('load', () => Promise.all([
+      this.formatSheet(), this.addSheetData(),
+    ]).then(() => this.renderingFinished.emit('done')));
   }
 
   public async formatSheet(): Promise<void> {

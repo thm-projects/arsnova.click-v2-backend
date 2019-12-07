@@ -39,6 +39,8 @@ export abstract class ExcelWorksheet {
     return this._responsesWithConfidenceValue;
   }
 
+  public readonly renderingFinished = new EventEmitter();
+
   protected _options: Object;
   protected _theme: ExcelTheme;
   protected _translation: string;
