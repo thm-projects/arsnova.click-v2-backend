@@ -38,28 +38,6 @@ class MemberDAO extends AbstractDAO {
     return doc;
   }
 
-  public async removeAllMembers(): Promise<void> {
-    const members = await MemberModel.find().exec();
-    members.forEach(member => {
-      AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(member.currentQuizName), '.*', Buffer.from(JSON.stringify({
-        status: StatusProtocol.Success,
-        step: MessageProtocol.Removed,
-        payload: { name: member.name },
-      })));
-    });
-
-    await MemberModel.deleteMany({}).exec();
-  }
-
-  public async removeMember(id: ObjectId | string): Promise<void> {
-    const member = await MemberModel.findByIdAndRemove(id).exec();
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(member.currentQuizName), '.*', Buffer.from(JSON.stringify({
-      status: StatusProtocol.Success,
-      step: MessageProtocol.Removed,
-      payload: { name: member.name },
-    })));
-  }
-
   public getMembersOfQuiz(quizName: string): Promise<Array<Document & MemberModelItem>> {
     return MemberModel.find({ currentQuizName: quizName }).exec();
   }

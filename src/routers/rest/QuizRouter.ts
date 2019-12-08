@@ -511,13 +511,21 @@ export class QuizRouter extends AbstractRouter {
 
     if (existingQuiz) {
       await QuizDAO.updateQuiz(existingQuiz.id, quiz);
-      return (
+      const result = (
         await QuizDAO.getQuizByName(quiz.name)
       ).toJSON();
+      if (quiz.state === QuizState.Active) {
+        await QuizDAO.initQuiz(existingQuiz);
+      }
+      return result;
     } else {
-      return (
+      const result = (
         await QuizDAO.addQuiz(quiz)
       ).toJSON();
+      if (quiz.state === QuizState.Active) {
+        await QuizDAO.initQuiz(result);
+      }
+      return result;
     }
   }
 
@@ -750,13 +758,13 @@ export class QuizRouter extends AbstractRouter {
 
     quiz.name = await QuizDAO.getRenameAsToken(quiz.name);
     quiz.privateKey = privateKey;
-    quiz.state = QuizState.Active;
     quiz.visibility = QuizVisibility.Account;
     quiz.currentQuestionIndex = -1;
     quiz.currentStartTimestamp = -1;
     quiz.readingConfirmationRequested = false;
 
     const doc = await QuizDAO.addQuiz(quiz);
+    await QuizDAO.initQuiz(doc);
 
     AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,

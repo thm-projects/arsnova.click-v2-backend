@@ -1,4 +1,6 @@
 import { ObjectId } from 'bson';
+import * as http from 'http';
+import * as https from 'https';
 import { Document } from 'mongoose';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';
@@ -6,12 +8,21 @@ import { QuizVisibility } from '../../enums/QuizVisibility';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { generateToken } from '../../lib/generateToken';
 import { QuizModel, QuizModelItem } from '../../models/quiz/QuizModelItem';
+import { settings } from '../../statistics';
 import { AbstractDAO } from '../AbstractDAO';
 import AMQPConnector from '../AMQPConnector';
 import MemberDAO from '../MemberDAO';
 
+interface IQuizDAOStorage {
+  quizTimer: number;
+  quizTimerInterval: NodeJS.Timeout;
+  emptyQuizInterval: NodeJS.Timeout;
+  isEmpty: boolean;
+}
+
 class QuizDAO extends AbstractDAO {
-  private readonly _storage: { [key: string]: { quizTimer: number, quizTimerInterval: NodeJS.Timeout } };
+  private readonly _storage: { [key: string]: IQuizDAOStorage };
+  private readonly CHECK_STATE_INTERVAL = 90000; // 1.5 Minutes
 
   constructor(storage) {
     super();
@@ -156,9 +167,13 @@ class QuizDAO extends AbstractDAO {
   }
 
   public async initQuiz(quiz: Document & QuizModelItem): Promise<void> {
-    quiz.state = QuizState.Active;
     this.initTimerData(quiz);
+    quiz.state = QuizState.Active;
     await this.updateQuiz(new ObjectId(quiz._id), quiz);
+
+    this._storage[quiz.name].emptyQuizInterval = setInterval(() => {
+      this.checkExistingConnection(quiz.name, quiz.privateKey);
+    }, this.CHECK_STATE_INTERVAL);
   }
 
   public getAllQuizzes(): Promise<Array<Document & QuizModelItem>> {
@@ -177,6 +192,8 @@ class QuizDAO extends AbstractDAO {
       name: this.buildQuiznameQuery(quizName),
       privateKey,
     }, { state: QuizState.Inactive }).exec();
+
+    clearInterval(this._storage[quizName].emptyQuizInterval);
 
     AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
@@ -288,11 +305,8 @@ class QuizDAO extends AbstractDAO {
   }
 
   public async startNextQuestion(quiz: Document & QuizModelItem): Promise<void> {
-    if (this._storage[quiz.name]) {
-      clearInterval(this._storage[quiz.name].quizTimerInterval);
-    }
-
     this.initTimerData(quiz);
+
     AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Start,
@@ -347,9 +361,16 @@ class QuizDAO extends AbstractDAO {
   }
 
   private initTimerData(quiz: QuizModelItem): void {
+    if (this._storage[quiz.name]) {
+      clearInterval(this._storage[quiz.name].quizTimerInterval);
+      clearInterval(this._storage[quiz.name].emptyQuizInterval);
+    }
+
     this._storage[quiz.name] = {
       quizTimer: -1,
       quizTimerInterval: null,
+      emptyQuizInterval: null,
+      isEmpty: false,
     };
   }
 
@@ -389,6 +410,41 @@ class QuizDAO extends AbstractDAO {
     delete this._storage[quizName];
 
     await AMQPConnector.channel.deleteExchange(AMQPConnector.buildQuizExchange(quizName));
+  }
+
+  private checkExistingConnection(quizName: string, privateKey: string): void {
+    const reqOptions: http.RequestOptions = {
+      protocol: settings.amqp.managementApi.protocol,
+      host: settings.amqp.managementApi.host,
+      port: settings.amqp.managementApi.port,
+      path: `/api/exchanges/${encodeURIComponent(settings.amqp.vhost)}/quiz_${encodeURIComponent(encodeURIComponent(quizName))}/bindings/source`,
+      auth: `${settings.amqp.managementApi.user}:${settings.amqp.managementApi.password}`,
+    };
+
+    (
+      settings.amqp.managementApi.protocol === 'https:' ? https : http
+    ).get(reqOptions, response => {
+      let data = '';
+
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      response.on('end', () => {
+        const parsedData = JSON.parse(data);
+        if (Array.isArray(parsedData) && parsedData.length) {
+          this._storage[quizName].isEmpty = false;
+          return;
+        }
+
+        if (this._storage[quizName].isEmpty) {
+          this.setQuizAsInactive(quizName, privateKey);
+          return;
+        }
+
+        this._storage[quizName].isEmpty = true;
+      });
+    });
   }
 }
 

@@ -75,7 +75,9 @@ export class AdminRouter extends AbstractRouter {
         answerAmount = quiz.questionList.map(question => question.answerOptionList.length)
         .reduce((previousValue, currentValue) => previousValue + currentValue);
       }
-      const memberAmount = await MemberDAO.getMembersOfQuiz(quiz.name);
+      const memberAmount = (
+        await MemberDAO.getMembersOfQuiz(quiz.name)
+      ).length;
 
       return {
         state: quiz.state,
