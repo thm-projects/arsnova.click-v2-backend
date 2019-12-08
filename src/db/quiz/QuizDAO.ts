@@ -191,7 +191,12 @@ class QuizDAO extends AbstractDAO {
     await QuizModel.updateOne({
       name: this.buildQuiznameQuery(quizName),
       privateKey,
-    }, { state: QuizState.Inactive }).exec();
+    }, {
+      state: QuizState.Inactive,
+      currentQuestionIndex: -1,
+      currentStartTimestamp: -1,
+      readingConfirmationRequested: false,
+    }).exec();
 
     clearInterval(this._storage[quizName].emptyQuizInterval);
 
