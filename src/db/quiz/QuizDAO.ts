@@ -167,7 +167,7 @@ class QuizDAO extends AbstractDAO {
   }
 
   public async initQuiz(quiz: Document & QuizModelItem): Promise<void> {
-    this.initTimerData(quiz);
+    this.initTimerData(quiz.name);
     quiz.state = QuizState.Active;
     await this.updateQuiz(new ObjectId(quiz._id), quiz);
 
@@ -198,7 +198,11 @@ class QuizDAO extends AbstractDAO {
       readingConfirmationRequested: false,
     }).exec();
 
-    clearInterval(this._storage[quizName].emptyQuizInterval);
+    if (!this._storage[quizName]) {
+      this.initTimerData(quizName);
+    } else {
+      clearInterval(this._storage[quizName].emptyQuizInterval);
+    }
 
     AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
@@ -310,7 +314,7 @@ class QuizDAO extends AbstractDAO {
   }
 
   public async startNextQuestion(quiz: Document & QuizModelItem): Promise<void> {
-    this.initTimerData(quiz);
+    this.initTimerData(quiz.name);
 
     AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
@@ -365,13 +369,13 @@ class QuizDAO extends AbstractDAO {
     return QuizModel.findOne({ _id: new ObjectId(id) }).exec();
   }
 
-  private initTimerData(quiz: QuizModelItem): void {
-    if (this._storage[quiz.name]) {
-      clearInterval(this._storage[quiz.name].quizTimerInterval);
-      clearInterval(this._storage[quiz.name].emptyQuizInterval);
+  private initTimerData(quizName: string): void {
+    if (this._storage[quizName]) {
+      clearInterval(this._storage[quizName].quizTimerInterval);
+      clearInterval(this._storage[quizName].emptyQuizInterval);
     }
 
-    this._storage[quiz.name] = {
+    this._storage[quizName] = {
       quizTimer: -1,
       quizTimerInterval: null,
       emptyQuizInterval: null,
