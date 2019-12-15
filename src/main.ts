@@ -13,7 +13,7 @@ import DbDAO from './db/DbDAO';
 import I18nDAO from './db/I18nDAO';
 import MathjaxDAO from './db/MathjaxDAO';
 import MemberDAO from './db/MemberDAO';
-import QuizDAO from './db/quiz/QuizDAO';
+import QuizDAO from './db/QuizDAO';
 import UserDAO from './db/UserDAO';
 import LoggerService from './services/LoggerService';
 import { staticStatistics } from './statistics';

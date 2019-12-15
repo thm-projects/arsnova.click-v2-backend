@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import MemberDAO from '../db/MemberDAO';
-import QuizDAO from '../db/quiz/QuizDAO';
+import QuizDAO from '../db/QuizDAO';
 import { IQuiz } from '../interfaces/quizzes/IQuizEntity';
 import { generateQuiz } from './fixtures';
 

@@ -7,7 +7,7 @@ import * as sinon from 'sinon';
 import app from '../../App';
 import AMQPConnector from '../../db/AMQPConnector';
 import MemberDAO from '../../db/MemberDAO';
-import QuizDAO from '../../db/quiz/QuizDAO';
+import QuizDAO from '../../db/QuizDAO';
 import { staticStatistics } from '../../statistics';
 import { generateQuiz } from '../fixtures';
 

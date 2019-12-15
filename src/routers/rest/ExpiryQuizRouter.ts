@@ -1,5 +1,5 @@
 import { Authorized, BadRequestError, BodyParam, Get, JsonController, Post } from 'routing-controllers';
-import QuizDAO from '../../db/quiz/QuizDAO';
+import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { UserRole } from '../../enums/UserRole';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';

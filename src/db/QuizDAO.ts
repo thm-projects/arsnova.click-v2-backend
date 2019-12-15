@@ -2,16 +2,16 @@ import { ObjectId } from 'bson';
 import * as http from 'http';
 import * as https from 'https';
 import { Document } from 'mongoose';
-import { MessageProtocol, StatusProtocol } from '../../enums/Message';
-import { QuizState } from '../../enums/QuizState';
-import { QuizVisibility } from '../../enums/QuizVisibility';
-import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
-import { generateToken } from '../../lib/generateToken';
-import { QuizModel, QuizModelItem } from '../../models/quiz/QuizModelItem';
-import { settings } from '../../statistics';
-import { AbstractDAO } from '../AbstractDAO';
-import AMQPConnector from '../AMQPConnector';
-import MemberDAO from '../MemberDAO';
+import { MessageProtocol, StatusProtocol } from '../enums/Message';
+import { QuizState } from '../enums/QuizState';
+import { QuizVisibility } from '../enums/QuizVisibility';
+import { IQuiz } from '../interfaces/quizzes/IQuizEntity';
+import { generateToken } from '../lib/generateToken';
+import { QuizModel, QuizModelItem } from '../models/quiz/QuizModelItem';
+import { settings } from '../statistics';
+import { AbstractDAO } from './AbstractDAO';
+import AMQPConnector from './AMQPConnector';
+import MemberDAO from './MemberDAO';
 
 interface IQuizDAOStorage {
   quizTimer: number;

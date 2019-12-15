@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as sinon from 'sinon';
 import AMQPConnector from '../../db/AMQPConnector';
 import MemberDAO from '../../db/MemberDAO';
-import QuizDAO from '../../db/quiz/QuizDAO';
+import QuizDAO from '../../db/QuizDAO';
 import { QuestionType } from '../../enums/QuestionType';
 import { ExcelWorkbook } from '../../export/ExcelWorkbook';
 import { IQuestionRanged } from '../../interfaces/questions/IQuestionRanged';

@@ -1,6 +1,6 @@
 import { BadRequestError, Body, BodyParam, Delete, Get, HeaderParam, JsonController, Param, Post, Put, UnauthorizedError } from 'routing-controllers';
 import MemberDAO from '../../db/MemberDAO';
-import QuizDAO from '../../db/quiz/QuizDAO';
+import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSerialized';

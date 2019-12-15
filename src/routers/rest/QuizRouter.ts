@@ -21,7 +21,7 @@ import {
 } from 'routing-controllers';
 import AMQPConnector from '../../db/AMQPConnector';
 import MemberDAO from '../../db/MemberDAO';
-import QuizDAO from '../../db/quiz/QuizDAO';
+import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';

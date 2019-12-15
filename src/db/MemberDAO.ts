@@ -6,7 +6,7 @@ import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
 import { MemberModel, MemberModelItem } from '../models/member/MemberModel';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
-import QuizDAO from './quiz/QuizDAO';
+import QuizDAO from './QuizDAO';
 
 class MemberDAO extends AbstractDAO {
 

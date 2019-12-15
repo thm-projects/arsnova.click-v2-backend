@@ -7,7 +7,7 @@ import * as path from 'path';
 import { Get, getMetadataArgsStorage, JsonController, NotFoundError, Param, Res } from 'routing-controllers';
 import { OpenAPI, routingControllersToSpec } from 'routing-controllers-openapi';
 import { routingControllerOptions } from '../../App';
-import QuizDAO from '../../db/quiz/QuizDAO';
+import QuizDAO from '../../db/QuizDAO';
 import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 

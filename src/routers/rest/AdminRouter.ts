@@ -2,7 +2,7 @@ import { ObjectId } from 'bson';
 import { Authorized, BodyParam, Delete, Get, JsonController, Param, Post, Put } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import MemberDAO from '../../db/MemberDAO';
-import QuizDAO from '../../db/quiz/QuizDAO';
+import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { UserRole } from '../../enums/UserRole';
 import { IAdminQuiz } from '../../interfaces/quizzes/IAdminQuiz';

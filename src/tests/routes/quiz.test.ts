@@ -6,7 +6,7 @@ import { suite, test } from 'mocha-typescript';
 import * as mongoUnit from 'mongo-unit';
 import * as path from 'path';
 import app from '../../App';
-import QuizDAO from '../../db/quiz/QuizDAO';
+import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol } from '../../enums/Message';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { staticStatistics } from '../../statistics';

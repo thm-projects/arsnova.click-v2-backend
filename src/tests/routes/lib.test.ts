@@ -84,8 +84,6 @@ class CacheQuizAssetsLibRouterTestSuite {
         },
       ],
     });
-
-
     sandbox.restore();
   }
 

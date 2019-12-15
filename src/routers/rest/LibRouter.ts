@@ -11,7 +11,7 @@ import * as xml2js from 'xml2js';
 import AssetDAO from '../../db/AssetDAO';
 import CasDAO from '../../db/CasDAO';
 import MathjaxDAO from '../../db/MathjaxDAO';
-import QuizDAO from '../../db/quiz/QuizDAO';
+import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { IMessage } from '../../interfaces/communication/IMessage';
