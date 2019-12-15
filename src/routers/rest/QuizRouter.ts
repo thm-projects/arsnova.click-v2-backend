@@ -579,8 +579,8 @@ export class QuizRouter extends AbstractRouter {
     try {
       await QuizDAO.setQuizAsInactive(quizName, privateKey);
 
-    } catch {
-      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
+    } catch (e) {
+      throw new BadRequestError(e.message);
     }
 
     return {

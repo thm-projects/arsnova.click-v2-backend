@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/node';
 import * as express from 'express';
 import { ExpressErrorMiddlewareInterface, HttpError, Middleware } from 'routing-controllers';
 
@@ -18,6 +19,9 @@ export class ErrorHandlerMiddleware implements ExpressErrorMiddlewareInterface {
       });
     }
 
+    if (!error.httpCode || error.httpCode >= 500) {
+      captureException(error);
+    }
     console.error(error.stack);
   }
 }

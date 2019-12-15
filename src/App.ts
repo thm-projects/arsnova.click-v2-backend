@@ -9,6 +9,7 @@ import * as process from 'process';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
 import options from './lib/cors.config';
+import { ErrorHandlerMiddleware } from './routers/middleware/customErrorHandler';
 import { I18nMiddleware } from './routers/middleware/i18n';
 import { roleAuthorizationChecker } from './routers/middleware/roleAuthorizationChecker';
 import { AdminRouter } from './routers/rest/AdminRouter';
@@ -35,7 +36,7 @@ export const routingControllerOptions: RoutingControllersOptions = {
   controllers: [
     AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LibRouter, MemberRouter, NicksRouter, QuizRouter,
   ],
-  middlewares: [I18nMiddleware],
+  middlewares: [I18nMiddleware, ErrorHandlerMiddleware],
 };
 
 // Creates and configures an ExpressJS web server.
@@ -59,8 +60,6 @@ class App {
     this.routes();
 
     useExpressServer(this._express, routingControllerOptions);
-
-    this._express.use(Handlers.errorHandler());
   }
 
   // Configure Express middleware.
