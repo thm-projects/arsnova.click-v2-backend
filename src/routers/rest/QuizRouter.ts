@@ -122,16 +122,16 @@ export class QuizRouter extends AbstractRouter {
       }
 
       const result: IQuiz = JSON.parse(fs.readFileSync(demoQuizPath).toString());
+      const lastPersistedDemoQuizNumber = await QuizDAO.getLastPersistedDemoQuizNumber();
       result.name = 'Demo Quiz ' + (
-                    (
-                      await QuizDAO.getLastPersistedDemoQuizNumber()
-                    ) + 1
+                    lastPersistedDemoQuizNumber + 1
       );
       QuizDAO.convertLegacyQuiz(result);
 
       return result;
 
     } catch (ex) {
+      console.error('File IO Error', ex.message);
       throw new InternalServerError(`File IO Error: ${ex}`);
     }
   }
@@ -154,17 +154,17 @@ export class QuizRouter extends AbstractRouter {
 
       const result: IQuiz = JSON.parse(fs.readFileSync(abcdQuizPath).toString());
       const abcdName = new Array(answerLength).fill('').map((val, index) => `${String.fromCharCode(65 + index)}`).join('');
+      const lastPersistedAbcdNumber = await QuizDAO.getLastPersistedAbcdQuizNumberByLength(answerLength);
 
       result.name = `${abcdName} ${(
-        (
-          await QuizDAO.getLastPersistedAbcdQuizNumberByLength(answerLength)
-        ) + 1
+        lastPersistedAbcdNumber + 1
       )}`;
       QuizDAO.convertLegacyQuiz(result);
 
       return result;
 
     } catch (ex) {
+      console.error('File IO Error', ex.message);
       throw new InternalServerError(`File IO Error: ${ex}`);
     }
   }

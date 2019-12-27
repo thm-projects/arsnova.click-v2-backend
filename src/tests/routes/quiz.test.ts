@@ -2,7 +2,7 @@
 
 import * as chai from 'chai';
 import * as fs from 'fs';
-import { suite, test } from 'mocha-typescript';
+import { suite, test, timeout } from 'mocha-typescript';
 import * as mongoUnit from 'mongo-unit';
 import * as path from 'path';
 import app from '../../App';
@@ -44,7 +44,7 @@ class QuizApiRouterTestSuite {
     expect(res.type).to.equal('application/json');
   }
 
-  @test
+  @test @timeout(5000)
   public async generateDemoQuiz(): Promise<void> {
     const res = await chai.request(app).get(`${this._baseApiRoute}/generate/demo/en`);
     expect(res.type).to.equal('application/json');
@@ -52,7 +52,7 @@ class QuizApiRouterTestSuite {
     expect(res.body.name).to.equal('Demo Quiz ' + ((await QuizDAO.getLastPersistedDemoQuizNumber()) + 1));
   }
 
-  @test
+  @test @timeout(5000)
   public async generateAbcdQuiz(): Promise<void> {
     const res = await chai.request(app).get(`${this._baseApiRoute}/generate/abcd/en/5`);
     expect(res.status).to.equal(200);
