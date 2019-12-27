@@ -31,7 +31,7 @@ npm_test:
     - nodejs
   script:
     - npm install
-    - export NODE_ENV=test
+    - export NODE_ENV='production'
     - node_modules/nyc/bin/nyc.js --reporter=text node_modules/mocha/bin/mocha --opts src/tests/mocha.opts
 
 build:
