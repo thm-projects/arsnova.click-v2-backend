@@ -1,3 +1,4 @@
+import { Document } from 'mongoose';
 import { Authorized, BadRequestError, BodyParam, Get, JsonController, Post } from 'routing-controllers';
 import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
@@ -27,10 +28,10 @@ export class ExpiryQuizRouter extends AbstractRouter {
   ): Promise<object> {
 
     const expiryQuizzes = await QuizDAO.getExpiryQuizzes();
-    const baseQuiz: any = expiryQuizzes.find(val => val.name === quizname);
+    const baseQuiz: Document & QuizModelItem = expiryQuizzes.find(val => val.name === quizname);
     baseQuiz.name = baseQuiz.name + (expiryQuizzes.length + 1);
 
-    const doc = await QuizDAO.addQuiz(baseQuiz);
+    const doc = await QuizDAO.addQuiz(baseQuiz.toJSON());
 
     return {
       status: StatusProtocol.Success,

@@ -149,6 +149,7 @@ class QuizDAO extends AbstractDAO {
   public async addQuiz(quizDoc: IQuiz): Promise<Document & QuizModelItem> {
     await AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quizDoc.name), 'fanout');
     delete quizDoc._id;
+    delete quizDoc.id;
     return QuizModel.create(quizDoc);
   }
 
@@ -231,6 +232,14 @@ class QuizDAO extends AbstractDAO {
 
   public getAllPublicQuizzes(): Promise<Array<Document & QuizModelItem>> {
     return QuizModel.find({
+      visibility: QuizVisibility.Any,
+      expiry: { $gte: new Date() },
+    }).exec();
+  }
+
+  public getPublicQuizByName(quizName: string): Promise<Document & QuizModelItem> {
+    return QuizModel.findOne({
+      name: this.buildQuiznameQuery(quizName),
       visibility: QuizVisibility.Any,
       expiry: { $gte: new Date() },
     }).exec();

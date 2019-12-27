@@ -751,9 +751,7 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError('Unauthorized to create quiz');
     }
 
-    const quiz = (
-      await QuizDAO.getAllPublicQuizzes()
-    ).find(q => q.name === quizName);
+    const quiz = await QuizDAO.getPublicQuizByName(quizName);
     if (!quiz) {
       throw new NotFoundError('Quiz name not found');
     }
@@ -765,7 +763,7 @@ export class QuizRouter extends AbstractRouter {
     quiz.currentStartTimestamp = -1;
     quiz.readingConfirmationRequested = false;
 
-    const doc = await QuizDAO.addQuiz(quiz);
+    const doc = await QuizDAO.addQuiz(quiz.toJSON());
     await QuizDAO.initQuiz(doc);
 
     AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
