@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import * as fs from 'fs';
+import { Document } from 'mongoose';
 import * as path from 'path';
 import {
   BadRequestError,
@@ -509,24 +510,22 @@ export class QuizRouter extends AbstractRouter {
       },
     })));
 
+    let result: Document & QuizModelItem;
     if (existingQuiz) {
       await QuizDAO.updateQuiz(existingQuiz.id, quiz);
-      const result = (
+      result = (
         await QuizDAO.getQuizByName(quiz.name)
       ).toJSON();
-      if (quiz.state === QuizState.Active) {
-        await QuizDAO.initQuiz(existingQuiz);
-      }
-      return result;
     } else {
-      const result = (
+      result = (
         await QuizDAO.addQuiz(quiz)
       ).toJSON();
-      if (quiz.state === QuizState.Active) {
-        await QuizDAO.initQuiz(result);
-      }
-      return result;
     }
+
+    if (quiz.state === QuizState.Active) {
+      await QuizDAO.initQuiz(result);
+    }
+    return result;
   }
 
   @Put('/save')
@@ -547,6 +546,9 @@ export class QuizRouter extends AbstractRouter {
     quiz.privateKey = privateKey;
     quiz.expiry = quiz.expiry ? new Date(quiz.expiry) : quiz.expiry;
     quiz.state = QuizState.Inactive;
+    quiz.currentQuestionIndex = -1;
+    quiz.currentStartTimestamp = -1;
+    quiz.readingConfirmationRequested = false;
 
     QuizDAO.convertLegacyQuiz(quiz);
     return (
