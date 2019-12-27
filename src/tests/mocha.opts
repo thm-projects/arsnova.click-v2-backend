@@ -4,4 +4,5 @@
 --require ts-node/register
 --require src/tests/mongo-mock.js
 --recursive
+--timeout 5000
 src/tests/**/*.test.ts
