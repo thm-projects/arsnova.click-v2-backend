@@ -5,4 +5,5 @@
 --require src/tests/mongo-mock.js
 --recursive
 --timeout 5000
+--delay
 src/tests/**/*.test.ts
