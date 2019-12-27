@@ -23,7 +23,7 @@ import { generateQuiz } from '../fixtures';
 class ExcelExportTestSuite {
   private readonly _hashtag = 'mocha-export-test';
   private _memberCount = 20;
-  private _theme = 'theme-Material';
+  private _theme = 'Material';
   private _language = 'en';
   private _date: Date = new Date();
   private _dateDay = `${this._date.getDate()}_${this._date.getMonth() + 1}_${this._date.getFullYear()}`;
@@ -78,8 +78,9 @@ class ExcelExportTestSuite {
   public async initQuiz(): Promise<void> {
     const doc = await QuizDAO.addQuiz(generateQuiz(this._hashtag));
     await QuizDAO.initQuiz(doc);
+    const result = await QuizDAO.isActiveQuiz(this._hashtag);
 
-    assert.equal((await QuizDAO.isActiveQuiz(this._hashtag)), true, 'Expected to find an active quiz item');
+    assert.equal(result, true, 'Expected to find an active quiz item');
   }
 
   @test
@@ -95,8 +96,9 @@ class ExcelExportTestSuite {
         token: 'testnick',
       });
     }
-    await assert.equal((await MemberDAO.getMembersOfQuiz(doc.name)).length, this._memberCount,
-      `Expected that the quiz has ${this._memberCount} members`);
+
+    const result = await MemberDAO.getMembersOfQuiz(doc.name);
+    await assert.equal(result.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
   }
 
   @test
