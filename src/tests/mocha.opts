@@ -2,8 +2,7 @@
 --exit
 --require source-map-support/register
 --require ts-node/register
---require src/tests/mongo-mock.js
 --recursive
 --timeout 5000
---delay
+--require src/tests/mongo-mock.js
 src/tests/**/*.test.ts

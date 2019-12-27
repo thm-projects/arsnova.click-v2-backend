@@ -1,4 +1,3 @@
-import { setGlobalOptions } from '@typegoose/typegoose';
 import * as chai from 'chai';
 import { suite, test } from 'mocha-typescript';
 import * as sinon from 'sinon';
@@ -8,12 +7,6 @@ import { QuizModel } from '../../models/quiz/QuizModelItem';
 import { generateQuiz } from '../fixtures';
 
 const expect = chai.expect;
-
-setGlobalOptions({
-  globalOptions: {
-    useNewEnum: true,
-  },
-});
 
 @suite
 class QuizDAOTestSuite {
