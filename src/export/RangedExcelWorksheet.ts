@@ -143,7 +143,9 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     const leaderBoardData = await this.getLeaderboardData();
 
     const hasEntries = leaderBoardData.length > 0;
-    const attendeeEntryRows = hasEntries ? (leaderBoardData.length) : 1;
+    const attendeeEntryRows = hasEntries ? (
+      leaderBoardData.length
+    ) : 1;
     const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
       alignment: {
         horizontal: 'center',
@@ -157,24 +159,30 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       if (this._isCasRequired) {
         nextColumnIndex += 2;
       }
-      const responseItem = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickitem => {
+      const responseItem = (
+        await MemberDAO.getMembersOfQuiz(this.quiz.name)
+      ).filter(nickitem => {
         return nickitem.name === leaderboardItem.name;
       })[0].responses[this._questionIndex];
       const castedQuestion = this._question as IQuestionRanged;
+      const castedResponseValue = parseInt(responseItem.value as string, 10);
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
           horizontal: 'center',
         },
         font: {
-          color: responseItem.value === castedQuestion.correctValue || responseItem.value < castedQuestion.rangeMin || responseItem.value
-                 > castedQuestion.rangeMax ? 'FFFFFFFF' : 'FF000000',
+          color: castedResponseValue === castedQuestion.correctValue || //
+                 castedResponseValue < castedQuestion.rangeMin || //
+                 castedResponseValue > castedQuestion.rangeMax ? //
+                 'FFFFFFFF' : 'FF000000',
         },
         fill: {
           type: 'pattern',
           patternType: 'solid',
-          fgColor: responseItem.value === castedQuestion.correctValue ? 'FF008000' : responseItem.value < castedQuestion.rangeMin
-                                                                                     || responseItem.value > castedQuestion.rangeMax ? 'FFB22222'
-                                                                                                                                     : 'FFFFE200',
+          fgColor: castedResponseValue === castedQuestion.correctValue ? //
+                   'FF008000' : castedResponseValue < castedQuestion.rangeMin || //
+                                castedResponseValue > castedQuestion.rangeMax ? //
+                                'FFB22222' : 'FFFFE200',
         },
       });
       if (this.responsesWithConfidenceValue.length > 0) {
@@ -218,14 +226,19 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
-                                               .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
-                                               / (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length * 100;
-    this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
+                                               .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length / (
+                                                 await MemberDAO.getMembersOfQuiz(this.quiz.name)
+                                               ).length * 100;
+    this.ws.cell(7, 2).number((
+      isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)
+    ));
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem) => {
+      (
+        await MemberDAO.getMembersOfQuiz(this.quiz.name)
+      ).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -245,7 +258,9 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
 
     let nextStartRow = 10;
     await asyncForEach(leaderBoardData, async leaderboardItem => {
-      const responseItem = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickitem => {
+      const responseItem = (
+        await MemberDAO.getMembersOfQuiz(this.quiz.name)
+      ).filter(nickitem => {
         return nickitem.name === leaderboardItem.name;
       })[0].responses[this._questionIndex];
 
@@ -253,13 +268,15 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(leaderboardItem.name);
       if (this._isCasRequired) {
-        const profile = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter((nick: MemberModelItem) => {
+        const profile = (
+          await MemberDAO.getMembersOfQuiz(this.quiz.name)
+        ).filter((nick: MemberModelItem) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
       }
-      this.ws.cell(nextStartRow, nextColumnIndex++).number(responseItem.value);
+      this.ws.cell(nextStartRow, nextColumnIndex++).number(parseInt(responseItem.value as string, 10));
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
       }
