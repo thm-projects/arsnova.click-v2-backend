@@ -4,7 +4,7 @@ import * as assert from 'assert';
 import * as fs from 'fs';
 import * as i18n from 'i18n';
 import * as MessageFormat from 'messageformat';
-import { slow, suite, test } from 'mocha-typescript';
+import { slow, suite, test, timeout } from 'mocha-typescript';
 import * as mongoUnit from 'mongo-unit';
 import * as path from 'path';
 import * as sinon from 'sinon';
@@ -74,7 +74,7 @@ class ExcelExportTestSuite {
     return Math.floor(Math.random() * (max - min + 1) + min);
   }
 
-  @test
+  @test @slow(5000) @timeout(5000)
   public async initQuiz(): Promise<void> {
     const doc = await QuizDAO.addQuiz(generateQuiz(this._hashtag));
     await QuizDAO.initQuiz(doc);
@@ -83,7 +83,7 @@ class ExcelExportTestSuite {
     assert.equal(result, true, 'Expected to find an active quiz item');
   }
 
-  @test
+  @test @slow(5000) @timeout(5000)
   public async addMembers(): Promise<void> {
     const doc = await QuizDAO.addQuiz(generateQuiz(this._hashtag));
     await QuizDAO.initQuiz(doc);
