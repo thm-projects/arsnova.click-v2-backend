@@ -5,7 +5,7 @@ import { AbstractDAO } from './AbstractDAO';
 import MongoDBConnector from './MongoDBConnector';
 
 class DbDAO extends AbstractDAO {
-  private static DB_RECONNECT_INTERVAL = 1000 * 60 * 5; // 5 Minutes
+  private static DB_RECONNECT_INTERVAL = 1000 * 60; // 1 Minute
   public readonly DB = MongoDBConnector.dbName;
 
   private _dbCon: Connection = null;

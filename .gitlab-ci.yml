@@ -1,89 +1,104 @@
 stages:
-  - install
-  - test
   - build
   - deploy
-  - deploy-beta
 
-cache:
-  key: ${CI_COMMIT_REF_SLUG}
-  paths:
-    - node_modules/
-
-install_node_modules:
-  stage: install
-  tags:
-    - nodejs
-  script:
-    - npm install
-
-ts_lint:
-  stage: test
-  tags:
-    - nodejs
-  script:
-    - npm install
-    - node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json
-
-npm_test:
-  stage: test
-  tags:
-    - nodejs
-  script:
-    - npm install
-    - export NODE_ENV='test'
-    - node_modules/nyc/bin/nyc.js --reporter=text node_modules/mocha/bin/mocha --opts src/tests/mocha.opts
-
-build:
+.template: &build-template
   stage: build
+  services:
+    - name: docker:19.03.1-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  tags:
+    - docker-compose
+  artifacts:
+    expire_in: 2 mins
+    paths:
+      - variables
+      - private_key
+
+.docker-push-template: &docker-push |
+  docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  docker build -t $CI_IMAGE_NAME:$VERSION .
+  docker push "$CI_IMAGE_NAME:$VERSION"
+
+.staging-server-env-template: &staging-server-env |
+  echo "export CI_CONTAINER_INSTANCE_NAME=$CI_CONTAINER_INSTANCE_NAME" >> variables
+  echo "export SSH_URL=$STAGING_BACKEND_URL" >> variables
+  echo "export SSH_CMD=$STAGING_SSH" >> variables
+  echo "export VERSION=$VERSION" >> variables
+  echo "$STAGING_SSH_PRIVATE_KEY" >> private_key
+
+.production-server-env-template: &production-server-env |
+  echo "export CI_CONTAINER_INSTANCE_NAME=$CI_CONTAINER_INSTANCE_NAME" >> variables
+  echo "export SSH_URL=$PRODUCTION_BACKEND_URL" >> variables
+  echo "export SSH_CMD=$PRODUCTION_SSH" >> variables
+  echo "export VERSION=$VERSION" >> variables
+  echo "$PRODUCTION_SSH_PRIVATE_KEY" >> private_key
+
+build-master:
+  <<: *build-template
   only:
     - master
-    - beta
-  tags:
-    - nodejs
+  environment:
+    name: Master
+  variables:
+    VERSION: 2.0.0
+    CI_CONTAINER_INSTANCE_NAME: arsnova-click-backend
   script:
-    - npm install
-    - export NODE_ENV='production'
-    - export ARSNOVA_CLICK_BACKEND_PORT_INTERNAL='3000'
-    - export ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX='/backend'
-    - export LEADERBOARD_ALGORITHM='PointBased'
-    - npm run build:PROD
-    - cp package.json dist
-  artifacts:
-    paths:
-      - dist
+    - *production-server-env
+    - *docker-push
+
+build-staging:
+  <<: *build-template
+  only:
+    - staging
+  environment:
+    name: Staging
+  variables:
+    VERSION: 2.0.0-staging
+    CI_CONTAINER_INSTANCE_NAME: arsnova-click-backend-staging
+  script:
+    - *staging-server-env
+    - *docker-push
+
+build-beta:
+  <<: *build-template
+  only:
+    - beta
+  environment:
+    name: Beta
+  variables:
+    VERSION: 2.0.0-beta
+    CI_CONTAINER_INSTANCE_NAME: arsnova-click-backend-beta
+  script:
+    - *staging-server-env
+    - *docker-push
+
+build-snapshot:
+  <<: *build-template
+  only:
+    - docker
+  variables:
+    VERSION: 2.0.0-beta
+    CI_CONTAINER_INSTANCE_NAME: arsnova-click-backend-beta
+  script:
+    - *staging-server-env
+    - *docker-push
 
 deploy:
   stage: deploy
   only:
     - master
-  tags:
-    - rsync
-  dependencies:
-    - build
-  script:
-    - chmod -R a+rX,ug+w .
-    - eval $(ssh-agent -s)
-    - mkdir ~/.ssh
-    - ssh-keyscan "$STAGING_BACKEND_URL" >> ~/.ssh/known_hosts
-    - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY")
-    - rsync -rltgoDqv --delete -e "ssh" dist/* "$STAGING_BACKEND_SSH_URL"
-    - ssh $NEW_PRODUCTION_SSH 'touch /home/arsnova/arsnova.click-v2/backend/deploy.touch'
-
-deploy-beta:
-  stage: deploy-beta
-  only:
+    - staging
     - beta
+    - docker
   tags:
-    - rsync
-  dependencies:
-    - build
+    - ssh
   script:
-    - chmod -R a+rX,ug+w .
+    - source variables
     - eval $(ssh-agent -s)
     - mkdir ~/.ssh
-    - ssh-keyscan "$STAGING_BACKEND_URL" >> ~/.ssh/known_hosts
-    - ssh-add <(echo "$STAGING_SSH_PRIVATE_KEY")
-    - rsync -rltgoDqv --delete -e "ssh" dist/* "$BETA_BACKEND_SSH_URL"
-    - ssh $NEW_PRODUCTION_SSH 'touch /home/arsnova/arsnova.click-v2-beta/backend/deploy.touch'
-
+    - ssh-keyscan "$SSH_URL" >> ~/.ssh/known_hosts
+    - ssh-add <(cat private_key)
+    - ssh $SSH_CMD "docker pull $CI_IMAGE_NAME:$VERSION && docker rm -f $CI_CONTAINER_INSTANCE_NAME && docker run -d -p 3010 --name=$CI_CONTAINER_INSTANCE_NAME $CI_IMAGE_NAME:$VERSION && docker image prune -af"

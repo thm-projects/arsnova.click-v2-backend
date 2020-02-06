@@ -51,3 +51,8 @@ arsnova-click-v2-db-v*.json
 /images/themes/*.png
 test-generated/*
 .nyc_output/
+
+arsnova-click.env
+mongo.env
+rabbitmq.env
+init-mongo.js
