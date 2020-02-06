@@ -1,10 +1,9 @@
 version: '3.7'
-
 services:
-  node:
+  master:
     image: arsnova/arsnova-click-backend:2.0.0
-    container_name: arsnova-click-backend
     hostname: arsnova-click-backend
+    container_name: arsnova-click-backend-master
     build:
       context: .
       dockerfile: Dockerfile
@@ -13,6 +12,36 @@ services:
     networks:
       - app-tier
     env_file: arsnova-click.env
+    depends_on:
+      - rabbitmq
+      - mongodb
+  staging:
+    image: arsnova/arsnova-click-backend:2.0.0
+    hostname: arsnova-click-backend
+    container_name: arsnova-click-backend-staging
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3020:3010
+    networks:
+      - app-tier
+    env_file: arsnova-click-staging.env
+    depends_on:
+      - rabbitmq
+      - mongodb
+  beta:
+    image: arsnova/arsnova-click-backend:2.0.0
+    hostname: arsnova-click-backend
+    container_name: arsnova-click-backend-beta
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3030:3010
+    networks:
+      - app-tier
+    env_file: arsnova-click-beta.env
     depends_on:
       - rabbitmq
       - mongodb
