@@ -89,4 +89,4 @@ deploy:
     - mkdir ~/.ssh
     - ssh-keyscan "$SSH_URL" >> ~/.ssh/known_hosts
     - ssh-add <(cat private_key)
-    - ssh $SSH_CMD "docker pull $CI_IMAGE_NAME:$VERSION && docker rm -f $CI_CONTAINER_INSTANCE_NAME && docker run -d -p 3010 --env-file=/home/arsnova/$CI_CONTAINER_INSTANCE_NAME.env --name=$CI_CONTAINER_INSTANCE_NAME $CI_IMAGE_NAME:$VERSION && docker image prune -af"
+    - ssh $SSH_CMD "docker pull $CI_IMAGE_NAME:$VERSION && docker rm -f $CI_CONTAINER_INSTANCE_NAME && docker run -d -p 3010 --env-file=/home/arsnova/arsnova-click-docker/$NAME/backend/arsnova-click.env --name=$CI_CONTAINER_INSTANCE_NAME $CI_IMAGE_NAME:$VERSION && docker image prune -af"
