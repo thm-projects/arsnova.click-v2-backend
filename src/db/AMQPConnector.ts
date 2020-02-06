@@ -3,6 +3,7 @@ import { settings } from '../statistics';
 
 class AMQPConnector {
   private static _instance: AMQPConnector;
+  public readonly RECONNECT_INTERVAL = 1000 * 60; // 1 Minute
   public readonly globalExchange: string = 'global';
 
   private _channel: Channel;

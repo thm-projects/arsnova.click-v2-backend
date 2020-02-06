@@ -1,39 +1,46 @@
 #### arsnova.click v2 Backend
 
-###### Environment Variables
-These are the basic variables required to run the server
-- `ARSNOVA_CLICK_BACKEND_BASE_PATH`: Sets the path relative to the working directory which contains the app 
-- `ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL [number]`: This is the external port used for rewriting the urls of cached quizzes (defaults to $ARSNOVA_CLICK_BACKEND_PORT_INTERNAL if unset)
-- `ARSNOVA_CLICK_BACKEND_PORT_INTERNAL [number]`: This is the internal port used during the startup of the server (defaults to 3000 if unset)
-- `ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX [string]`: The routePrefix is used to prefix the access of the Express routes. E.g if set to 'backend' the access to '/api/v1/myPath' will become '/backend/api/v1/myPath'  (defaults to `/` if unset)
-- `ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL [string]`: This configuration is used as base endpoint for cached assets  (defaults to `http://${hostname()}:${BACKEND_PORT_EXTERNAL}${BACKEND_ROUTE_PREFIX}` if unset)
+###### Additional noticable files
+- arsnova-click.env - This file contains all environment variables for the arsnova-click backend
+    - `MONGODB_SERVICE_NAME`: Hostname of the MongoDB (eg: `mongodb`)
+    - `MONGODB_DATABASE`: Database name (eg: `arsnova-click-v2`)
+    - `MONGODB_USER`: User with access to the `MONGODB_DATABASE`
+    - `MONGODB_PASSWORD`: Password of the user provided with `MONGODB_USER`
+    - `MONGODB_AUTH_SOURCE`: *[Optional]* The database of the auth db
+    - `LOG_LEVEL`: *[Optional]* Log level of the node process (eg: `debug`)
+    - `NODE_ENV`: *[Optional]* Node Environment (eg: `development`)
+    - `GITLAB_TOKEN`: *[Optional]* Access Token for gitlab project to retrieve and parse i18n files
+    - `AMQP_HOSTNAME`: Hostname of the AMQP Server (eg: `rabbitmq`)
+    - `AMQP_USER`: User with access to the AMQP Server
+    - `AMQP_PASSWORD`: Password of the user provided by `AMQP_USER`
+    - `AMQP_VHOST`: (default: `/`)
+    - `AMQP_PROTOCOL`: Protocol for the connection (default: `amqp`)
+    - `AMQP_MANAGEMENT_API_PROTOCOL` (default: `http:`);
+    - `AMQP_MANAGEMENT_API_HOST` (default: `AMQP_HOSTNAME`);
+    - `AMQP_MANAGEMENT_API_PORT` (default: `15672`);
+    - `AMQP_MANAGEMENT_USER` (eg: `AMQP_USER`);
+    - `AMQP_MANAGEMENT_PASSWORD` (eg: `AMQP_PASSWORD`);
+    - `ARSNOVA_CLICK_BACKEND_BASE_PATH`: *[Optional]* Sets the path relative to the working directory which contains the app
+    - `ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL`: *[Optional]* This is the external port used for rewriting the urls of cached quizzes (default: `ARSNOVA_CLICK_BACKEND_PORT_INTERNAL`)
+    - `ARSNOVA_CLICK_BACKEND_PORT_INTERNAL`: *[Optional]* This is the internal port used during the startup of the server (default: 3010)
+    - `ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX`: *[Optional]* The routePrefix is used to prefix the access of the Express routes. E.g if set to 'backend' the access to '/api/v1/myPath' will become '/backend/api/v1/myPath'  (default: `/`)
+    - `ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL`: *[Optional]* This configuration is used as base endpoint for cached assets  (default: `http://${hostname()}:${ARSNOVA_CLICK_BACKEND_PORT_INTERNAL}${ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX}`)
+    - `LEADERBOARD_ALGORITHM [PointBased | TimeBased]`: *[Optional]* Sets the leaderboard algorithm which should be used (default: `TimeBased`)
+- mongo.env - Environment variables for bootstrapping the mongodb server
+    - `MONGO_INITDB_DATABASE`: Name of the initial database (default: `arsnova-click-v2`)
+    - `MONGO_INITDB_ROOT_USERNAME`: Initial root user name
+    - `MONGO_INITDB_ROOT_PASSWORD`: Password of the user provided by `MONGO_INITDB_ROOT_USERNAME`
+- init-mongo.js - Initial MongoDB cli commands for bootstrapping the server (eg. create db user, database, insert default documents, ...)
+- rabbitmq.env - Environment variables for bootstrapping the rabbitmq server
+    - eg: [List of some commands someone posted at github](https://github.com/docker-library/rabbitmq/issues/138#issuecomment-350081900)
+    - Note that the default login of the rabbitmq docker image is `user:bitnami`
+- rabbitmq-plugins.txt - Textfile containing the plugin list for rabbitmq (The dot at the end is mandatory!)
 
-To send E-Mails it is required to provide additional variables:
-- `ARSNOVA_CLICK_BACKEND_SMTP_HOST [string]`: Points to the smtp host
-- `ARSNOVA_CLICK_BACKEND_SMTP_PORT [number]`: The port of the smtp installation (defaults to 587 if unset)
-- `ARSNOVA_CLICK_BACKEND_SMTP_USERNAME [string]`: The username to use for the smtp connection
-- `ARSNOVA_CLICK_BACKEND_SMTP_PASSWORD [string]`: The password of the username
-- `ARSNOVA_CLICK_BACKEND_MAIL_FROM [string]`: The `from` header of the E-Mails
-- `ARSNOVA_CLICK_BACKEND_MAIL_TO [string]`: The `to` header of the E-Mails
-
-###### RabbitMQ
-The server uses RabbitMQ to send messages to the frontend. These variables can be adjusted to connect to the RabbitMQ server:
-- `AMQP_PROTOCOL [string]`: Protocol for the connection (defaults to amqp)
-- `AMQP_HOSTNAME [string]`: Hostname of the RabbitMQ Server (defaults to localhost)
-- `AMQP_USER [string]`: The username to use for the connection (defaults to guest)
-- `AMQP_PASSWORD [string]`: The username to use for the connection (defaults to guest)
-
-As mentioned in the RabbitMQ installation guideline, the user should not be an management user!
-
-###### Dumps
-The server will generate dumps if an Error is thrown.
-The dump will contain the serialized error and the state of the DAOs. 
-Since the DAOs may contain personal data they are encrypted before stored on the file system. 
-The encryption certificate (`dist/assets/dump_cert.pem`) may be exchanged by a customized one during the build process.
-
-###### Jobs
-- The `DumpCryptor` job allows encryption and decryption of generated dumps.
-- The `SendMail` job uses the nodemailer package to send emails (e.g. error reports).
+###### Build & Run
+Just running `docker-compose up` should be everything required to run the server with its dependencies.
+Note that the rabbitmq server is up approx. 1 minute after starting the container. The node app and the mongo db
+are likely faster online. The node server tries to connect every 60 seconds to the rabbitmq so be patient if
+the connection fails when starting the app.
 
 ###### Test
 Enter `npm test` in the root directory to run the unit tests. 
@@ -45,11 +52,5 @@ The export unit test will generate a random filled Excel export file in the `${r
 ###### Build (DEV)
 Enter `npm run build:DEV` in the root directory to run the dev build.
 
-Using IntelliJ IDEA it is possible to create a `Node.js Run Configuration`. 
-Use `--inspect=9229 --inspect-brk main.js` as node parameters, set the `dist/` directory as working dir and set the main.js as entry point. 
-Trigger the command `npm run build:DEV` as a before launch. 
-This will make it possible to use breakpoints in the node.js app.
-
 ###### Build (PROD)
 Enter `npm run build:PROD` in the root directory to run the prod build.
-Since it is not required to minify / uglify the serverside code the production build command is an alias for the dev build.

@@ -1,3 +1,4 @@
+import { Replies } from 'amqplib';
 import * as mongoose from 'mongoose';
 import { Connection } from 'mongoose';
 import { Database } from '../enums/DbOperation';
@@ -32,18 +33,27 @@ class MongoDbConnector {
         resolve(db);
       });
 
-      AMQPConnector.initConnection().then(() => {
-        AMQPConnector.channel.assertExchange(AMQPConnector.globalExchange, 'fanout');
-      });
-
-      await mongoose.connect(this._mongoURL, {
-        useCreateIndex: true,
-        autoIndex: true,
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useFindAndModify: false,
-      } as any);
+      await Promise.all([
+        this.initRabbitMQConnection(), mongoose.connect(this._mongoURL, {
+          useCreateIndex: true,
+          autoIndex: true,
+          useNewUrlParser: true,
+          useFindAndModify: false,
+        } as any),
+      ]);
     });
+  }
+
+  private async initRabbitMQConnection(): Promise<Replies.AssertExchange> {
+    try {
+      return AMQPConnector.initConnection().then(() => {
+        return AMQPConnector.channel.assertExchange(AMQPConnector.globalExchange, 'fanout');
+      });
+    } catch (ex) {
+      LoggerService.error(`Db connection failed with error ${ex}, will retry in ${AMQPConnector.RECONNECT_INTERVAL / 1000} seconds`);
+
+      setTimeout(this.initRabbitMQConnection.bind(this), AMQPConnector.RECONNECT_INTERVAL);
+    }
   }
 
   private static buildDbName(): string {
@@ -57,7 +67,6 @@ class MongoDbConnector {
 
     const mongoHost = process.env.MONGODB_SERVICE_NAME || 'localhost';
     const mongoPort = process.env.MONGODB_SERVICE_PORT || '27017';
-    const mongoReplSet = process.env.MONGODB_REPLICA_NAME || 'rs0';
     const mongoPassword = process.env.MONGODB_PASSWORD;
     const mongoUser = process.env.MONGODB_USER;
 
@@ -70,7 +79,6 @@ class MongoDbConnector {
       this._mongoURL += `${mongoHost}:${mongoPort}/${mongoDatabase}`;
 
       const mongoURLOptions = [];
-      mongoURLOptions.push(`replicaSet=${mongoReplSet}`);
       if (process.env.MONGODB_AUTH_SOURCE) {
         if (process.env.MONGODB_AUTH_SOURCE === 'true') {
           mongoURLOptions.push(`authSource=${process.env.MONGODB_AUTH_SOURCE}`);

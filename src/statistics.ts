@@ -7,10 +7,10 @@ import { LeaderboardConfiguration } from './enums/LeaderboardConfiguration';
 const config = require(path.join(__dirname, 'config.json'));
 
 const interfaces = networkInterfaces();
-const localAddress = interfaces[Object.keys(interfaces).filter(netIface => {
+const localAddress = interfaces[Object.keys(interfaces).find(netIface => {
   const singleInterface = interfaces[netIface][0];
   return singleInterface.family === 'IPv4' && singleInterface.internal === false;
-})[0]];
+})];
 const localIpv4Address = localAddress ? localAddress[0].address : '127.0.0.1';
 
 const basePath = process.env.ARSNOVA_CLICK_BACKEND_BASE_PATH || config.basePath || '';
@@ -27,7 +27,7 @@ const amqpVhost = process.env.AMQP_VHOST || '/';
 const amqpUser = process.env.AMQP_USER || 'guest';
 const amqpPassword = process.env.AMQP_PASSWORD || 'guest';
 const amqpManagementApiProtocol = process.env.AMQP_MANAGEMENT_API_PROTOCOL || 'http:';
-const amqpManagementApiHost = process.env.AMQP_MANAGEMENT_API_HOST || 'localhost';
+const amqpManagementApiHost = process.env.AMQP_MANAGEMENT_API_HOST || amqpHostname;
 const amqpManagementApiPort = process.env.AMQP_MANAGEMENT_API_PORT || '15672';
 const amqpManagementUser = process.env.AMQP_MANAGEMENT_USER || amqpUser;
 const amqpManagementPassword = process.env.AMQP_MANAGEMENT_PASSWORD || amqpPassword;

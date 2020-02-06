@@ -1,0 +1,12 @@
+.git
+.gitignore
+.dockerignore
+.gitlab-ci.yml
+.nyc_output
+dist
+node_modules
+test-generated
+*.iml
+.vscode
+Dockerfile
+docker-compose.yml
