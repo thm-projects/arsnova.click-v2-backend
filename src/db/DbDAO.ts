@@ -44,7 +44,7 @@ class DbDAO extends AbstractDAO {
         }
       });
 
-      LoggerService.info(`Db connected`);
+      LoggerService.info(`Db upgrade finished`);
       db.on('error', () => {});
 
     }).catch((error) => {

@@ -34,12 +34,12 @@ class MongoDbConnector {
       });
 
       await Promise.all([
-        this.initRabbitMQConnection(), mongoose.connect(this._mongoURL, {
+        this.initRabbitMQConnection().then(() => console.log('RabbitMQ connected')), mongoose.connect(this._mongoURL, {
           useCreateIndex: true,
           autoIndex: true,
           useNewUrlParser: true,
           useFindAndModify: false,
-        } as any),
+        } as any).then(() => console.log('MongoDB connected')),
       ]);
     });
   }
@@ -50,7 +50,7 @@ class MongoDbConnector {
         return AMQPConnector.channel.assertExchange(AMQPConnector.globalExchange, 'fanout');
       });
     } catch (ex) {
-      LoggerService.error(`Db connection failed with error ${ex}, will retry in ${AMQPConnector.RECONNECT_INTERVAL / 1000} seconds`);
+      LoggerService.error(`RabbitMQ connection failed with error ${ex}, will retry in ${AMQPConnector.RECONNECT_INTERVAL / 1000} seconds`);
 
       setTimeout(this.initRabbitMQConnection.bind(this), AMQPConnector.RECONNECT_INTERVAL);
     }
