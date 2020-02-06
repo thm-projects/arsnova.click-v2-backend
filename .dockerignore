@@ -10,3 +10,5 @@ test-generated
 .vscode
 Dockerfile
 docker-compose.yml
+variables
+private_key
