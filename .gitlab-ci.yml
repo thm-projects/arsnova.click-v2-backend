@@ -75,24 +75,12 @@ build-beta:
     - *staging-server-env
     - *docker-push
 
-build-snapshot:
-  <<: *build-template
-  only:
-    - docker
-  variables:
-    VERSION: 2.0.0-beta
-    CI_CONTAINER_INSTANCE_NAME: arsnova-click-backend-beta
-  script:
-    - *staging-server-env
-    - *docker-push
-
 deploy:
   stage: deploy
   only:
     - master
     - staging
     - beta
-    - docker
   tags:
     - ssh
   script:
@@ -101,4 +89,4 @@ deploy:
     - mkdir ~/.ssh
     - ssh-keyscan "$SSH_URL" >> ~/.ssh/known_hosts
     - ssh-add <(cat private_key)
-    - ssh $SSH_CMD "docker pull $CI_IMAGE_NAME:$VERSION && docker rm -f $CI_CONTAINER_INSTANCE_NAME && docker run -d -p 3010 --name=$CI_CONTAINER_INSTANCE_NAME $CI_IMAGE_NAME:$VERSION && docker image prune -af"
+    - ssh $SSH_CMD "docker pull $CI_IMAGE_NAME:$VERSION && docker rm -f $CI_CONTAINER_INSTANCE_NAME && docker run -d -p 3010 --env-file=/home/arsnova/$CI_CONTAINER_INSTANCE_NAME.env --name=$CI_CONTAINER_INSTANCE_NAME $CI_IMAGE_NAME:$VERSION && docker image prune -af"
