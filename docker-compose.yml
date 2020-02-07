@@ -16,7 +16,7 @@ services:
       - rabbitmq
       - mongodb
   staging:
-    image: arsnova/arsnova-click-backend:2.0.0
+    image: arsnova/arsnova-click-backend:2.0.0-staging
     hostname: arsnova-click-backend
     container_name: arsnova-click-backend-staging
     build:
@@ -31,7 +31,7 @@ services:
       - rabbitmq
       - mongodb
   beta:
-    image: arsnova/arsnova-click-backend:2.0.0
+    image: arsnova/arsnova-click-backend:2.0.0-beta
     hostname: arsnova-click-backend
     container_name: arsnova-click-backend-beta
     build:
