@@ -53,6 +53,8 @@ test-generated/*
 .nyc_output/
 
 arsnova-click.env
+arsnova-click-beta.env
+arsnova-click-staging.env
 mongo.env
 rabbitmq.env
 init-mongo.js

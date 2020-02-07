@@ -533,14 +533,16 @@ export class QuizRouter extends AbstractRouter {
     @HeaderParam('authorization') privateKey: string, //
     @BodyParam('quiz') quiz: IQuiz, //
   ): Promise<IQuiz> {
-    const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
-    if (existingQuiz) {
-      if (existingQuiz.privateKey !== privateKey) {
-        throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
-      }
+    if (quiz.name) {
+      const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
+      if (existingQuiz) {
+        if (existingQuiz.privateKey !== privateKey) {
+          throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
+        }
 
-      await QuizDAO.updateQuiz(existingQuiz._id, quiz);
-      return quiz;
+        await QuizDAO.updateQuiz(existingQuiz._id, quiz);
+        return quiz;
+      }
     }
 
     quiz.privateKey = privateKey;
