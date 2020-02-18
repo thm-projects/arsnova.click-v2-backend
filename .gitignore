@@ -58,3 +58,4 @@ arsnova-click-staging.env
 mongo.env
 rabbitmq.env
 init-mongo.js
+mongodb

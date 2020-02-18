@@ -1,6 +1,8 @@
+import { settings } from '../statistics';
+
 export enum GitlabProject {
-  'arsnova-click-v2-backend'  = 3909, //
-  'arsnova-click-v2-frontend' = 3911, //
+  'arsnova-click-v2-backend'  = settings.gitlab.backend, //
+  'arsnova-click-v2-frontend' = settings.gitlab.frontend, //
 }
 
 export enum Branch {

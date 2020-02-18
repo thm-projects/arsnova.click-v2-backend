@@ -3,7 +3,7 @@ import { Branch, GitlabCommitAction, GitlabProject, Language } from '../enums/En
 import { IGitlabCommitAction } from '../interfaces/gitlab/apiv11';
 import { generateToken } from '../lib/generateToken';
 import LoggerService from '../services/LoggerService';
-import { availableLangs } from '../statistics';
+import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 
 class I18nDAO extends AbstractDAO {
@@ -15,7 +15,6 @@ class I18nDAO extends AbstractDAO {
 
   private readonly mergeRequestTitle = 'WIP: Update i18n keys';
   private readonly commitMessage = 'Updates i18n keys';
-  private readonly gitlabAccessToken = process.env.GITLAB_TOKEN;
 
   constructor(storage: object) {
     super();
@@ -52,11 +51,19 @@ class I18nDAO extends AbstractDAO {
       since: this.storage[project].lastUpdate.toISOString(),
     });
 
-    return (commits as any).length > 0;
+    return (
+             commits as any
+           ).length > 0;
   }
 
   public reloadCache(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
+      if (!isNaN(settings.gitlab.frontend) || !isNaN(settings.gitlab.backend)) {
+        resolve();
+        return;
+      }
+      reject();
+    }).then(() => new Promise((resolve, reject) => {
       Object.values(this.storage).forEach(async (project, index, array) => {
         const gitlabProject = project['name'] === 'arsnova-click-v2-backend' ? GitlabProject['arsnova-click-v2-backend']
                                                                              : GitlabProject['arsnova-click-v2-frontend'];
@@ -87,7 +94,7 @@ class I18nDAO extends AbstractDAO {
           reject(e);
         }
       });
-    });
+    }));
   }
 
   public buildKeys({ root, dataNode, langRef, langData }): void {
@@ -143,10 +150,16 @@ class I18nDAO extends AbstractDAO {
 
     const filter = /\.(ts|html|js)$/;
     const negativeFilter = /(spec|test|po|mock|pipe|module|config|conf|karma|environment|assets|adapter)\./;
-    const fileContents = (((await gitlabService.Repositories.tree(project, {
-      recursive: true,
-      ref: Branch.TargetBranch,
-    })) as any).filter(val => val.type === 'blob' && val.name.match(filter)).filter(val => !val.name.match(negativeFilter)));
+    const fileContents = (
+      (
+        (
+          await gitlabService.Repositories.tree(project, {
+            recursive: true,
+            ref: Branch.TargetBranch,
+          })
+        ) as any
+      ).filter(val => val.type === 'blob' && val.name.match(filter)).filter(val => !val.name.match(negativeFilter))
+    );
 
     let fileData = [];
     while (fileContents.length > 0) {
@@ -163,13 +176,16 @@ class I18nDAO extends AbstractDAO {
 
   public getI18nFileContentFromRepo(project: GitlabProject): Promise<Array<any>> {
     const gitlabService = this.prepareGitlabConnection();
+    const availableLangs = Object.values(Language);
 
     return new Promise<Array<any>>(resolve => {
       const langData = [];
 
       availableLangs.forEach(async (langRef, index) => {
-        const dataNode = (await gitlabService.RepositoryFiles.showRaw(project, `${this.buildI18nBasePath(project)}/${langRef.toLowerCase()}.json`,
-          Branch.TargetBranch)) as unknown as string;
+        const dataNode = (
+          await gitlabService.RepositoryFiles.showRaw(project, `${this.buildI18nBasePath(project)}/${langRef.toLowerCase()}.json`,
+            Branch.TargetBranch)
+        ) as unknown as string;
 
         this.buildKeys({
           root: '',
@@ -193,7 +209,9 @@ class I18nDAO extends AbstractDAO {
       return false;
     }
 
-    return (remoteProject as any).permissions.project_access.access_level >= 30;
+    return (
+             remoteProject as any
+           ).permissions.project_access.access_level >= 30;
   }
 
   public createObjectFromKeys({ data, result }): void {
@@ -224,7 +242,7 @@ class I18nDAO extends AbstractDAO {
   private prepareGitlabConnection(token?: string): InstanceType<typeof Gitlab> {
     return new Gitlab({
       host: 'https://git.thm.de',
-      token: token || this.gitlabAccessToken,
+      token: token || settings.gitlab.loginToken,
     });
   }
 

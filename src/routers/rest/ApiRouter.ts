@@ -1,6 +1,6 @@
 import * as Converter from 'api-spec-converter';
 import { Response } from 'express';
-import fileType from 'file-type';
+import { fromBuffer } from 'file-type';
 import * as fs from 'fs';
 import { OpenAPIObject } from 'openapi3-ts';
 import * as path from 'path';
@@ -48,7 +48,9 @@ export class ApiRouter extends AbstractRouter {
   private async getAll(): Promise<object> {
     return {
       serverConfig: settings.public,
-      activeQuizzes: (await QuizDAO.getJoinableQuizzes()).map(quiz => quiz.name),
+      activeQuizzes: (
+        await QuizDAO.getJoinableQuizzes()
+      ).map(quiz => quiz.name),
     };
   }
 
@@ -115,16 +117,17 @@ export class ApiRouter extends AbstractRouter {
   @OpenAPI({
     deprecated: true,
   })
-  private getThemeImageFileByName(
+  private async getThemeImageFileByName(
     @Param('themeName') themeName: string, //
     @Param('fileName') fileName: string, //
     @Res() res: Response,
-  ): object {
+  ): Promise<object> {
 
     const pathToFiles = path.join(staticStatistics.pathToAssets, 'images', 'theme', `${themeName}`, `${fileName}`);
     if (fs.existsSync(pathToFiles)) {
       const data: Buffer = fs.readFileSync(pathToFiles);
-      res.contentType(fileType(data).mime);
+      const bufferMimeData = await fromBuffer(data);
+      res.contentType(bufferMimeData.mime);
       return data;
     } else {
       throw new NotFoundError('File not found');

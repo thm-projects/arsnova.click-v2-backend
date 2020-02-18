@@ -1,7 +1,6 @@
 import { cpus, freemem, hostname, loadavg, networkInterfaces, totalmem } from 'os';
 import * as path from 'path';
 import * as process from 'process';
-import { Language } from './enums/Enums';
 import { LeaderboardConfiguration } from './enums/LeaderboardConfiguration';
 
 const config = require(path.join(__dirname, 'config.json'));
@@ -31,6 +30,10 @@ const amqpManagementApiHost = process.env.AMQP_MANAGEMENT_API_HOST || amqpHostna
 const amqpManagementApiPort = process.env.AMQP_MANAGEMENT_API_PORT || '15672';
 const amqpManagementUser = process.env.AMQP_MANAGEMENT_USER || amqpUser;
 const amqpManagementPassword = process.env.AMQP_MANAGEMENT_PASSWORD || amqpPassword;
+
+const frontendGitlabId = parseInt(process.env.GITLAB_FRONTEND_PROJECT_ID, 10);
+const backendGitlabId = parseInt(process.env.GITLAB_BACKEND_PROJECT_ID, 10);
+const gitlabLoginToken = process.env.GITLAB_TOKEN;
 
 export const staticStatistics = {
   appName: 'arsnova-click-v2-backend',
@@ -78,18 +81,10 @@ export const settings = {
       password: amqpManagementPassword,
     },
   },
+  gitlab: {
+    frontend: frontendGitlabId,
+    backend: backendGitlabId,
+    loginToken: gitlabLoginToken,
+  },
 };
 
-export const availableLangs = Object.values(Language);
-export const projectGitLocation = {
-  'arsnova-click-v2-backend': path.join(__dirname),
-};
-export const projectBaseLocation = {
-  'arsnova-click-v2-backend': path.join(projectGitLocation['arsnova-click-v2-backend']),
-};
-export const projectAppLocation = {
-  'arsnova-click-v2-backend': path.join(projectBaseLocation['arsnova-click-v2-backend']),
-};
-export const i18nFileBaseLocation = {
-  'arsnova-click-v2-backend': path.join(staticStatistics.pathToAssets, 'i18n'),
-};
