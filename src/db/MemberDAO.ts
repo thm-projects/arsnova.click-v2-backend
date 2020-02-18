@@ -28,18 +28,26 @@ class MemberDAO extends AbstractDAO {
     }
 
     const doc = await MemberModel.create(memberSerialized);
+    const docSerialized = doc.toJSON();
+    delete docSerialized.token;
+    delete docSerialized.ticket;
+    delete docSerialized.casProfile;
 
     AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(memberSerialized.currentQuizName), '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Added,
-      payload: { member: doc.toJSON() },
+      payload: { member: docSerialized },
     })));
 
     return doc;
   }
 
   public getMembersOfQuiz(quizName: string): Promise<Array<Document & MemberModelItem>> {
-    return MemberModel.find({ currentQuizName: quizName }).exec();
+    return MemberModel.find({ currentQuizName: quizName }, {
+      token: 0,
+      ticket: 0,
+      casProfile: 0,
+    }).exec();
   }
 
   public getMemberByToken(token: string): Promise<Document & MemberModelItem> {
@@ -63,7 +71,9 @@ class MemberDAO extends AbstractDAO {
     const result = {};
     groups.forEach(g => result[g] = 0);
 
-    (await this.getMembersOfQuiz(name)).forEach(member => {
+    (
+      await this.getMembersOfQuiz(name)
+    ).forEach(member => {
       result[member.groupName]++;
     });
 
@@ -140,7 +150,9 @@ class MemberDAO extends AbstractDAO {
       },
     })));
 
-    if ((await this.getMembersOfQuiz(quiz.name)).every(nick => {
+    if ((
+      await this.getMembersOfQuiz(quiz.name)
+    ).every(nick => {
       const val = nick.responses[quiz.currentQuestionIndex].value;
       return typeof val === 'number' ? val > -1 : val.length > 0;
     })) {

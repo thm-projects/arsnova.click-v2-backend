@@ -4,18 +4,12 @@ import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSerialized';
-import { MemberModelItem } from '../../models/member/MemberModel';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
 import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/member')
 export class MemberRouter extends AbstractRouter {
-
-  @Get('/')
-  public async getMembers(): Promise<Array<MemberModelItem>> {
-    return (await MemberDAO.getMembers()).map(member => member.toJSON());
-  }
 
   @Post('/token')
   public generateMemberToken(@BodyParam('name') name: string, @BodyParam('quizName') quizName: string): string {
@@ -30,7 +24,9 @@ export class MemberRouter extends AbstractRouter {
     const quiz = await QuizDAO.getQuizByName(quizName);
     const nicks = JSON.parse(JSON.stringify(quiz.sessionConfig.nicks.selectedNicks));
 
-    (await MemberDAO.getMembersOfQuiz(quizName)).forEach(val => nicks.splice(nicks.indexOf(val.name), 1));
+    (
+      await MemberDAO.getMembersOfQuiz(quizName)
+    ).forEach(val => nicks.splice(nicks.indexOf(val.name), 1));
 
     return nicks;
   }
@@ -50,7 +46,9 @@ export class MemberRouter extends AbstractRouter {
       };
     }
 
-    if (!member.name || (activeQuiz.sessionConfig.nicks.restrictToCasLogin && !member.ticket)) {
+    if (!member.name || (
+      activeQuiz.sessionConfig.nicks.restrictToCasLogin && !member.ticket
+    )) {
       throw new BadRequestError(JSON.stringify({
         status: StatusProtocol.Failed,
         step: MessageProtocol.InvalidParameters,
@@ -203,7 +201,9 @@ export class MemberRouter extends AbstractRouter {
       };
     }
 
-    const members = (await MemberDAO.getMembersOfQuiz(quizName)).map(member => member.toJSON());
+    const members = (
+      await MemberDAO.getMembersOfQuiz(quizName)
+    ).map(member => member.toJSON());
 
     return {
       status: StatusProtocol.Success,
@@ -227,7 +227,9 @@ export class MemberRouter extends AbstractRouter {
       };
     }
 
-    const alreadyUsed = (await MemberDAO.getMembersOfQuiz(activeQuiz.name)).map(member => member.name);
+    const alreadyUsed = (
+      await MemberDAO.getMembersOfQuiz(activeQuiz.name)
+    ).map(member => member.name);
 
     const names: Array<string> = activeQuiz.sessionConfig.nicks.selectedNicks.filter(nick => {
       return !alreadyUsed.find(member => member === nick);
