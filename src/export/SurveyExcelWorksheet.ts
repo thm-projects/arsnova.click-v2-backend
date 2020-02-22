@@ -83,8 +83,8 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       lastColumn: minColums,
     });
 
-    const hasEntries = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length > 0;
-    const attendeeEntryRows = hasEntries ? ((await MemberDAO.getMembersOfQuiz(this.quiz.name)).length) : 1;
+    const hasEntries = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length > 0;
+    const attendeeEntryRows = hasEntries ? ((await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length) : 1;
     const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
       alignment: {
         horizontal: 'center',
@@ -92,7 +92,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     });
     this.ws.cell(10, 1, attendeeEntryRows + 9, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
-    (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((responseItem, indexInList) => {
+    (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).forEach((responseItem, indexInList) => {
       let nextColumnIndex = 3;
       const targetRow = indexInList + 10;
       if (this._isCasRequired) {
@@ -143,7 +143,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(7, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem) => {
+      (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(7, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -162,7 +162,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(9, nextColumnIndex++).string(this.mf('export.time'));
 
     let nextStartRow = 9;
-    (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem, indexInList) => {
+    (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).forEach((nickItem, indexInList) => {
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(nickItem.name);

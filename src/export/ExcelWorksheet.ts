@@ -70,9 +70,9 @@ export abstract class ExcelWorksheet {
       },
     });
 
-    this._columnsToFormat = 4;
+    this._columnsToFormat = 5;
 
-    MemberDAO.getMembersOfQuiz(this._quiz.name).then(members => {
+    MemberDAO.getMembersOfQuizForOwner(this._quiz.name).then(members => {
       if (questionIndex) {
         this._responsesWithConfidenceValue = members.filter(nickname => {
           return nickname.responses[questionIndex].confidence > -1;

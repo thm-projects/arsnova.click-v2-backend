@@ -67,6 +67,7 @@ export enum MessageProtocol {
   Disconnect         = 'Disconnect', //
   Editable           = 'Editable', //
   GetFreeMemberGroup = 'GetFreeMemberGroup', //
+  RequestTweets = 'RequestTweets', //
 }
 
 export const Message = {

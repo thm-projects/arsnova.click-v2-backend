@@ -23,7 +23,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     this._questionIndex = questionIndex;
     this._question = this.quiz.questionList[questionIndex] as IQuestionFreetext;
 
-    MemberDAO.getMembersOfQuiz(this.quiz.name).then(members => this.allResponses = members.filter(nickname => {
+    MemberDAO.getMembersOfQuizForOwner(this.quiz.name).then(members => this.allResponses = members.filter(nickname => {
       return nickname.responses.find(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
@@ -97,8 +97,8 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       lastColumn: minColums,
     });
 
-    const hasEntries = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length > 0;
-    const attendeeEntryRows = hasEntries ? ((await MemberDAO.getMembersOfQuiz(this.quiz.name)).length) : 1;
+    const hasEntries = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length > 0;
+    const attendeeEntryRows = hasEntries ? ((await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length) : 1;
     const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
       alignment: {
         horizontal: 'center',
@@ -162,7 +162,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = (await this.getLeaderboardData()).map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
-                                               / (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length * 100;
+                                               / (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     this.ws.cell(7, 3).string(`
@@ -175,7 +175,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem) => {
+      (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));

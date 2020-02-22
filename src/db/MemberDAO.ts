@@ -1,5 +1,5 @@
 import { ObjectId } from 'bson';
-import { Document } from 'mongoose';
+import {Document, Error} from 'mongoose';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
@@ -7,6 +7,9 @@ import { MemberModel, MemberModelItem } from '../models/member/MemberModel';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
 import QuizDAO from './QuizDAO';
+import UserDAO from './UserDAO';
+import Hex = require('crypto-js/enc-hex');
+import * as CryptoJS from 'crypto-js';
 
 class MemberDAO extends AbstractDAO {
 
@@ -22,16 +25,21 @@ class MemberDAO extends AbstractDAO {
     return MemberModel.findOne({ name }).exec();
   }
 
+
   public async addMember(memberSerialized: IMemberSerialized): Promise<Document & MemberModelItem> {
     if (memberSerialized.id && this.getMemberById(memberSerialized.id)) {
       throw new Error(`Duplicate member insertion: (name: ${memberSerialized.name}, id: ${memberSerialized.id})`);
     }
+
+    memberSerialized.bonusToken = await this.generateBonusToken(memberSerialized.currentQuizName, memberSerialized.name);
+    memberSerialized.isActive = true;
 
     const doc = await MemberModel.create(memberSerialized);
     const docSerialized = doc.toJSON();
     delete docSerialized.token;
     delete docSerialized.ticket;
     delete docSerialized.casProfile;
+    delete docSerialized.bonusToken;
 
     AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(memberSerialized.currentQuizName), '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
@@ -43,6 +51,15 @@ class MemberDAO extends AbstractDAO {
   }
 
   public getMembersOfQuiz(quizName: string): Promise<Array<Document & MemberModelItem>> {
+    return MemberModel.find({ currentQuizName: quizName }, {
+      token: 0,
+      ticket: 0,
+      casProfile: 0,
+      bonusToken: 0,
+    }).exec();
+  }
+
+  public getMembersOfQuizForOwner(quizName: string): Promise<Array<Document & MemberModelItem>> {
     return MemberModel.find({ currentQuizName: quizName }, {
       token: 0,
       ticket: 0,
@@ -80,7 +97,11 @@ class MemberDAO extends AbstractDAO {
     return result;
   }
 
-  public resetMembersOfQuiz(name: string, questionAmount: number): Promise<any> {
+  public async resetMembersOfQuiz(name: string, questionAmount: number): Promise<any> {
+    await MemberModel.deleteMany({
+        currentQuizName: name,
+        isActive: false
+    }).exec();
     return MemberModel.updateMany({ currentQuizName: name }, {
       responses: this.generateResponseForQuiz(questionAmount),
     }).exec();
@@ -160,17 +181,38 @@ class MemberDAO extends AbstractDAO {
     }
   }
 
-  public removeMemberByName(quizName: string, nickname: string): Promise<Document & MemberModelItem> {
-    const doc = MemberModel.findOneAndRemove({
-      currentQuizName: quizName,
-      name: nickname,
-    }).exec();
+  public async removeMemberByName(quizName: string, nickname: string): Promise<Document & MemberModelItem> {
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
-      status: StatusProtocol.Success,
-      step: MessageProtocol.Removed,
-      payload: { name: nickname },
-    })));
+    let doc;
+
+    try {
+
+        const member: MemberModelItem = await this.getMemberByName(nickname);
+
+        if (member.responses && member.responses.every(response => !(Array.isArray(response.value) && response.value.length === 0))) {
+           doc = MemberModel.findOneAndUpdate({
+                currentQuizName: quizName,
+                name: nickname
+            }, {
+                isActive: false
+            }).exec();
+            AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+                status: StatusProtocol.Success,
+                step: MessageProtocol.Updated,
+                payload: { name: nickname },
+            })));
+        } else {
+              doc = MemberModel.findOneAndDelete({
+                  currentQuizName: quizName,
+                  name: nickname
+              }).exec();
+            AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+                status: StatusProtocol.Success,
+                step: MessageProtocol.Removed,
+                payload: { name: nickname },
+            })));
+          }
+    } catch (err) {}
 
     return doc;
   }
@@ -194,6 +236,11 @@ class MemberDAO extends AbstractDAO {
 
   private getMemberById(id: ObjectId | string): Promise<Document & MemberModelItem> {
     return MemberModel.findById(id).exec();
+  }
+
+
+  private async generateBonusToken(quizname, username): Promise<string> {
+    return await Hex.stringify(CryptoJS.SHA256(quizname + username + Date.now()));
   }
 }
 

@@ -29,6 +29,8 @@ export class MemberModelItem implements IMemberSerialized {
   @prop() public token: string;
   @prop() public currentQuizName: string;
   @prop() public casProfile: ICasData;
+  @prop() public bonusToken: string;
+  @prop() public isActive: boolean;
 }
 
 function hashCode(str: string): number { // java String#hashCode

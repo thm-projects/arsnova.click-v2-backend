@@ -106,7 +106,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     });
 
     await asyncForEach(this.quiz.sessionConfig.nicks.memberGroups, async memberGroup => {
-      const responses = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(attendee => attendee.groupName === memberGroup)
+      const responses = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(attendee => attendee.groupName === memberGroup)
       .map(nickname => nickname.responses[this._questionIndex]);
       const hasEntries: boolean = responses.length > 0;
       const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
@@ -143,7 +143,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
 
   public async addSheetData(): Promise<void> {
     const answerList = this._question.answerOptionList;
-    const allResponses: Array<MemberModelItem> = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickname => {
+    const allResponses: Array<MemberModelItem> = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(nickname => {
       return nickname.responses.map(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
@@ -156,13 +156,13 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
 
     const correctResponsesPercentage: number = (await this.getLeaderboardData()).map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
-                                               / (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length * 100;
+                                               / (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem) => {
+      (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -199,13 +199,13 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter((nick: MemberModelItem) => {
+        const profile = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter((nick: MemberModelItem) => {
           return nick.name === responseItem.name;
         })[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
       }
-      const nickItem = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nick => nick.name === responseItem.name)[0];
+      const nickItem = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(nick => nick.name === responseItem.name)[0];
       const chosenAnswer = this._question.answerOptionList.filter((answer, index) => {
         const responseValue = nickItem.responses[this._questionIndex].value;
         // noinspection SuspiciousInstanceOfGuard

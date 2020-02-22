@@ -8,5 +8,7 @@ export interface IMemberBase {
   colorCode?: string;
   ticket?: string;
   responses?: Array<IQuizResponse>;
+  bonusToken?: string;
+  isActive?: boolean;
 }
 
