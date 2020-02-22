@@ -241,7 +241,7 @@ class I18nDAO extends AbstractDAO {
 
   private prepareGitlabConnection(token?: string): InstanceType<typeof Gitlab> {
     return new Gitlab({
-      host: 'https://git.thm.de',
+      host: settings.gitlab.host,
       token: token || settings.gitlab.loginToken,
     });
   }

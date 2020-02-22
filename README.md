@@ -8,6 +8,7 @@
     - `TWITTER_ACCESS_TOKEN_KEY`: Access Token from Twitter
     - `TWITTER_ACCESS_TOKEN_SECRET`: Access Token secret from Twitter
     - `TWITTER_SEARCH_KEY`: Key to search for tweets on Twitter (default: `arsnova.click`)
+    - `CHROMIUM_PATH`: Path to a local chromium instance (default: `/usr/bin/chromium-browser`)
     - `MONGODB_SERVICE_NAME`: Hostname of the MongoDB (eg: `mongodb`)
     - `MONGODB_DATABASE`: Database name (eg: `arsnova-click-v2`)
     - `MONGODB_USER`: User with access to the `MONGODB_DATABASE`
@@ -15,7 +16,10 @@
     - `MONGODB_AUTH_SOURCE`: *[Optional]* The database of the auth db
     - `LOG_LEVEL`: *[Optional]* Log level of the node process (eg: `debug`)
     - `NODE_ENV`: *[Optional]* Node Environment (eg: `development`)
+    - `GITLAB_HOST`: *[Optional]* Host where to find the gitlab projects for frontend and backend (eg: `https://git.thm.de`)
     - `GITLAB_TOKEN`: *[Optional]* Access Token for gitlab project to retrieve and parse i18n files
+    - `GITLAB_BACKEND_PROJECT_ID`: *[Optional]* Project ID where the backend i18n files are found
+    - `GITLAB_FRONTEND_PROJECT_ID`: *[Optional]* Project ID where the frontend i18n files are found
     - `AMQP_HOSTNAME`: Hostname of the AMQP Server (eg: `rabbitmq`)
     - `AMQP_USER`: User with access to the AMQP Server
     - `AMQP_PASSWORD`: Password of the user provided by `AMQP_USER`

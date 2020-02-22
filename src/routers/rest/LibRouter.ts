@@ -24,7 +24,7 @@ import { TwitterCard } from '../../lib/social-media/twitter/twitter-card';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
-import { staticStatistics } from '../../statistics';
+import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
 const casSettings = { base_url: 'https://cas.thm.de/cas' };
@@ -241,7 +241,7 @@ export class LibRouter extends AbstractRouter {
       return digest;
     }
 
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ executablePath: settings.chromiumPath });
     const page = await browser.newPage();
     await page.setViewport({
       width: 1200,

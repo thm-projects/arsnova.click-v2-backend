@@ -34,6 +34,7 @@ const amqpManagementPassword = process.env.AMQP_MANAGEMENT_PASSWORD || amqpPassw
 const frontendGitlabId = parseInt(process.env.GITLAB_FRONTEND_PROJECT_ID, 10);
 const backendGitlabId = parseInt(process.env.GITLAB_BACKEND_PROJECT_ID, 10);
 const gitlabLoginToken = process.env.GITLAB_TOKEN;
+const gitlabHost = process.env.GITLAB_HOST;
 
 const twitterEnabled = process.env.TWITTER_ENABLED ?? false;
 const twitterConsumerKey = process.env.TWITTER_CONSUMER_KEY;
@@ -41,6 +42,8 @@ const twitterConsumerSecret = process.env.TWITTER_CONSUMER_SECRET;
 const twitterAccessTokenKey = process.env.TWITTER_ACCESS_TOKEN_KEY;
 const twitterAccessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
 const twitterSearchKey = process.env.TWITTER_SEARCH_KEY;
+
+const chromiumPath = process.env.CHROMIUM_PATH ?? '/usr/bin/chromium-browser';
 
 export const staticStatistics = {
   appName: 'arsnova-click-v2-backend',
@@ -95,6 +98,7 @@ export const settings = {
     frontend: frontendGitlabId,
     backend: backendGitlabId,
     loginToken: gitlabLoginToken,
+    host: gitlabHost,
   },
   twitter: {
     twitterAccessTokenKey,
@@ -103,5 +107,6 @@ export const settings = {
     twitterConsumerSecret,
     enabled: twitterEnabled && twitterAccessTokenKey && twitterAccessTokenSecret && twitterConsumerKey && twitterConsumerSecret,
   },
+  chromiumPath,
 };
 
