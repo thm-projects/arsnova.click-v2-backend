@@ -241,7 +241,10 @@ export class LibRouter extends AbstractRouter {
       return digest;
     }
 
-    const browser = await puppeteer.launch({ executablePath: settings.chromiumPath });
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: settings.chromiumPath,
+    });
     const page = await browser.newPage();
     await page.setViewport({
       width: 1200,
