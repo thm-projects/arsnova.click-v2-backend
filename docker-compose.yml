@@ -7,6 +7,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+        CHROMIUM_PATH: "/usr/bin/chromium-browser"
     ports:
       - 3010:3010
     networks:
@@ -22,6 +25,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+        CHROMIUM_PATH: "/usr/bin/chromium-browser"
     ports:
       - 3020:3010
     networks:
