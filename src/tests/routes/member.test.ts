@@ -36,13 +36,6 @@ class MemberApiRouterTestSuite {
   }
 
   @test
-  public async baseApiExists(): Promise<void> {
-    const res = await chai.request(app).get(`${this._baseApiRoute}/`);
-    expect(res.status).to.equal(200);
-    expect(res.type).to.equal('application/json');
-  }
-
-  @test
   public async getAllMembers(): Promise<void> {
     const res = await chai.request(app).get(`${this._baseApiRoute}/${this._hashtag}`);
     expect(res.status).to.equal(200);
@@ -61,6 +54,15 @@ class MemberApiRouterTestSuite {
     const res = await this.initUser();
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
+  }
+
+  @test
+  public async getBonustoken(): Promise<void> {
+    await this.initUser();
+    const res = await chai.request(app).get(`${this._baseApiRoute}/token/bonus`).set('authorization', 'testtoken').send();
+    expect(res.status).to.equal(200);
+    const bonusToken: string = res.body;
+    expect(bonusToken.length).to.equal(64);
   }
 
   @test

@@ -10,25 +10,28 @@ export class PointBasedLeaderboardScore extends AbstractLeaderboardScore {
   }
 
   public getScoreForCorrect(responseTime: number): number {
-    return this.algorithm.parameters.bonusForCorrect + this.algorithm.parameters.bonusForTime.parameter.find(
-      val => val.value <= (responseTime / 1000)).bonus;
+    return this.algorithm.parameters.bonusForCorrect + this.algorithm.parameters.bonusForTime.parameter.find(val => val.value <= (
+      responseTime / 1000
+    )).bonus;
   }
 
   public getScoreForPartiallyCorrect(responseTime: number): number {
-    return this.algorithm.parameters.bonusForPartiallyCorrect + this.algorithm.parameters.bonusForTime.parameter.find(
-      val => val.value <= (responseTime / 1000)).bonus;
+    return this.algorithm.parameters.bonusForPartiallyCorrect + this.algorithm.parameters.bonusForTime.parameter.find(val => val.value <= (
+      responseTime / 1000
+    )).bonus;
   }
 
   public getScoreForGroup({ memberGroupResults, correctResponses, activeQuiz }): object {
-    Object.values(memberGroupResults).forEach((memberGroup: any) => {
-      memberGroup.score += Object.values(correctResponses).map((val: any) => val.score);
+    Object.values(memberGroupResults).forEach((memberGroup: { score: number }) => {
+      memberGroup.score = Object.values(correctResponses).map((val: { score: number }) => val.score).reduce((val1, val2) => val1 + val2);
     });
 
     return memberGroupResults;
   }
 
   public getScoreForWrongAnswer(responseTime: number): number {
-    return this.algorithm.parameters.bonusForWrong + this.algorithm.parameters.bonusForTime.parameter.find(
-      val => val.value <= (responseTime / 1000)).bonus;
+    return this.algorithm.parameters.bonusForWrong + this.algorithm.parameters.bonusForTime.parameter.find(val => val.value <= (
+      responseTime / 1000
+    )).bonus;
   }
 }

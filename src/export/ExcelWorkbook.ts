@@ -13,6 +13,7 @@ import { RangedExcelWorksheet } from './RangedExcelWorksheet';
 import { SingleChoiceExcelWorksheet } from './SingleChoiceExcelWorksheet';
 import { SummaryExcelWorksheet } from './SummaryExcelWorksheet';
 import { SurveyExcelWorksheet } from './SurveyExcelWorksheet';
+import {ArchivedQuizWorksheet} from './ArchivedQuizWorksheet';
 
 export class ExcelWorkbook implements IExcelWorkbook {
   public readonly renderingFinished = new EventEmitter();
@@ -92,6 +93,7 @@ export class ExcelWorkbook implements IExcelWorkbook {
           throw new Error(`Unsupported question type '${this._quiz.questionList[i].TYPE}' while exporting`);
       }
     }
+    this._worksheets.push(new ArchivedQuizWorksheet(worksheetOptions));
 
     return await Promise.all(this._worksheets.map(val => new Promise(resolve => val.renderingFinished.on('done', () => resolve()))));
   }

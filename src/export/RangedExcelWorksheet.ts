@@ -160,7 +160,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
         nextColumnIndex += 2;
       }
       const responseItem = (
-        await MemberDAO.getMembersOfQuiz(this.quiz.name)
+        await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)
       ).filter(nickitem => {
         return nickitem.name === leaderboardItem.name;
       })[0].responses[this._questionIndex];
@@ -227,7 +227,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length / (
-                                                 await MemberDAO.getMembersOfQuiz(this.quiz.name)
+                                                 await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)
                                                ).length * 100;
     this.ws.cell(7, 2).number((
       isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)
@@ -237,7 +237,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
       (
-        await MemberDAO.getMembersOfQuiz(this.quiz.name)
+        await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)
       ).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
@@ -259,7 +259,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     let nextStartRow = 10;
     await asyncForEach(leaderBoardData, async leaderboardItem => {
       const responseItem = (
-        await MemberDAO.getMembersOfQuiz(this.quiz.name)
+        await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)
       ).filter(nickitem => {
         return nickitem.name === leaderboardItem.name;
       })[0].responses[this._questionIndex];
@@ -269,14 +269,19 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       this.ws.cell(nextStartRow, nextColumnIndex++).string(leaderboardItem.name);
       if (this._isCasRequired) {
         const profile = (
-          await MemberDAO.getMembersOfQuiz(this.quiz.name)
+          await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)
         ).filter((nick: MemberModelItem) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
       }
-      this.ws.cell(nextStartRow, nextColumnIndex++).number(parseInt(responseItem.value as string, 10));
+      const value = parseInt(responseItem.value as string, 10);
+      if (isNaN(value)) {
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.value);
+      } else {
+        this.ws.cell(nextStartRow, nextColumnIndex++).number(value);
+      }
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
       }

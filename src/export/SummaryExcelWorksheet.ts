@@ -46,7 +46,11 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.ws.column(1).setWidth(30);
     this.ws.column(2).setWidth(this._isCasRequired ? 10 : 20);
     for (let i = 3; i <= this.columnsToFormat; i++) {
-      this.ws.column(i).setWidth(22);
+      if (i === this.columnsToFormat) {
+        this.ws.column(i).setWidth(70);
+      } else {
+        this.ws.column(i).setWidth(22);
+      }
     }
 
     this.ws.cell(1, 1, 1, this.columnsToFormat).style(Object.assign({}, defaultStyles.quizNameRowStyle, {
@@ -101,7 +105,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       firstRow: currentRowIndex,
       firstColumn: 1,
       lastRow: currentRowIndex,
-      lastColumn: this.columnsToFormat - 1,
+      lastColumn: this.columnsToFormat - 2,
     });
 
     let dataWithoutCompleteCorrectQuestions = 0;
@@ -165,7 +169,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1, (leaderBoardData.length + (currentRowIndex - 1)), this.columnsToFormat)
-    .style(defaultStyles.attendeeEntryRowStyle);
+        .style(defaultStyles.attendeeEntryRowStyle);
 
     leaderBoardData.forEach((leaderboardItem, indexInList) => {
       let nextColumnIndex = 3;
@@ -183,11 +187,16 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         },
         numberFormat: '#,##0;',
       });
-      this.ws.cell(targetRow, nextColumnIndex).style({
+      this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
           horizontal: 'center',
         },
         numberFormat: '#,##0;',
+      });
+      this.ws.cell(targetRow, nextColumnIndex).style({
+        alignment: {
+          horizontal: 'center',
+        },
       });
     });
   }
@@ -195,29 +204,24 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
   public async addSheetData(): Promise<void> {
     const leaderBoardData = await this.getLeaderboardData();
     let currentRowIndex = 1;
-    const numberOfResponses = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickname => {
+    const numberOfResponses = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(nickname => {
       return nickname.responses.filter(response => {
         return !!response.value && response.value !== -1;
       }).length;
     }).length;
-    const allResponses: Array<MemberModelItem> = await MemberDAO.getMembersOfQuiz(this.quiz.name);
-    const numberOfAttendees = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length;
+    const allResponses: Array<MemberModelItem> = await MemberDAO.getMembersOfQuizForOwner(this.quiz.name);
+    const numberOfAttendees = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length;
     const numberOfQuestions = this.quiz.questionList.length;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.quiz_name')}: ${this.quiz.name}`);
-
-    this.ws.cell(currentRowIndex, this.columnsToFormat - 1).string(`${this.mf('export.session_content')}`);
     currentRowIndex++;
-
     this.ws.cell(currentRowIndex, 1).string(this.createdAt);
-    this.ws.cell(currentRowIndex, this.columnsToFormat - 1, currentRowIndex, this.columnsToFormat, true)
-    .string(JSON.stringify(this.quiz));
     currentRowIndex += 2;
 
     this.addLogoImage();
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.number_attendees')}:`);
-    this.ws.cell(currentRowIndex, 3).number((await MemberDAO.getMembersOfQuiz(this.quiz.name)).length);
+    this.ws.cell(currentRowIndex, 3).number((await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length);
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_number_attendees_participated')}:`);
@@ -283,7 +287,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       const targetRow = indexInList + currentRowIndex;
       this.ws.cell(targetRow, nextColumnIndex++).string(leaderboardItem.name);
       if (this._isCasRequired) {
-        const profile = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter((nick: MemberModelItem) => {
+        const profile = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter((nick: MemberModelItem) => {
           return nick.name === leaderboardItem.name;
         })[0].casProfile;
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
@@ -294,8 +298,10 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
       }
 
+      // user's response time and avg. response time is added (top list)
       this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime));
       this.ws.cell(targetRow, nextColumnIndex++).number(Math.round((leaderboardItem.responseTime / leaderBoardData.length)));
+      nextColumnIndex++;
     });
 
     if (nextStartRow === currentRowIndex + 5) {
@@ -321,14 +327,16 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     }
 
     this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.overall_response_time'));
-    this.ws.cell(nextStartRow++, nextColumnIndex++).string(this.mf('export.average_response_time'));
+    this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.average_response_time'));
+    this.ws.cell(nextStartRow++, nextColumnIndex++).string(this.mf('export.bonus_token'));
 
     await asyncForEach(allResponses, async (responseItem, indexInList) => {
       nextColumnIndex = 1;
       const targetRow = indexInList + nextStartRow;
+      // name is added to summary (bottom list)
       this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).find((nick: MemberModelItem) => {
+        const profile = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).find((nick: MemberModelItem) => {
           return nick.name === responseItem.name;
         }).casProfile;
         this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
@@ -344,9 +352,10 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         if (this.quiz.sessionConfig.confidenceSliderEnabled) {
           this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
         }
-
+        // user's response time and avg. response time is added (bottom list)
         this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime));
         this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime / leaderboardItem.correctQuestions.length));
+        this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.bonusToken);
       } else {
         this.ws.cell(targetRow, nextColumnIndex++).string(this.mf('export.correct_questions_none_available'));
       }

@@ -97,7 +97,7 @@ class ExcelExportTestSuite {
       });
     }
 
-    const result = await MemberDAO.getMembersOfQuiz(doc.name);
+    const result = await MemberDAO.getMembersOfQuizForOwner(doc.name);
     await assert.equal(result.length, this._memberCount, `Expected that the quiz has ${this._memberCount} members`);
   }
 

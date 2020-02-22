@@ -7,6 +7,7 @@ import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSeria
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
 import { AbstractRouter } from './AbstractRouter';
+import {MemberModelItem} from '../../models/member/MemberModel';
 
 @JsonController('/api/v1/member')
 export class MemberRouter extends AbstractRouter {
@@ -17,6 +18,15 @@ export class MemberRouter extends AbstractRouter {
       name,
       quizName,
     });
+  }
+
+  @Get('/token/bonus')
+  public async getCurrentBonusToken(@HeaderParam('authorization') token: string): Promise<string> {
+    const member = await MemberDAO.getMemberByToken(token);
+    if (!member) {
+      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
+    }
+    return member.bonusToken;
   }
 
   @Get('/available/:quizName')
@@ -189,7 +199,6 @@ export class MemberRouter extends AbstractRouter {
   @Get('/:quizName')
   public async getAllMembers(@Param('quizName') quizName: string, //
   ): Promise<IMessage> {
-
     const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
       return {

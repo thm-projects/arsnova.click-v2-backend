@@ -1,9 +1,12 @@
+import { SHA256 } from 'crypto-js';
+import * as Hex from 'crypto-js/enc-hex';
 import { Request, Response } from 'express';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as mjAPI from 'mathjax-node';
 import { Document } from 'mongoose';
 import * as path from 'path';
+import * as puppeteer from 'puppeteer';
 import {
   BadRequestError, BodyParam, ContentType, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
 } from 'routing-controllers';
@@ -17,6 +20,7 @@ import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { ICasData } from '../../interfaces/users/ICasData';
 import { MatchAssetCachedQuiz } from '../../lib/cache/assets';
+import { TwitterCard } from '../../lib/social-media/twitter/twitter-card';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
@@ -229,6 +233,43 @@ export class LibRouter extends AbstractRouter {
     });
   }
 
+  @Post('/image/quiz')
+  public async renderImage(@BodyParam('html') htmlContent: string, @BodyParam('theme') theme: string): Promise<string> {
+    const digest = Hex.stringify(SHA256(`${htmlContent}-${theme}`));
+
+    if (await AssetDAO.getAssetByDigest(digest)) {
+      return digest;
+    }
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setViewport({
+      width: 1200,
+      height: 675,
+      deviceScaleFactor: 1,
+    });
+    await page.setContent(htmlContent);
+    await Promise.all([
+      page.addStyleTag({ path: path.join(staticStatistics.pathToAssets, 'css', 'gfm.css') }),
+      page.addStyleTag({ url: `https://staging.arsnova.click/theme-${theme ?? 'default'}.css` }),
+    ]);
+    return new Promise(resolve => {
+      setTimeout(async () => {
+        const data = await page.screenshot({ type: 'png' });
+        await browser.close();
+
+        await AssetDAO.addAsset({
+          mimeType: 'image/png',
+          digest,
+          data: data,
+          url: '',
+        });
+
+        resolve(digest);
+      }, 1000);
+    });
+  }
+
   @Get('/cache/quiz/assets/:digest')
   public async getCache(@Param('digest') digest: string, @Res() response: Response): Promise<ArrayBufferLike> {
     const doc = await AssetDAO.getAssetByDigestAsLean(digest);
@@ -239,6 +280,12 @@ export class LibRouter extends AbstractRouter {
     response.contentType(doc.mimeType);
 
     return doc.data.buffer;
+  }
+
+  @Get('/quiz/twitterPost/:digest/:quizname') //
+  @ContentType('text/html')
+  public async postToTwitter(@Param('digest') digest: string, @Param('quizname') quizname: string, @Res() res: ICustomI18nResponse): Promise<string> {
+    return new TwitterCard(res.__mf).buildCard(`${staticStatistics.rewriteAssetCacheUrl}/lib/cache/quiz/assets/${digest}`, quizname);
   }
 
   @Get('/authorize/:ticket?')
@@ -321,7 +368,9 @@ export class LibRouter extends AbstractRouter {
     if (username) {
       user = await UserDAO.getUser(username);
 
-      if (!password || !user || !(await UserDAO.validateUser(username, password))) {
+      if (!password || !user || !(
+        await UserDAO.validateUser(username, password)
+      )) {
         throw new UnauthorizedError(JSON.stringify({
           status: StatusProtocol.Failed,
           step: MessageProtocol.AuthenticateStatic,
@@ -383,7 +432,9 @@ export class LibRouter extends AbstractRouter {
   @Get('/authorize/validate/:username/:token')
   private async validateToken(@Param('username') username: string, @Param('token') token: string): Promise<IMessage> {
 
-    if (!(await UserDAO.validateTokenForUser(username, token))) {
+    if (!(
+      await UserDAO.validateTokenForUser(username, token)
+    )) {
       return {
         status: StatusProtocol.Failed,
         step: MessageProtocol.AuthenticateStatic,

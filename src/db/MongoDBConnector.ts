@@ -1,4 +1,5 @@
 import { Replies } from 'amqplib';
+import { EventEmitter } from 'events';
 import * as mongoose from 'mongoose';
 import { Connection } from 'mongoose';
 import { Database } from '../enums/DbOperation';
@@ -6,6 +7,13 @@ import LoggerService from '../services/LoggerService';
 import AMQPConnector from './AMQPConnector';
 
 class MongoDbConnector {
+
+  private _rabbitEventEmitter: EventEmitter = new EventEmitter();
+
+  get rabbitEventEmitter(): EventEmitter {
+    return this._rabbitEventEmitter;
+  }
+
   get dbName(): string {
     return this._dbName;
   }
@@ -34,12 +42,12 @@ class MongoDbConnector {
       });
 
       await Promise.all([
-        this.initRabbitMQConnection().then(() => console.log('RabbitMQ connected')), mongoose.connect(this._mongoURL, {
+        this.initRabbitMQConnection().then(() => LoggerService.info('RabbitMQ connected')), mongoose.connect(this._mongoURL, {
           useCreateIndex: true,
           autoIndex: true,
           useNewUrlParser: true,
           useFindAndModify: false,
-        } as any).then(() => console.log('MongoDB connected')),
+        } as any).then(() => LoggerService.info('MongoDB connected')),
       ]);
     });
   }
@@ -47,7 +55,10 @@ class MongoDbConnector {
   private async initRabbitMQConnection(): Promise<Replies.AssertExchange> {
     try {
       return AMQPConnector.initConnection().then(() => {
-        return AMQPConnector.channel.assertExchange(AMQPConnector.globalExchange, 'fanout');
+        return AMQPConnector.channel.assertExchange(AMQPConnector.globalExchange, 'fanout').then(reply => {
+          this.rabbitEventEmitter.emit('connected');
+          return reply;
+        });
       });
     } catch (ex) {
       LoggerService.error(`RabbitMQ connection failed with error ${ex}, will retry in ${AMQPConnector.RECONNECT_INTERVAL / 1000} seconds`);

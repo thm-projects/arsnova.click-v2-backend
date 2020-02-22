@@ -3,7 +3,7 @@ import { IQuizBase } from '../../interfaces/quizzes/IQuizEntity';
 
 export async function calculateNumberOfAnswers(quiz: IQuizBase, questionIndex: number, answerNumber: number): Promise<number> {
   let numberOfAnswers = 0;
-  (await MemberDAO.getMembersOfQuiz(quiz.name)).forEach(nickname => {
+  (await MemberDAO.getMembersOfQuizForOwner(quiz.name)).forEach(nickname => {
     const response = nickname.responses[questionIndex].value;
     // noinspection SuspiciousInstanceOfGuard
     if (Array.isArray(response)) {
@@ -26,7 +26,7 @@ export async function calculateNumberOfRangedAnswers(
   let numberOfAnswersInMinRange = 0;
   let numberOfAnswersInMaxRange = 0;
   let numberOfCorrectAnswers = 0;
-  (await MemberDAO.getMembersOfQuiz(quiz.name)).forEach((nickname) => {
+  (await MemberDAO.getMembersOfQuizForOwner(quiz.name)).forEach((nickname) => {
     if (nickname.responses[questionIndex].value <= maxRange && nickname.responses[questionIndex].value > correctValue) {
       numberOfAnswersInMaxRange++;
     } else if (nickname.responses[questionIndex].value === correctValue) {

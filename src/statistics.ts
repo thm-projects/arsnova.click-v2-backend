@@ -35,6 +35,13 @@ const frontendGitlabId = parseInt(process.env.GITLAB_FRONTEND_PROJECT_ID, 10);
 const backendGitlabId = parseInt(process.env.GITLAB_BACKEND_PROJECT_ID, 10);
 const gitlabLoginToken = process.env.GITLAB_TOKEN;
 
+const twitterEnabled = process.env.TWITTER_ENABLED ?? false;
+const twitterConsumerKey = process.env.TWITTER_CONSUMER_KEY;
+const twitterConsumerSecret = process.env.TWITTER_CONSUMER_SECRET;
+const twitterAccessTokenKey = process.env.TWITTER_ACCESS_TOKEN_KEY;
+const twitterAccessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
+const twitterSearchKey = process.env.TWITTER_SEARCH_KEY;
+
 export const staticStatistics = {
   appName: 'arsnova-click-v2-backend',
   appVersion: '2.0.0',
@@ -48,6 +55,9 @@ export const staticStatistics = {
   cpuCores: cpus().length,
   jwtSecret: 'arsnova.click-v2',
   leaderboardAlgorithm,
+  twitter: {
+    searchKey: twitterSearchKey ?? 'arsnova.click',
+  },
 };
 
 export const dynamicStatistics = () => {
@@ -85,6 +95,13 @@ export const settings = {
     frontend: frontendGitlabId,
     backend: backendGitlabId,
     loginToken: gitlabLoginToken,
+  },
+  twitter: {
+    twitterAccessTokenKey,
+    twitterAccessTokenSecret,
+    twitterConsumerKey,
+    twitterConsumerSecret,
+    enabled: twitterEnabled && twitterAccessTokenKey && twitterAccessTokenSecret && twitterConsumerKey && twitterConsumerSecret,
   },
 };
 

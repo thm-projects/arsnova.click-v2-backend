@@ -13,8 +13,8 @@ setGlobalOptions({
 @suite
 class AppBootstrapRouterTestSuite {
 
-  public async before(): Promise<void> {
-    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
+  public static async before(): Promise<void> {
+    return mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
   }
 
   public async after(): Promise<void> {

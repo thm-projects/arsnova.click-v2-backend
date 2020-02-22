@@ -105,7 +105,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       lastColumn: minColums,
     });
 
-    const responses = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).map(nickname => nickname.responses[this._questionIndex]);
+    const responses = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).map(nickname => nickname.responses[this._questionIndex]);
     const hasEntries: boolean = responses.length > 0;
     const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
     const attendeeEntryRowStyle: any = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
@@ -153,7 +153,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
 
   public async addSheetData(): Promise<void> {
     const answerList = this._question.answerOptionList;
-    const allResponses: Array<MemberModelItem> = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(nickname => {
+    const allResponses: Array<MemberModelItem> = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(nickname => {
       return nickname.responses.map(response => {
         return !!response.value && response.value !== -1 ? response.value : null;
       });
@@ -173,13 +173,13 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = (await this.getLeaderboardData()).map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
-                                               / (await MemberDAO.getMembersOfQuiz(this.quiz.name)).length * 100;
+                                               / (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
-      (await MemberDAO.getMembersOfQuiz(this.quiz.name)).forEach((nickItem) => {
+      (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
@@ -203,7 +203,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.name);
       if (this._isCasRequired) {
-        const profile: ICasData = (await MemberDAO.getMembersOfQuiz(this.quiz.name)).filter(
+        const profile: ICasData = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(
           nickname => nickname.name === responseItem.name)[0].casProfile;
         this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
         this.ws.cell(nextStartRow, nextColumnIndex++).string(Array.isArray(profile.mail) ? profile.mail.slice(-1)[0] : profile.mail);

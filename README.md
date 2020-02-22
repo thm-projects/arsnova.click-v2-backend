@@ -2,6 +2,12 @@
 
 ###### Additional noticable files
 - arsnova-click.env - This file contains all environment variables for the arsnova-click backend
+    - `TWITTER_ENABLED`: Flag if the twitter polling should be enabled (default: `false`)
+    - `TWITTER_CONSUMER_KEY`: Consumer API Key from Twitter
+    - `TWITTER_CONSUMER_SECRET`: Consumer API Key secret from Twitter
+    - `TWITTER_ACCESS_TOKEN_KEY`: Access Token from Twitter
+    - `TWITTER_ACCESS_TOKEN_SECRET`: Access Token secret from Twitter
+    - `TWITTER_SEARCH_KEY`: Key to search for tweets on Twitter (default: `arsnova.click`)
     - `MONGODB_SERVICE_NAME`: Hostname of the MongoDB (eg: `mongodb`)
     - `MONGODB_DATABASE`: Database name (eg: `arsnova-click-v2`)
     - `MONGODB_USER`: User with access to the `MONGODB_DATABASE`

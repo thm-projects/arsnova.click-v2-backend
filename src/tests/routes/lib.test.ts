@@ -19,7 +19,7 @@ const privateKey = Math.random().toString(10);
 class LibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib`;
 
-  public async before(): Promise<void> {
+  public static async before(): Promise<void> {
     await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
   }
 
@@ -31,6 +31,15 @@ class LibRouterTestSuite {
   public async baseApiExists(): Promise<void> {
     const res = await chai.request(router).get(`${this._baseApiRoute}`);
     expect(res.type).to.eql('application/json');
+  }
+
+  @test
+  public async renderImageExists(): Promise<void> {
+    const res = await chai.request(router).post(`${this._baseApiRoute}/image/quiz`).send({
+      html: '<div></div>',
+      theme: 'Material',
+    });
+    expect(res.body).to.eql('2c862f8f719d6bf6e2ba5ecd7ea9a39ade6b4eb18a10524aa27773a676de445a');
   }
 }
 
@@ -71,7 +80,7 @@ class MathjaxLibRouterTestSuite {
 class CacheQuizAssetsLibRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/lib/cache/quiz/assets`;
 
-  public async before(): Promise<void> {
+  public static async before(): Promise<void> {
     const sandbox = sinon.createSandbox();
     sandbox.stub(AMQPConnector, 'channel').value({ assertExchange: () => {} });
     await mongoUnit.initDb(process.env.MONGODB_CONN_URL, {

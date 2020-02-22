@@ -16,6 +16,7 @@ import MemberDAO from './db/MemberDAO';
 import QuizDAO from './db/QuizDAO';
 import UserDAO from './db/UserDAO';
 import LoggerService from './services/LoggerService';
+import TwitterService from './services/TwitterService';
 import { staticStatistics } from './statistics';
 import { LoadTester } from './tests/LoadTester';
 
@@ -35,6 +36,9 @@ export interface IGlobal extends NodeJS.Global {
   DAO: {
     AssetDAO: {}, CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizDAO: {}, DbDAO: {}, UserDAO: {}, MemberDAO: {},
   };
+  Services: {
+    TwitterService: {}
+  };
 }
 
 interface IInetAddress {
@@ -43,7 +47,15 @@ interface IInetAddress {
   address: string;
 }
 
-(<IGlobal>global).DAO = {
+(
+  <IGlobal>global
+).Services = {
+  TwitterService,
+};
+
+(
+  <IGlobal>global
+).DAO = {
   AssetDAO,
   CasDAO,
   I18nDAO,
@@ -71,7 +83,9 @@ if (argv['load-test']) {
 }
 
 function normalizePort(val: number | string): number | string | boolean {
-  const portCheck: number = (typeof val === 'string') ? parseInt(val, 10) : val;
+  const portCheck: number = (
+                              typeof val === 'string'
+                            ) ? parseInt(val, 10) : val;
   if (isNaN(portCheck)) {
     return val;
   } else if (portCheck >= 0) {
@@ -85,7 +99,9 @@ function onError(error: NodeJS.ErrnoException): void {
   if (error.syscall !== 'listen') {
     throw error;
   }
-  const bind: string = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port;
+  const bind: string = (
+                         typeof port === 'string'
+                       ) ? 'Pipe ' + port : 'Port ' + port;
   switch (error.code) {
     case 'EACCESS':
       LoggerService.error(`${bind} requires elevated privileges`);
@@ -102,8 +118,12 @@ function onError(error: NodeJS.ErrnoException): void {
 
 function onListening(): void {
   const addr: IInetAddress | string = server.address();
-  const bind: string = (typeof addr === 'string') ? `pipe ${addr}` : `port ${addr.port}`;
+  const bind: string = (
+                         typeof addr === 'string'
+                       ) ? `pipe ${addr}` : `port ${addr.port}`;
   LoggerService.info(`Listening on ${bind}`);
+
+  TwitterService.run();
 
   I18nDAO.reloadCache().catch(reason => {
     console.error('Could not reload i18n dao cache', reason);
@@ -117,9 +137,12 @@ function runTest(): void {
   const loadTest = new LoadTester();
   loadTest.done.on('done', () => {
     console.log(`CPU Time Spent End: ${process.cpuUsage().user / 1000000}`);
-    console.log(`Load Test took ${(new Date().getTime() - startTime) / 1000}`);
+    console.log(`Load Test took ${(
+                                    new Date().getTime() - startTime
+                                  ) / 1000}`);
     console.log('----- Load Test Finished -----');
   });
 }
 
 function onClose(): void {}
+
