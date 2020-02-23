@@ -1,3 +1,5 @@
+import { objectEqual } from './object-equal';
+
 export function arraysEqual(a, b): boolean {
   if (a === b) {
     return true;
@@ -15,7 +17,7 @@ export function arraysEqual(a, b): boolean {
   // you might want to clone your array first.
 
   for (let i = 0; i < a.length; ++i) {
-    if (a[i] !== b[i]) {
+    if (!objectEqual(a[i], b[i])) {
       return false;
     }
   }
