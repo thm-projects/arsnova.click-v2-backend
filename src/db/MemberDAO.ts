@@ -174,7 +174,7 @@ class MemberDAO extends AbstractDAO {
       await this.getMembersOfQuiz(quiz.name)
     ).every(nick => {
       const val = nick.responses[quiz.currentQuestionIndex].value;
-      return typeof val === 'number' ? val > -1 : (
+      return typeof val === 'number' ? val > -1 : Array.isArray(val) ? val.length > 0 : (
         val !== null && typeof val !== 'undefined'
       );
     })) {
