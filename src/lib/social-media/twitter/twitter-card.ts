@@ -13,8 +13,8 @@ export class TwitterCard extends SocialMediaCard {
     const description = `${this._mf('social-media.card.description')}`;
 
     return `<meta http-equiv="refresh" content="0; URL=/">` + //
-           `<meta name="twitter:card" content="summary_large_image">` + //
-           `<meta name="twitter:site" content="@arsnovaC">` + //
+           `<meta name="twitter:card" content="summary">` + //
+           `<meta name="twitter:site" content="@arsnovaclick">` + //
            `<meta name="twitter:title" content="${quizname}">` + //
            `<meta name="twitter:description" content="${description}">` + //
            `<meta name="twitter:image" content="${imageUrl}">`;

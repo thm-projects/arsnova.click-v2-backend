@@ -6,6 +6,7 @@ export interface ITwitterApiTweets {
   text: string;
   created_at: string;
   id: number;
+  id_str: string;
   truncated: boolean;
 
   user: ITwitterApiUser;

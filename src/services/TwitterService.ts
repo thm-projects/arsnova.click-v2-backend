@@ -52,7 +52,7 @@ class TwitterService {
         user_url: status.user.url,
         followers_count: status.user.followers_count,
         profile_image_url_https: status.user.profile_image_url_https,
-        url: Array.isArray(status.entities.urls) && status.entities.urls.length > 0 ? status.entities.urls[0].url : null,
+        url: `https://twitter.com/i/web/status/${status.id_str}`,
         screen_name: status.user.screen_name,
       };
     });
