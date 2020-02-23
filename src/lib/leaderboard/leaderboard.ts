@@ -123,18 +123,18 @@ export class Leaderboard {
           const isCorrect = this.isCorrectResponse(attendee.responses[i], question);
           if (isCorrect === 1) {
             responses[attendee.name].correctQuestions.push(i);
-            responses[attendee.name].score += scoringLeaderboard.getScoreForCorrect(attendee.responses[i].responseTime);
+            responses[attendee.name].score += scoringLeaderboard.getScoreForCorrect(attendee.responses[i].responseTime, question.timer);
 
             memberGroupResults[memberGroup].correctQuestions.push(i);
 
           } else if (isCorrect === 0) {
             responses[attendee.name].correctQuestions.push(i);
-            responses[attendee.name].score += scoringLeaderboard.getScoreForPartiallyCorrect(attendee.responses[i].responseTime);
+            responses[attendee.name].score += scoringLeaderboard.getScoreForPartiallyCorrect(attendee.responses[i].responseTime, question.timer);
 
             memberGroupResults[memberGroup].correctQuestions.push(i);
 
           } else {
-            responses[attendee.name].score += scoringLeaderboard.getScoreForWrongAnswer(attendee.responses[i].responseTime);
+            responses[attendee.name].score += scoringLeaderboard.getScoreForWrongAnswer(attendee.responses[i].responseTime, question.timer);
           }
         }
       });

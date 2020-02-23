@@ -1,7 +1,7 @@
 [
   {
-    "algorithm": "PointBased",
-    "parameter": {
+    "algorithm": "TimeBased",
+    "parameters": {
       "bonusForCorrect": 2,
       "bonusForPartiallyCorrect": 1,
       "bonusForWrong": 0,
@@ -21,7 +21,7 @@
     }
   },
   {
-    "algorithm": "TimeBased",
+    "algorithm": "PointBased",
     "parameters": {
       "bonusForCorrect": 2,
       "bonusForPartiallyCorrect": 1,

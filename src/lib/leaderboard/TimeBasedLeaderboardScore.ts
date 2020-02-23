@@ -6,39 +6,33 @@ export class TimeBasedLeaderboardScore extends AbstractLeaderboardScore {
   constructor() {
     super();
 
-    this.algorithm = this.algorithms.find(val => val.algorithm === LeaderboardConfiguration.TimeBased);
+    this.algorithm = this.algorithms.find(val => val.algorithm === LeaderboardConfiguration.PointBased);
   }
 
   public getScoreForCorrect(responseTime: number): number {
-    const result = Math.round(this.algorithm.parameters.bonusForCorrect - (
-      responseTime / 1000
-    ));
-    return result < 0 ? 1 : result;
+    return this.algorithm.parameters.bonusForCorrect + //
+           this.algorithm.parameters.bonusForTime.parameter.find(val => responseTime / 1000 <= val.value).bonus;
   }
 
   public getScoreForPartiallyCorrect(responseTime: number): number {
-    const result = Math.round(this.algorithm.parameters.bonusForPartiallyCorrect - (
-      responseTime / 1000
-    ));
-    return result < 0 ? 1 : result;
+    return this.algorithm.parameters.bonusForPartiallyCorrect + //
+           this.algorithm.parameters.bonusForTime.parameter.find(val => responseTime / 1000 <= val.value).bonus;
   }
 
   public getScoreForGroup({ memberGroupResults, correctResponses, activeQuiz }): object {
-    Object.values(memberGroupResults).forEach((memberGroup: any) => {
-      memberGroup.score = Math.round((
-                                       memberGroup.correctQuestions.length / memberGroup.memberAmount / activeQuiz.questionList.length
-                                     ) * (
-                                       memberGroup.responseTime / memberGroup.memberAmount
-                                     ));
+    Object.values(memberGroupResults).forEach((memberGroup: { score: number }) => {
+      memberGroup.score = Object.values(correctResponses).map((val: { score: number }) => val.score).reduce((val1, val2) => val1 + val2);
     });
 
     return memberGroupResults;
   }
 
   public getScoreForWrongAnswer(responseTime: number): number {
-    const result = Math.round(this.algorithm.parameters.bonusForWrong - (
-      responseTime / 1000
-    ));
-    return result < 0 ? 1 : result;
+    if (this.algorithm.parameters.bonusForTime.onlyCorrect) {
+      return 0;
+    }
+
+    return this.algorithm.parameters.bonusForWrong + //
+           this.algorithm.parameters.bonusForTime.parameter.find(val => responseTime / 1000 <= val.value).bonus;
   }
 }

@@ -6,32 +6,55 @@ export class PointBasedLeaderboardScore extends AbstractLeaderboardScore {
   constructor() {
     super();
 
-    this.algorithm = this.algorithms.find(val => val.algorithm === LeaderboardConfiguration.PointBased);
+    this.algorithm = this.algorithms.find(val => val.algorithm === LeaderboardConfiguration.TimeBased);
   }
 
-  public getScoreForCorrect(responseTime: number): number {
-    return this.algorithm.parameters.bonusForCorrect + this.algorithm.parameters.bonusForTime.parameter.find(val => val.value <= (
-      responseTime / 1000
-    )).bonus;
+  public getScoreForCorrect(responseTime: number, quizTimer: number): number {
+    const result = Math.round(this.algorithm.parameters.bonusForCorrect + (
+      quizTimer * (
+        (
+        responseTime / 1000
+        ) / 100
+      )
+    ));
+    return result < 0 ? 0 : result;
   }
 
-  public getScoreForPartiallyCorrect(responseTime: number): number {
-    return this.algorithm.parameters.bonusForPartiallyCorrect + this.algorithm.parameters.bonusForTime.parameter.find(val => val.value <= (
-      responseTime / 1000
-    )).bonus;
+  public getScoreForPartiallyCorrect(responseTime: number, quizTimer: number): number {
+    const result = Math.round(this.algorithm.parameters.bonusForPartiallyCorrect + (
+      quizTimer * (
+        (
+        responseTime / 1000
+        ) / 100
+      )
+    ));
+    return result < 0 ? 0 : result;
   }
 
   public getScoreForGroup({ memberGroupResults, correctResponses, activeQuiz }): object {
-    Object.values(memberGroupResults).forEach((memberGroup: { score: number }) => {
-      memberGroup.score = Object.values(correctResponses).map((val: { score: number }) => val.score).reduce((val1, val2) => val1 + val2);
+    Object.values(memberGroupResults).forEach((memberGroup: any) => {
+      memberGroup.score = Math.round((
+                                       memberGroup.correctQuestions.length / memberGroup.memberAmount / activeQuiz.questionList.length
+                                     ) * (
+                                       memberGroup.responseTime / memberGroup.memberAmount
+                                     ));
     });
 
     return memberGroupResults;
   }
 
-  public getScoreForWrongAnswer(responseTime: number): number {
-    return this.algorithm.parameters.bonusForWrong + this.algorithm.parameters.bonusForTime.parameter.find(val => val.value <= (
-      responseTime / 1000
-    )).bonus;
+  public getScoreForWrongAnswer(responseTime: number, quizTimer: number): number {
+    if (this.algorithm.parameters.bonusForWrong === 0) {
+      return 0;
+    }
+
+    const result = Math.round(this.algorithm.parameters.bonusForWrong + (
+      quizTimer * (
+        (
+        responseTime / 1000
+        ) / 100
+      )
+    ));
+    return result < 0 ? 0 : result;
   }
 }

@@ -7,12 +7,12 @@ export abstract class AbstractLeaderboardScore {
   protected readonly algorithms: Array<ILeaderboardConfigurationAlgorithm> = require(
     path.join(staticStatistics.pathToAssets, 'leaderboard-config.json'));
 
-  public abstract getScoreForCorrect(responseTime: number): number;
+  public abstract getScoreForCorrect(responseTime: number, quizTimer: number): number;
 
-  public abstract getScoreForPartiallyCorrect(responseTime: number): number;
+  public abstract getScoreForPartiallyCorrect(responseTime: number, quizTimer: number): number;
 
   public abstract getScoreForGroup({ memberGroupResults, correctResponses, activeQuiz }): object;
 
-  public abstract getScoreForWrongAnswer(responseTime: number): number;
+  public abstract getScoreForWrongAnswer(responseTime: number, quizTimer: number): number;
 
 }

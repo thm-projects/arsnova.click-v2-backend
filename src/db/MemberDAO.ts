@@ -1,5 +1,6 @@
 import { ObjectId } from 'bson';
-import {Document, Error} from 'mongoose';
+import * as CryptoJS from 'crypto-js';
+import { Document, Error } from 'mongoose';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
@@ -7,9 +8,7 @@ import { MemberModel, MemberModelItem } from '../models/member/MemberModel';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
 import QuizDAO from './QuizDAO';
-import UserDAO from './UserDAO';
 import Hex = require('crypto-js/enc-hex');
-import * as CryptoJS from 'crypto-js';
 
 class MemberDAO extends AbstractDAO {
 
@@ -99,8 +98,8 @@ class MemberDAO extends AbstractDAO {
 
   public async resetMembersOfQuiz(name: string, questionAmount: number): Promise<any> {
     await MemberModel.deleteMany({
-        currentQuizName: name,
-        isActive: false
+      currentQuizName: name,
+      isActive: false,
     }).exec();
     return MemberModel.updateMany({ currentQuizName: name }, {
       responses: this.generateResponseForQuiz(questionAmount),
@@ -175,7 +174,9 @@ class MemberDAO extends AbstractDAO {
       await this.getMembersOfQuiz(quiz.name)
     ).every(nick => {
       const val = nick.responses[quiz.currentQuestionIndex].value;
-      return typeof val === 'number' ? val > -1 : val.length > 0;
+      return typeof val === 'number' ? val > -1 : (
+        val !== null && typeof val !== 'undefined'
+      );
     })) {
       await QuizDAO.stopQuiz(quiz);
     }
@@ -187,32 +188,35 @@ class MemberDAO extends AbstractDAO {
 
     try {
 
-        const member: MemberModelItem = await this.getMemberByName(nickname);
+      const member: MemberModelItem = await this.getMemberByName(nickname);
 
-        if (member.responses && member.responses.every(response => !(Array.isArray(response.value) && response.value.length === 0))) {
-           doc = MemberModel.findOneAndUpdate({
-                currentQuizName: quizName,
-                name: nickname
-            }, {
-                isActive: false
-            }).exec();
-            AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
-                status: StatusProtocol.Success,
-                step: MessageProtocol.Updated,
-                payload: { name: nickname },
-            })));
-        } else {
-              doc = MemberModel.findOneAndDelete({
-                  currentQuizName: quizName,
-                  name: nickname
-              }).exec();
-            AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
-                status: StatusProtocol.Success,
-                step: MessageProtocol.Removed,
-                payload: { name: nickname },
-            })));
-          }
-    } catch (err) {}
+      if (member.responses && member.responses.every(response => !(
+          Array.isArray(response.value) && response.value.length === 0
+      ))) {
+        doc = MemberModel.findOneAndUpdate({
+          currentQuizName: quizName,
+          name: nickname,
+        }, {
+          isActive: false,
+        }).exec();
+        AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+          status: StatusProtocol.Success,
+          step: MessageProtocol.Updated,
+          payload: { name: nickname },
+        })));
+      } else {
+        doc = MemberModel.findOneAndDelete({
+          currentQuizName: quizName,
+          name: nickname,
+        }).exec();
+        AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+          status: StatusProtocol.Success,
+          step: MessageProtocol.Removed,
+          payload: { name: nickname },
+        })));
+      }
+    } catch (err) {
+    }
 
     return doc;
   }

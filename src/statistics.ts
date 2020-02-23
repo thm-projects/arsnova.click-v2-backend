@@ -18,7 +18,7 @@ const portExternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL || config.
 const routePrefix = process.env.ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX || config.routePrefix || '';
 const rewriteAssetCacheUrl = process.env.ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL || config.rewriteAssetCacheUrl
                              || `http://${hostname()}:${portExternal}${routePrefix}`;
-const leaderboardAlgorithm = process.env.LEADERBOARD_ALGORITHM || config.leaderboardAlgorithm || LeaderboardConfiguration.TimeBased;
+const leaderboardAlgorithm = process.env.LEADERBOARD_ALGORITHM || config.leaderboardAlgorithm || LeaderboardConfiguration.PointBased;
 
 const amqpProtocol = process.env.AMQP_PROTOCOL || 'amqp';
 const amqpHostname = process.env.AMQP_HOSTNAME || 'localhost';
