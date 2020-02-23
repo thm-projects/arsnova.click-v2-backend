@@ -3,7 +3,7 @@ import AMQPConnector from '../db/AMQPConnector';
 import MongoDBConnector from '../db/MongoDBConnector';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { ITweet } from '../interfaces/twitter/ITweet';
-import { ITwitterApi } from '../interfaces/twitter/ITwitterApi';
+import { ITwitterApiTweets } from '../interfaces/twitter/ITwitterApi';
 import { arraysEqual } from '../lib/array-equal';
 import { settings, staticStatistics } from '../statistics';
 import LoggerService from './LoggerService';
@@ -41,8 +41,8 @@ class TwitterService {
     this.intervalInstance = null;
   }
 
-  private mapJsonToTweet(json: ITwitterApi): ITweet[] {
-    return json.statuses.map(status => {
+  private mapJsonToTweet(json: Array<ITwitterApiTweets>): ITweet[] {
+    return json.map(status => {
       return {
         created_at: status.created_at,
         id: status.id,
@@ -59,16 +59,24 @@ class TwitterService {
   }
 
   private async retrieveTweets(): Promise<void> {
-    const client = new Twitter({
-      consumer_key: settings.twitter.twitterConsumerKey,
-      consumer_secret: settings.twitter.twitterConsumerSecret,
-      access_token_key: settings.twitter.twitterAccessTokenKey,
-      access_token_secret: settings.twitter.twitterAccessTokenSecret,
-    });
+    let client: Twitter;
+    if (settings.twitter.twitterBearerToken) {
+      client = new Twitter({
+        consumer_key: settings.twitter.twitterConsumerKey,
+        consumer_secret: settings.twitter.twitterConsumerSecret,
+        bearer_token: settings.twitter.twitterBearerToken,
+      });
+    } else {
+      client = new Twitter({
+        consumer_key: settings.twitter.twitterConsumerKey,
+        consumer_secret: settings.twitter.twitterConsumerSecret,
+        access_token_key: settings.twitter.twitterAccessTokenKey,
+        access_token_secret: settings.twitter.twitterAccessTokenSecret,
+      });
+    }
 
-    // const params = { q: 'arsnova.click' };
-    const params = { q: staticStatistics.twitter.searchKey };
-    client.get('search/tweets', params, (error, tweets: ITwitterApi, response) => {
+    const params: Twitter.RequestParams = { q: staticStatistics.twitter.searchKey };
+    client.get('statuses/mentions_timeline', params, (error, tweets: Array<ITwitterApiTweets>, response) => {
       if (error) {
         LoggerService.error('Requesting recent Tweets with TwitterApi has failed with error:' + error.join(','));
         return;

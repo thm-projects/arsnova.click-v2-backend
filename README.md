@@ -7,6 +7,7 @@
     - `TWITTER_CONSUMER_SECRET`: Consumer API Key secret from Twitter
     - `TWITTER_ACCESS_TOKEN_KEY`: Access Token from Twitter
     - `TWITTER_ACCESS_TOKEN_SECRET`: Access Token secret from Twitter
+    - `TWITTER_BEARER_TOKEN`: Bearer Token from Twitter. If a bearer token is provided access tokens will not be used (see `https://developer.twitter.com/en/docs/basics/authentication/oauth-2-0/bearer-tokens`)
     - `TWITTER_SEARCH_KEY`: Key to search for tweets on Twitter (default: `arsnova.click`)
     - `CHROMIUM_PATH`: Path to a local chromium instance (default: `/usr/bin/chromium-browser`)
     - `MONGODB_SERVICE_NAME`: Hostname of the MongoDB (eg: `mongodb`)

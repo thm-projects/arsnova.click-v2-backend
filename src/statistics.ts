@@ -39,6 +39,7 @@ const gitlabHost = process.env.GITLAB_HOST;
 const twitterEnabled = process.env.TWITTER_ENABLED ?? false;
 const twitterConsumerKey = process.env.TWITTER_CONSUMER_KEY;
 const twitterConsumerSecret = process.env.TWITTER_CONSUMER_SECRET;
+const twitterBearerToken = process.env.TWITTER_BEARER_TOKEN;
 const twitterAccessTokenKey = process.env.TWITTER_ACCESS_TOKEN_KEY;
 const twitterAccessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
 const twitterSearchKey = process.env.TWITTER_SEARCH_KEY;
@@ -105,6 +106,7 @@ export const settings = {
     twitterAccessTokenSecret,
     twitterConsumerKey,
     twitterConsumerSecret,
+    twitterBearerToken,
     enabled: twitterEnabled && twitterAccessTokenKey && twitterAccessTokenSecret && twitterConsumerKey && twitterConsumerSecret,
   },
   chromiumPath,
