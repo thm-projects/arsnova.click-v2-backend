@@ -59,7 +59,7 @@ export const staticStatistics = {
   jwtSecret: 'arsnova.click-v2',
   leaderboardAlgorithm,
   twitter: {
-    searchKey: twitterSearchKey ?? 'arsnova.click',
+    searchKey: twitterSearchKey ?? 'arsnova.click OR arsnovaclick OR arsnova-click OR @arsnovaclick OR #arsnovaclick OR #arsnova-click',
   },
 };
 

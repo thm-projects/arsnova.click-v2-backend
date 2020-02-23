@@ -70,7 +70,7 @@ class TwitterService {
     const params = { q: staticStatistics.twitter.searchKey };
     client.get('search/tweets', params, (error, tweets: ITwitterApi, response) => {
       if (error) {
-        LoggerService.error('Requesting recent Tweets with TwitterApi has failed with error:' + error);
+        LoggerService.error('Requesting recent Tweets with TwitterApi has failed with error:' + error.join(','));
         return;
       }
 
