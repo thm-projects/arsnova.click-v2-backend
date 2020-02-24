@@ -2,10 +2,8 @@
 
 import * as chai from 'chai';
 import { suite, test } from 'mocha-typescript';
-import * as mongoUnit from 'mongo-unit';
-import * as sinon from 'sinon';
 import app from '../../App';
-import AMQPConnector from '../../db/AMQPConnector';
+import DbDAO from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
 import { staticStatistics } from '../../statistics';
@@ -22,17 +20,8 @@ class MemberApiRouterTestSuite {
   private readonly _hashtag = 'mocha-test-api-v1-member';
   private _nickname = 'testNickname';
 
-  public async before(): Promise<void> {
-    const sandbox = sinon.createSandbox();
-    sandbox.stub(AMQPConnector, 'channel').value({
-      assertExchange: () => {},
-      publish: () => {},
-    });
-    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
-  }
-
   public async after(): Promise<void> {
-    return mongoUnit.drop();
+    await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
   }
 
   @test

@@ -2,6 +2,7 @@ import { AnswerType } from '../enums/AnswerType';
 import { LeaderboardConfiguration } from '../enums/LeaderboardConfiguration';
 import { QuestionType } from '../enums/QuestionType';
 import { QuizState } from '../enums/QuizState';
+import { IFreetextAnswer } from '../interfaces/answeroptions/IFreetextAnswer';
 import { IQuiz } from '../interfaces/quizzes/IQuizEntity';
 
 export const generateQuiz = (name: string): IQuiz => {
@@ -62,6 +63,45 @@ export const generateQuiz = (name: string): IQuiz => {
             answerText: 'answer2',
             isCorrect: false,
           },
+        ],
+      }, {
+        TYPE: QuestionType.MultipleChoiceQuestion,
+        displayAnswerText: true,
+        questionText: 'abc',
+        timer: 60,
+        answerOptionList: [
+          {
+            TYPE: AnswerType.DefaultAnswerOption,
+            answerText: 'answer1',
+            isCorrect: true,
+          }, {
+            TYPE: AnswerType.DefaultAnswerOption,
+            answerText: 'answer2',
+            isCorrect: false,
+          },
+        ],
+      }, {
+        TYPE: QuestionType.RangedQuestion,
+        displayAnswerText: true,
+        questionText: 'abc',
+        timer: 60,
+        rangeMin: 0,
+        rangeMax: 0,
+        correctValue: 0,
+      }, {
+        TYPE: QuestionType.FreeTextQuestion,
+        displayAnswerText: true,
+        questionText: 'abc',
+        timer: 60,
+        answerOptionList: [
+          {
+            TYPE: AnswerType.FreeTextAnswerOption,
+            answerText: '',
+            configCaseSensitive: true,
+            configTrimWhitespaces: true,
+            configUseKeywords: true,
+            configUsePunctuation: true,
+          } as IFreetextAnswer,
         ],
       },
     ],

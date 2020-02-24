@@ -3,9 +3,9 @@
 import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test, timeout } from 'mocha-typescript';
-import * as mongoUnit from 'mongo-unit';
 import * as path from 'path';
 import app from '../../App';
+import DbDAO from '../../db/DbDAO';
 import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol } from '../../enums/Message';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
@@ -25,16 +25,12 @@ class QuizApiRouterTestSuite {
   private _hashtag = hashtag;
   private _privateKey = privateKey;
 
-  public static before(): void {
+  public async before(): Promise<void> {
     staticStatistics.pathToAssets = path.join(__dirname, '..', '..', '..', 'assets');
   }
 
-  public async before(): Promise<void> {
-    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
-  }
-
   public async after(): Promise<void> {
-    return mongoUnit.drop();
+    await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
   }
 
   @test

@@ -2,9 +2,9 @@
 
 import * as chai from 'chai';
 import { suite, test } from 'mocha-typescript';
-import * as mongoUnit from 'mongo-unit';
 
 import app from '../../App';
+import DbDAO from '../../db/DbDAO';
 import LoginDAO from '../../db/UserDAO';
 import { UserRole } from '../../enums/UserRole';
 import { AuthService } from '../../services/AuthService';
@@ -17,12 +17,8 @@ const expect = chai.expect;
 class ExpiryQuizTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/expiry-quiz`;
 
-  public async before(): Promise<void> {
-    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
-  }
-
   public async after(): Promise<void> {
-    return mongoUnit.drop();
+    await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
   }
 
   @test

@@ -7,6 +7,11 @@ import LoggerService from '../services/LoggerService';
 import AMQPConnector from './AMQPConnector';
 
 class MongoDbConnector {
+  private _externalServicesEmitter: EventEmitter = new EventEmitter();
+
+  get externalServicesEmitter(): EventEmitter {
+    return this._externalServicesEmitter;
+  }
 
   private _rabbitEventEmitter: EventEmitter = new EventEmitter();
 
@@ -48,7 +53,7 @@ class MongoDbConnector {
           useNewUrlParser: true,
           useFindAndModify: false,
         } as any).then(() => LoggerService.info('MongoDB connected')),
-      ]);
+      ]).then(() => this._externalServicesEmitter.emit('connected'));
     });
   }
 

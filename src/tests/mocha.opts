@@ -1,8 +1,0 @@
---ui mocha-typescript
---exit
---require source-map-support/register
---require ts-node/register
---recursive
---timeout 5000
---require src/tests/mongo-mock.js
-src/tests/**/*.test.ts

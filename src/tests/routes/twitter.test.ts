@@ -2,10 +2,8 @@
 
 import * as chai from 'chai';
 import { suite, test } from 'mocha-typescript';
-import * as mongoUnit from 'mongo-unit';
-import * as sinon from 'sinon';
 import app from '../../App';
-import AMQPConnector from '../../db/AMQPConnector';
+import DbDAO from '../../db/DbDAO';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');
@@ -19,17 +17,8 @@ const hashtag = 'mocha-test-api-v1';
 class TwitterApiTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/twitter`;
 
-  public static async before(): Promise<void> {
-    const sandbox = sinon.createSandbox();
-    sandbox.stub(AMQPConnector, 'channel').value({
-      assertExchange: () => {},
-      publish: () => {},
-    });
-    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
-  }
-
   public async after(): Promise<void> {
-    return mongoUnit.drop();
+    await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
   }
 
   @test

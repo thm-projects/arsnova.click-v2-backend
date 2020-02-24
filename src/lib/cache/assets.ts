@@ -2,6 +2,7 @@ import * as Hex from 'crypto-js/enc-hex';
 import { Document } from 'mongoose';
 import * as requestPromise from 'request-promise-native';
 import AssetDAO from '../../db/AssetDAO';
+import { IQuestionBase } from '../../interfaces/questions/IQuestion';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 
 import { AssetModel, AssetModelItem } from '../../models/AssetModel';
@@ -24,11 +25,17 @@ export function GetAssetUrlByDigest(digest: string): Promise<Document & AssetMod
 export async function MatchAssetCachedQuiz(quiz: IQuiz): Promise<IQuiz> {
   quiz.questionList = await Promise.all(quiz.questionList.map(async question => {
 
-    question.answerOptionList = await Promise.all(question.answerOptionList.map(async answer => {
+    (
+      question as IQuestionBase
+    ).answerOptionList = await Promise.all((
+      question as IQuestionBase
+    ).answerOptionList.map(async answer => {
       const answerMatched = answer.answerText.matchAll(new RegExp(assetsPathUrlRegex, 'gi'));
       let answerTextMatcher = answerMatched.next();
       while (!answerTextMatcher.done) {
-        const answerTextDbResult = (await GetAssetUrlByDigest(answerTextMatcher.value[2]));
+        const answerTextDbResult = (
+          await GetAssetUrlByDigest(answerTextMatcher.value[2])
+        );
         if (answerTextDbResult) {
           const url = answerTextDbResult.url;
           answer.answerText = answer.answerText.replace(answerTextMatcher.value[0], url);

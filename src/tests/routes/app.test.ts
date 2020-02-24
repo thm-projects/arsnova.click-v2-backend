@@ -2,9 +2,9 @@
 
 import * as chai from 'chai';
 import { suite, test } from 'mocha-typescript';
-import * as mongoUnit from 'mongo-unit';
 
 import app from '../../App';
+import DbDAO from '../../db/DbDAO';
 import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');
@@ -16,12 +16,8 @@ const expect = chai.expect;
 class AppRouterTestSuite {
   private _baseApiRoute = `${staticStatistics.routePrefix}/`;
 
-  public async before(): Promise<void> {
-    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
-  }
-
   public async after(): Promise<void> {
-    return mongoUnit.drop();
+    await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
   }
 
   @test

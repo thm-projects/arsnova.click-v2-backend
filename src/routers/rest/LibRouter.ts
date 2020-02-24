@@ -403,7 +403,7 @@ export class LibRouter extends AbstractRouter {
     if (!token || typeof token !== 'string' || token.length === 0) {
       token = await AuthService.generateToken(user);
       await UserDAO.updateUser(user.id, { token });
-      const quizzes = await QuizDAO.getQuizzesByPrivateKey(user.privateKey);
+      const quizzes = await QuizDAO.getQuizzesByPrivateKey(user.privateKey) || [];
       const parsedQuizzes = await Promise.all(quizzes.map(quiz => MatchAssetCachedQuiz(quiz.toJSON())));
 
       return {

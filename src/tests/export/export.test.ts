@@ -5,10 +5,8 @@ import * as fs from 'fs';
 import * as i18n from 'i18n';
 import * as MessageFormat from 'messageformat';
 import { slow, suite, test, timeout } from 'mocha-typescript';
-import * as mongoUnit from 'mongo-unit';
 import * as path from 'path';
-import * as sinon from 'sinon';
-import AMQPConnector from '../../db/AMQPConnector';
+import DbDAO from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
 import { QuestionType } from '../../enums/QuestionType';
@@ -58,16 +56,7 @@ class ExcelExportTestSuite {
   }
 
   public async after(): Promise<void> {
-    return mongoUnit.drop();
-  }
-
-  public async before(): Promise<void> {
-    const sandbox = sinon.createSandbox();
-    sandbox.stub(AMQPConnector, 'channel').value({
-      assertExchange: () => {},
-      publish: () => {},
-    });
-    await mongoUnit.initDb(process.env.MONGODB_CONN_URL, []);
+    await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
   }
 
   public randomIntFromInterval(min: number, max: number): number {
