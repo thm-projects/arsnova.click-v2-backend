@@ -3,11 +3,10 @@
 import * as chai from 'chai';
 import { suite, test } from 'mocha-typescript';
 import * as mongoUnit from 'mongo-unit';
-
-import app from '../../App';
-import { staticStatistics } from '../../statistics';
 import * as sinon from 'sinon';
+import app from '../../App';
 import AMQPConnector from '../../db/AMQPConnector';
+import { staticStatistics } from '../../statistics';
 
 const chaiHttp = require('chai-http');
 
@@ -38,5 +37,5 @@ class TwitterApiTestSuite {
     const res = await chai.request(app).get(`${this._baseApiRoute}/recentTweets`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-  } 
+  }
 }

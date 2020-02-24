@@ -20,7 +20,7 @@ import { LibRouter } from './routers/rest/LibRouter';
 import { MemberRouter } from './routers/rest/MemberRouter';
 import { NicksRouter } from './routers/rest/NicksRouter';
 import { QuizRouter } from './routers/rest/QuizRouter';
-import { TwitterRouter } from './routers/rest/TwitterRouter'; 
+import { TwitterRouter } from './routers/rest/TwitterRouter';
 import { dynamicStatistics, staticStatistics } from './statistics';
 
 export const routingControllerOptions: RoutingControllersOptions = {
@@ -35,7 +35,7 @@ export const routingControllerOptions: RoutingControllersOptions = {
   defaultErrorHandler: false,
   cors: options,
   controllers: [
-    AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LibRouter, MemberRouter, NicksRouter, QuizRouter,TwitterRouter, 
+    AdminRouter, ApiRouter, ExpiryQuizRouter, I18nApiRouter, LibRouter, MemberRouter, NicksRouter, QuizRouter, TwitterRouter,
   ],
   middlewares: [I18nMiddleware, ErrorHandlerMiddleware],
 };
