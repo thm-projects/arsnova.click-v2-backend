@@ -6,7 +6,7 @@ import MongoDBConnector from '../db/MongoDBConnector';
 const prepare = require('mocha-prepare');
 const MongoMemoryServer = require('mongodb-memory-server').MongoMemoryServer;
 
-prepare(async function (done) {
+prepare(async (done) => {
   const sandbox = sinon.createSandbox();
   sandbox.stub(AMQPConnector, 'initConnection').value(() => new Promise(resolve => resolve()));
   sandbox.stub(AMQPConnector, 'channel').value({
