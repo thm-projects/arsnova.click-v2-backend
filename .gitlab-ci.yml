@@ -1,4 +1,5 @@
 stages:
+  - test
   - build
   - deploy
 
@@ -79,6 +80,23 @@ build-beta:
   script:
     - *staging-server-env
     - *docker-push
+
+ts_lint:
+  stage: test
+  tags:
+    - nodejs
+  script:
+    - npm install
+    - node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json
+
+npm_test:
+  stage: test
+  tags:
+    - nodejs
+  script:
+    - npm install
+    - export NODE_ENV='test'
+    - node_modules/nyc/bin/nyc.js --reporter=text node_modules/mocha/bin/mocha --opts src/tests/mocha.opts
 
 deploy:
   stage: deploy
