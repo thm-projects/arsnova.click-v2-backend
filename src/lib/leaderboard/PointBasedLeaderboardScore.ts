@@ -6,15 +6,13 @@ export class PointBasedLeaderboardScore extends AbstractLeaderboardScore {
   constructor() {
     super();
 
-    this.algorithm = this.algorithms.find(val => val.algorithm === LeaderboardConfiguration.TimeBased);
+    this.algorithm = this.algorithms.find(val => val.algorithm === LeaderboardConfiguration.PointBased);
   }
 
   public getScoreForCorrect(responseTime: number, quizTimer: number): number {
     const result = Math.round(this.algorithm.parameters.bonusForCorrect + (
-      quizTimer * (
-        (
+      quizTimer - (
         responseTime / 1000
-        ) / 100
       )
     ));
     return result < 0 ? 0 : result;
@@ -22,10 +20,8 @@ export class PointBasedLeaderboardScore extends AbstractLeaderboardScore {
 
   public getScoreForPartiallyCorrect(responseTime: number, quizTimer: number): number {
     const result = Math.round(this.algorithm.parameters.bonusForPartiallyCorrect + (
-      quizTimer * (
-        (
+      quizTimer - (
         responseTime / 1000
-        ) / 100
       )
     ));
     return result < 0 ? 0 : result;
@@ -44,17 +40,6 @@ export class PointBasedLeaderboardScore extends AbstractLeaderboardScore {
   }
 
   public getScoreForWrongAnswer(responseTime: number, quizTimer: number): number {
-    if (this.algorithm.parameters.bonusForWrong === 0) {
-      return 0;
-    }
-
-    const result = Math.round(this.algorithm.parameters.bonusForWrong + (
-      quizTimer * (
-        (
-        responseTime / 1000
-        ) / 100
-      )
-    ));
-    return result < 0 ? 0 : result;
+    return Math.round(this.algorithm.parameters.bonusForWrong || 0);
   }
 }

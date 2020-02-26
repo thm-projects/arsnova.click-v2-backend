@@ -6,7 +6,7 @@ export class TimeBasedLeaderboardScore extends AbstractLeaderboardScore {
   constructor() {
     super();
 
-    this.algorithm = this.algorithms.find(val => val.algorithm === LeaderboardConfiguration.PointBased);
+    this.algorithm = this.algorithms.find(val => val.algorithm === LeaderboardConfiguration.TimeBased);
   }
 
   public getScoreForCorrect(responseTime: number): number {
@@ -16,7 +16,10 @@ export class TimeBasedLeaderboardScore extends AbstractLeaderboardScore {
 
   public getScoreForPartiallyCorrect(responseTime: number): number {
     return this.algorithm.parameters.bonusForPartiallyCorrect + //
-           this.algorithm.parameters.bonusForTime.parameter.find(val => responseTime / 1000 <= val.value).bonus;
+           (
+             this.algorithm.parameters.bonusForTime.onlyCorrect ? 0 : //
+             this.algorithm.parameters.bonusForTime.parameter.find(val => responseTime / 1000 <= val.value).bonus
+           );
   }
 
   public getScoreForGroup({ memberGroupResults, correctResponses, activeQuiz }): object {
@@ -33,6 +36,9 @@ export class TimeBasedLeaderboardScore extends AbstractLeaderboardScore {
     }
 
     return this.algorithm.parameters.bonusForWrong + //
-           this.algorithm.parameters.bonusForTime.parameter.find(val => responseTime / 1000 <= val.value).bonus;
+           (
+             this.algorithm.parameters.bonusForTime.onlyCorrect ? 0 : //
+             this.algorithm.parameters.bonusForTime.parameter.find(val => responseTime / 1000 <= val.value).bonus
+           );
   }
 }
