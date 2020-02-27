@@ -98,7 +98,7 @@ class App {
       integrations: [
         new Integrations.OnUncaughtException(), new Integrations.OnUnhandledRejection(),
       ],
-      enabled: process.env.NODE_ENV === 'production',
+      enabled: Boolean(process.env.SENTRY_DSN),
     });
   }
 }
