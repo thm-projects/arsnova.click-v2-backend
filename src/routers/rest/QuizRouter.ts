@@ -233,9 +233,11 @@ export class QuizRouter extends AbstractRouter {
     }
 
     const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
+    let nextQuestionIndex;
+    let currentStartTimestamp;
 
     if (quiz.sessionConfig.readingConfirmationEnabled && !quiz.readingConfirmationRequested) {
-      const nextQuestionIndex = await QuizDAO.nextQuestion(quiz);
+      nextQuestionIndex = await QuizDAO.nextQuestion(quiz);
       if (nextQuestionIndex === -1) {
         throw new BadRequestError(MessageProtocol.EndOfQuestions);
       }
@@ -251,8 +253,10 @@ export class QuizRouter extends AbstractRouter {
         status: StatusProtocol.Success,
         step: MessageProtocol.ReadingConfirmationRequested,
       };
-    } else if (quiz.readingConfirmationRequested) {
-      const currentStartTimestamp: number = new Date().getTime();
+    }
+
+    if (quiz.readingConfirmationRequested) {
+      currentStartTimestamp = new Date().getTime();
 
       await QuizDAO.updateQuiz(existingQuiz._id, {
         currentStartTimestamp,
@@ -262,7 +266,7 @@ export class QuizRouter extends AbstractRouter {
 
       quiz.readingConfirmationRequested = false;
 
-      await QuizDAO.nextQuestion(quiz);
+      await QuizDAO.startNextQuestion(quiz);
 
       return {
         status: StatusProtocol.Success,
@@ -272,33 +276,33 @@ export class QuizRouter extends AbstractRouter {
           currentQuestionIndex: quiz.currentQuestionIndex,
         },
       };
-    } else {
-      const nextQuestionIndex = await QuizDAO.nextQuestion(quiz);
-      if (nextQuestionIndex === -1) {
-        throw new BadRequestError(MessageProtocol.EndOfQuestions);
-      }
-      const currentStartTimestamp: number = new Date().getTime();
-
-      await QuizDAO.updateQuiz(existingQuiz._id, {
-        currentStartTimestamp,
-        readingConfirmationRequested: false,
-        state: QuizState.Running,
-      });
-
-      quiz.readingConfirmationRequested = false;
-      quiz.currentStartTimestamp = currentStartTimestamp;
-
-      await QuizDAO.startNextQuestion(quiz);
-
-      return {
-        status: StatusProtocol.Success,
-        step: MessageProtocol.Start,
-        payload: {
-          currentStartTimestamp,
-          nextQuestionIndex,
-        },
-      };
     }
+
+    nextQuestionIndex = await QuizDAO.nextQuestion(quiz);
+    if (nextQuestionIndex === -1) {
+      throw new BadRequestError(MessageProtocol.EndOfQuestions);
+    }
+    currentStartTimestamp = new Date().getTime();
+
+    await QuizDAO.updateQuiz(existingQuiz._id, {
+      currentStartTimestamp,
+      readingConfirmationRequested: false,
+      state: QuizState.Running,
+    });
+
+    quiz.readingConfirmationRequested = false;
+    quiz.currentStartTimestamp = currentStartTimestamp;
+
+    await QuizDAO.startNextQuestion(quiz);
+
+    return {
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Start,
+      payload: {
+        currentStartTimestamp,
+        nextQuestionIndex,
+      },
+    };
   }
 
   @Post('/stop')
@@ -443,7 +447,7 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
-    await QuizDAO.updateQuiz(activeQuiz._id, { ['sessionConfig.' + quizSettings.target]: quizSettings.state });
+    await QuizDAO.updateQuizSettings(activeQuiz, quizSettings);
 
     return {
       status: StatusProtocol.Success,

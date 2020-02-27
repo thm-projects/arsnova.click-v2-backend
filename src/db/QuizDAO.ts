@@ -368,6 +368,19 @@ class QuizDAO extends AbstractDAO {
     })));
   }
 
+  public async updateQuizSettings(quiz: Document & QuizModelItem, quizSettings: { state: boolean; target: string }): Promise<void> {
+    await this.updateQuiz(quiz._id, { ['sessionConfig.' + quizSettings.target]: quizSettings.state });
+    quiz.sessionConfig[quizSettings.target] = quizSettings.state;
+
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.UpdatedSettings,
+      payload: {
+        sessionConfig: quiz.sessionConfig,
+      },
+    })));
+  }
+
   public getQuizzesByPrivateKey(privateKey: string): Promise<Array<Document & QuizModelItem>> {
     return QuizModel.find({ privateKey }).exec();
   }
