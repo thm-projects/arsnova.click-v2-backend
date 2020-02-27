@@ -504,7 +504,7 @@ export class QuizRouter extends AbstractRouter {
     quiz.privateKey = privateKey;
     quiz.state = quiz.questionList.length > 0 ? QuizState.Active : QuizState.Inactive;
 
-    QuizDAO.convertLegacyQuiz(quiz);
+    await QuizDAO.convertLegacyQuiz(quiz);
 
     AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
@@ -536,7 +536,7 @@ export class QuizRouter extends AbstractRouter {
   public async saveQuiz(
     @HeaderParam('authorization') privateKey: string, //
     @BodyParam('quiz') quiz: IQuiz, //
-  ): Promise<IQuiz> {
+  ): Promise<IMessage> {
     if (quiz.name) {
       const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
       if (existingQuiz) {
@@ -545,7 +545,13 @@ export class QuizRouter extends AbstractRouter {
         }
 
         await QuizDAO.updateQuiz(existingQuiz._id, quiz);
-        return quiz;
+        return {
+          status: StatusProtocol.Success,
+          step: MessageProtocol.SaveQuiz,
+          payload: (
+            await QuizDAO.addQuiz(quiz)
+          ).toJSON(),
+        };
       }
     }
 
@@ -556,10 +562,14 @@ export class QuizRouter extends AbstractRouter {
     quiz.currentStartTimestamp = -1;
     quiz.readingConfirmationRequested = false;
 
-    QuizDAO.convertLegacyQuiz(quiz);
-    return (
-      await QuizDAO.addQuiz(quiz)
-    ).toJSON();
+    await QuizDAO.convertLegacyQuiz(quiz);
+    return {
+      status: StatusProtocol.Success,
+      step: MessageProtocol.SaveQuiz,
+      payload: (
+        await QuizDAO.addQuiz(quiz)
+      ).toJSON(),
+    };
   }
 
   @Delete('/:quizName')

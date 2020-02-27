@@ -97,13 +97,20 @@ class QuizDAO extends AbstractDAO {
     return parseInt(splitted[1], 10);
   }
 
-  public convertLegacyQuiz(legacyQuiz: any): Document & QuizModelItem {
+  public async convertLegacyQuiz(legacyQuiz: any): Promise<Document & QuizModelItem> {
+    if (legacyQuiz.hashtag) {
+      if (await this.getQuizByName(legacyQuiz.hashtag)) {
+        const renameRecommendations = await this.getRenameRecommendations(legacyQuiz.hashtag);
+        legacyQuiz.name = renameRecommendations[0];
+      } else {
+        legacyQuiz.name = legacyQuiz.hashtag;
+      }
+    }
+
     legacyQuiz = this.replaceTypeInformationOnLegacyQuiz(legacyQuiz);
     if (legacyQuiz.hasOwnProperty('configuration')) {
-      // Detected old v1 arsnova.click quiz
-      legacyQuiz.name = legacyQuiz.hashtag;
-      delete legacyQuiz.hashtag;
 
+      // Detected old v1 arsnova.click quiz
       legacyQuiz.currentQuestionIndex = 0;
       legacyQuiz.expiry = null;
       legacyQuiz.currentStartTimestamp = -1;
@@ -422,6 +429,7 @@ class QuizDAO extends AbstractDAO {
     if (obj.hasOwnProperty('type')) {
       obj.TYPE = obj.type;
       delete obj.type;
+      delete obj.hashtag;
     }
 
     return obj;

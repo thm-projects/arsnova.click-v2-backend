@@ -4,6 +4,7 @@ export enum StatusProtocol {
 }
 
 export enum MessageProtocol {
+  SaveQuiz                     = 'SaveQuiz', //
   Countdown                    = 'Countdown', //
   Updated                      = 'Updated', //
   UpdatedResponse              = 'UpdatedResponse', //
@@ -55,19 +56,19 @@ export enum MessageProtocol {
   EndOfQuestions               = 'EndOfQuestions', //
   CurrentState                 = 'CurrentState', //
   GetStartTime                 = 'GetStartTime', //
-  GetLeaderboardData = 'GetLeaderboardData', //
-  Reserved           = 'Reserved', //
-  Removed            = 'Removed', //
-  GetThemes          = 'GetThemes', //
-  QuizAssets         = 'QuizAssets', //
-  Render             = 'Render', //
-  Connected          = 'Connected', //
-  QuizNotFound       = 'QuizNotFound', //
-  Connect            = 'Connect', //
-  Disconnect         = 'Disconnect', //
-  Editable           = 'Editable', //
-  GetFreeMemberGroup = 'GetFreeMemberGroup', //
-  RequestTweets = 'RequestTweets', //
+  GetLeaderboardData           = 'GetLeaderboardData', //
+  Reserved                     = 'Reserved', //
+  Removed                      = 'Removed', //
+  GetThemes                    = 'GetThemes', //
+  QuizAssets                   = 'QuizAssets', //
+  Render                       = 'Render', //
+  Connected                    = 'Connected', //
+  QuizNotFound                 = 'QuizNotFound', //
+  Connect                      = 'Connect', //
+  Disconnect                   = 'Disconnect', //
+  Editable                     = 'Editable', //
+  GetFreeMemberGroup           = 'GetFreeMemberGroup', //
+  RequestTweets                = 'RequestTweets', //
 }
 
 export const Message = {
