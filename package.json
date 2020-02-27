@@ -15,7 +15,7 @@
     "dependency-check": "npx --ignore-existing madge --circular --extensions ts src"
   },
   "dependencies": {
-    "@sentry/node": "^5.12.3",
+    "@sentry/node": "^5.12.5",
     "@typegoose/typegoose": "^6.3.2",
     "amqplib": "^0.5.5",
     "api-spec-converter": "^2.11.0",
