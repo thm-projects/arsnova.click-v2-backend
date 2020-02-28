@@ -179,10 +179,10 @@ export class QuizRouter extends AbstractRouter {
     const savedQuizzes = [];
     const uploadedQuizzes = [];
 
-    uploadedFiles.forEach(file => {
+    await asyncForEach(uploadedFiles, async file => {
       uploadedQuizzes.push({
         fileName: file.originalname,
-        quiz: QuizDAO.convertLegacyQuiz(JSON.parse(file.buffer.toString('UTF-8'))),
+        quiz: await QuizDAO.convertLegacyQuiz(JSON.parse(file.buffer.toString('UTF-8'))),
       });
     });
 
