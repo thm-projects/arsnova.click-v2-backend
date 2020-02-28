@@ -3,7 +3,7 @@ stages:
   - build
   - deploy
 
-.template: &build-template
+.build-template: &build-template
   stage: build
   services:
     - name: docker:19.03.1-dind
@@ -39,6 +39,13 @@ stages:
   echo "export SERVICE_NAME=$SERVICE_NAME" >> variables
   echo "$PRODUCTION_SSH_PRIVATE_KEY" >> private_key
 
+.server-deploy-template: &server-deploy |
+  - source variables
+  - eval $(ssh-agent -s)
+  - mkdir ~/.ssh
+  - ssh-keyscan "$SSH_URL" >> ~/.ssh/known_hosts
+  - ssh-add <(cat private_key)
+
 build-master:
   <<: *build-template
   only:
@@ -48,7 +55,7 @@ build-master:
   variables:
     VERSION: 2.0.0
     SERVICE_NAME: master
-    CI_CONTAINER_INSTANCE_NAME: arsnova-click-backend
+    CI_CONTAINER_INSTANCE_NAME: arsnova-click-backend-master
   script:
     - *production-server-env
     - *docker-push
@@ -101,15 +108,20 @@ npm_test:
 deploy:
   stage: deploy
   only:
-    - master
     - staging
     - beta
   tags:
     - ssh
   script:
-    - source variables
-    - eval $(ssh-agent -s)
-    - mkdir ~/.ssh
-    - ssh-keyscan "$SSH_URL" >> ~/.ssh/known_hosts
-    - ssh-add <(cat private_key)
+    - *server-deploy
     - ssh $SSH_CMD "docker pull $CI_IMAGE_NAME:$VERSION && docker rm -f $CI_CONTAINER_INSTANCE_NAME ; docker-compose -f /home/arsnova/arsnova-click-docker/docker-compose-backend.yml -p arsnova-click-backend up --no-deps -d $SERVICE_NAME && docker image prune -af"
+
+deploy-master:
+  stage: deploy
+  only:
+    - master
+  tags:
+    - ssh
+  script:
+    - *server-deploy
+    - ssh $SSH_CMD "docker pull $CI_IMAGE_NAME:$VERSION && docker rm -f $CI_CONTAINER_INSTANCE_NAME ; docker-compose up -d backend && docker image prune -af"
