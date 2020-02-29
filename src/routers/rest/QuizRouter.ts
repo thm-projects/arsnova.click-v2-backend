@@ -562,7 +562,7 @@ export class QuizRouter extends AbstractRouter {
     quiz.currentStartTimestamp = -1;
     quiz.readingConfirmationRequested = false;
 
-    await QuizDAO.convertLegacyQuiz(quiz);
+    quiz = await QuizDAO.convertLegacyQuiz(quiz);
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.SaveQuiz,

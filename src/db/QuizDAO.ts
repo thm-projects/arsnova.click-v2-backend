@@ -62,7 +62,7 @@ class QuizDAO extends AbstractDAO {
       return result;
     }
 
-    const count = await QuizModel.find({ name: this.buildQuiznameQuery(quizName) }).count().exec();
+    const count = await QuizModel.find({ name: new RegExp(`^${quizName.trim()}\\s?[0-9]*$`, 'i') }).countDocuments().exec();
     const date = new Date();
     const dateYearPart = `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}`;
     const dateFormatted = `${dateYearPart}-${date.getHours()}_${date.getMinutes()}_${date.getSeconds()}`;
@@ -431,8 +431,8 @@ class QuizDAO extends AbstractDAO {
     if (obj.hasOwnProperty('type')) {
       obj.TYPE = obj.type;
       delete obj.type;
-      delete obj.hashtag;
     }
+    delete obj.hashtag;
 
     return obj;
   }
