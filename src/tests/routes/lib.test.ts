@@ -129,7 +129,6 @@ class AuthorizeLibRouterTestSuite {
       passwordHash: 'testpasshash',
       userAuthorizations: [],
       privateKey: 'privateKey',
-      tokenHash: 'tokenHash',
     });
     const res = await chai.request(router)
     .post(`${this._baseApiRoute}/static`).send({
