@@ -7,15 +7,14 @@ import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 
 class I18nDAO extends AbstractDAO {
-  private _storage: object;
+  private readonly _mergeRequestTitle = 'WIP: Update i18n keys';
+  private readonly _commitMessage = 'Updates i18n keys';
+  private readonly _targetBranch = settings.gitlab.targetBranch;
+  private readonly _storage: object;
 
   get storage(): object {
     return this._storage;
   }
-
-  private readonly mergeRequestTitle = 'WIP: Update i18n keys';
-  private readonly commitMessage = 'Updates i18n keys';
-  private readonly targetBranch = settings.gitlab.targetBranch;
 
   constructor(storage: object) {
     super();
@@ -141,9 +140,9 @@ class I18nDAO extends AbstractDAO {
     const branch = this.generateBranchName();
     const gitlabService = this.prepareGitlabConnection(token);
 
-    await gitlabService.Branches.create(project, branch, this.targetBranch);
-    await gitlabService.Commits.create(project, branch, this.commitMessage, this.generateCommitActions(project, data));
-    await gitlabService.MergeRequests.create(project, branch, this.targetBranch, this.mergeRequestTitle);
+    await gitlabService.Branches.create(project, branch, this._targetBranch);
+    await gitlabService.Commits.create(project, branch, this._commitMessage, this.generateCommitActions(project, data));
+    await gitlabService.MergeRequests.create(project, branch, this._targetBranch, this._mergeRequestTitle);
   }
 
   public async getUnusedI18nKeysFromSourceFiles(project: GitlabProject, i18nContent: { [key: string]: any }): Promise<Array<any>> {
@@ -156,7 +155,7 @@ class I18nDAO extends AbstractDAO {
         (
           await gitlabService.Repositories.tree(project, {
             recursive: true,
-            ref: this.targetBranch,
+            ref: this._targetBranch,
           })
         ) as any
       ).filter(val => val.type === 'blob' && val.name.match(filter)).filter(val => !val.name.match(negativeFilter))
@@ -165,7 +164,7 @@ class I18nDAO extends AbstractDAO {
     let fileData = [];
     while (fileContents.length > 0) {
       fileData = fileData.concat(...await Promise.all<any>(fileContents.splice(0, 50).map(val => {
-        return gitlabService.RepositoryFiles.showRaw(project, `${val.path}`, this.targetBranch).catch(rejected => LoggerService.error(rejected));
+        return gitlabService.RepositoryFiles.showRaw(project, `${val.path}`, this._targetBranch).catch(rejected => LoggerService.error(rejected));
       }))).filter(val => !!val);
     }
 
@@ -184,7 +183,7 @@ class I18nDAO extends AbstractDAO {
 
       availableLangs.forEach(async (langRef, index) => {
         const dataNode = (
-          await gitlabService.RepositoryFiles.showRaw(project, `${this.buildI18nBasePath(project)}/${langRef.toLowerCase()}.json`, this.targetBranch)
+          await gitlabService.RepositoryFiles.showRaw(project, `${this.buildI18nBasePath(project)}/${langRef.toLowerCase()}.json`, this._targetBranch)
         ) as unknown as string;
 
         this.buildKeys({

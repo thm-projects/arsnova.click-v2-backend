@@ -5,10 +5,6 @@ export enum GitlabProject {
   'arsnova-click-v2-frontend' = settings.gitlab.frontend, //
 }
 
-export enum Branch {
-  DefaultBranch = 'master', //
-}
-
 export enum GitlabCommitAction {
   Create = 'create', //
   Delete = 'delete', //
