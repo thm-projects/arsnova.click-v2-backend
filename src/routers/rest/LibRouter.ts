@@ -10,6 +10,7 @@ import * as puppeteer from 'puppeteer';
 import {
   BadRequestError, BodyParam, ContentType, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
 } from 'routing-controllers';
+import { OpenAPI } from 'routing-controllers-openapi';
 import * as xml2js from 'xml2js';
 import AssetDAO from '../../db/AssetDAO';
 import CasDAO from '../../db/CasDAO';
@@ -291,7 +292,17 @@ export class LibRouter extends AbstractRouter {
     return new TwitterCard(res.__mf).buildCard(`${staticStatistics.rewriteAssetCacheUrl}/lib/cache/quiz/assets/${digest}`, quizname);
   }
 
-  @Get('/authorize/:ticket?')
+  @Get('/authorize/:ticket?') //
+  @OpenAPI({
+    summary: 'Authorizes a cas user by a ticket',
+    parameters: [
+      {
+        name: 'ticket',
+        in: 'path',
+        required: false,
+      },
+    ],
+  })
   public authorize(@Param('ticket') ticket: string, @Req() req: Request, @Res() res: Response): Promise<object> {
 
     let serviceUrl = req.headers.referer;

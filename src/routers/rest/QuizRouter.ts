@@ -9,17 +9,9 @@ import {
   Delete,
   Get,
   HeaderParam,
-  InternalServerError,
-  JsonController,
-  NotFoundError,
-  Param,
-  Params,
-  Post,
-  Put,
-  Res,
-  UnauthorizedError,
-  UploadedFiles,
+  InternalServerError, JsonController, NotFoundError, Param, Params, Post, Put, Res, UnauthorizedError, UploadedFiles,
 } from 'routing-controllers';
+import { OpenAPI } from 'routing-controllers-openapi';
 import AMQPConnector from '../../db/AMQPConnector';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
@@ -43,7 +35,17 @@ import { AbstractRouter } from './AbstractRouter';
 export class QuizRouter extends AbstractRouter {
   private readonly _leaderboard: Leaderboard = new Leaderboard();
 
-  @Get('/status/:quizName?')
+  @Get('/status/:quizName?') //
+  @OpenAPI({
+    summary: 'Returns the status of a quiz',
+    parameters: [
+      {
+        name: 'quizName',
+        in: 'path',
+        required: false,
+      },
+    ],
+  })
   public async getIsAvailableQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
@@ -89,7 +91,16 @@ export class QuizRouter extends AbstractRouter {
     };
   }
 
-  @Get('/full-status/:quizName?')
+  @Get('/full-status/:quizName?') @OpenAPI({
+    summary: 'Returns the quiz state and content',
+    parameters: [
+      {
+        name: 'quizName',
+        in: 'path',
+        required: false,
+      },
+    ],
+  })
   public async getFullQuizStatusData(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
@@ -137,6 +148,21 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/generate/abcd/:languageId/:answerLength?') //
+  @OpenAPI({
+    summary: 'Generates a new abcd quiz with the passed language and number of answers',
+    parameters: [
+      {
+        name: 'languageId',
+        in: 'path',
+        required: true,
+      },
+      {
+        name: 'answerLength',
+        in: 'path',
+        required: false,
+      },
+    ],
+  }) //
   @ContentType('application/json')
   public async generateAbcdQuiz(
     @Param('languageId') languageId: string, //
@@ -695,7 +721,27 @@ export class QuizRouter extends AbstractRouter {
     };
   }
 
-  @Get('/leaderboard/:quizName/:amount/:questionIndex?')
+  @Get('/leaderboard/:quizName/:amount/:questionIndex?') //
+  @OpenAPI({
+    summary: 'Returns the leaderboard data',
+    parameters: [
+      {
+        name: 'quizName',
+        in: 'path',
+        required: true,
+      },
+      {
+        name: 'amount',
+        in: 'path',
+        required: true,
+      },
+      {
+        name: 'questionIndex',
+        in: 'path',
+        required: false,
+      },
+    ],
+  })
   public async getLeaderBoardData(
     @Param('quizName') quizName: string, //
     @Param('amount') amount: number, //
@@ -825,7 +871,17 @@ export class QuizRouter extends AbstractRouter {
     return {};
   }
 
-  @Get('/quiz/:quizName?')
+  @Get('/quiz/:quizName?') //
+  @OpenAPI({
+    summary: 'Returns the data of a quiz',
+    parameters: [
+      {
+        name: 'quizName',
+        in: 'path',
+        required: false,
+      },
+    ],
+  })
   private async getQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
