@@ -170,6 +170,18 @@ class QuizDAO extends AbstractDAO {
     return QuizModel.findOne({ name: this.buildQuiznameQuery(name) }).exec();
   }
 
+  public getQuizForAttendee(quizName: string): Promise<Document & QuizModelItem> {
+    return QuizModel.findOne({ name: this.buildQuiznameQuery(quizName) }, {
+      _id: 0,
+      privateKey: 0,
+      visibility: 0,
+      expiry: 0,
+      createdAt: 0,
+      updatedAt: 0,
+      __v: 0,
+    }).exec();
+  }
+
   public getExpiryQuizzes(): Promise<Array<Document & QuizModelItem>> {
     return QuizModel.find({ expiry: { $gte: new Date() } }).exec();
   }

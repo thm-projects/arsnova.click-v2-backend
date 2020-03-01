@@ -30,7 +30,7 @@ class MemberDAO extends AbstractDAO {
       throw new Error(`Duplicate member insertion: (name: ${memberSerialized.name}, id: ${memberSerialized.id})`);
     }
 
-    memberSerialized.bonusToken = await this.generateBonusToken(memberSerialized.currentQuizName, memberSerialized.name);
+    memberSerialized.bonusToken = this.generateBonusToken(memberSerialized.currentQuizName, memberSerialized.name);
     memberSerialized.isActive = true;
 
     const doc = await MemberModel.create(memberSerialized);
@@ -243,8 +243,8 @@ class MemberDAO extends AbstractDAO {
   }
 
 
-  private async generateBonusToken(quizname, username): Promise<string> {
-    return await Hex.stringify(CryptoJS.SHA256(quizname + username + Date.now()));
+  private generateBonusToken(quizname, username): string {
+    return Hex.stringify(CryptoJS.SHA256(quizname + username + Date.now()));
   }
 }
 

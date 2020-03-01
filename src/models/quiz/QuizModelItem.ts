@@ -1,4 +1,5 @@
 import { arrayProp, getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
+import { Document } from 'mongoose';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { QuizState } from '../../enums/QuizState';
@@ -29,7 +30,7 @@ export class QuizModelItem {
     default: QuizState.Inactive,
     enum: QuizState,
   }) public state: QuizState;
-  @prop({ _id: false }) public sessionConfig: SessionConfigurationModelItem;
+  @prop({ _id: false }) public sessionConfig: Document & SessionConfigurationModelItem;
   @prop() public currentStartTimestamp: number;
   @prop() public currentQuestionIndex: number;
   @prop() public privateKey: string;

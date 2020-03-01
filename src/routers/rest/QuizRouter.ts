@@ -100,7 +100,8 @@ export class QuizRouter extends AbstractRouter {
     };
   }
 
-  @Get('/full-status/:quizName?') @OpenAPI({
+  @Get('/full-status/:quizName?') //
+  @OpenAPI({
     summary: 'Returns the quiz state and content',
     parameters: [
       {
@@ -112,18 +113,25 @@ export class QuizRouter extends AbstractRouter {
   })
   public async getFullQuizStatusData(
     @Params() params: { [key: string]: any }, //
-    @HeaderParam('authorization', { required: false }) token: string, //
   ): Promise<object> {
-    const status = await this.getIsAvailableQuiz(params, token);
-    const quiz = await this.getQuiz(params, token);
+    const quiz = await QuizDAO.getQuizForAttendee(params.quizName);
+    if (!quiz) {
+      throw new NotFoundError(`Quiz with name ${params.quizName} not found`);
+    }
+
+    const step = [QuizState.Active, QuizState.Running].includes(quiz.state) ? MessageProtocol.Available : MessageProtocol.Unavailable;
+    const payload: { quiz?: QuizModelItem, status?: { authorizeViaCas: boolean } } = {};
+    if (step === MessageProtocol.Available) {
+      payload.quiz = quiz.toJSON();
+      payload.status = {
+        authorizeViaCas: quiz.sessionConfig.nicks.restrictToCasLogin,
+      };
+    }
+
     return {
-      status: status.status === StatusProtocol.Success && quiz.status === StatusProtocol.Success ? StatusProtocol.Success : StatusProtocol.Failed,
-      step: status.step === MessageProtocol.Available && quiz.step === MessageProtocol.Available ? MessageProtocol.Available
-                                                                                                 : MessageProtocol.Unavailable,
-      payload: {
-        status: status.payload,
-        quiz: quiz.payload,
-      },
+      status: StatusProtocol.Success,
+      step,
+      payload,
     };
   }
 
@@ -447,8 +455,8 @@ export class QuizRouter extends AbstractRouter {
   public async getQuizSettings(@Param('quizName') quizName: string, //
   ): Promise<IMessage> {
 
-    const activeQuiz = await QuizDAO.getQuizByName(quizName);
-    if (!activeQuiz) {
+    const quiz = await QuizDAO.getQuizByName(quizName);
+    if (!quiz || ![QuizState.Active, QuizState.Running].includes(quiz.state)) {
       return {
         status: StatusProtocol.Failed,
         step: MessageProtocol.UpdatedSettings,
@@ -459,7 +467,7 @@ export class QuizRouter extends AbstractRouter {
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.UpdatedSettings,
-      payload: { settings: activeQuiz.sessionConfig },
+      payload: { settings: quiz.sessionConfig },
     };
   }
 
@@ -875,11 +883,6 @@ export class QuizRouter extends AbstractRouter {
     ).length;
   }
 
-  @Get('/')
-  private getAll(): object {
-    return {};
-  }
-
   @Get('/quiz/:quizName?') //
   @OpenAPI({
     summary: 'Returns the data of a quiz',
@@ -905,7 +908,7 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
-    const quiz = await QuizDAO.getQuizByName(quizName || member.currentQuizName);
+    const quiz = await QuizDAO.getQuizForAttendee(quizName || member.currentQuizName);
     const payload: IQuizStatusPayload = {};
 
     if (quiz) {
