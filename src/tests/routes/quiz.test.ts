@@ -33,13 +33,6 @@ class QuizApiRouterTestSuite {
     await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
   }
 
-  @test
-  public async baseApiExists(): Promise<void> {
-    const res = await chai.request(app).get(`${this._baseApiRoute}`);
-    expect(res.status).to.equal(200);
-    expect(res.type).to.equal('application/json');
-  }
-
   @test @timeout(5000)
   public async generateDemoQuiz(): Promise<void> {
     const res = await chai.request(app).get(`${this._baseApiRoute}/generate/demo/en`);
