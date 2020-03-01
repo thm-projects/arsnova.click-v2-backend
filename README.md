@@ -21,6 +21,7 @@
     - `GITLAB_TOKEN`: *[Optional]* Access Token for gitlab project to retrieve and parse i18n files
     - `GITLAB_BACKEND_PROJECT_ID`: *[Optional]* Project ID where the backend i18n files are found
     - `GITLAB_FRONTEND_PROJECT_ID`: *[Optional]* Project ID where the frontend i18n files are found
+    - `GITLAB_TARGET_BRANCH`: *[Optional]* Branch name of the frontend and backend project which will be used to consume the i18n files (default: `master`)
     - `AMQP_HOSTNAME`: Hostname of the AMQP Server (eg: `rabbitmq`)
     - `AMQP_USER`: User with access to the AMQP Server
     - `AMQP_PASSWORD`: Password of the user provided by `AMQP_USER`

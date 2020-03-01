@@ -1,6 +1,7 @@
 import { cpus, freemem, hostname, loadavg, networkInterfaces, totalmem } from 'os';
 import * as path from 'path';
 import * as process from 'process';
+import { Branch } from './enums/Enums';
 import { LeaderboardConfiguration } from './enums/LeaderboardConfiguration';
 
 const config = require(path.join(__dirname, 'config.json'));
@@ -35,6 +36,7 @@ const frontendGitlabId = parseInt(process.env.GITLAB_FRONTEND_PROJECT_ID, 10);
 const backendGitlabId = parseInt(process.env.GITLAB_BACKEND_PROJECT_ID, 10);
 const gitlabLoginToken = process.env.GITLAB_TOKEN;
 const gitlabHost = process.env.GITLAB_HOST;
+const gitlabTargetBranch = process.env.GITLAB_TARGET_BRANCH ?? Branch.DefaultBranch;
 
 const twitterEnabled = process.env.TWITTER_ENABLED ?? false;
 const twitterConsumerKey = process.env.TWITTER_CONSUMER_KEY;
@@ -100,6 +102,7 @@ export const settings = {
     backend: backendGitlabId,
     loginToken: gitlabLoginToken,
     host: gitlabHost,
+    targetBranch: gitlabTargetBranch,
   },
   twitter: {
     twitterAccessTokenKey,

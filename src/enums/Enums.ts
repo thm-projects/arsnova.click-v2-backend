@@ -6,7 +6,7 @@ export enum GitlabProject {
 }
 
 export enum Branch {
-  TargetBranch = 'master', //
+  DefaultBranch = 'master', //
 }
 
 export enum GitlabCommitAction {
