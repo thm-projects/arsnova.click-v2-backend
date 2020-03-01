@@ -9,7 +9,16 @@ import {
   Delete,
   Get,
   HeaderParam,
-  InternalServerError, JsonController, NotFoundError, Param, Params, Post, Put, Res, UnauthorizedError, UploadedFiles,
+  InternalServerError,
+  JsonController,
+  NotFoundError,
+  Param,
+  Params,
+  Post,
+  Put,
+  Res,
+  UnauthorizedError,
+  UploadedFiles,
 } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import AMQPConnector from '../../db/AMQPConnector';
@@ -137,7 +146,7 @@ export class QuizRouter extends AbstractRouter {
       result.name = 'Demo Quiz ' + (
                     lastPersistedDemoQuizNumber + 1
       );
-      QuizDAO.convertLegacyQuiz(result);
+      await QuizDAO.convertLegacyQuiz(result);
 
       return result;
 
@@ -185,7 +194,7 @@ export class QuizRouter extends AbstractRouter {
       result.name = `${abcdName} ${(
         lastPersistedAbcdNumber + 1
       )}`;
-      QuizDAO.convertLegacyQuiz(result);
+      await QuizDAO.convertLegacyQuiz(result);
 
       return result;
 
