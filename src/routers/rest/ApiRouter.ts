@@ -1,4 +1,6 @@
 import * as Converter from 'api-spec-converter';
+import { getFromContainer, MetadataStorage } from 'class-validator';
+import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import { Response } from 'express';
 import { fromBuffer } from 'file-type';
 import * as fs from 'fs';
@@ -25,7 +27,24 @@ export class ApiRouter extends AbstractRouter {
 
   private openAPISpec(): OpenAPIObject {
     const storage = getMetadataArgsStorage();
+    const metadatas = (
+      getFromContainer(MetadataStorage) as any
+    ).validationMetadatas;
+    const schemas = validationMetadatasToSchemas(metadatas, {
+      refPointerPrefix: '#/components/schemas/',
+    });
+
     return routingControllersToSpec(storage as any, routingControllerOptions, {
+      components: {
+        schemas,
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
+      },
       info: {
         title: staticStatistics.appName,
         version: staticStatistics.appVersion,

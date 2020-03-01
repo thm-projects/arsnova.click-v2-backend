@@ -1,4 +1,5 @@
 import { Authorized, BodyParam, Get, HeaderParam, InternalServerError, JsonController, Param, Post } from 'routing-controllers';
+import { OpenAPI } from 'routing-controllers-openapi';
 import I18nDAO from '../../db/I18nDAO';
 import { GitlabProject, Language } from '../../enums/Enums';
 import { StatusProtocol } from '../../enums/Message';
@@ -9,7 +10,11 @@ import { AbstractRouter } from './AbstractRouter';
 export class I18nApiRouter extends AbstractRouter {
 
   @Post('/:project/updateLang') //
-  @Authorized(UserRole.EditI18n)
+  @Authorized(UserRole.EditI18n) //
+  @OpenAPI({
+    summary: 'Updates the language keys for a project',
+    security: [{ bearerAuth: [] }],
+  })
   private async updateLang(
     @Param('project') project: string, //
     @BodyParam('gitlabToken') gitlabToken: string, //
@@ -33,7 +38,11 @@ export class I18nApiRouter extends AbstractRouter {
   }
 
   @Get('/:project/langFile') //
-  @Authorized(UserRole.EditI18n)
+  @Authorized(UserRole.EditI18n) //
+  @OpenAPI({
+    summary: 'Returns the language file for a project',
+    security: [{ bearerAuth: [] }],
+  })
   private async getLangFile( //
     @HeaderParam('authorization') token: string, //
     @Param('project') project: string, //

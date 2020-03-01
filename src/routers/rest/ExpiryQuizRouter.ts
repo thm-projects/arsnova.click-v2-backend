@@ -1,5 +1,6 @@
 import { Document } from 'mongoose';
 import { Authorized, BadRequestError, BodyParam, Get, JsonController, Post } from 'routing-controllers';
+import { OpenAPI } from 'routing-controllers-openapi';
 import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { UserRole } from '../../enums/UserRole';
@@ -10,7 +11,12 @@ import { AbstractRouter } from './AbstractRouter';
 @JsonController('/api/v1/expiry-quiz')
 export class ExpiryQuizRouter extends AbstractRouter {
 
-  @Get('/')
+  @Get('/') @Authorized(UserRole.CreateQuizFromExpired) //
+  @OpenAPI({
+    summary: 'Returns all quizzes with expiry date',
+    security: [{ bearerAuth: [] }],
+    deprecated: true,
+  })
   private async getAll(): Promise<object> {
     const quiz: Array<QuizModelItem> = (await QuizDAO.getExpiryQuizzes()).map(expiryQuiz => expiryQuiz.toJSON());
 
@@ -20,7 +26,12 @@ export class ExpiryQuizRouter extends AbstractRouter {
   }
 
   @Post('/init') //
-  @Authorized(UserRole.CreateQuizFromExpired)
+  @Authorized(UserRole.CreateQuizFromExpired) //
+  @OpenAPI({
+    summary: 'Initializes a quiz with expiry date',
+    security: [{ bearerAuth: [] }],
+    deprecated: true,
+  })
   private async initQuiz(
     @BodyParam('quizname') quizname: string, //
     @BodyParam('username') username: string, //
@@ -41,7 +52,12 @@ export class ExpiryQuizRouter extends AbstractRouter {
   }
 
   @Post('/quiz') //
-  @Authorized(UserRole.CreateExpiredQuiz)
+  @Authorized(UserRole.CreateExpiredQuiz) //
+  @OpenAPI({
+    summary: 'Creates a new quiz with expiry date',
+    security: [{ bearerAuth: [] }],
+    deprecated: true,
+  })
   private postQuiz(@BodyParam('quiz') quiz: IQuiz): object {
 
     if (!quiz) {

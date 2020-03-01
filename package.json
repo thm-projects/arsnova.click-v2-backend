@@ -57,7 +57,8 @@
     "imagemin": "^7.0.0",
     "imagemin-pngquant": "^8.0.0",
     "simple-oauth2": "^3.3.0",
-    "twitter": "^1.7.1"
+    "twitter": "^1.7.1",
+    "class-validator-jsonschema": "latest"
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.13",

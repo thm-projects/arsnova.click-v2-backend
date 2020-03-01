@@ -14,8 +14,10 @@ import { AbstractRouter } from './AbstractRouter';
 export class AdminRouter extends AbstractRouter {
 
   @Get('/users') //
+  @Authorized(UserRole.SuperAdmin) //
   @OpenAPI({
     description: 'Returns all available users',
+    security: [{ bearerAuth: [] }],
   })
   private getUsers(): Promise<Array<IUserSerialized>> {
     return UserModel.find().lean().exec() as Promise<Array<IUserSerialized>>;
@@ -24,6 +26,7 @@ export class AdminRouter extends AbstractRouter {
   @Delete('/user/:username') //
   @OpenAPI({
     description: 'Removes a given user',
+    security: [{ bearerAuth: [] }],
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   private async deleteUser(@Param('username') username: string): Promise<void> {
@@ -33,6 +36,7 @@ export class AdminRouter extends AbstractRouter {
   @Put('/user') //
   @OpenAPI({
     description: 'Adds a new user or updates an existing one',
+    security: [{ bearerAuth: [] }],
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   private async putUser(
@@ -65,7 +69,8 @@ export class AdminRouter extends AbstractRouter {
   @Get('/quizzes') //
   @OpenAPI({
     description: 'Returns all available quizzes',
-  })
+    security: [{ bearerAuth: [] }],
+  }) @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   private async getQuizzes(): Promise<Array<IAdminQuiz>> {
     return Promise.all((await QuizDAO.getAllQuizzes()).map(async quiz => {
       let questionAmount = 0;
@@ -95,6 +100,7 @@ export class AdminRouter extends AbstractRouter {
   @Post('/quiz') //
   @OpenAPI({
     description: 'Deactivates a given quiz',
+    security: [{ bearerAuth: [] }],
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   private async updateQuizState(@BodyParam('quizname') quizname: string): Promise<void> {
@@ -109,7 +115,8 @@ export class AdminRouter extends AbstractRouter {
   @Get('/quiz/:id') //
   @OpenAPI({
     description: 'Returns an available quiz by the id',
-  })
+    security: [{ bearerAuth: [] }],
+  }) @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   private async getQuiz(@Param('id') quizId: string): Promise<object> {
     return (await QuizDAO.getQuizById(new ObjectId(quizId))).toJSON();
   }
@@ -117,6 +124,7 @@ export class AdminRouter extends AbstractRouter {
   @Delete('/quiz/:quizName') //
   @OpenAPI({
     description: 'Removes a given quiz',
+    security: [{ bearerAuth: [] }],
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   private async deleteQuiz(@Param('quizName') quizName: string): Promise<void> {
