@@ -11,14 +11,17 @@ import { AbstractRouter } from './AbstractRouter';
 @JsonController('/api/v1/expiry-quiz')
 export class ExpiryQuizRouter extends AbstractRouter {
 
-  @Get('/') @Authorized(UserRole.CreateQuizFromExpired) //
+  @Get('/') //
+  @Authorized(UserRole.CreateQuizFromExpired) //
   @OpenAPI({
     summary: 'Returns all quizzes with expiry date',
     security: [{ bearerAuth: [] }],
     deprecated: true,
   })
   private async getAll(): Promise<object> {
-    const quiz: Array<QuizModelItem> = (await QuizDAO.getExpiryQuizzes()).map(expiryQuiz => expiryQuiz.toJSON());
+    const quiz: Array<QuizModelItem> = (
+      await QuizDAO.getExpiryQuizzes()
+    ).map(expiryQuiz => expiryQuiz.toJSON());
 
     return {
       quiz,
