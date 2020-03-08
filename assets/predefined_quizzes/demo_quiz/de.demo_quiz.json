@@ -91,7 +91,7 @@
       "correctValue": 30
     },
     {
-      "questionText": "### Geben Sie $\\pi$ auf zwei Nachkommastellen an!\n![Kreiszahl Pi](https://upload.wikimedia.org/wikipedia/commons/2/2a/Pi-unrolled-720.gif)\n___\nLeonhard Euler:\n$$e^{i \\pi} +1 = 0$$\n___\nKarl Weierstraß:\n$$\\pi = \\int_{-\\infty}^\\infty \\frac{\\mathrm{d} x}{1 + x^2} = 2\\cdot \\int_{-1}^1 \\frac{\\mathrm{d} x}{1 + x^2}$$",
+      "questionText": "### Geben Sie $\\pi$ auf zwei Nachkommastellen an!\n![Kreiszahl Pi](https://upload.wikimedia.org/wikipedia/commons/2/2a/Pi-unrolled-720.gif)\n___\nLeonhard Euler:\n\n$$e^{i \\pi} +1 = 0$$\n___\nKarl Weierstraß:\n\n$$\\pi = \\int_{-\\infty}^\\infty \\frac{\\mathrm{d} x}{1 + x^2} = 2\\cdot \\int_{-1}^1 \\frac{\\mathrm{d} x}{1 + x^2}$$",
       "timer": 120,
       "displayAnswerText": true,
       "answerOptionList": [

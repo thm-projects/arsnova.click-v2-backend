@@ -20,6 +20,7 @@ import UserDAO from '../../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { ICasData } from '../../interfaces/users/ICasData';
+import { asyncForEach } from '../../lib/async-for-each';
 import { MatchAssetCachedQuiz } from '../../lib/cache/assets';
 import { TwitterCard } from '../../lib/social-media/twitter/twitter-card';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
@@ -38,13 +39,12 @@ export class LibRouter extends AbstractRouter {
 
     mjAPI.start();
     mjAPI.config({
-      // determines whether Message.Set() calls are logged
-      displayMessages: false, // determines whether error messages are shown on the console
-      displayErrors: false, // determines whether "unknown characters" (i.e., no glyph in the configured fonts) are saved in the error array
-      undefinedCharError: false, // a convenience option to add MathJax extensions
-      extensions: '', // for webfont urls in the CSS for HTML output
-      fontURL: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS', // default MathJax config
-      MathJax: {
+      displayMessages: false, // determines whether Message.Set() calls are logged
+      displayErrors: false, // determines whether error messages are shown on the console
+      undefinedCharError: false, // determines whether "unknown characters" (i.e., no glyph in the configured fonts) are saved in the error array
+      extensions: '', // a convenience option to add MathJax extensions
+      fontURL: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/fonts/HTML-CSS', // for webfont urls in the CSS for HTML output
+      MathJax: { // default MathJax config
         jax: ['input/TeX', 'input/MathML', 'input/AsciiMath', 'output/CommonHTML'],
         extensions: [
           'tex2jax.js', 'mml2jax.js', 'asciimath2jax.js', 'AssistiveMML.js',
@@ -55,8 +55,8 @@ export class LibRouter extends AbstractRouter {
         tex2jax: {
           processEscapes: true,
           processEnvironments: true,
-          inlineMath: [['$', '$'], ['\\(', '\\)']],
-          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          inlineMath: [['$', '$']],
+          displayMath: [['$$', '$$']],
         },
       },
     });
@@ -174,7 +174,7 @@ export class LibRouter extends AbstractRouter {
   }
 
   @Post('/mathjax')
-  public renderMathjax(
+  public async renderMathjax(
     @BodyParam('mathjax') mathjax: string, //
     @BodyParam('format') format: string, //
     @BodyParam('output') output: string, //
@@ -183,9 +183,11 @@ export class LibRouter extends AbstractRouter {
     if (!mathjax || !format || !output) {
       throw new InternalServerError(`Malformed request received -> ${mathjax}, ${format}, ${output}`);
     }
+
     const mathjaxArray: Array<string> = [];
-    mathjaxArray.push(...JSON.parse(mathjax));
     const result = [];
+
+    mathjaxArray.push(...JSON.parse(mathjax));
     if (!mathjaxArray.length) {
       throw new BadRequestError(JSON.stringify({
         status: StatusProtocol.Failed,
@@ -199,39 +201,31 @@ export class LibRouter extends AbstractRouter {
       }));
     }
 
-    return new Promise<object>(resolve => {
-      mathjaxArray.forEach(async (mathjaxPlain, index) => {
+    await asyncForEach(mathjaxArray, async mathjaxPlain => {
+      const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
+      if (dbResult) {
+        result.push(dbResult);
+        return;
+      }
 
-        const dbResult = MathjaxDAO.getAllPreviouslyRenderedData(mathjaxPlain);
-        if (dbResult) {
-          result.push(dbResult);
-          if (index === mathjaxArray.length - 1) {
-            resolve(result);
-          }
-          return;
-        }
+      try {
+        const data = await mjAPI.typeset({
+          math: mathjaxPlain.replace(/( ?\${1,2} ?)/g, ''),
+          format: format,
+          html: output === 'html',
+          css: output === 'html',
+          svg: output === 'svg',
+          mml: output === 'mml',
+        });
 
-        try {
-          const data = await mjAPI.typeset({
-            math: mathjaxPlain.replace(/( ?\${1,2} ?)/g, ''),
-            format: format,
-            html: output === 'html',
-            css: output === 'html',
-            svg: output === 'svg',
-            mml: output === 'mml',
-          });
-
-          MathjaxDAO.updateRenderedData(data, mathjaxPlain);
-          result.push(data);
-        } catch (e) {
-          console.error('error while trying to parse mathjax', e);
-        }
-
-        if (index === mathjaxArray.length - 1) {
-          resolve(result);
-        }
-      });
+        MathjaxDAO.updateRenderedData(data, mathjaxPlain);
+        result.push(data);
+      } catch (e) {
+        console.error('error while trying to parse mathjax', e);
+      }
     });
+
+    return result;
   }
 
   @Post('/image/quiz')

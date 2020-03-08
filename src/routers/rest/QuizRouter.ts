@@ -241,6 +241,7 @@ export class QuizRouter extends AbstractRouter {
       } else {
         data.quiz.privateKey = privateKey;
         data.quiz.visibility = QuizVisibility.Account;
+        data.quiz.state = QuizState.Inactive;
 
         savedQuizzes.push((
           await QuizDAO.addQuiz(data.quiz)
@@ -546,7 +547,7 @@ export class QuizRouter extends AbstractRouter {
     quiz.currentStartTimestamp = -1;
     quiz.readingConfirmationRequested = false;
     quiz.privateKey = privateKey;
-    quiz.state = quiz.questionList.length > 0 ? QuizState.Active : QuizState.Inactive;
+    quiz.state = quiz.state ?? quiz.questionList.length > 0 ? QuizState.Active : QuizState.Inactive;
 
     await QuizDAO.convertLegacyQuiz(quiz);
 

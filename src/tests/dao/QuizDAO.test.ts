@@ -27,21 +27,25 @@ class QuizDAOTestSuite {
 
   @test
   public async getActiveQuizzes(): Promise<void> {
-    this.quiz = generateQuiz('test-quiz');
-    this.quiz.state = QuizState.Running;
-    await QuizDAO.addQuiz(this.quiz);
+    const quiz = await QuizDAO.addQuiz(generateQuiz('test-quiz'));
+    await QuizDAO.updateQuiz(quiz._id, {
+      state: QuizState.Running,
+    });
+    this.quiz = await QuizDAO.getQuizById(quiz._id);
 
     const quizze = await QuizDAO.getActiveQuizzes();
-    expect(quizze[0].toJSON()).to.deep.include(this.quiz);
+    expect(quizze[0].toJSON()).to.deep.include(this.quiz.toJSON());
   }
 
   @test
   public async getJoinableQuizzes(): Promise<void> {
-    this.quiz = generateQuiz('test-quiz');
-    this.quiz.state = QuizState.Active;
-    await QuizDAO.addQuiz(this.quiz);
+    const quiz = await QuizDAO.addQuiz(generateQuiz('test-quiz'));
+    await QuizDAO.updateQuiz(quiz._id, {
+      state: QuizState.Active,
+    });
+    this.quiz = await QuizDAO.getQuizById(quiz._id);
 
     const quizze = await QuizDAO.getJoinableQuizzes();
-    expect(quizze[0].toJSON()).to.deep.include(this.quiz);
+    expect(quizze[0].toJSON()).to.deep.include(this.quiz.toJSON());
   }
 }

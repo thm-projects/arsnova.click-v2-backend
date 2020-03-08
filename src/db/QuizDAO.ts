@@ -159,7 +159,6 @@ class QuizDAO extends AbstractDAO {
     await AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quizDoc.name), 'fanout');
     delete quizDoc._id;
     delete quizDoc.id;
-    quizDoc.state = QuizState.Inactive;
     return QuizModel.create(quizDoc);
   }
 
