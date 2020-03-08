@@ -78,13 +78,13 @@ class TwitterService {
     const params: Twitter.RequestParams = { q: staticStatistics.twitter.searchKey };
     client.get('statuses/mentions_timeline', params, (error, tweets: Array<ITwitterApiTweets>, response) => {
       if (error) {
-        LoggerService.error('Requesting recent Tweets with TwitterApi has failed with error:' + error.join(','));
+        LoggerService.error('Requesting recent Tweets with TwitterApi has failed with error: ' + error.map(e => e.message).join(', '));
         return;
       }
 
       const newTweets = this.mapJsonToTweet(tweets);
       if (arraysEqual(this.currentTweets, newTweets)) {
-        LoggerService.info('No new tweets found');
+        LoggerService.debug('No new tweets found');
         return;
       }
       this.currentTweets = newTweets;
