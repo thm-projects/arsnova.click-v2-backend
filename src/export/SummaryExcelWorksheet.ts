@@ -44,7 +44,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     this.ws.row(1).setHeight(20);
     this.ws.column(1).setWidth(30);
-    this.ws.column(2).setWidth(this._isCasRequired ? 10 : 20);
+    this.ws.column(2).setWidth(this._isCasRequired ? 10 : this.quiz.sessionConfig.readingConfirmationEnabled ? 25 : 20);
     for (let i = 3; i <= this.columnsToFormat; i++) {
       if (i === this.columnsToFormat) {
         this.ws.column(i).setWidth(70);
@@ -88,7 +88,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     if (this.quiz.sessionConfig.confidenceSliderEnabled) {
     }
     this.ws.cell(this.quiz.sessionConfig.confidenceSliderEnabled ? currentRowIndex - 1 : currentRowIndex, 3, currentRowIndex, 3).style({
-      numberFormat: '#,##0',
+      numberFormat: defaultStyles.numberFormat,
     });
 
     currentRowIndex += 2;
@@ -135,13 +135,13 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         alignment: {
           horizontal: 'center',
         },
-        numberFormat: '#,##0;',
+        numberFormat: defaultStyles.numberFormat,
       });
       this.ws.cell(currentRowIndex, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
         },
-        numberFormat: '#,##0;',
+        numberFormat: defaultStyles.numberFormat,
       });
     });
 
@@ -185,18 +185,19 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         alignment: {
           horizontal: 'center',
         },
-        numberFormat: '#,##0;',
+        numberFormat: defaultStyles.numberFormat,
       });
       this.ws.cell(targetRow, nextColumnIndex++).style({
         alignment: {
           horizontal: 'center',
         },
-        numberFormat: '#,##0;',
+        numberFormat: defaultStyles.numberFormat,
       });
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
           horizontal: 'center',
         },
+        numberFormat: defaultStyles.numberFormat,
       });
     });
   }
@@ -244,17 +245,23 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         return x.confidenceValue;
       }).reduce((a, b) => {
         return a + b;
-      }, 0) / numberOfAttendees);
-      this.ws.cell(currentRowIndex, 3).number((isNaN(averageConfidencePercentage) ? 0 : Math.round(averageConfidencePercentage)));
+      }, 0) / numberOfAttendees
+      );
+      this.ws.cell(currentRowIndex, 3).number((
+        isNaN(averageConfidencePercentage) ? 0 : Math.round(averageConfidencePercentage)
+      ));
       currentRowIndex++;
     }
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_response_time')}:`);
-    this.ws.cell(currentRowIndex, 3).number((Math.round((leaderBoardData.map((x) => {
-      return x.responseTime;
-    }).reduce((a, b) => {
-      return a + b;
-    }, 0) / numberOfAttendees) / this.quiz.questionList.length)) || 0);
+    const averageResponseTime = (
+                                leaderBoardData.map((x) => {
+                                  return x.responseTime;
+                                }).reduce((a, b) => {
+                                  return a + b;
+                                }, 0) / numberOfAttendees
+                                ) / this.quiz.questionList.length;
+    this.ws.cell(currentRowIndex, 3).number(this.formatMillisToSeconds(averageResponseTime));
     currentRowIndex += 2;
 
     let nextColumnIndex = 1;
@@ -299,8 +306,9 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       }
 
       // user's response time and avg. response time is added (top list)
-      this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime));
-      this.ws.cell(targetRow, nextColumnIndex++).number(Math.round((leaderboardItem.responseTime / leaderBoardData.length)));
+      const responseTime = this.formatMillisToSeconds(leaderboardItem.responseTime);
+      this.ws.cell(targetRow, nextColumnIndex++).number(responseTime);
+      this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(responseTime / leaderBoardData.length));
       nextColumnIndex++;
     });
 
@@ -353,8 +361,9 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
           this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
         }
         // user's response time and avg. response time is added (bottom list)
-        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime));
-        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.responseTime / leaderboardItem.correctQuestions.length));
+        const responseTime = this.formatMillisToSeconds(leaderboardItem.responseTime);
+        this.ws.cell(targetRow, nextColumnIndex++).number(responseTime);
+        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(responseTime / leaderboardItem.correctQuestions.length));
         this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.bonusToken);
       } else {
         this.ws.cell(targetRow, nextColumnIndex++).string(this.mf('export.correct_questions_none_available'));

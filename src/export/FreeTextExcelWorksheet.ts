@@ -134,7 +134,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
         alignment: {
           horizontal: 'center',
         },
-        numberFormat: '#,##0;',
+        numberFormat: defaultStyles.numberFormat,
       });
     });
   }
@@ -207,7 +207,7 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(nickItem.responses[this._questionIndex].confidence));
       }
-      this.ws.cell(nextStartRow, nextColumnIndex++).number(nickItem.responses[this._questionIndex].responseTime);
+      this.ws.cell(nextStartRow, nextColumnIndex++).number(this.formatMillisToSeconds(nickItem.responses[this._questionIndex].responseTime));
     });
     if (nextStartRow === 10) {
       this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));

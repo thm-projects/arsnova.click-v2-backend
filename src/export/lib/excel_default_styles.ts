@@ -91,6 +91,7 @@ export class ExcelTheme {
           fgColor: themeData[this._selectedTheme].attendeeEntryRowStyle.bg,
         },
       },
+      numberFormat: '#,##0.00;',
     };
   }
 }

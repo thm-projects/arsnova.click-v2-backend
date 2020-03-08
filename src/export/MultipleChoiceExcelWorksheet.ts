@@ -135,7 +135,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
           alignment: {
             horizontal: 'center',
           },
-          numberFormat: '#,##0;',
+          numberFormat: defaultStyles.numberFormat,
         });
       });
     });
@@ -208,7 +208,6 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       const nickItem = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(nick => nick.name === responseItem.name)[0];
       const chosenAnswer = this._question.answerOptionList.filter((answer, index) => {
         const responseValue = nickItem.responses[this._questionIndex].value;
-        // noinspection SuspiciousInstanceOfGuard
         if (Array.isArray(responseValue)) {
           return responseValue.indexOf(index) > -1;
         }
@@ -226,7 +225,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(responseItem.responses[this._questionIndex].confidence));
       }
-      this.ws.cell(nextStartRow, nextColumnIndex++).number(responseItem.responses[this._questionIndex].responseTime);
+      this.ws.cell(nextStartRow, nextColumnIndex++).number(this.formatMillisToSeconds(responseItem.responses[this._questionIndex].responseTime));
     });
     if (nextStartRow === 10) {
       this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));

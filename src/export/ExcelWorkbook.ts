@@ -5,6 +5,7 @@ import * as MessageFormat from 'messageformat';
 import { QuestionType } from '../enums/QuestionType';
 import { IExcelWorkbook, IExcelWorksheet } from '../interfaces/iExcel';
 import { IQuiz, IQuizBase } from '../interfaces/quizzes/IQuizEntity';
+import { ArchivedQuizWorksheet } from './ArchivedQuizWorksheet';
 import { FreeTextExcelWorksheet } from './FreeTextExcelWorksheet';
 
 import { ExcelTheme } from './lib/excel_default_styles';
@@ -13,7 +14,6 @@ import { RangedExcelWorksheet } from './RangedExcelWorksheet';
 import { SingleChoiceExcelWorksheet } from './SingleChoiceExcelWorksheet';
 import { SummaryExcelWorksheet } from './SummaryExcelWorksheet';
 import { SurveyExcelWorksheet } from './SurveyExcelWorksheet';
-import {ArchivedQuizWorksheet} from './ArchivedQuizWorksheet';
 
 export class ExcelWorkbook implements IExcelWorkbook {
   public readonly renderingFinished = new EventEmitter();

@@ -108,6 +108,10 @@ export abstract class ExcelWorksheet {
     return leaderBoard.sortBy(correctResponses, 'score');
   }
 
+  protected formatMillisToSeconds(value: number, digits: number = 2): number {
+    return parseFloat(Number(value / 1000).toFixed(digits));
+  }
+
   private prefixNumberWithZero(num: number): string {
     return `${num < 10 ? '0' : ''}${num}`;
   }

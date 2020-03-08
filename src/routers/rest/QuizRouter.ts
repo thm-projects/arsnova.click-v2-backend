@@ -684,12 +684,12 @@ export class QuizRouter extends AbstractRouter {
     @Res() res: ICustomI18nResponse, //
   ): Promise<Buffer> {
 
-    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
-    if (!activeQuiz) {
+    const quiz = await QuizDAO.getQuizForAttendee(quizName);
+    if (!quiz || ![QuizState.Active, QuizState.Running, QuizState.Finished].includes(quiz.state)) {
       return;
     }
 
-    const parsedQuiz = await MatchAssetCachedQuiz(activeQuiz.toJSON());
+    const parsedQuiz = await MatchAssetCachedQuiz(quiz.toJSON());
 
     const wb = new ExcelWorkbook({
       themeName,
