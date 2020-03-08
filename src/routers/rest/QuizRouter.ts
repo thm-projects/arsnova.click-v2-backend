@@ -120,11 +120,12 @@ export class QuizRouter extends AbstractRouter {
     }
 
     const step = [QuizState.Active, QuizState.Running].includes(quiz.state) ? MessageProtocol.Available : MessageProtocol.Unavailable;
-    const payload: { quiz?: QuizModelItem, status?: { authorizeViaCas: boolean } } = {};
+    const payload: { quiz?: QuizModelItem, status?: { authorizeViaCas: boolean, provideNickSelection: boolean } } = {};
     if (step === MessageProtocol.Available) {
       payload.quiz = quiz.toJSON();
       payload.status = {
         authorizeViaCas: quiz.sessionConfig.nicks.restrictToCasLogin,
+        provideNickSelection: quiz.sessionConfig.nicks.selectedNicks.length > 0,
       };
     }
 
