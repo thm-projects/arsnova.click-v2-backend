@@ -74,7 +74,7 @@ class QuizDAO extends AbstractDAO {
 
   public async getLastPersistedDemoQuizNumber(): Promise<number> {
     const quizzes = await QuizModel.find({ name: { $regex: new RegExp(`^(demo quiz) ([0-9]*)$`, 'i') } }).sort({
-      createdAt: -1,
+      name: -1,
     }).limit(1).collation({
       locale: 'en_US',
       numericOrdering: true,
@@ -90,7 +90,7 @@ class QuizDAO extends AbstractDAO {
   public async getLastPersistedAbcdQuizNumberByLength(length: number): Promise<number> {
     const regexMatchString = new Array(length).fill('').map((val, index) => `${String.fromCharCode(65 + index)}{1}`).join('');
     const quizzes = await QuizModel.find({ name: { $regex: new RegExp(`^(${regexMatchString}) ([0-9]*)$`, 'i') } }).sort({
-      createdAt: -1,
+      name: -1,
     }).limit(1).collation({
       locale: 'en_US',
       numericOrdering: true,
