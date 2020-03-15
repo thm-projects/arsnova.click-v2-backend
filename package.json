@@ -6,7 +6,7 @@
   "description": "Version 2 of arsnova.click (Backend)",
   "scripts": {
     "clean": "rm -rf ./dist/*",
-    "test": "node_modules/nyc/bin/nyc.js --reporter=text mocha --opts src/tests/mocha.opts",
+    "test": "node node_modules/nyc/bin/nyc.js --reporter=text node_modules/mocha/bin/mocha",
     "prebuild:DEV": "npm run clean",
     "prebuild:PROD": "npm run clean",
     "build:DEV": "tsc && cp -r assets dist/",
@@ -97,7 +97,7 @@
     "ts-loader": "^6.2.1",
     "ts-node": "^8.6.2",
     "tslint": "^6.0.0",
-    "typescript": "^3.7.5"
+    "typescript": "^3.8.3"
   },
   "nyc": {
     "extension": [
@@ -114,6 +114,7 @@
     "reporter": [
       "text"
     ],
-    "all": true
+    "all": true,
+    "cache": false
   }
 }

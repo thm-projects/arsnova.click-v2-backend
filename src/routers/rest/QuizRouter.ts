@@ -231,7 +231,12 @@ export class QuizRouter extends AbstractRouter {
     });
 
     await asyncForEach(uploadedQuizzes, async (data: { fileName: string, quiz: QuizModelItem }) => {
-      const existingQuiz = await QuizDAO.getQuizByName(data.quiz.name);
+      let existingQuiz;
+      if (data.quiz.name === null) {
+        existingQuiz = true;
+      } else {
+        existingQuiz = await QuizDAO.getQuizByName(data.quiz.name);
+      }
       if (existingQuiz) {
         duplicateQuizzes.push({
           quizName: data.quiz.name,
