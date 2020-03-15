@@ -5,9 +5,11 @@ import { Document } from 'mongoose';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { QuizState } from '../enums/QuizState';
 import { QuizVisibility } from '../enums/QuizVisibility';
+import { IQuestion } from '../interfaces/questions/IQuestion';
 import { IQuiz } from '../interfaces/quizzes/IQuizEntity';
 import { generateToken } from '../lib/generateToken';
 import { QuizModel, QuizModelItem } from '../models/quiz/QuizModelItem';
+import { QuizPoolModel, QuizPoolModelItem } from '../models/quiz/QuizPoolModelItem';
 import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
@@ -414,6 +416,65 @@ class QuizDAO extends AbstractDAO {
 
   public getQuizById(id: ObjectId): Promise<Document & QuizModelItem> {
     return QuizModel.findOne({ _id: new ObjectId(id) }).exec();
+  }
+
+  public async getPoolQuestionsByTags(tags: Array<string>, amount?: number): Promise<Array<Document & QuizPoolModelItem>> {
+    const sampleQuery: any = {};
+    if (amount) {
+      sampleQuery.$sample = {size: amount};
+    }
+
+    return QuizPoolModel.aggregate([
+      {$match: { approved: true, 'question.tags': { $in: tags.map(tag => new RegExp(tag, 'i')) } }}, //
+      { $project: { _id: 0, question: 1 } }, //
+      sampleQuery
+    ]);
+  }
+
+  public async getPoolTags(): Promise<Array<object>> {
+    return QuizPoolModel.aggregate([
+      { $match: { approved: true } }, //
+      { $project: { _id: 0, 'question.tags': 1 } }, //
+      { $unwind: '$question.tags' }, //
+      { $group: { _id: { '$toLower': '$question.tags' }, count: { '$sum': 1 } } }, //
+      { $sort: { count: -1 } }, //
+      { $group: { _id: null, counts: { $push: { k: '$_id', v: '$count' } } } }, //
+      { $replaceRoot: { newRoot: { $arrayToObject: '$counts' } } }, //
+    ]).exec();
+  }
+
+  public async getPendingPoolQuestions(): Promise<Array<Document & QuizPoolModelItem>> {
+    return QuizPoolModel.find({ approved: false }).exec();
+  }
+
+  public async removePoolQuestion(id: ObjectId): Promise<void> {
+    await QuizPoolModel.findOneAndDelete({ _id: id }).exec();
+  }
+
+  public async getPendingPoolQuestionById(id: ObjectId): Promise<Document & QuizPoolModelItem> {
+    return QuizPoolModel.findOne({ _id: id, approved: false }).exec();
+  }
+
+  public async approvePoolQuestion(id: ObjectId, question?: IQuestion, approved?: boolean): Promise<void> {
+    const query: { approved?: boolean, tags?: Array<string>, question?: IQuestion } = {};
+    if (approved) {
+      query.approved = approved;
+    }
+    if (question) {
+      query.question = question;
+    }
+
+    if (Object.keys(query).length === 0) {
+      throw new Error('Either approved flag or an updated question must be set');
+    }
+
+    await QuizPoolModel.updateOne({ _id: id }, query).exec();
+
+    // Todo send mail to notificationMail of quizpool model item
+  }
+
+  public async addQuizToPool(question: IQuestion, notificationMail?: string): Promise<Document & QuizPoolModelItem> {
+    return QuizPoolModel.create({ approved: false, question, notificationMail });
   }
 
   private initTimerData(quizName: string): void {

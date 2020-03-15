@@ -8,6 +8,7 @@ export interface IQuestionBase {
   timer: number;
   questionText: string;
   answerOptionList: Array<IAnswer | IFreetextAnswer>;
+  tags: Array<string>;
 }
 
 export interface IQuestion extends IQuestionBase {
