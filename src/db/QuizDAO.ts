@@ -443,7 +443,7 @@ class QuizDAO extends AbstractDAO {
       { $match: { approved: true } }, //
       { $project: { _id: 0, 'question.tags': 1 } }, //
       { $unwind: '$question.tags' }, //
-      { $group: { _id: { '$toLower': '$question.tags' }, count: { '$sum': 1 } } }, //
+      { $group: { _id: { '$toLower': { '$trim': { input: '$question.tags' } } }, count: { '$sum': 1 } } }, //
       { $sort: { count: -1 } }, //
       { $group: { _id: null, counts: { $push: { k: '$_id', v: '$count' } } } }, //
       { $replaceRoot: { newRoot: { $arrayToObject: '$counts' } } }, //
