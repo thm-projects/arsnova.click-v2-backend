@@ -1,23 +1,17 @@
 /// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
 import * as chai from 'chai';
-import * as fs from 'fs';
 import { suite, test, timeout } from 'mocha-typescript';
-import { Schema } from 'mongoose';
+import { ObjectId } from 'mongodb';
 import * as path from 'path';
 import app from '../../App';
 import DbDAO from '../../db/DbDAO';
-import QuizDAO from '../../db/QuizDAO';
-import UserDAO from '../../db/UserDAO';
 import { MessageProtocol } from '../../enums/Message';
 import { UserRole } from '../../enums/UserRole';
-import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
-import { generateToken } from '../../lib/generateToken';
 import { QuizPoolModel } from '../../models/quiz/QuizPoolModelItem';
 import { AuthService } from '../../services/AuthService';
 import { staticStatistics } from '../../statistics';
 import { generateQuiz } from '../fixtures';
-import {ObjectId} from 'mongodb';
 
 const chaiHttp = require('chai-http');
 
@@ -43,8 +37,10 @@ class QuizPoolApiRouterTestSuite {
   @test @timeout(5000)
   public async getAvailablePoolQuestions(): Promise<void> {
     const res = await chai.request(app).post(`${this._baseApiRoute}/generate`).send({
-      tags: [],
-      amount: 1,
+      data: {
+        tag: 'test-tag',
+        amount: 1,
+      },
     });
     expect(res.type).to.equal('application/json');
     expect(res.status).to.equal(200);
