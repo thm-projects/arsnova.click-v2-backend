@@ -458,13 +458,17 @@ class QuizDAO extends AbstractDAO {
     await QuizPoolModel.findOneAndDelete({ _id: id }).exec();
   }
 
-  public async getPendingPoolQuestionById(id: ObjectId): Promise<Document & QuizPoolModelItem> {
-    return QuizPoolModel.findOne({ _id: id, approved: false }).exec();
+  public async getPoolQuestionById(id: ObjectId): Promise<Document & QuizPoolModelItem> {
+    return QuizPoolModel.findOne({ _id: id }).exec();
+  }
+
+  public async getQuizpoolQuestions(): Promise<Array<Document & QuizPoolModelItem>> {
+    return QuizPoolModel.find({ approved: true }).exec();
   }
 
   public async approvePoolQuestion(id: ObjectId, question?: IQuestion, approved?: boolean): Promise<void> {
     const query: { approved?: boolean, tags?: Array<string>, question?: IQuestion } = {};
-    if (approved) {
+    if (typeof approved !== 'undefined' && approved !== null) {
       query.approved = approved;
     }
     if (question) {

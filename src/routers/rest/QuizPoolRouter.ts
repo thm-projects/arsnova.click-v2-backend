@@ -79,14 +79,30 @@ export class QuizPoolRouter extends AbstractRouter {
     };
   }
 
-  @Get('/pending/:id') //
+  @Get('/all') //
   @OpenAPI({
-    description: 'Returns a pending pool question which has not yet been approved by its id',
+    description: 'Returns all pool questions which have been approved already',
+    security: [{ bearerAuth: [] }],
+  }) //
+  @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
+  public async getQuizpoolQuestions(): Promise<IMessage> {
+    const question = await QuizDAO.getQuizpoolQuestions();
+
+    return {
+      status: StatusProtocol.Success,
+      step: MessageProtocol.Available,
+      payload: question?.map(q => q.toJSON({ getters: true })),
+    };
+  }
+
+  @Get('/all/:id') //
+  @OpenAPI({
+    description: 'Returns a pool question by its id',
     security: [{ bearerAuth: [] }],
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   public async getPendingPoolQuestionById(@Param('id') id: string): Promise<IMessage> {
-    const question = await QuizDAO.getPendingPoolQuestionById(new ObjectId(id));
+    const question = await QuizDAO.getPoolQuestionById(new ObjectId(id));
 
     return {
       status: StatusProtocol.Success,
@@ -127,7 +143,7 @@ export class QuizPoolRouter extends AbstractRouter {
     }
 
     const parsedId = new ObjectId(id);
-    const exists = await QuizDAO.getPendingPoolQuestionById(parsedId);
+    const exists = await QuizDAO.getPoolQuestionById(parsedId);
     if ((
         !question || !Array.isArray(question.tags)
         ) || !exists) {
