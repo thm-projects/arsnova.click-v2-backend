@@ -15,12 +15,12 @@ export class QuizPoolRouter extends AbstractRouter {
   public async getAvailablePoolQuestions( //
     @BodyParam('data', { required: true }) data: Array<{ tag: string, amount: number }>, //
   ): Promise<IMessage> {
-    const questions = await QuizDAO.getPoolQuestionsByTags(data);
+    const payload = await QuizDAO.getPoolQuestionsByTags(data);
 
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.Available,
-      payload: questions.map(q => q.question),
+      payload,
     };
   }
 

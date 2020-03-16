@@ -418,7 +418,7 @@ class QuizDAO extends AbstractDAO {
     return QuizModel.findOne({ _id: new ObjectId(id) }).exec();
   }
 
-  public async getPoolQuestionsByTags(data: Array<{ tag: string, amount: number }>): Promise<Array<Document & QuizPoolModelItem>> {
+  public async getPoolQuestionsByTags(data: Array<{ tag: string, amount: number }>): Promise<Array<object>> {
     return Promise.all(data.map(value => {
       const sampleQuery: any = {};
       if (value.amount) {
