@@ -418,17 +418,24 @@ class QuizDAO extends AbstractDAO {
     return QuizModel.findOne({ _id: new ObjectId(id) }).exec();
   }
 
-  public async getPoolQuestionsByTags(tags: Array<string>, amount?: number): Promise<Array<Document & QuizPoolModelItem>> {
-    const sampleQuery: any = {};
-    if (amount) {
-      sampleQuery.$sample = {size: amount};
-    }
+  public async getPoolQuestionsByTags(data: Array<{ tag: string, amount: number }>): Promise<Array<Document & QuizPoolModelItem>> {
+    return Promise.all(data.map(value => {
+      const sampleQuery: any = {};
+      if (value.amount) {
+        sampleQuery.$sample = { size: value.amount };
+      }
 
-    return QuizPoolModel.aggregate([
-      {$match: { approved: true, 'question.tags': { $in: tags.map(tag => new RegExp(tag, 'i')) } }}, //
-      { $project: { _id: 0, question: 1 } }, //
-      sampleQuery
-    ]);
+      return QuizPoolModel.aggregate([
+        { $match: { approved: true, 'question.tags': new RegExp(value.tag, 'i') } }, //
+        { $project: { question: 1 } }, //
+        sampleQuery,
+      ]);
+    })).then(values => {
+      return values.reduce((previousValue, currentValue) => previousValue.concat(...currentValue.map(cv => (
+        { _id: cv._id.toHexString(), question: cv.question }
+      ))), [])
+      .filter((value, index, array) => array.findIndex(arrayElem => value._id === arrayElem._id) === index).map(value => value.question);
+    });
   }
 
   public async getPoolTags(): Promise<Array<object>> {

@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Authorized, BadRequestError, BodyParam, Delete, Get, HeaderParam, JsonController, Param, Post, Put } from 'routing-controllers';
+import { Authorized, BadRequestError, BodyParam, Delete, Get, JsonController, Param, Post, Put } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
@@ -13,10 +13,9 @@ export class QuizPoolRouter extends AbstractRouter {
 
   @Post('/generate') //
   public async getAvailablePoolQuestions( //
-    @BodyParam('tags') tags: Array<string> = [], //
-    @BodyParam('amount', { required: false }) amount: number, //
+    @BodyParam('data', { required: true }) data: Array<{ tag: string, amount: number }>, //
   ): Promise<IMessage> {
-    const questions = await QuizDAO.getPoolQuestionsByTags(tags, amount);
+    const questions = await QuizDAO.getPoolQuestionsByTags(data);
 
     return {
       status: StatusProtocol.Success,
@@ -27,7 +26,9 @@ export class QuizPoolRouter extends AbstractRouter {
 
   @Get('/tags') //
   public async getAvailablePoolTags(): Promise<IMessage> {
-    const tags = (await QuizDAO.getPoolTags())[0] ?? {};
+    const tags = (
+                   await QuizDAO.getPoolTags()
+                 )[0] ?? {};
     const parsedTags = {};
     Object.keys(tags).forEach(key => {
       const parsedKey = key.toLowerCase()
@@ -47,7 +48,7 @@ export class QuizPoolRouter extends AbstractRouter {
   @Post('/') //
   public async addNewPoolQuestion( //
     @BodyParam('question') question: IQuestion, //
-    @BodyParam('notificationMail', {required: false}) notificationMail?: string, //
+    @BodyParam('notificationMail', { required: false }) notificationMail?: string, //
   ): Promise<IMessage> {
     if (!question || !Array.isArray(question.tags) || !question.tags.length) {
       throw new BadRequestError('no valid question or tag list found');
@@ -74,7 +75,7 @@ export class QuizPoolRouter extends AbstractRouter {
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.Available,
-      payload: questions.map(q => q.toJSON({getters: true})),
+      payload: questions.map(q => q.toJSON({ getters: true })),
     };
   }
 
@@ -90,7 +91,7 @@ export class QuizPoolRouter extends AbstractRouter {
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.Available,
-      payload: question?.toJSON({getters: true}),
+      payload: question?.toJSON({ getters: true }),
     };
   }
 
@@ -127,7 +128,9 @@ export class QuizPoolRouter extends AbstractRouter {
 
     const parsedId = new ObjectId(id);
     const exists = await QuizDAO.getPendingPoolQuestionById(parsedId);
-    if ((!question || !Array.isArray(question.tags)) || !exists) {
+    if ((
+        !question || !Array.isArray(question.tags)
+        ) || !exists) {
       throw new BadRequestError('no valid question or tag list found');
     }
 
@@ -136,7 +139,7 @@ export class QuizPoolRouter extends AbstractRouter {
     return {
       status: StatusProtocol.Success,
       step: MessageProtocol.Updated,
-      payload: {}
+      payload: {},
     };
   }
 }
