@@ -84,7 +84,7 @@ class QuizPoolApiRouterTestSuite {
 
   @test
   public async getPendingPoolQuestionById(): Promise<void> {
-    const res = await chai.request(app).get(`${this._baseApiRoute}/pending/${new ObjectId()}`).set('authorization', AuthService.createToken({
+    const res = await chai.request(app).get(`${this._baseApiRoute}/all/${new ObjectId()}`).set('authorization', AuthService.createToken({
       name: 'user',
       userAuthorizations: [UserRole.SuperAdmin],
     }));
