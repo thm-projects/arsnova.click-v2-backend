@@ -17,8 +17,8 @@ import MemberDAO from './MemberDAO';
 
 interface IQuizDAOStorage {
   quizTimer: number;
-  quizTimerInterval: NodeJS.Timeout;
-  emptyQuizInterval: NodeJS.Timeout;
+  quizTimerInterval: any;
+  emptyQuizInterval: any;
   isEmpty: boolean;
 }
 
