@@ -466,13 +466,16 @@ class QuizDAO extends AbstractDAO {
     return QuizPoolModel.find({ approved: true }).exec();
   }
 
-  public async approvePoolQuestion(id: ObjectId, question?: IQuestion, approved?: boolean): Promise<void> {
-    const query: { approved?: boolean, tags?: Array<string>, question?: IQuestion } = {};
+  public async approvePoolQuestion(id: ObjectId, question?: IQuestion, hash?: string, approved?: boolean): Promise<void> {
+    const query: Partial<QuizPoolModelItem> = {};
     if (typeof approved !== 'undefined' && approved !== null) {
       query.approved = approved;
     }
     if (question) {
+      query.approved = false;
       query.question = question;
+      query.hash = hash;
+      query.contentHash = this.generateHashFromPoolQuestion(question);
     }
 
     if (Object.keys(query).length === 0) {
@@ -484,8 +487,27 @@ class QuizDAO extends AbstractDAO {
     // Todo send mail to notificationMail of quizpool model item
   }
 
-  public async addQuizToPool(question: IQuestion, notificationMail?: string): Promise<Document & QuizPoolModelItem> {
-    return QuizPoolModel.create({ approved: false, question, notificationMail });
+  public async getPoolQuestionByHash(hash: string): Promise<Document & QuizPoolModelItem> {
+    return QuizPoolModel.findOne({ hash });
+  }
+
+  public async addQuizToPool(question: IQuestion, hash: string, origin: string, notificationMail?: string): Promise<Document & QuizPoolModelItem> {
+    return QuizPoolModel.create({
+      approved: false,
+      question,
+      hash,
+      contentHash: this.generateHashFromPoolQuestion(question),
+      origin,
+      notificationMail,
+    });
+  }
+
+  private generateHashFromPoolQuestion(question: IQuestion): Partial<{ [key in keyof IQuestion]: string }> {
+    return {
+      questionText: Buffer.from(question.questionText).toString('base64'),
+      answerOptionList: Buffer.from(JSON.stringify(question.answerOptionList)).toString('base64'),
+      tags: Buffer.from(question.tags.sort().join()).toString('base64'),
+    };
   }
 
   private initTimerData(quizName: string): void {

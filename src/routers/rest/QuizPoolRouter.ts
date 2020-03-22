@@ -1,3 +1,4 @@
+import * as CryptoJS from 'crypto-js';
 import { ObjectId } from 'mongodb';
 import { Authorized, BadRequestError, BodyParam, Delete, Get, JsonController, Param, Post, Put } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
@@ -12,7 +13,7 @@ import { AbstractRouter } from './AbstractRouter';
 export class QuizPoolRouter extends AbstractRouter {
 
   @Post('/generate') //
-  public async getAvailablePoolQuestions( //
+  public async generateAvailablePoolQuestions( //
     @BodyParam('data', { required: true }) data: Array<{ tag: string, amount: number }>, //
   ): Promise<IMessage> {
     const payload = await QuizDAO.getPoolQuestionsByTags(data);
@@ -48,17 +49,22 @@ export class QuizPoolRouter extends AbstractRouter {
   @Post('/') //
   public async addNewPoolQuestion( //
     @BodyParam('question') question: IQuestion, //
+    @BodyParam('origin', { required: false }) origin: string = 'quiz-pool', //
     @BodyParam('notificationMail', { required: false }) notificationMail?: string, //
   ): Promise<IMessage> {
     if (!question || !Array.isArray(question.tags) || !question.tags.length) {
       throw new BadRequestError('no valid question or tag list found');
     }
 
-    await QuizDAO.addQuizToPool(question, notificationMail);
+    const hash = CryptoJS.SHA3(JSON.stringify(question)).toString();
+    const exists = await QuizDAO.getPoolQuestionByHash(hash);
+    if (!exists) {
+      await QuizDAO.addQuizToPool(question, hash, origin, notificationMail);
+    }
 
     return {
       status: StatusProtocol.Success,
-      step: MessageProtocol.Available,
+      step: MessageProtocol.Added,
       payload: {},
     };
   }
@@ -150,7 +156,11 @@ export class QuizPoolRouter extends AbstractRouter {
       throw new BadRequestError('no valid question or tag list found');
     }
 
-    await QuizDAO.approvePoolQuestion(parsedId, question, approved);
+    let hash;
+    if (question) {
+      hash = CryptoJS.SHA3(JSON.stringify(question)).toString();
+    }
+    await QuizDAO.approvePoolQuestion(parsedId, question, hash, approved);
 
     return {
       status: StatusProtocol.Success,

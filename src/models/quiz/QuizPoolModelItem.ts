@@ -1,5 +1,5 @@
 import { getModelForClass, prop, Severity } from '@typegoose/typegoose';
-import { IsBoolean, IsEmail, IsObject } from 'class-validator';
+import { IsBoolean, IsEmail, IsObject, IsString } from 'class-validator';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
@@ -12,6 +12,22 @@ export class QuizPoolModelItem {
   @prop({ default: false }) //
   @IsBoolean() //
   public approved: boolean;
+
+  @prop({ default: 'quiz-pool' }) //
+  @IsString() //
+  public origin: string;
+
+  @prop({ unique: true }) //
+  @IsString() //
+  public hash: string;
+
+  @prop({
+    validate: function (value: object): boolean {
+      return Object.keys(value).every(key => this.question[key] ?? false);
+    },
+  }) //
+  @IsObject() //
+  public contentHash: Partial<{ [key in keyof IQuestion]: string }>;
 
   @prop({ required: false }) //
   @IsEmail({

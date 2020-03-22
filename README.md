@@ -66,3 +66,14 @@ Enter `npm run build:DEV` in the root directory to run the dev build.
 
 ###### Build (PROD)
 Enter `npm run build:PROD` in the root directory to run the prod build.
+
+###### Database migrations
+Db Migrations are performed when the application starts. However, they can also be triggered manually.
+Run `npm i -g migrate-mongo` and `cd` into the `db-migration` folder.
+Then run `migrate-mongo up` to perform the pending migrations.
+
+- Required env variables:
+    - `MONGODB_DB_MIGRATION_CONN_URL`, eg `mongodb://user:pass@localhost:27017`
+    - `MONGODB_DB_NAME`, eg `arsnova-click-v2`
+
+For more information check the [migrate-mongo](https://www.npmjs.com/package/migrate-mongo) library on npmjs.com
