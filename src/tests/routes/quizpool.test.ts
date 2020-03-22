@@ -68,7 +68,7 @@ class QuizPoolApiRouterTestSuite {
     });
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
-    expect(res.body.step).to.equal(MessageProtocol.Available);
+    expect(res.body.step).to.equal(MessageProtocol.Added);
   }
 
   @test
