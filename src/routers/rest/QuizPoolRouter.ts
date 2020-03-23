@@ -151,9 +151,9 @@ export class QuizPoolRouter extends AbstractRouter {
     const parsedId = new ObjectId(id);
     const exists = await QuizDAO.getPoolQuestionById(parsedId);
     if ((
-        !question || !Array.isArray(question.tags)
-        ) || !exists) {
-      throw new BadRequestError('no valid question or tag list found');
+          !question || !Array.isArray(question.tags)
+        ) && !exists) {
+      throw new BadRequestError('no valid question found');
     }
 
     let hash;
