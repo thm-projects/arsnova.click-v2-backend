@@ -32,6 +32,7 @@ class MongoDbConnector {
     this._dbName = MongoDbConnector.buildDbName();
     this.buildUrl(this._dbName);
     LoggerService.info(`Db connectionString: ${this._mongoURL}`);
+    this._externalServicesEmitter.once('connected', () => LoggerService.info('External services connected'));
   }
 
   public connect(mongoDatabase: string): Promise<Connection> {
@@ -42,7 +43,6 @@ class MongoDbConnector {
         reject(error);
       });
       db.once('open', () => {
-        LoggerService.info('Successfully connected to the db');
         resolve(db);
       });
 
