@@ -62,7 +62,7 @@ class I18nDAO extends AbstractDAO {
         resolve();
         return;
       }
-      reject();
+      reject('No gitlab projects set');
     }).then(() => new Promise((resolve, reject) => {
       Object.values(this.storage).forEach(async (project, index, array) => {
         const gitlabProject = project['name'] === 'arsnova-click-v2-backend' ? GitlabProject['arsnova-click-v2-backend']

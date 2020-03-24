@@ -100,7 +100,7 @@ export class QuizRouter extends AbstractRouter {
     };
   }
 
-  @Get('/full-status/:quizName?') //
+  @Get('/full-status/:quizName') //
   @OpenAPI({
     summary: 'Returns the quiz state and content',
     parameters: [
@@ -622,23 +622,6 @@ export class QuizRouter extends AbstractRouter {
     };
   }
 
-  @Delete('/:quizName')
-  public async deleteQuiz(
-    @Param('quizName') quizName: string, //
-    @HeaderParam('authorization') privateKey: string, //
-  ): Promise<IMessage> {
-    try {
-      await QuizDAO.removeQuizByName(quizName);
-      return {
-        status: StatusProtocol.Success,
-        step: MessageProtocol.Removed,
-        payload: {},
-      };
-    } catch {
-      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
-    }
-  }
-
   @Delete('/active/:quizName')
   public async deleteActiveQuiz(
     @Param('quizName') quizName: string, //
@@ -656,6 +639,23 @@ export class QuizRouter extends AbstractRouter {
       step: MessageProtocol.Closed,
       payload: {},
     };
+  }
+
+  @Delete('/:quizName')
+  public async deleteQuiz(
+    @Param('quizName') quizName: string, //
+    @HeaderParam('authorization') privateKey: string, //
+  ): Promise<IMessage> {
+    try {
+      await QuizDAO.removeQuizByName(quizName);
+      return {
+        status: StatusProtocol.Success,
+        step: MessageProtocol.Removed,
+        payload: {},
+      };
+    } catch {
+      throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
+    }
   }
 
   @Post('/reset/:quizName')

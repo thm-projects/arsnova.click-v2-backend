@@ -18,8 +18,6 @@ class DbDAO extends AbstractDAO {
 
   constructor() {
     super();
-
-    this.connectToDb();
   }
 
   public static getInstance(): DbDAO {
@@ -29,7 +27,7 @@ class DbDAO extends AbstractDAO {
     return this.instance;
   }
 
-  private connectToDb(): Promise<void> {
+  public connectToDb(): Promise<void> {
     return MongoDBConnector.connect(this.DB).then((db: Connection) => {
       this._dbCon = db;
       this._dbCon.useDb(this.DB);

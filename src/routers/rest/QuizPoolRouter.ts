@@ -2,7 +2,7 @@ import * as CryptoJS from 'crypto-js';
 import { ObjectId } from 'mongodb';
 import { Authorized, BadRequestError, BodyParam, Delete, Get, JsonController, Param, Post, Put } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
-import QuizDAO from '../../db/QuizDAO';
+import QuizPoolDAO from '../../db/QuizPoolDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { UserRole } from '../../enums/UserRole';
 import { IMessage } from '../../interfaces/communication/IMessage';
@@ -16,7 +16,7 @@ export class QuizPoolRouter extends AbstractRouter {
   public async generateAvailablePoolQuestions( //
     @BodyParam('data', { required: true }) data: Array<{ tag: string, amount: number }>, //
   ): Promise<IMessage> {
-    const payload = await QuizDAO.getPoolQuestionsByTags(data);
+    const payload = await QuizPoolDAO.getPoolQuestionsByTags(data);
 
     return {
       status: StatusProtocol.Success,
@@ -28,7 +28,7 @@ export class QuizPoolRouter extends AbstractRouter {
   @Get('/tags') //
   public async getAvailablePoolTags(): Promise<IMessage> {
     const tags = (
-                   await QuizDAO.getPoolTags()
+                   await QuizPoolDAO.getPoolTags()
                  )[0] ?? {};
     const parsedTags = {};
     Object.keys(tags).forEach(key => {
@@ -57,9 +57,9 @@ export class QuizPoolRouter extends AbstractRouter {
     }
 
     const hash = CryptoJS.SHA3(JSON.stringify(question)).toString();
-    const exists = await QuizDAO.getPoolQuestionByHash(hash);
+    const exists = await QuizPoolDAO.getPoolQuestionByHash(hash);
     if (!exists) {
-      await QuizDAO.addQuizToPool(question, hash, origin, notificationMail);
+      await QuizPoolDAO.addQuizToPool(question, hash, origin, notificationMail);
     }
 
     return {
@@ -76,7 +76,7 @@ export class QuizPoolRouter extends AbstractRouter {
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   public async getPendingPoolQuestions(): Promise<IMessage> {
-    const questions = await QuizDAO.getPendingPoolQuestions();
+    const questions = await QuizPoolDAO.getPendingPoolQuestions();
 
     return {
       status: StatusProtocol.Success,
@@ -92,7 +92,7 @@ export class QuizPoolRouter extends AbstractRouter {
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   public async getQuizpoolQuestions(): Promise<IMessage> {
-    const question = await QuizDAO.getQuizpoolQuestions();
+    const question = await QuizPoolDAO.getQuizpoolQuestions();
 
     return {
       status: StatusProtocol.Success,
@@ -108,7 +108,7 @@ export class QuizPoolRouter extends AbstractRouter {
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   public async getPendingPoolQuestionById(@Param('id') id: string): Promise<IMessage> {
-    const question = await QuizDAO.getPoolQuestionById(new ObjectId(id));
+    const question = await QuizPoolDAO.getPoolQuestionById(new ObjectId(id));
 
     return {
       status: StatusProtocol.Success,
@@ -124,7 +124,7 @@ export class QuizPoolRouter extends AbstractRouter {
   }) //
   @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   public async deletePoolQuestion(@Param('id') id: string): Promise<IMessage> {
-    await QuizDAO.removePoolQuestion(new ObjectId(id));
+    await QuizPoolDAO.removePoolQuestion(new ObjectId(id));
 
     return {
       status: StatusProtocol.Success,
@@ -149,7 +149,7 @@ export class QuizPoolRouter extends AbstractRouter {
     }
 
     const parsedId = new ObjectId(id);
-    const exists = await QuizDAO.getPoolQuestionById(parsedId);
+    const exists = await QuizPoolDAO.getPoolQuestionById(parsedId);
     if ((
           !question || !Array.isArray(question.tags)
         ) && !exists) {
@@ -160,7 +160,7 @@ export class QuizPoolRouter extends AbstractRouter {
     if (question) {
       hash = CryptoJS.SHA3(JSON.stringify(question)).toString();
     }
-    await QuizDAO.approvePoolQuestion(parsedId, question, hash, approved);
+    await QuizPoolDAO.approvePoolQuestion(parsedId, question, hash, approved);
 
     return {
       status: StatusProtocol.Success,

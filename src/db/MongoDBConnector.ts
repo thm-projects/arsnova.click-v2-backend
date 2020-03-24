@@ -26,6 +26,7 @@ class MongoDbConnector {
   private _mongoMigrationsURL: string;
   private readonly _dbName: string;
   private _mongoURL = process.env.MONGODB_CONN_URL;
+  private _isConnected = false;
 
   constructor() {
     this._dbName = MongoDbConnector.buildDbName();
@@ -34,9 +35,7 @@ class MongoDbConnector {
   }
 
   public connect(mongoDatabase: string): Promise<Connection> {
-
     return new Promise(async (resolve, reject) => {
-
       const db = mongoose.connection;
       db.once('error', (error) => {
         db.close();

@@ -259,7 +259,9 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
                                   return x.responseTime;
                                 }).reduce((a, b) => {
                                   return a + b;
-                                }, 0) / numberOfAttendees
+                                }, 0) / (
+                                  numberOfAttendees || 1
+                                )
                                 ) / this.quiz.questionList.length;
     this.ws.cell(currentRowIndex, 3).number(this.formatMillisToSeconds(averageResponseTime));
     currentRowIndex += 2;
