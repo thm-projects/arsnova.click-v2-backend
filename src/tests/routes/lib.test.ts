@@ -63,8 +63,19 @@ class MathjaxLibRouterTestSuite {
 
   @test
   public async mathjaxExists(): Promise<void> {
+    const mathjax = [
+      `
+      $$
+      \\begin{matrix}
+      1 & 2 & 3 \\\\
+      4 & 5 & 6 \\\\
+      7 & 8 & 9
+      \\end{matrix}
+      $$
+    `,
+    ];
     const res = await chai.request(router).post(`${this._baseApiRoute}`).send({
-      mathjax: JSON.stringify(`\\begin{align} a_1& =b_1+c_1\\\\ a_2& =b_2+c_2-d_2+e_2 \\end{align}`),
+      mathjax: JSON.stringify(mathjax),
       format: 'TeX',
       output: 'svg',
     });
