@@ -8,6 +8,7 @@ export interface ITwitterApiTweets {
   id: number;
   id_str: string;
   truncated: boolean;
+  lang: string;
 
   user: ITwitterApiUser;
   entities: ITwitterApiEntities;
