@@ -12,6 +12,7 @@ stages:
     DOCKER_TLS_CERTDIR: ""
   tags:
     - docker-compose
+  interruptible: true
   artifacts:
     expire_in: 2 mins
     paths:
@@ -92,6 +93,7 @@ ts_lint:
   stage: test
   tags:
     - nodejs
+  interruptible: true
   script:
     - npm install tslint@6.0.0 typescript@3.7.5
     - node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json
@@ -100,6 +102,7 @@ npm_test:
   stage: test
   tags:
     - nodejs
+  interruptible: true
   script:
     - npm install
     - export NODE_ENV='test'
