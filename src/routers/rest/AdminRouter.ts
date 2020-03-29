@@ -56,6 +56,10 @@ export class AdminRouter extends AbstractRouter {
       gitlabToken,
     };
 
+    if (!originalUser) {
+      originalUser = name;
+    }
+
     await UserModel.updateOne({ name: originalUser }, userData, {
       upsert: true,
       setDefaultsOnInsert: true,
@@ -68,7 +72,8 @@ export class AdminRouter extends AbstractRouter {
   @OpenAPI({
     description: 'Returns all available quizzes',
     security: [{ bearerAuth: [] }],
-  }) @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
+  }) //
+  @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
   private async getQuizzes(): Promise<Array<IAdminQuiz>> {
     return Promise.all((await QuizDAO.getAllQuizzes()).map(async quiz => {
       let questionAmount = 0;

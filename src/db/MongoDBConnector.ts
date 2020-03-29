@@ -23,26 +23,26 @@ class MongoDbConnector {
     return this._dbName;
   }
 
+  private _mongoMigrationsURL: string;
   private readonly _dbName: string;
   private _mongoURL = process.env.MONGODB_CONN_URL;
+  private _isConnected = false;
 
   constructor() {
     this._dbName = MongoDbConnector.buildDbName();
     this.buildUrl(this._dbName);
     LoggerService.info(`Db connectionString: ${this._mongoURL}`);
+    this._externalServicesEmitter.once('connected', () => LoggerService.info('External services connected'));
   }
 
   public connect(mongoDatabase: string): Promise<Connection> {
-
     return new Promise(async (resolve, reject) => {
-
       const db = mongoose.connection;
       db.once('error', (error) => {
         db.close();
         reject(error);
       });
       db.once('open', () => {
-        LoggerService.info('Successfully connected to the db');
         resolve(db);
       });
 
@@ -52,6 +52,7 @@ class MongoDbConnector {
           autoIndex: true,
           useNewUrlParser: true,
           useFindAndModify: false,
+          useUnifiedTopology: true,
         } as any).then(() => LoggerService.info('MongoDB connected')),
       ]).then(() => this._externalServicesEmitter.emit('connected'));
     });
@@ -73,6 +74,7 @@ class MongoDbConnector {
   }
 
   private static buildDbName(): string {
+    process.env.MONGODB_DB_NAME = Database.Default as unknown as string;
     return `${Database.Default}`;
   }
 
@@ -92,11 +94,12 @@ class MongoDbConnector {
       if (mongoUser && mongoPassword) {
         this._mongoURL += `${mongoUser}:${mongoPassword}@`;
       }
+      this._mongoMigrationsURL = this._mongoURL + `${mongoHost}:${mongoPort}`;
       this._mongoURL += `${mongoHost}:${mongoPort}/${mongoDatabase}`;
 
       const mongoURLOptions = [];
       if (process.env.MONGODB_AUTH_SOURCE) {
-        if (process.env.MONGODB_AUTH_SOURCE === 'true') {
+        if (process.env.MONGODB_AUTH_SOURCE !== 'false') {
           mongoURLOptions.push(`authSource=${process.env.MONGODB_AUTH_SOURCE}`);
         }
       } else {
@@ -104,7 +107,9 @@ class MongoDbConnector {
       }
       if (mongoURLOptions.length) {
         this._mongoURL += `?${mongoURLOptions.join('&')}`;
+        this._mongoMigrationsURL += `?${mongoURLOptions.join('&')}`;
       }
+      process.env.MONGODB_DB_MIGRATION_CONN_URL = this._mongoMigrationsURL;
     }
   }
 }

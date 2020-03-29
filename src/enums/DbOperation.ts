@@ -25,6 +25,7 @@ export enum Database {
 }
 
 export enum DbCollection {
+  QuizPool   = 'quizpool', //
   Quizzes    = 'quizzes', //
   Users      = 'users', //
   Assets     = 'assets', //

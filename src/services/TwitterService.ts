@@ -49,6 +49,7 @@ class TwitterService {
         text: status.text,
         truncated: status.truncated,
         name: status.user.name,
+        lang: status.lang,
         user_url: status.user.url,
         followers_count: status.user.followers_count,
         profile_image_url_https: status.user.profile_image_url_https,

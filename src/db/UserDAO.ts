@@ -55,7 +55,7 @@ class UserDAO extends AbstractDAO {
     return (await UserModel.findOne({ name }).exec()).gitlabToken;
   }
 
-  public isUserAuthorizedFor(name: string, userAuthorization: UserRole): Promise<boolean> {
+  public isUserAuthorizedFor(name: string, userAuthorization: Array<UserRole>): Promise<boolean> {
     return UserModel.exists({
       name,
       userAuthorizations: { $all: userAuthorization },

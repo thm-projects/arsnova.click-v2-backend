@@ -7,14 +7,14 @@ import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 
 class I18nDAO extends AbstractDAO {
+  get storage(): object {
+    return this._storage;
+  }
+
   private readonly _mergeRequestTitle = 'WIP: Update i18n keys';
   private readonly _commitMessage = 'Updates i18n keys';
   private readonly _targetBranch = settings.gitlab.targetBranch;
   private readonly _storage: object;
-
-  get storage(): object {
-    return this._storage;
-  }
 
   constructor(storage: object) {
     super();
@@ -62,7 +62,7 @@ class I18nDAO extends AbstractDAO {
         resolve();
         return;
       }
-      reject();
+      reject('No gitlab projects set');
     }).then(() => new Promise((resolve, reject) => {
       Object.values(this.storage).forEach(async (project, index, array) => {
         const gitlabProject = project['name'] === 'arsnova-click-v2-backend' ? GitlabProject['arsnova-click-v2-backend']
@@ -142,7 +142,8 @@ class I18nDAO extends AbstractDAO {
 
     await gitlabService.Branches.create(project, branch, this._targetBranch);
     await gitlabService.Commits.create(project, branch, this._commitMessage, this.generateCommitActions(project, data));
-    await gitlabService.MergeRequests.create(project, branch, this._targetBranch, this._mergeRequestTitle);
+    await gitlabService.MergeRequests.create(project, branch, this._targetBranch, this._mergeRequestTitle,
+      { remove_source_branch: true, squash: true });
   }
 
   public async getUnusedI18nKeysFromSourceFiles(project: GitlabProject, i18nContent: { [key: string]: any }): Promise<Array<any>> {

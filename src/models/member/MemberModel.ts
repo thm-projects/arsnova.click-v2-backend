@@ -1,4 +1,5 @@
 import { arrayProp, getModelForClass, index, pre, prop, Severity } from '@typegoose/typegoose';
+import { IsArray, IsBoolean, IsObject, IsString } from 'class-validator';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSerialized';
@@ -21,16 +22,16 @@ import { ICasData } from '../../interfaces/users/ICasData';
   }
 })
 export class MemberModelItem implements IMemberSerialized {
-  @prop() public colorCode: string;
-  @prop({ required: false }) public groupName: string;
-  @prop() public name: string;
-  @arrayProp({ items: Object }) public responses: Array<IQuizResponse>;
-  @prop({ required: false }) public ticket: string;
-  @prop() public token: string;
-  @prop() public currentQuizName: string;
-  @prop() public casProfile: ICasData;
-  @prop() public bonusToken: string;
-  @prop() public isActive: boolean;
+  @prop() @IsString() public colorCode: string;
+  @prop({ required: false }) @IsString() public groupName: string;
+  @prop() @IsString() public name: string;
+  @arrayProp({ items: Object }) @IsArray() public responses: Array<IQuizResponse>;
+  @prop({ required: false }) @IsString() public ticket: string;
+  @prop() @IsString() public token: string;
+  @prop() @IsString() public currentQuizName: string;
+  @prop() @IsObject() public casProfile: ICasData;
+  @prop() @IsString() public bonusToken: string;
+  @prop() @IsBoolean() public isActive: boolean;
 }
 
 function hashCode(str: string): number { // java String#hashCode

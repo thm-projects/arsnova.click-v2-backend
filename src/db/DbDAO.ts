@@ -1,6 +1,8 @@
+import * as childProcess from 'child_process';
 import { Connection } from 'mongoose';
 import { DbCollection } from '../enums/DbOperation';
 import LoggerService from '../services/LoggerService';
+import { staticStatistics } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 import MongoDBConnector from './MongoDBConnector';
 
@@ -16,8 +18,6 @@ class DbDAO extends AbstractDAO {
 
   constructor() {
     super();
-
-    this.connectToDb();
   }
 
   public static getInstance(): DbDAO {
@@ -27,31 +27,42 @@ class DbDAO extends AbstractDAO {
     return this.instance;
   }
 
-  private connectToDb(): Promise<void> {
+  public connectToDb(): Promise<void> {
     return MongoDBConnector.connect(this.DB).then((db: Connection) => {
       this._dbCon = db;
       this._dbCon.useDb(this.DB);
 
-      Object.keys(DbCollection).forEach(collection => {
+      db.on('error', () => {});
+
+      return Promise.all(Object.keys(DbCollection).map(collection => {
         collection = collection.toLowerCase();
 
         if (!this._dbCon.collection(collection)) {
           LoggerService.info('Creating not existing collection', collection);
-          this._dbCon.createCollection(collection, {
+          return this._dbCon.createCollection(collection, {
             validationLevel: 'strict',
             validationAction: 'error',
           });
         }
-      });
-
-      LoggerService.info(`Db upgrade finished`);
-      db.on('error', () => {});
+      })).then(() => this.runMigrations());
 
     }).catch((error) => {
       LoggerService.error(`Db connection failed with error ${error}, will retry in ${DbDAO.DB_RECONNECT_INTERVAL / 1000} seconds`);
 
       setTimeout(this.connectToDb.bind(this), DbDAO.DB_RECONNECT_INTERVAL);
     });
+  }
+
+  private async runMigrations(): Promise<void> {
+    LoggerService.info(`[DB-Migration] start`);
+
+    const migrationProcess = childProcess.execSync('node db-migration-bootstrap',
+      { cwd: staticStatistics.pathToMigrations, env: process.env, stdio: 'pipe', encoding: 'utf-8' });
+    const results = migrationProcess.split('\n');
+    results.pop();
+    results.forEach(result => LoggerService.info(result));
+
+    LoggerService.info(`[DB-Migration] finished`);
   }
 }
 

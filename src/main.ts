@@ -126,8 +126,10 @@ function onListening(): void {
   TwitterService.run();
 
   I18nDAO.reloadCache().catch(reason => {
-    console.error('Could not reload i18n dao cache', reason);
+    console.error('Could not reload i18n dao cache. Reason:', reason);
   });
+
+  DbDAO.connectToDb();
 }
 
 function runTest(): void {

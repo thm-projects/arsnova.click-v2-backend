@@ -5,6 +5,7 @@ import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
 import { MemberModel, MemberModelItem } from '../models/member/MemberModel';
+import { QuizModelItem } from '../models/quiz/QuizModelItem';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
 import QuizDAO from './QuizDAO';
@@ -56,6 +57,10 @@ class MemberDAO extends AbstractDAO {
       casProfile: 0,
       bonusToken: 0,
     }).exec();
+  }
+
+  public async isMemberInQuiz(member: IMemberSerialized, activeQuiz: Document & QuizModelItem): Promise<boolean> {
+    return MemberModel.exists({ currentQuizName: activeQuiz.name, name: member.name });
   }
 
   public getMembersOfQuizForOwner(quizName: string): Promise<Array<Document & MemberModelItem>> {
