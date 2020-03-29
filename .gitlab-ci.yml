@@ -5,11 +5,6 @@ stages:
 
 .build-template: &build-template
   stage: build
-  services:
-    - name: docker:19.03.1-dind
-      alias: docker
-  variables:
-    DOCKER_TLS_CERTDIR: ""
   tags:
     - dind
   artifacts:
