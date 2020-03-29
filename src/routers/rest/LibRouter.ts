@@ -8,7 +8,19 @@ import { Document } from 'mongoose';
 import * as path from 'path';
 import * as puppeteer from 'puppeteer';
 import {
-  BadRequestError, BodyParam, ContentType, Get, InternalServerError, JsonController, NotFoundError, Param, Post, Req, Res, UnauthorizedError,
+  BadRequestError,
+  BodyParam,
+  ContentType,
+  Get,
+  InternalServerError,
+  JsonController,
+  NotFoundError,
+  Param,
+  Params,
+  Post,
+  Req,
+  Res,
+  UnauthorizedError,
 } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import * as xml2js from 'xml2js';
@@ -289,6 +301,7 @@ export class LibRouter extends AbstractRouter {
   @Get('/authorize/:ticket?') //
   @OpenAPI({
     summary: 'Authorizes a cas user by a ticket',
+    deprecated: true,
     parameters: [
       {
         name: 'ticket',
@@ -297,8 +310,13 @@ export class LibRouter extends AbstractRouter {
       },
     ],
   })
-  public authorize(@Param('ticket') ticket: string, @Req() req: Request, @Res() res: Response): Promise<object> {
+  public authorize(
+    @Params() params: { [key: string]: any }, //
+    @Req() req: Request, //
+    @Res() res: Response, //
+  ): Promise<object> {
 
+    const ticket = params.ticket;
     let serviceUrl = req.headers.referer;
     if (Array.isArray(serviceUrl)) {
       serviceUrl = serviceUrl[0];

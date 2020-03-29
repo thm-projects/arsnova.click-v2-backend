@@ -1,4 +1,5 @@
 import { getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
+import { IsArray, IsString } from 'class-validator';
 import DbDAO from '../db/DbDAO';
 import { DbCollection } from '../enums/DbOperation';
 import { IAssetSerialized } from '../interfaces/IAsset';
@@ -8,10 +9,10 @@ export class AssetModelItem implements IAssetSerialized {
   @prop({
     required: true,
     _id: false,
-  }) public data: Buffer;
-  @prop() public digest: string;
-  @prop() public url: string;
-  @prop() public mimeType: string;
+  }) @IsArray() public data: Buffer;
+  @prop() @IsString() public digest: string;
+  @prop() @IsString() public url: string;
+  @prop() @IsString() public mimeType: string;
 }
 
 export const AssetModel = getModelForClass(AssetModelItem, {

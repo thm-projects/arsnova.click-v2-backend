@@ -1,4 +1,5 @@
 import { arrayProp, getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
+import { IsArray, IsBoolean, IsDate, IsEnum, IsNumber, IsObject, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
@@ -15,27 +16,27 @@ import { SessionConfigurationModelItem } from '../session-config/SessionConfigur
   },
 })
 export class QuizModelItem {
-  @prop({ required: false }) public expiry?: Date;
+  @prop({ required: false }) @IsDate() public expiry?: Date;
   @prop({
     required: false,
     enum: QuizVisibility,
     default: QuizVisibility.Account,
-  }) public visibility?: QuizVisibility;
+  }) @IsEnum(QuizVisibility) public visibility?: QuizVisibility;
   @prop({
     minlength: 2,
     trim: true,
-  }) public name: string;
-  @arrayProp({ items: Object }) public questionList: Array<IQuestion>;
+  }) @IsString() public name: string;
+  @arrayProp({ items: Object }) @IsArray() public questionList: Array<IQuestion>;
   @prop({
     default: QuizState.Inactive,
     enum: QuizState,
-  }) public state: QuizState;
-  @prop({ _id: false }) public sessionConfig: Document & SessionConfigurationModelItem;
-  @prop() public currentStartTimestamp: number;
-  @prop() public currentQuestionIndex: number;
-  @prop() public privateKey: string;
-  @prop() public description?: string;
-  @prop() public readingConfirmationRequested: boolean;
+  }) @IsEnum(QuizState) public state: QuizState;
+  @prop({ _id: false }) @IsObject() public sessionConfig: Document & SessionConfigurationModelItem;
+  @prop() @IsNumber() public currentStartTimestamp: number;
+  @prop() @IsNumber() public currentQuestionIndex: number;
+  @prop() @IsString() public privateKey: string;
+  @prop() @IsString() public description?: string;
+  @prop() @IsBoolean() public readingConfirmationRequested: boolean;
 }
 
 export const QuizModel = getModelForClass(QuizModelItem, {

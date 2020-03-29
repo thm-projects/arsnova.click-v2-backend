@@ -12,4 +12,3 @@ Dockerfile
 docker-compose.yml
 variables
 private_key
-

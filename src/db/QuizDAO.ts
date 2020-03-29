@@ -15,8 +15,8 @@ import MemberDAO from './MemberDAO';
 
 interface IQuizDAOStorage {
   quizTimer: number;
-  quizTimerInterval: NodeJS.Timeout;
-  emptyQuizInterval: NodeJS.Timeout;
+  quizTimerInterval: any;
+  emptyQuizInterval: any;
   isEmpty: boolean;
 }
 
@@ -47,13 +47,6 @@ class QuizDAO extends AbstractDAO {
 
   public getJoinableQuizzes(): Promise<Array<Document & QuizModelItem>> {
     return this.getQuizByState([QuizState.Active]);
-  }
-
-  public async removeQuiz(id: ObjectId): Promise<void> {
-    const removedQuiz = await this.getQuizById(id);
-    await QuizModel.deleteOne({ _id: id }).exec();
-    await MemberDAO.removeMembersOfQuiz(removedQuiz.name);
-    await this.cleanupQuiz(removedQuiz.name);
   }
 
   public async getRenameRecommendations(quizName: string): Promise<Array<string>> {
@@ -251,10 +244,6 @@ class QuizDAO extends AbstractDAO {
       name: this.buildQuiznameQuery(quizName),
       state: { $in: [QuizState.Active, QuizState.Running, QuizState.Finished] },
     }).exec();
-  }
-
-  public getQuizByToken(privateKey: string): Promise<Document & QuizModelItem> {
-    return QuizModel.findOne({ privateKey }).exec();
   }
 
   public getAllPublicQuizzes(): Promise<Array<Document & QuizModelItem>> {
@@ -459,7 +448,7 @@ class QuizDAO extends AbstractDAO {
     return QuizModel.find({ state: { $in: states } }).exec();
   }
 
-  private buildQuiznameQuery(quizName: string): RegExp {
+  private buildQuiznameQuery(quizName: string = ''): RegExp {
     return new RegExp(`^${quizName.trim()}$`, 'i');
   }
 

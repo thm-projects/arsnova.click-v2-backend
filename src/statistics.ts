@@ -56,6 +56,7 @@ export const staticStatistics = {
   localIpv4Address: localIpv4Address,
   rewriteAssetCacheUrl: rewriteAssetCacheUrl,
   pathToAssets: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'assets'),
+  pathToMigrations: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'db-migration'),
   pathToJobs: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'jobs'),
   cpuCores: cpus().length,
   jwtSecret: 'arsnova.click-v2',

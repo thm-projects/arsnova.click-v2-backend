@@ -1,13 +1,25 @@
-import { BadRequestError, Body, BodyParam, Delete, Get, HeaderParam, JsonController, Param, Post, Put, UnauthorizedError } from 'routing-controllers';
+import {
+  BadRequestError,
+  Body,
+  BodyParam,
+  Delete,
+  Get,
+  HeaderParam,
+  JsonController,
+  Param,
+  Post,
+  Put,
+  UnauthorizedError,
+} from 'routing-controllers';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { IMemberSerialized } from '../../interfaces/entities/Member/IMemberSerialized';
+import illegalNicks from '../../lib/nicknames/illegalNicks';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
 import { AbstractRouter } from './AbstractRouter';
-import {MemberModelItem} from '../../models/member/MemberModel';
 
 @JsonController('/api/v1/member')
 export class MemberRouter extends AbstractRouter {
@@ -64,6 +76,20 @@ export class MemberRouter extends AbstractRouter {
         step: MessageProtocol.InvalidParameters,
         payload: {},
       }));
+    }
+
+    if (illegalNicks.includes(member.name.toUpperCase())) {
+      return {
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.IllegalName,
+      };
+    }
+
+    if (await MemberDAO.isMemberInQuiz(member, activeQuiz)) {
+      return {
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.DuplicateLogin,
+      };
     }
 
     try {
