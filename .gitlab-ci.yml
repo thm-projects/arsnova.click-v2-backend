@@ -11,7 +11,7 @@ stages:
   variables:
     DOCKER_TLS_CERTDIR: ""
   tags:
-    - docker-compose
+    - dind
   artifacts:
     expire_in: 2 mins
     paths:
