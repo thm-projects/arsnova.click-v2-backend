@@ -98,6 +98,19 @@ class QuizPoolDAO extends AbstractDAO {
     });
   }
 
+  public addQuestions(payload: Array<QuizPoolModelItem>): Promise<Array<Document & QuizPoolModelItem>> {
+    payload = payload.map(pl => (
+      {
+        approved: pl.approved,
+        origin: pl.origin,
+        question: pl.question,
+        contentHash: pl.contentHash,
+        hash: pl.hash,
+      }
+    ));
+    return QuizPoolModel.insertMany(payload, { ordered: false });
+  }
+
   private generateHashFromPoolQuestion(question: IQuestion): Partial<{ [key in keyof IQuestion]: string }> {
     return {
       questionText: Buffer.from(question.questionText).toString('base64'),
