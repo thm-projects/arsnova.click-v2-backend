@@ -1,7 +1,9 @@
 import * as CryptoJS from 'crypto-js';
+import { Request } from 'express';
 import { ObjectId } from 'mongodb';
-import { Authorized, BadRequestError, BodyParam, Delete, Get, JsonController, Param, Post, Put } from 'routing-controllers';
+import { Authorized, BadRequestError, BodyParam, Delete, Get, JsonController, Param, Post, Put, Req } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
+import * as superagent from 'superagent';
 import QuizPoolDAO from '../../db/QuizPoolDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { UserRole } from '../../enums/UserRole';
@@ -44,6 +46,39 @@ export class QuizPoolRouter extends AbstractRouter {
       step: MessageProtocol.Available,
       payload: parsedTags ?? {},
     };
+  }
+
+  @Post('/import') //
+  @OpenAPI({
+    description: 'Imports all pool questions which have been approved already from a remote arsnova.click server',
+    security: [{ bearerAuth: [] }],
+  }) //
+  @Authorized([UserRole.QuizAdmin, UserRole.SuperAdmin])
+  public async initiateImport( //
+    @BodyParam('url') url: string, //
+    @Req() request: Request, //
+  ): Promise<IMessage> {
+    if (!url) {
+      throw new BadRequestError('url not found');
+    }
+
+    return superagent.get(`${url}/api/v1/quizpool/all`) //
+    .set('Authorization', request.header('authorization')) //
+    .then(result => QuizPoolDAO.addQuestions(result.body.payload)) //
+    .then(data => {
+      return {
+        status: StatusProtocol.Success,
+        step: MessageProtocol.Added,
+        payload: data.map(val => val.toJSON({ getters: true })),
+      };
+    })
+    .catch(error => {
+      return {
+        status: StatusProtocol.Failed,
+        step: MessageProtocol.InvalidResponse,
+        payload: error,
+      };
+    });
   }
 
   @Post('/') //
