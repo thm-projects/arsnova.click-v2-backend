@@ -14,6 +14,10 @@ class AssetDAO extends AbstractDAO {
     return this.instance;
   }
 
+  public async getStatistics(): Promise<{ [key: string]: number }> {
+    return {};
+  }
+
   public addAsset(document: IAssetSerialized): Promise<Document & AssetModelItem> {
     return AssetModel.create(document);
   }

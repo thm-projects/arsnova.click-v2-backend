@@ -1,4 +1,4 @@
-import { cpus, freemem, hostname, loadavg, networkInterfaces, totalmem } from 'os';
+import { cpus, hostname, networkInterfaces } from 'os';
 import * as path from 'path';
 import * as process from 'process';
 import { LeaderboardConfiguration } from './enums/LeaderboardConfiguration';
@@ -59,20 +59,10 @@ export const staticStatistics = {
   pathToMigrations: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'db-migration'),
   pathToJobs: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'jobs'),
   cpuCores: cpus().length,
-  jwtSecret: 'arsnova.click-v2',
   leaderboardAlgorithm,
   twitter: {
     searchKey: twitterSearchKey ?? 'arsnova.click OR arsnovaclick OR arsnova-click OR @arsnovaclick OR #arsnovaclick OR #arsnova-click',
   },
-};
-
-export const dynamicStatistics = () => {
-  return {
-    uptime: process.uptime(),
-    loadavg: loadavg(),
-    freemem: freemem(),
-    totalmem: totalmem(),
-  };
 };
 
 export const settings = {
@@ -81,6 +71,7 @@ export const settings = {
     createQuizPasswordRequired: false,
     limitActiveQuizzes: Infinity,
   },
+  jwtSecret: 'arsnova.click-v2',
   limitQuizCreationToCasAccounts: [],
   createQuizPassword: 'abc',
   amqp: {

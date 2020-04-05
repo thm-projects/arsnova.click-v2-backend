@@ -14,7 +14,7 @@ const expect = chai.expect;
 
 @suite
 class AppRouterTestSuite {
-  private _baseApiRoute = `${staticStatistics.routePrefix}/`;
+  private _baseApiRoute = `${staticStatistics.routePrefix}`;
 
   public async after(): Promise<void> {
     await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
@@ -22,7 +22,7 @@ class AppRouterTestSuite {
 
   @test
   public async baseStatisticsExists(): Promise<void> {
-    const res = await chai.request(app).get(`${this._baseApiRoute}`);
+    const res = await chai.request(app).get(`${this._baseApiRoute}/statistics`);
     expect(res.type).to.eql('application/json');
   }
 }

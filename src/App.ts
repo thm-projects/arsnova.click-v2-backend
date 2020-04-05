@@ -8,6 +8,7 @@ import * as logger from 'morgan';
 import * as process from 'process';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
+import { dynamicStatistics } from './dynamic-statistics';
 import options from './lib/cors.config';
 import { ErrorHandlerMiddleware } from './routers/middleware/customErrorHandler';
 import { I18nMiddleware } from './routers/middleware/i18n';
@@ -22,7 +23,7 @@ import { NicksRouter } from './routers/rest/NicksRouter';
 import { QuizPoolRouter } from './routers/rest/QuizPoolRouter';
 import { QuizRouter } from './routers/rest/QuizRouter';
 import { TwitterRouter } from './routers/rest/TwitterRouter';
-import { dynamicStatistics, staticStatistics } from './statistics';
+import { staticStatistics } from './statistics';
 
 export const routingControllerOptions: RoutingControllersOptions = {
   defaults: {
@@ -83,8 +84,8 @@ class App {
     }));
 
     const router: Router = express.Router();
-    router.get(`/`, (req: Request, res: Response) => {
-      res.send(Object.assign({}, staticStatistics, dynamicStatistics()));
+    router.get(`/statistics`, cors(options), async (req: Request, res: Response) => {
+      res.send(Object.assign({}, staticStatistics, await dynamicStatistics()));
     });
     router.get(`/err`, () => {
       throw new Error('testerror');

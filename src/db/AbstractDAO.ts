@@ -15,6 +15,8 @@ export abstract class AbstractDAO {
     return this._updateEmitter;
   }
 
+  public abstract async getStatistics(): Promise<{ [key: string]: number }>;
+
   protected isEmptyVars(...variables): boolean {
     return variables.length > 0 && variables.filter(variable => this.isEmptyVar(variable)).length > 0;
   }

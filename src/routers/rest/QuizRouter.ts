@@ -564,6 +564,8 @@ export class QuizRouter extends AbstractRouter {
       },
     })));
 
+    AMQPConnector.sendRequestStatistics();
+
     let result: Document & QuizModelItem;
     if (existingQuiz) {
       await QuizDAO.updateQuiz(existingQuiz.id, quiz);
@@ -859,6 +861,8 @@ export class QuizRouter extends AbstractRouter {
         quizName: quiz.name,
       },
     })));
+
+    AMQPConnector.sendRequestStatistics();
 
     return {
       status: StatusProtocol.Success,
