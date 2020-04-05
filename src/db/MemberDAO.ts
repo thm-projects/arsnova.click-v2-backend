@@ -36,7 +36,7 @@ class MemberDAO extends AbstractDAO {
   public async getStatistics(): Promise<{ [key: string]: number }> {
     const average = (
       await HistoryModel.countDocuments({ type: HistoryModelType.Attendee }) / await HistoryModel.countDocuments(
-      { type: HistoryModelType.PlayedQuiz })
+        { type: HistoryModelType.PlayedQuiz })
     );
 
     return {
@@ -295,7 +295,11 @@ class MemberDAO extends AbstractDAO {
       const totalUsersResponse = await superagent.get(reqOptions.protocol + '//' + reqOptions.host + ':' + reqOptions.port + reqOptions.path) //
       .set('Authorization', 'Basic ' + Buffer.from(reqOptions.auth).toString('base64'));
 
-      const total = totalUsersResponse.body.filter(val => val.client_properties.product === 'STOMP client').length;
+      const total = totalUsersResponse.body //
+      .filter(val => val.client_properties.product === 'STOMP client') //
+      .filter(val => val.vhost === settings.amqp.vhost) //
+        .length; //
+
       if (this._totalUsers !== total) {
         this._totalUsers = total;
         AMQPConnector.sendRequestStatistics();
