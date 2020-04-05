@@ -91,7 +91,7 @@ class App {
       throw new Error('testerror');
     });
 
-    this._express.use(`${staticStatistics.routePrefix}/`, router);
+    this._express.use(`/`, router);
   }
 
   private static initializeSentry(): void {
