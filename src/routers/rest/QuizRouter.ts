@@ -37,6 +37,7 @@ import { asyncForEach } from '../../lib/async-for-each';
 import { MatchAssetCachedQuiz, MatchTextToAssetsDb } from '../../lib/cache/assets';
 import { Leaderboard } from '../../lib/leaderboard/leaderboard';
 import { QuizModelItem } from '../../models/quiz/QuizModelItem';
+import LoggerService from '../../services/LoggerService';
 import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
@@ -538,13 +539,16 @@ export class QuizRouter extends AbstractRouter {
     if (settings.public.cacheQuizAssets) {
       const promises: Array<Promise<any>> = [];
 
-      quiz.questionList.forEach(question => {
+      LoggerService.debug('[QuizRouter] Checking questionList for assets');
+      quiz.questionList.forEach((question, index) => {
         promises.push(MatchTextToAssetsDb(question.questionText).then(val => question.questionText = val));
+        LoggerService.debug('[QuizRouter] Checking answerOptionList of question ' + index + ' for assets');
         question.answerOptionList.forEach(answerOption => {
           promises.push(MatchTextToAssetsDb(answerOption.answerText).then(val => answerOption.answerText = val));
         });
       });
 
+      LoggerService.debug('[QuizRouter] Awaiting ' + promises.length + ' resources');
       await Promise.all<any>(promises);
     }
 
@@ -554,8 +558,12 @@ export class QuizRouter extends AbstractRouter {
     quiz.privateKey = privateKey;
     quiz.state = quiz.state ?? quiz.questionList.length > 0 ? QuizState.Active : QuizState.Inactive;
 
+    LoggerService.debug('[QuizRouter] Converting quiz ' + (
+      quiz.name ?? quiz['hashtag']
+    ) + ' from a legacy quiz');
     await QuizDAO.convertLegacyQuiz(quiz);
 
+    LoggerService.debug('[QuizRouter] Publishing active quiz notification ' + quiz.name);
     AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: quiz.state === QuizState.Active ? MessageProtocol.SetActive : MessageProtocol.SetInactive,
@@ -564,23 +572,29 @@ export class QuizRouter extends AbstractRouter {
       },
     })));
 
+    LoggerService.debug('[QuizRouter] Publishing request of statistics notification ' + quiz.name);
     AMQPConnector.sendRequestStatistics();
 
     let result: Document & QuizModelItem;
     if (existingQuiz) {
+      LoggerService.debug('[QuizRouter] Quiz ' + quiz.name + ' already exists, updating the data');
       await QuizDAO.updateQuiz(existingQuiz.id, quiz);
       result = (
         await QuizDAO.getQuizByName(quiz.name)
       ).toJSON();
     } else {
+      LoggerService.debug('[QuizRouter] Quiz ' + quiz.name + ' not already exists, so adding it to the db');
       result = (
         await QuizDAO.addQuiz(quiz)
       ).toJSON();
     }
 
     if (quiz.state === QuizState.Active) {
+      LoggerService.debug('[QuizRouter] Quiz ' + quiz.name + ' is set to active, so initializing it');
       await QuizDAO.initQuiz(result);
     }
+
+    LoggerService.debug('[QuizRouter] Quiz ' + quiz.name + ' is finished, returning data to the client');
     return result;
   }
 
