@@ -79,7 +79,8 @@ class TwitterService {
     const params: Twitter.RequestParams = { q: staticStatistics.twitter.searchKey };
     client.get('statuses/mentions_timeline', params, (error, tweets: Array<ITwitterApiTweets>, response) => {
       if (error) {
-        LoggerService.error('Requesting recent Tweets with TwitterApi has failed with error: ' + error.map(e => e.message).join(', '));
+        const msg = Array.isArray(error) ? error.map(e => e.message).join(', ') : error.message ?? error;
+        LoggerService.error('Requesting recent Tweets with TwitterApi has failed with error: ' + msg);
         return;
       }
 

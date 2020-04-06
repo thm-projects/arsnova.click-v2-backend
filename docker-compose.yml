@@ -15,6 +15,7 @@ services:
     networks:
       - app-tier
     env_file: arsnova-click.env
+    restart: unless-stopped
     depends_on:
       - rabbitmq
       - mongodb
@@ -33,6 +34,7 @@ services:
     networks:
       - app-tier
     env_file: arsnova-click-staging.env
+    restart: unless-stopped
     depends_on:
       - rabbitmq
       - mongodb
@@ -51,6 +53,7 @@ services:
     networks:
       - app-tier
     env_file: arsnova-click-beta.env
+    restart: unless-stopped
     depends_on:
       - rabbitmq
       - mongodb
@@ -65,6 +68,7 @@ services:
     networks:
       - app-tier
     env_file: rabbitmq.env
+    restart: unless-stopped
     volumes:
       - rabbitmq:/bitnami
       - ./rabbitmq-plugins.txt:/opt/bitnami/rabbitmq/etc/rabbitmq/enabled_plugins
@@ -77,6 +81,7 @@ services:
     networks:
       - app-tier
     env_file: mongo.env
+    restart: unless-stopped
     volumes:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - mongodb:/data/db

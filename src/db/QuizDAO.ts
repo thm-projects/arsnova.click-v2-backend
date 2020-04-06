@@ -1,12 +1,14 @@
 import { ObjectId } from 'bson';
 import * as http from 'http';
-import * as https from 'https';
 import { Document } from 'mongoose';
+import * as superagent from 'superagent';
+import { HistoryModelType } from '../enums/HistoryModelType';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { QuizState } from '../enums/QuizState';
 import { QuizVisibility } from '../enums/QuizVisibility';
 import { IQuiz } from '../interfaces/quizzes/IQuizEntity';
 import { generateToken } from '../lib/generateToken';
+import { HistoryModel } from '../models/HistoryModel';
 import { QuizModel, QuizModelItem } from '../models/quiz/QuizModelItem';
 import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
@@ -35,6 +37,13 @@ class QuizDAO extends AbstractDAO {
     }
 
     return this.instance;
+  }
+
+  public async getStatistics(): Promise<{ [key: string]: number }> {
+    return {
+      total: await QuizModel.countDocuments({}),
+      active: await QuizModel.countDocuments({ state: { $in: [QuizState.Active, QuizState.Finished, QuizState.Running] } }),
+    };
   }
 
   public getInactiveQuizzes(): Promise<Array<Document & QuizModelItem>> {
@@ -158,7 +167,9 @@ class QuizDAO extends AbstractDAO {
     await AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quizDoc.name), 'fanout');
     delete quizDoc._id;
     delete quizDoc.id;
-    return QuizModel.create(quizDoc);
+    const result = QuizModel.create(quizDoc);
+    AMQPConnector.sendRequestStatistics();
+    return result;
   }
 
   public updateQuiz(id: ObjectId, updatedFields: any): Promise<void> {
@@ -193,6 +204,8 @@ class QuizDAO extends AbstractDAO {
     this._storage[quiz.name].emptyQuizInterval = setInterval(() => {
       this.checkExistingConnection(quiz.name, quiz.privateKey);
     }, this.CHECK_STATE_INTERVAL);
+
+    HistoryModel.create({ type: HistoryModelType.PlayedQuiz, name: quiz.name });
   }
 
   public getAllQuizzes(): Promise<Array<Document & QuizModelItem>> {
@@ -230,6 +243,8 @@ class QuizDAO extends AbstractDAO {
         quizName,
       },
     })));
+
+    AMQPConnector.sendRequestStatistics();
 
     AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
@@ -274,6 +289,7 @@ class QuizDAO extends AbstractDAO {
     await MemberDAO.removeMembersOfQuiz(quizName);
 
     await this.cleanupQuiz(quizName);
+    AMQPConnector.sendRequestStatistics();
   }
 
   public async resetQuiz(name: string, privateKey: string): Promise<any> {
@@ -467,29 +483,18 @@ class QuizDAO extends AbstractDAO {
       auth: `${settings.amqp.managementApi.user}:${settings.amqp.managementApi.password}`,
     };
 
-    (
-      settings.amqp.managementApi.protocol === 'https:' ? https : http
-    ).get(reqOptions, response => {
-      let data = '';
+    superagent.get(reqOptions.protocol + '//' + reqOptions.host + ':' + reqOptions.port + reqOptions.path) //
+    .set('Authorization', 'Basic ' + Buffer.from(reqOptions.auth).toString('base64')).then((res) => {
+      if (Array.isArray(res.body) && res.body.length) {
+        this._storage[quizName].isEmpty = false;
+        return;
+      }
 
-      response.on('data', (chunk) => {
-        data += chunk;
-      });
+      if (this._storage[quizName].isEmpty) {
+        return this.setQuizAsInactive(quizName, privateKey);
+      }
 
-      response.on('end', () => {
-        const parsedData = JSON.parse(data);
-        if (Array.isArray(parsedData) && parsedData.length) {
-          this._storage[quizName].isEmpty = false;
-          return;
-        }
-
-        if (this._storage[quizName].isEmpty) {
-          this.setQuizAsInactive(quizName, privateKey);
-          return;
-        }
-
-        this._storage[quizName].isEmpty = true;
-      });
+      this._storage[quizName].isEmpty = true;
     });
   }
 }

@@ -14,6 +14,10 @@ class MathjaxDAO extends AbstractDAO {
     return this.instance;
   }
 
+  public async getStatistics(): Promise<{ [key: string]: number }> {
+    return {};
+  }
+
   public getAllPreviouslyRenderedData(plainData: string): object {
     return this.storage[plainData];
   }

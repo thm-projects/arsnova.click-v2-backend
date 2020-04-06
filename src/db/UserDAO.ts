@@ -1,7 +1,6 @@
 import { ObjectId } from 'bson';
 import { DeleteWriteOpResultObject } from 'mongodb';
 import { Document } from 'mongoose';
-import { UserRole } from '../enums/UserRole';
 import { IUserSerialized } from '../interfaces/users/IUserSerialized';
 import { UserModel, UserModelItem } from '../models/UserModelItem/UserModel';
 import { AuthService } from '../services/AuthService';
@@ -16,12 +15,8 @@ class UserDAO extends AbstractDAO {
     return this.instance;
   }
 
-  public async initUser(user: IUserSerialized): Promise<Document & UserModelItem> {
-    if (await UserModel.findOne({ name: user.name }).exec()) {
-      throw new Error(`Trying to initiate a duplicate login`);
-    }
-
-    return UserModel.create(user);
+  public async getStatistics(): Promise<{ [key: string]: number }> {
+    return {};
   }
 
   public validateUser(name: string, passwordHash: string): Promise<boolean> {
@@ -29,10 +24,6 @@ class UserDAO extends AbstractDAO {
       name,
       passwordHash,
     });
-  }
-
-  public setTokenForUser(name: string, token: string): Promise<Document & UserModelItem> {
-    return UserModel.updateOne({ name }, { token }).exec();
   }
 
   public validateTokenForUser(name: string, token: string): Promise<boolean> {
@@ -51,31 +42,12 @@ class UserDAO extends AbstractDAO {
     });
   }
 
-  public async getGitlabTokenForUser(name: string): Promise<string> {
-    return (await UserModel.findOne({ name }).exec()).gitlabToken;
-  }
-
-  public isUserAuthorizedFor(name: string, userAuthorization: Array<UserRole>): Promise<boolean> {
-    return UserModel.exists({
-      name,
-      userAuthorizations: { $all: userAuthorization },
-    });
-  }
-
   public getUser(name: string): Promise<Document & UserModelItem> {
     return UserModel.findOne({ name }).exec();
   }
 
   public getUserByTokenHash(tokenHash: string): Promise<Document & UserModelItem> {
     return UserModel.findOne({ tokenHash }).exec();
-  }
-
-  public getUserById(id: ObjectId): Promise<Document & UserModelItem> {
-    return UserModel.findOne({ _id: id }).exec();
-  }
-
-  public clearStorage(): Promise<DeleteWriteOpResultObject['result'] & { deletedCount?: number }> {
-    return UserModel.deleteMany({}).exec();
   }
 
   public removeUser(id: ObjectId): Promise<DeleteWriteOpResultObject['result'] & { deletedCount?: number }> {

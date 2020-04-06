@@ -27,6 +27,10 @@ class DbDAO extends AbstractDAO {
     return this.instance;
   }
 
+  public async getStatistics(): Promise<{ [key: string]: number }> {
+    return {};
+  }
+
   public connectToDb(): Promise<void> {
     return MongoDBConnector.connect(this.DB).then((db: Connection) => {
       this._dbCon = db;

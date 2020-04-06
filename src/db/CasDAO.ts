@@ -15,6 +15,10 @@ class CasDAO extends AbstractDAO {
     return this.instance;
   }
 
+  public async getStatistics(): Promise<{ [key: string]: number }> {
+    return {};
+  }
+
   public add(ticket: string, data: ICasData): void {
     this.storage[ticket] = data;
   }

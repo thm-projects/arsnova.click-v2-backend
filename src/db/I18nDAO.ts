@@ -41,6 +41,10 @@ class I18nDAO extends AbstractDAO {
     return this.instance;
   }
 
+  public async getStatistics(): Promise<{ [key: string]: number }> {
+    return {};
+  }
+
   public async cacheUpdateRequired(project: GitlabProject): Promise<boolean> {
     if (!this.storage[project].lastUpdate || !this.storage[project].langData || !this.storage[project].unused) {
       return true;
