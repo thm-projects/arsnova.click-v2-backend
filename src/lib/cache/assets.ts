@@ -66,6 +66,7 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
 
   return new Promise<string>(resolve => {
     if (!foundUrls) {
+      LoggerService.debug('[MatchTextToAssetsDb] Abort: No URLs found');
       resolve(value);
       return;
     }
@@ -75,6 +76,7 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
       const parsedResult = value.replace(foundUrl, `${assetsBasePath}/${digest}`);
       const exists = await AssetDAO.getAssetByDigest(digest);
       if (exists) {
+        LoggerService.debug('[MatchTextToAssetsDb] Found existing digest ' + digest);
         resolve(parsedResult);
         return;
       }
@@ -91,12 +93,14 @@ export function MatchTextToAssetsDb(value: string): Promise<string> {
         const contentType = response.headers['content-type'];
         const hasContentTypeMatched = acceptedFileTypes.some((contentTypeRegex) => contentType.match(contentTypeRegex) !== null);
         if (!hasContentTypeMatched) {
+          LoggerService.debug('[MatchTextToAssetsDb] Resource "' + digest + '" is not an accepted content type ' + contentType);
           resolve(value);
           return;
         }
 
         const buffer = Buffer.from(response.body, 'utf8');
 
+        LoggerService.debug('[MatchTextToAssetsDb] Resource "' + digest + '" is added to the db');
         return AssetDAO.addAsset({
           url: foundUrl,
           digest,
