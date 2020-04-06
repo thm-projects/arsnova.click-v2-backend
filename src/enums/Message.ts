@@ -4,6 +4,7 @@ export enum StatusProtocol {
 }
 
 export enum MessageProtocol {
+  RequestStatistics            = 'RequestStatistics', //
   SaveQuiz                     = 'SaveQuiz', //
   Countdown                    = 'Countdown', //
   Updated                      = 'Updated', //

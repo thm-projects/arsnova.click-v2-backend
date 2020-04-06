@@ -3,6 +3,7 @@ import { Document } from 'mongoose';
 import { IQuestion } from '../interfaces/questions/IQuestion';
 import { QuizPoolModel, QuizPoolModelItem } from '../models/quiz/QuizPoolModelItem';
 import { AbstractDAO } from './AbstractDAO';
+import AMQPConnector from './AMQPConnector';
 
 class QuizPoolDAO extends AbstractDAO {
 
@@ -12,6 +13,15 @@ class QuizPoolDAO extends AbstractDAO {
     }
 
     return this.instance;
+  }
+
+  public async getStatistics(): Promise<{ [key: string]: number }> {
+    return {
+      quizzes: await QuizPoolModel.countDocuments({}),
+      tags: Object.keys((
+                          await this.getPoolTags()
+                        )[0] ?? {}).length,
+    };
   }
 
   public async getPoolQuestionsByTags(data: Array<{ tag: string, amount: number }>): Promise<Array<object>> {
@@ -52,6 +62,7 @@ class QuizPoolDAO extends AbstractDAO {
 
   public async removePoolQuestion(id: ObjectId): Promise<void> {
     await QuizPoolModel.findOneAndDelete({ _id: id }).exec();
+    AMQPConnector.sendRequestStatistics();
   }
 
   public async getPoolQuestionById(id: ObjectId): Promise<Document & QuizPoolModelItem> {
@@ -79,6 +90,8 @@ class QuizPoolDAO extends AbstractDAO {
     }
 
     await QuizPoolModel.updateOne({ _id: id }, query).exec();
+
+    AMQPConnector.sendRequestStatistics();
 
     // Todo send mail to notificationMail of quizpool model item
   }
@@ -108,7 +121,11 @@ class QuizPoolDAO extends AbstractDAO {
         hash: pl.hash,
       }
     ));
-    return QuizPoolModel.insertMany(payload, { ordered: false });
+    const result = QuizPoolModel.insertMany(payload, { ordered: false });
+
+    AMQPConnector.sendRequestStatistics();
+
+    return result;
   }
 
   private generateHashFromPoolQuestion(question: IQuestion): Partial<{ [key in keyof IQuestion]: string }> {

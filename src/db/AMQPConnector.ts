@@ -1,4 +1,5 @@
 import { Channel, connect, Connection } from 'amqplib';
+import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { settings } from '../statistics';
 
 class AMQPConnector {
@@ -7,12 +8,14 @@ class AMQPConnector {
   public readonly globalExchange: string = 'global';
 
   private _channel: Channel;
+  private _sendStatisticsTimeout: any;
 
   get channel(): Channel {
     return this._channel;
   }
 
   private _connection: Connection;
+  private _lastStatisticRequestSent: number;
 
   constructor() {
   }
@@ -45,6 +48,22 @@ class AMQPConnector {
       throw new Error(`Could not build exchange name. Quizname '${quizname}' is not supported.`);
     }
     return encodeURI(`quiz_${quizname.trim()}`);
+  }
+
+  public sendRequestStatistics(): boolean {
+    const diff = new Date().getTime() - this._lastStatisticRequestSent;
+    clearTimeout(this._sendStatisticsTimeout);
+    if (diff < 5000) {
+      this._sendStatisticsTimeout = setTimeout(() => this.sendRequestStatistics(), diff);
+      return;
+    }
+
+    this._lastStatisticRequestSent = new Date().getTime();
+
+    return this.channel.publish(this.globalExchange, '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.RequestStatistics,
+    })));
   }
 }
 

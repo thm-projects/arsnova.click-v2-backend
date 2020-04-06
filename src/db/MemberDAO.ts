@@ -1,17 +1,29 @@
 import { ObjectId } from 'bson';
 import * as CryptoJS from 'crypto-js';
 import { Document, Error } from 'mongoose';
+import * as superagent from 'superagent';
+import { HistoryModelType } from '../enums/HistoryModelType';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
+import { HistoryModel } from '../models/HistoryModel';
 import { MemberModel, MemberModelItem } from '../models/member/MemberModel';
 import { QuizModelItem } from '../models/quiz/QuizModelItem';
+import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
 import QuizDAO from './QuizDAO';
 import Hex = require('crypto-js/enc-hex');
 
 class MemberDAO extends AbstractDAO {
+  private _totalUsers = 0;
+
+  constructor() {
+    super();
+    if (process.env.NODE_ENV !== 'test') {
+      this.initializeUserQuery();
+    }
+  }
 
   public static getInstance(): MemberDAO {
     if (!this.instance) {
@@ -21,10 +33,22 @@ class MemberDAO extends AbstractDAO {
     return this.instance;
   }
 
+  public async getStatistics(): Promise<{ [key: string]: number }> {
+    const average = (
+      await HistoryModel.countDocuments({ type: HistoryModelType.Attendee }) / await HistoryModel.countDocuments(
+        { type: HistoryModelType.PlayedQuiz })
+    );
+
+    return {
+      total: this._totalUsers,
+      active: await MemberModel.countDocuments({}),
+      average: isNaN(average) ? 0 : Math.round(average),
+    };
+  }
+
   public getMemberByName(name: string): Promise<Document & MemberModelItem> {
     return MemberModel.findOne({ name }).exec();
   }
-
 
   public async addMember(memberSerialized: IMemberSerialized): Promise<Document & MemberModelItem> {
     if (memberSerialized.id && this.getMemberById(memberSerialized.id)) {
@@ -46,6 +70,10 @@ class MemberDAO extends AbstractDAO {
       step: MessageProtocol.Added,
       payload: { member: docSerialized },
     })));
+
+    AMQPConnector.sendRequestStatistics();
+
+    HistoryModel.create({ type: HistoryModelType.Attendee, name: docSerialized.name, ref: docSerialized.currentQuizName });
 
     return doc;
   }
@@ -86,6 +114,7 @@ class MemberDAO extends AbstractDAO {
     });
 
     await MemberModel.deleteMany({ currentQuizName: quizName }).exec();
+    AMQPConnector.sendRequestStatistics();
   }
 
   public async getMemberAmountPerQuizGroup(name: string, groups: Array<string>): Promise<object> {
@@ -220,6 +249,7 @@ class MemberDAO extends AbstractDAO {
           payload: { name: nickname },
         })));
       }
+      AMQPConnector.sendRequestStatistics();
     } catch (err) {
     }
 
@@ -250,6 +280,31 @@ class MemberDAO extends AbstractDAO {
 
   private generateBonusToken(quizname, username): string {
     return Hex.stringify(CryptoJS.SHA256(quizname + username + Date.now()));
+  }
+
+  private initializeUserQuery(): void {
+    setInterval(async () => {
+      const reqOptions = {
+        protocol: settings.amqp.managementApi.protocol,
+        host: settings.amqp.managementApi.host,
+        port: settings.amqp.managementApi.port,
+        path: `/api/connections`,
+        auth: `${settings.amqp.managementApi.user}:${settings.amqp.managementApi.password}`,
+      };
+
+      const totalUsersResponse = await superagent.get(reqOptions.protocol + '//' + reqOptions.host + ':' + reqOptions.port + reqOptions.path) //
+      .set('Authorization', 'Basic ' + Buffer.from(reqOptions.auth).toString('base64'));
+
+      const total = totalUsersResponse.body //
+      .filter(val => val.client_properties.product === 'STOMP client') //
+      .filter(val => val.vhost === settings.amqp.vhost) //
+        .length; //
+
+      if (this._totalUsers !== total) {
+        this._totalUsers = total;
+        AMQPConnector.sendRequestStatistics();
+      }
+    }, 10000);
   }
 }
 

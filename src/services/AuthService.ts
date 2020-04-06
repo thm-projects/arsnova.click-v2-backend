@@ -4,7 +4,7 @@ import UserDAO from '../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { UserRole } from '../enums/UserRole';
 import { UserModelItem } from '../models/UserModelItem/UserModel';
-import { staticStatistics } from '../statistics';
+import { settings } from '../statistics';
 
 export class AuthService {
 
@@ -34,7 +34,7 @@ export class AuthService {
   }
 
   public static createToken(payload): string {
-    return jwt.sign(payload, staticStatistics.jwtSecret, {
+    return jwt.sign(payload, settings.jwtSecret, {
       algorithm: 'HS512',
       expiresIn: 28800, // 8 hours
     });
@@ -59,7 +59,7 @@ export class AuthService {
   }
 
   public static decodeToken(token: string): string | object {
-    return jwt.verify(token, staticStatistics.jwtSecret, {
+    return jwt.verify(token, settings.jwtSecret, {
       algorithms: ['HS512'],
     });
   }
