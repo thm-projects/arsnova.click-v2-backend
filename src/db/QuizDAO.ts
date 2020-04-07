@@ -29,6 +29,8 @@ class QuizDAO extends AbstractDAO {
   constructor(storage) {
     super();
     this._storage = storage;
+
+    this.restoreActiveQuizTimers();
   }
 
   public static getInstance(): QuizDAO {
@@ -37,6 +39,16 @@ class QuizDAO extends AbstractDAO {
     }
 
     return this.instance;
+  }
+
+  public async restoreActiveQuizTimers(): Promise<void> {
+    const activeQuizzes = await QuizModel.find({ state: { $in: [QuizState.Active, QuizState.Finished, QuizState.Running] } }).exec();
+    activeQuizzes.forEach(quiz => {
+      this.initTimerData(quiz.name);
+      this._storage[quiz.name].emptyQuizInterval = setInterval(() => {
+        this.checkExistingConnection(quiz.name, quiz.privateKey);
+      }, this.CHECK_STATE_INTERVAL);
+    });
   }
 
   public async getStatistics(): Promise<{ [key: string]: number }> {
