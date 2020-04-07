@@ -292,6 +292,7 @@ class QuizDAOTestSuite {
     const quiz = generateQuiz('test-quiz');
     quiz.currentQuestionIndex = 0;
     const daoquiz = await QuizDAO.addQuiz(quiz);
+    QuizDAO['initTimerData'](daoquiz.name);
     await QuizDAO.startNextQuestion(daoquiz);
 
     expect(QuizDAO['_storage']['test-quiz'].quizTimer).to.equal(quiz.questionList[quiz.currentQuestionIndex].timer);
