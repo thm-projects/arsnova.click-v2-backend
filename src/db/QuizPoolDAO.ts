@@ -74,7 +74,7 @@ class QuizPoolDAO extends AbstractDAO {
       status: StatusProtocol.Success,
       step: MessageProtocol.UpdateBadgeAmount,
       payload: {
-        target: 'quizpool',
+        target: 'admin',
         amount: await this.getPendingPoolQuestionsAmount(),
       },
     })));
@@ -137,7 +137,7 @@ class QuizPoolDAO extends AbstractDAO {
       status: StatusProtocol.Success,
       step: MessageProtocol.UpdateBadgeAmount,
       payload: {
-        target: 'quizpool',
+        target: 'admin',
         amount: await this.getPendingPoolQuestionsAmount(),
       },
     })));

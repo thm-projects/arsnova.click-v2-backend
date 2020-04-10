@@ -55,7 +55,7 @@ export class I18nApiRouter extends AbstractRouter {
     try {
       await I18nDAO.reloadCache();
     } catch (e) {
-      return new InternalServerError(e);
+      throw new InternalServerError(e);
     }
 
     payload.langData = I18nDAO.storage[GitlabProject[project]].langData;
