@@ -1,6 +1,7 @@
 import { ObjectId } from 'bson';
 import { DeleteWriteOpResultObject } from 'mongodb';
 import { Document } from 'mongoose';
+import { UserRole } from '../enums/UserRole';
 import { IUserSerialized } from '../interfaces/users/IUserSerialized';
 import { UserModel, UserModelItem } from '../models/UserModelItem/UserModel';
 import { AuthService } from '../services/AuthService';
@@ -64,6 +65,10 @@ class UserDAO extends AbstractDAO {
 
   public getUserByToken(token: string): Promise<Document & UserModelItem> {
     return UserModel.findOne({ token }).exec();
+  }
+
+  public async getUsersByRole(role: UserRole): Promise<Array<Document & UserModelItem>> {
+    return UserModel.find({ userAuthorizations: role }).exec();
   }
 }
 

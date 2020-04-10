@@ -1,5 +1,6 @@
 import { ObjectId } from 'bson';
 import { Document } from 'mongoose';
+import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { IQuestion } from '../interfaces/questions/IQuestion';
 import { QuizPoolModel, QuizPoolModelItem } from '../models/quiz/QuizPoolModelItem';
 import { AbstractDAO } from './AbstractDAO';
@@ -17,7 +18,8 @@ class QuizPoolDAO extends AbstractDAO {
 
   public async getStatistics(): Promise<{ [key: string]: number }> {
     return {
-      quizzes: await QuizPoolModel.countDocuments({}),
+      questions: await QuizPoolModel.countDocuments({}),
+      pendingQuestionAmount: await this.getPendingPoolQuestionsAmount(),
       tags: Object.keys((
                           await this.getPoolTags()
                         )[0] ?? {}).length,
@@ -60,9 +62,22 @@ class QuizPoolDAO extends AbstractDAO {
     return QuizPoolModel.find({ approved: false }).exec();
   }
 
+  public async getPendingPoolQuestionsAmount(): Promise<number> {
+    return QuizPoolModel.countDocuments({ approved: false }).exec();
+  }
+
   public async removePoolQuestion(id: ObjectId): Promise<void> {
     await QuizPoolModel.findOneAndDelete({ _id: id }).exec();
     AMQPConnector.sendRequestStatistics();
+
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.UpdateBadgeAmount,
+      payload: {
+        target: 'quizpool',
+        amount: await this.getPendingPoolQuestionsAmount(),
+      },
+    })));
   }
 
   public async getPoolQuestionById(id: ObjectId): Promise<Document & QuizPoolModelItem> {
@@ -92,6 +107,14 @@ class QuizPoolDAO extends AbstractDAO {
     await QuizPoolModel.updateOne({ _id: id }, query).exec();
 
     AMQPConnector.sendRequestStatistics();
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.UpdateBadgeAmount,
+      payload: {
+        target: 'footerElemQuizpool',
+        amount: await this.getPendingPoolQuestionsAmount(),
+      },
+    })));
 
     // Todo send mail to notificationMail of quizpool model item
   }
@@ -101,7 +124,7 @@ class QuizPoolDAO extends AbstractDAO {
   }
 
   public async addQuizToPool(question: IQuestion, hash: string, origin: string, notificationMail?: string): Promise<Document & QuizPoolModelItem> {
-    return QuizPoolModel.create({
+    const result = await QuizPoolModel.create({
       approved: false,
       question,
       hash,
@@ -109,6 +132,17 @@ class QuizPoolDAO extends AbstractDAO {
       origin,
       notificationMail,
     });
+
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.UpdateBadgeAmount,
+      payload: {
+        target: 'quizpool',
+        amount: await this.getPendingPoolQuestionsAmount(),
+      },
+    })));
+
+    return result;
   }
 
   public addQuestions(payload: Array<QuizPoolModelItem>): Promise<Array<Document & QuizPoolModelItem>> {

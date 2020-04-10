@@ -4,6 +4,8 @@ export enum StatusProtocol {
 }
 
 export enum MessageProtocol {
+  UpdateBadgeAmount            = 'UpdateBadgeAmount', //
+  PendingPoolQuestion          = 'PendingPoolQuestion', //
   RequestStatistics            = 'RequestStatistics', //
   SaveQuiz                     = 'SaveQuiz', //
   Countdown                    = 'Countdown', //

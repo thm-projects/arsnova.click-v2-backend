@@ -17,14 +17,8 @@ export const dynamicStatistics = async () => {
     quiz: {
       total: quizStatistics.total,
       active: quizStatistics.active,
-      pool: {
-        questions: quizPoolStatistics.quizzes,
-        tags: quizPoolStatistics.tags,
-      },
-      participants: {
-        active: attendeeStatistics.active,
-        average: attendeeStatistics.average,
-      },
+      pool: quizPoolStatistics,
+      participants: attendeeStatistics,
     },
     activeSockets: attendeeStatistics.total,
   };

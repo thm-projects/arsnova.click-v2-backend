@@ -6,6 +6,7 @@ import { Server } from 'http';
 import * as Minimist from 'minimist';
 import * as process from 'process';
 import 'reflect-metadata';
+import { setVapidDetails } from 'web-push';
 import App from './App';
 import AssetDAO from './db/AssetDAO';
 import CasDAO from './db/CasDAO';
@@ -17,7 +18,7 @@ import QuizDAO from './db/QuizDAO';
 import UserDAO from './db/UserDAO';
 import LoggerService from './services/LoggerService';
 import TwitterService from './services/TwitterService';
-import { staticStatistics } from './statistics';
+import { settings, staticStatistics } from './statistics';
 import { LoadTester } from './tests/LoadTester';
 
 setGlobalOptions({
@@ -81,6 +82,12 @@ const argv = Minimist(process.argv.slice(2));
 if (argv['load-test']) {
   runTest();
 }
+
+setVapidDetails(
+  `mailto:${settings.projectEMail}`,
+  settings.vapidKeys.publicKey,
+  settings.vapidKeys.privateKey,
+);
 
 function normalizePort(val: number | string): number | string | boolean {
   const portCheck: number = (

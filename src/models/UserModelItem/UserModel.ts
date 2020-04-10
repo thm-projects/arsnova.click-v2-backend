@@ -1,5 +1,6 @@
 import { arrayProp, getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
 import { IsArray, IsString } from 'class-validator';
+import { PushSubscription } from 'web-push';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { IUserSerialized } from '../../interfaces/users/IUserSerialized';
@@ -13,6 +14,10 @@ export class UserModelItem implements IUserSerialized {
     required: true,
     items: String,
   }) @IsArray() public userAuthorizations: Array<string>;
+  @arrayProp({
+    required: true,
+    items: Object,
+  }) @IsArray() public subscriptions: Array<PushSubscription>;
   @prop({ required: true }) @IsString() public privateKey: string;
   @prop() @IsString() public gitlabToken?: string;
   @prop() @IsString() public token?: string;

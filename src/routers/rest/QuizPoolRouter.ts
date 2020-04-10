@@ -4,7 +4,9 @@ import { ObjectId } from 'mongodb';
 import { Authorized, BadRequestError, BodyParam, Delete, Get, JsonController, Param, Post, Put, Req } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import * as superagent from 'superagent';
+import { sendNotification } from 'web-push';
 import QuizPoolDAO from '../../db/QuizPoolDAO';
+import UserDAO from '../../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { UserRole } from '../../enums/UserRole';
 import { IMessage } from '../../interfaces/communication/IMessage';
@@ -95,6 +97,18 @@ export class QuizPoolRouter extends AbstractRouter {
     const exists = await QuizPoolDAO.getPoolQuestionByHash(hash);
     if (!exists) {
       await QuizPoolDAO.addQuizToPool(question, hash, origin, notificationMail);
+
+      const users = await UserDAO.getUsersByRole(UserRole.SuperAdmin);
+      await Promise.all(users.map(user => {
+        return Promise.all(user.subscriptions.map(async sub => {
+          sendNotification(sub, JSON.stringify({
+            step: MessageProtocol.PendingPoolQuestion,
+            payload: {
+              amount: await QuizPoolDAO.getPendingPoolQuestionsAmount(),
+            },
+          })).catch(() => {});
+        }));
+      }));
     }
 
     return {

@@ -47,6 +47,10 @@ const twitterSearchKey = process.env.TWITTER_SEARCH_KEY;
 
 const chromiumPath = process.env.CHROMIUM_PATH ?? '/usr/bin/chromium-browser';
 
+const projectEmail = process.env.PROJECT_MAIL_ADDRESS;
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
 export const staticStatistics = {
   appName: 'arsnova-click-v2-backend',
   appVersion: '2.0.0',
@@ -104,5 +108,10 @@ export const settings = {
     enabled: twitterEnabled && twitterAccessTokenKey && twitterAccessTokenSecret && twitterConsumerKey && twitterConsumerSecret,
   },
   chromiumPath,
+  projectEMail: projectEmail,
+  vapidKeys: {
+    publicKey: vapidPublicKey,
+    privateKey: vapidPrivateKey,
+  },
 };
 
