@@ -134,6 +134,7 @@ if (cluster.isMaster) {
         break;
       case IPCExchange.TotalUsers:
         MemberDAO.totalUsers = workerModel.get(data[0]);
+        LoggerService.info(`[Worker] received total-users update`);
     }
   });
 
