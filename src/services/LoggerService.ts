@@ -1,12 +1,12 @@
 import * as bunyan from 'bunyan';
 import { LogLevel } from 'bunyan';
+import * as bunyan_express_serializer from 'bunyan-express-serializer';
 import * as process from 'process';
 import { staticStatistics } from '../statistics';
 
 class LoggerService {
 
   private static instance: LoggerService;
-  public useLog = true;
 
   private _logger: bunyan;
 
@@ -90,6 +90,11 @@ class LoggerService {
       name: staticStatistics.appName,
       level,
       streams,
+      serializers: {
+        req: bunyan_express_serializer,
+        res: bunyan.stdSerializers.res,
+        err: bunyan.stdSerializers.err,
+      },
     });
 
     this._logQueue.forEach((logLevelQueue) => {

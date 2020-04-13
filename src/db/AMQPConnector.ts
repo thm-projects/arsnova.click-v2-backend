@@ -60,7 +60,7 @@ class AMQPConnector {
 
     this._lastStatisticRequestSent = new Date().getTime();
 
-    return this.channel.publish(this.globalExchange, '.*', Buffer.from(JSON.stringify({
+    return this.channel?.publish(this.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.RequestStatistics,
     })));

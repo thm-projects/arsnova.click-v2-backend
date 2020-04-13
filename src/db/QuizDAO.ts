@@ -1,4 +1,5 @@
 import { ObjectId } from 'bson';
+import * as cluster from 'cluster';
 import * as http from 'http';
 import { Document } from 'mongoose';
 import * as superagent from 'superagent';
@@ -30,7 +31,9 @@ class QuizDAO extends AbstractDAO {
     super();
     this._storage = storage;
 
-    this.restoreActiveQuizTimers();
+    if (cluster.isMaster) {
+      this.restoreActiveQuizTimers();
+    }
   }
 
   public static getInstance(): QuizDAO {
@@ -371,7 +374,8 @@ class QuizDAO extends AbstractDAO {
     })));
   }
 
-  public async startNextQuestion(quiz: Document & QuizModelItem): Promise<void> {
+  public async startNextQuestion(quizName: string): Promise<void> {
+    const quiz = await this.getQuizByName(quizName);
     AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Start,
@@ -382,14 +386,15 @@ class QuizDAO extends AbstractDAO {
   }
 
   public async stopQuiz(quiz: Document & QuizModelItem): Promise<void> {
-    if (this._storage[quiz.name]) {
-      this._storage[quiz.name].quizTimer = 1;
+    await QuizModel.updateOne({ _id: quiz._id }, { currentStartTimestamp: -1 }).exec();
+  }
+
+  public stopQuizTimer(quizName: string): void {
+    if (this._storage[quizName]) {
+      this._storage[quizName].quizTimer = 1;
     }
 
-    quiz.currentStartTimestamp = -1;
-    await QuizModel.updateOne({ _id: quiz._id }, { currentStartTimestamp: -1 }).exec();
-
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Stop,
     })));

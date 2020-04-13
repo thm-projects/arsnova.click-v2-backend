@@ -1,11 +1,14 @@
 declare function require(name: string): any;
 
 import { setGlobalOptions } from '@typegoose/typegoose';
+import * as cluster from 'cluster';
 import * as http from 'http';
 import { Server } from 'http';
 import * as Minimist from 'minimist';
+import * as net from 'net';
 import * as process from 'process';
 import 'reflect-metadata';
+import * as Model from 'scuttlebutt/model';
 import { setVapidDetails } from 'web-push';
 import App from './App';
 import AssetDAO from './db/AssetDAO';
@@ -16,6 +19,7 @@ import MathjaxDAO from './db/MathjaxDAO';
 import MemberDAO from './db/MemberDAO';
 import QuizDAO from './db/QuizDAO';
 import UserDAO from './db/UserDAO';
+import { IPCExchange } from './enums/IPCExchange';
 import LoggerService from './services/LoggerService';
 import TwitterService from './services/TwitterService';
 import { settings, staticStatistics } from './statistics';
@@ -70,24 +74,85 @@ interface IInetAddress {
 const port: string | number | boolean = normalizePort(staticStatistics.port);
 App.set('port', port);
 
-LoggerService.info(`Booting NodeJS ${process.version} on ${process.arch} architecture`);
+const numWorkers = process.env.NODE_ENV !== 'test' ? require('os').cpus().length - 1 : 2;
+let server: Server;
 
-const server: Server = http.createServer(App);
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
-server.on('close', onClose);
+if (cluster.isMaster) {
+  LoggerService.info(`Booting NodeJS ${process.version} on ${process.arch} architecture`);
+  LoggerService.info(`[Master ${process.pid}] is running`);
+  const workers = [];
 
-const argv = Minimist(process.argv.slice(2));
-if (argv['load-test']) {
-  runTest();
+  const masterModel = new Model();
+  net.createServer((stream) => {
+    stream.pipe(masterModel.createStream()).pipe(stream);
+  }).listen(8000, () => {
+    for (let i = 0; i < numWorkers; i++) {
+      workers[i] = cluster.fork();
+
+      workers[i].on('message', ({ message, data }) => {
+        switch (message) {
+          case IPCExchange.QuizStart:
+            LoggerService.info('[Master] QuizStart from worker received');
+            QuizDAO.startNextQuestion(data);
+            break;
+          case IPCExchange.QuizStop:
+            LoggerService.info('[Master] QuizStop from worker received');
+            QuizDAO.stopQuizTimer(data);
+            break;
+        }
+      });
+    }
+  });
+
+  cluster.on('exit', (worker) => {
+    LoggerService.error(`[Worker ${worker.process.pid}] died`);
+  });
+
+  TwitterService.run();
+
+  I18nDAO.reloadCache().then(() => {
+    masterModel.set(IPCExchange.I18nCache, I18nDAO.storage);
+    LoggerService.info(`[Master] updated i18n-cache`);
+  }).catch(reason => {
+    LoggerService.error('Could not reload i18n dao cache. Reason:', reason);
+  });
+
+  DbDAO.connectToDb();
+
+} else {
+
+  const workerModel = new Model();
+  const stream = net.connect(8000);
+  stream.pipe(workerModel.createStream()).pipe(stream);
+  workerModel.on('update', data => {
+    switch (data[0]) {
+      case IPCExchange.I18nCache:
+        I18nDAO.setStorageData(workerModel.get(data[0]));
+        LoggerService.info(`[Worker] received i18n-cache update`);
+    }
+  });
+
+  server = http.createServer(App);
+  server.listen(port);
+  server.on('error', onError);
+  server.on('listening', onListening);
+  server.on('close', onClose);
+
+  DbDAO.connectToDb();
+
+  const argv = Minimist(process.argv.slice(2));
+  if (argv['load-test']) {
+    runTest();
+  }
+
+  setVapidDetails(
+    `mailto:${settings.projectEMail}`,
+    settings.vapidKeys.publicKey,
+    settings.vapidKeys.privateKey,
+  );
+
+  LoggerService.info(`[Worker ${process.pid}] started`);
 }
-
-setVapidDetails(
-  `mailto:${settings.projectEMail}`,
-  settings.vapidKeys.publicKey,
-  settings.vapidKeys.privateKey,
-);
 
 function normalizePort(val: number | string): number | string | boolean {
   const portCheck: number = (
@@ -129,14 +194,6 @@ function onListening(): void {
                          typeof addr === 'string'
                        ) ? `pipe ${addr}` : `port ${addr.port}`;
   LoggerService.info(`Listening on ${bind}`);
-
-  TwitterService.run();
-
-  I18nDAO.reloadCache().catch(reason => {
-    console.error('Could not reload i18n dao cache. Reason:', reason);
-  });
-
-  DbDAO.connectToDb();
 }
 
 function runTest(): void {

@@ -25,6 +25,7 @@ import AMQPConnector from '../../db/AMQPConnector';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
+import { IPCExchange } from '../../enums/IPCExchange';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
@@ -317,7 +318,7 @@ export class QuizRouter extends AbstractRouter {
 
       quiz.readingConfirmationRequested = false;
 
-      await QuizDAO.startNextQuestion(quiz);
+      process.send({ message: IPCExchange.QuizStart, data: quiz.name });
 
       return {
         status: StatusProtocol.Success,
@@ -344,7 +345,7 @@ export class QuizRouter extends AbstractRouter {
     quiz.readingConfirmationRequested = false;
     quiz.currentStartTimestamp = currentStartTimestamp;
 
-    await QuizDAO.startNextQuestion(quiz);
+    process.send({ message: IPCExchange.QuizStart, data: quiz.name });
 
     return {
       status: StatusProtocol.Success,
@@ -365,6 +366,7 @@ export class QuizRouter extends AbstractRouter {
       return;
     }
 
+    process.send({ message: IPCExchange.QuizStop, data: activeQuiz.name });
     await QuizDAO.stopQuiz(activeQuiz);
 
     return {

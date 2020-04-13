@@ -4,10 +4,10 @@ import * as compress from 'compression';
 import * as cors from 'cors';
 import * as express from 'express';
 import { Request, Response, Router } from 'express';
-import * as logger from 'morgan';
 import * as process from 'process';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
+import * as timesyncServer from 'timesync/server';
 import { dynamicStatistics } from './dynamic-statistics';
 import options from './lib/cors.config';
 import { ErrorHandlerMiddleware } from './routers/middleware/customErrorHandler';
@@ -24,6 +24,7 @@ import { NotificationRouter } from './routers/rest/NotificationRouter';
 import { QuizPoolRouter } from './routers/rest/QuizPoolRouter';
 import { QuizRouter } from './routers/rest/QuizRouter';
 import { TwitterRouter } from './routers/rest/TwitterRouter';
+import LoggerService from './services/LoggerService';
 import { staticStatistics } from './statistics';
 
 export const routingControllerOptions: RoutingControllersOptions = {
@@ -78,7 +79,19 @@ class App {
 
   // Configure Express middleware.
   private middleware(): void {
-    this._express.use(logger('dev'));
+    this._express.use((req, res, next) => {
+      const log = LoggerService.logger.child({
+        body: req.body,
+      }, true);
+      log.info({
+        req: {
+          method: req.method,
+          url: req.url,
+        },
+      });
+      next();
+    });
+    this._express.use('/timesync', timesyncServer.requestHandler);
     this._express.use(bodyParser.json({ limit: '50mb' }));
     this._express.use(bodyParser.urlencoded({
       limit: '50mb',
@@ -86,6 +99,7 @@ class App {
     }));
     this._express.options('*', cors(options));
     this._express.use(compress());
+    this._express.disable('x-powered-by');
   }
 
   // Configure API endpoints.

@@ -1,6 +1,7 @@
 import { Gitlab } from 'gitlab';
 import { GitlabCommitAction, GitlabProject, Language } from '../enums/Enums';
 import { IGitlabCommitAction } from '../interfaces/gitlab/apiv11';
+import { asyncForEach } from '../lib/async-for-each';
 import { generateToken } from '../lib/generateToken';
 import LoggerService from '../services/LoggerService';
 import { settings } from '../statistics';
@@ -52,7 +53,7 @@ class I18nDAO extends AbstractDAO {
 
     const gitlabService = this.prepareGitlabConnection();
     const commits = await gitlabService.Commits.all(project, {
-      since: this.storage[project].lastUpdate.toISOString(),
+      since: this.storage[project].lastUpdate,
     });
 
     return (
@@ -66,38 +67,28 @@ class I18nDAO extends AbstractDAO {
         resolve();
         return;
       }
-      reject('No gitlab projects set');
-    }).then(() => new Promise((resolve, reject) => {
-      Object.values(this.storage).forEach(async (project, index, array) => {
-        const gitlabProject = project['name'] === 'arsnova-click-v2-backend' ? GitlabProject['arsnova-click-v2-backend']
-                                                                             : GitlabProject['arsnova-click-v2-frontend'];
+      reject('[I18nDAO] No gitlab projects set');
+    }).then(() => asyncForEach(Object.values(this.storage), async project => {
+      const gitlabProject = project['name'] === 'arsnova-click-v2-backend' //
+                            ? GitlabProject['arsnova-click-v2-backend'] //
+                            : GitlabProject['arsnova-click-v2-frontend'];
 
-        const updateRequired = await this.cacheUpdateRequired(gitlabProject);
-        if (!updateRequired) {
-          resolve();
-          return;
-        }
+      const updateRequired = await this.cacheUpdateRequired(gitlabProject);
+      if (!updateRequired) {
+        return;
+      }
 
-        try {
-          const langDataStart = new Date().getTime();
-          this.storage[gitlabProject].langData = await this.getI18nFileContentFromRepo(gitlabProject);
-          const langDataEnd = new Date().getTime();
-          LoggerService.info(`Built language data for ${project['name']} in ${langDataEnd - langDataStart}ms`);
+      const langDataStart = new Date().getTime();
+      this.storage[gitlabProject].langData = await this.getI18nFileContentFromRepo(gitlabProject);
+      const langDataEnd = new Date().getTime();
+      LoggerService.info(`[I18nDAO] Built language data for ${project['name']} in ${langDataEnd - langDataStart}ms`);
 
-          const unusedKeysStart = new Date().getTime();
-          this.storage[gitlabProject].unused = await this.getUnusedI18nKeysFromSourceFiles(gitlabProject, this.storage[gitlabProject].langData);
-          const unusedKeysEnd = new Date().getTime();
-          LoggerService.info(`Built unused keys for ${project['name']} in ${unusedKeysEnd - unusedKeysStart}ms`);
+      const unusedKeysStart = new Date().getTime();
+      this.storage[gitlabProject].unused = await this.getUnusedI18nKeysFromSourceFiles(gitlabProject, this.storage[gitlabProject].langData);
+      const unusedKeysEnd = new Date().getTime();
+      LoggerService.info(`[I18nDAO] Built unused keys for ${project['name']} in ${unusedKeysEnd - unusedKeysStart}ms`);
 
-          this.storage[gitlabProject].lastUpdate = new Date();
-
-          if (index === array.length - 1) {
-            resolve();
-          }
-        } catch (e) {
-          reject(e);
-        }
-      });
+      this.storage[gitlabProject].lastUpdate = new Date().toISOString();
     }));
   }
 
@@ -241,6 +232,10 @@ class I18nDAO extends AbstractDAO {
 
       }
     }
+  }
+
+  public setStorageData(storage: object): void {
+    Object.entries(storage).forEach(storageElem => this._storage[storageElem[0]] = storageElem[1]);
   }
 
   private prepareGitlabConnection(token?: string): InstanceType<typeof Gitlab> {

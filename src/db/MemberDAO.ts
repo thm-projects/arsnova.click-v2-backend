@@ -1,8 +1,10 @@
 import { ObjectId } from 'bson';
+import * as cluster from 'cluster';
 import * as CryptoJS from 'crypto-js';
 import { Document, Error } from 'mongoose';
 import * as superagent from 'superagent';
 import { HistoryModelType } from '../enums/HistoryModelType';
+import { IPCExchange } from '../enums/IPCExchange';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
@@ -20,7 +22,7 @@ class MemberDAO extends AbstractDAO {
 
   constructor() {
     super();
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' && cluster.isMaster) {
       this.initializeUserQuery();
     }
   }
@@ -212,6 +214,7 @@ class MemberDAO extends AbstractDAO {
         val !== null && typeof val !== 'undefined'
       );
     })) {
+      process.send({ message: IPCExchange.QuizStop, data: quiz.name });
       await QuizDAO.stopQuiz(quiz);
     }
   }

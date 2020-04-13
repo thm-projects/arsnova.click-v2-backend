@@ -1,4 +1,5 @@
 import * as childProcess from 'child_process';
+import * as cluster from 'cluster';
 import { Connection } from 'mongoose';
 import { DbCollection } from '../enums/DbOperation';
 import LoggerService from '../services/LoggerService';
@@ -58,6 +59,10 @@ class DbDAO extends AbstractDAO {
   }
 
   private async runMigrations(): Promise<void> {
+    if (!cluster.isMaster) {
+      return;
+    }
+
     LoggerService.info(`[DB-Migration] start`);
 
     const migrationProcess = childProcess.execSync('node db-migration-bootstrap',

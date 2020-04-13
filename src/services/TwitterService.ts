@@ -101,7 +101,7 @@ class TwitterService {
         step: MessageProtocol.RequestTweets,
       })));
     } catch (err) {
-      LoggerService.error('Publishing message to global exchange of rabbit mq has failed with error:' + err);
+      LoggerService.error('Publishing message to global exchange of rabbit mq has failed with error: ' + err);
     }
   }
 }
