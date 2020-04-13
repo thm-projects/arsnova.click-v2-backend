@@ -117,6 +117,8 @@ if (cluster.isMaster) {
     LoggerService.error('Could not reload i18n dao cache. Reason:', reason);
   });
 
+  MemberDAO.totalUsersChanged.on('update', totalUsers => masterModel.set(IPCExchange.TotalUsers, totalUsers));
+
   DbDAO.connectToDb();
 
 } else {
@@ -129,6 +131,9 @@ if (cluster.isMaster) {
       case IPCExchange.I18nCache:
         I18nDAO.setStorageData(workerModel.get(data[0]));
         LoggerService.info(`[Worker] received i18n-cache update`);
+        break;
+      case IPCExchange.TotalUsers:
+        MemberDAO.totalUsers = workerModel.get(data[0]);
     }
   });
 

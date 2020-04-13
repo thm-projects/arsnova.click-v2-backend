@@ -1,6 +1,7 @@
 import { ObjectId } from 'bson';
 import * as cluster from 'cluster';
 import * as CryptoJS from 'crypto-js';
+import { EventEmitter } from 'events';
 import { Document, Error } from 'mongoose';
 import * as superagent from 'superagent';
 import { HistoryModelType } from '../enums/HistoryModelType';
@@ -18,7 +19,14 @@ import QuizDAO from './QuizDAO';
 import Hex = require('crypto-js/enc-hex');
 
 class MemberDAO extends AbstractDAO {
+  public readonly totalUsersChanged = new EventEmitter();
+
   private _totalUsers = 0;
+
+  set totalUsers(value: number) {
+    this._totalUsers = value;
+    this.totalUsersChanged.emit('update', this._totalUsers);
+  }
 
   constructor() {
     super();
@@ -296,15 +304,15 @@ class MemberDAO extends AbstractDAO {
       };
 
       const totalUsersResponse = await superagent.get(reqOptions.protocol + '//' + reqOptions.host + ':' + reqOptions.port + reqOptions.path) //
-      .set('Authorization', 'Basic ' + Buffer.from(reqOptions.auth).toString('base64'));
+        .set('Authorization', 'Basic ' + Buffer.from(reqOptions.auth).toString('base64'));
 
       const total = totalUsersResponse.body //
-      .filter(val => val.client_properties.product === 'STOMP client') //
-      .filter(val => val.vhost === settings.amqp.vhost) //
+        .filter(val => val.client_properties.product === 'STOMP client') //
+        .filter(val => val.vhost === settings.amqp.vhost) //
         .length; //
 
       if (this._totalUsers !== total) {
-        this._totalUsers = total;
+        this.totalUsers = total;
         AMQPConnector.sendRequestStatistics();
       }
     }, 10000);
