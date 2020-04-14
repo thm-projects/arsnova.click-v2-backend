@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import * as Twitter from 'twitter';
 import AMQPConnector from '../db/AMQPConnector';
 import MongoDBConnector from '../db/MongoDBConnector';
@@ -13,6 +14,7 @@ class TwitterService {
   private static INTERVAL = 90000;
   private static _instance: TwitterService;
   public currentTweets: Array<ITweet> = [];
+  public readonly currentTweetsChanged = new EventEmitter();
   private intervalInstance;
 
   public static getInstance(): TwitterService {
@@ -95,6 +97,7 @@ class TwitterService {
   }
 
   private async publishNewTweets(): Promise<void> {
+    this.currentTweetsChanged.emit('update', this.currentTweets);
     try {
       AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
         status: StatusProtocol.Success,

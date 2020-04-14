@@ -108,14 +108,15 @@ if (cluster.isMaster) {
     LoggerService.error(`[Worker ${worker.process.pid}] died`);
   });
 
-  TwitterService.run();
-
   I18nDAO.reloadCache().then(() => {
     masterModel.set(IPCExchange.I18nCache, I18nDAO.storage);
     LoggerService.info(`[Master] updated i18n-cache`);
   }).catch(reason => {
     LoggerService.error('Could not reload i18n dao cache. Reason:', reason);
   });
+
+  TwitterService.run();
+  TwitterService.currentTweetsChanged.on('update', currentTweets => masterModel.set(IPCExchange.TwitterCache, currentTweets));
 
   MemberDAO.totalUsersChanged.on('update', totalUsers => masterModel.set(IPCExchange.TotalUsers, totalUsers));
 
@@ -131,6 +132,10 @@ if (cluster.isMaster) {
       case IPCExchange.I18nCache:
         I18nDAO.setStorageData(workerModel.get(data[0]));
         LoggerService.info(`[Worker] received i18n-cache update`);
+        break;
+      case IPCExchange.TwitterCache:
+        TwitterService.currentTweets = workerModel.get(data[0]);
+        LoggerService.info(`[Worker] received twitter-cache update`);
         break;
       case IPCExchange.TotalUsers:
         MemberDAO.totalUsers = workerModel.get(data[0]);
