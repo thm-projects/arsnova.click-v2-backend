@@ -115,8 +115,8 @@ if (cluster.isMaster) {
     LoggerService.error('Could not reload i18n dao cache. Reason:', reason);
   });
 
-  TwitterService.run();
   TwitterService.currentTweetsChanged.on('update', currentTweets => masterModel.set(IPCExchange.TwitterCache, currentTweets));
+  TwitterService.run();
 
   MemberDAO.totalUsersChanged.on('update', totalUsers => masterModel.set(IPCExchange.TotalUsers, totalUsers));
 
