@@ -502,6 +502,9 @@ class QuizDAO extends AbstractDAO {
     if (quizTimer <= 0) {
       return;
     }
+    if (!this._storage[quiz.name]) {
+      this.initTimerData(quiz.name);
+    }
 
     clearInterval(this._storage[quiz.name].quizTimerInterval);
     this._storage[quiz.name].quizTimer = quizTimer;

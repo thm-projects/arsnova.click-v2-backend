@@ -92,11 +92,11 @@ if (cluster.isMaster) {
       workers[i].on('message', ({ message, data }) => {
         switch (message) {
           case IPCExchange.QuizStart:
-            LoggerService.info('[Master] QuizStart from worker received');
+            LoggerService.info(`[Master] QuizStart for quiz (${data}) from worker received`);
             QuizDAO.startNextQuestion(data);
             break;
           case IPCExchange.QuizStop:
-            LoggerService.info('[Master] QuizStop from worker received');
+            LoggerService.info(`[Master] QuizStop for quiz (${data}) from worker received`);
             QuizDAO.stopQuizTimer(data);
             break;
         }
