@@ -258,10 +258,23 @@ export class LibRouter extends AbstractRouter {
       height: 675,
       deviceScaleFactor: 1,
     });
+    const mathjaxStrings = htmlContent.match(/(\${1,2}\n?([^\$]*)\n?\${1,2})/gi);
+    if (Array.isArray(mathjaxStrings) && mathjaxStrings.length) {
+      const mathjaxData = await this.renderMathjax(JSON.stringify(mathjaxStrings), 'TeX', 'svg');
+
+      mathjaxStrings.forEach((mathjaxString, index) => {
+        if (!mathjaxData[index] || !mathjaxString.includes(mathjaxData[index].speakText)) {
+          return;
+        }
+
+        htmlContent = htmlContent.replace(mathjaxString, mathjaxData[index].svg);
+      });
+    }
+
     await page.setContent(htmlContent);
     await Promise.all([
-      page.addStyleTag({ path: path.join(staticStatistics.pathToAssets, 'css', 'gfm.css') }),
       page.addStyleTag({ url: `https://staging.arsnova.click/theme-${theme ?? 'default'}.css` }),
+      page.addStyleTag({ path: path.join(staticStatistics.pathToAssets, 'css', 'gfm.css') }),
     ]);
     return new Promise(resolve => {
       setTimeout(async () => {

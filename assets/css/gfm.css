@@ -2,6 +2,13 @@ body {
   margin: 10px;
 }
 
+.thumbnail {
+  max-height: 600px;
+  width: auto;
+  float: left;
+  margin-right: 10px;
+}
+
 code[class*="language-"],
 pre[class*="language-"] {
   color: #393A34;
