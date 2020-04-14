@@ -12,6 +12,7 @@ export interface ITwitterApiTweets {
 
   user: ITwitterApiUser;
   entities: ITwitterApiEntities;
+  extended_entities?: ITwitterApiExtendedEntities;
 }
 
 export interface ITwitterApiUser {
@@ -24,6 +25,15 @@ export interface ITwitterApiUser {
 
 export interface ITwitterApiEntities {
   urls: ITwitterApiUrl;
+}
+
+export interface ITwitterApiExtendedEntities {
+  media: Array<ITwitterExtendedEntityMedia>;
+}
+
+export interface ITwitterExtendedEntityMedia {
+  media_url_https: string;
+  type: 'photo' | string;
 }
 
 export interface ITwitterApiUrl {

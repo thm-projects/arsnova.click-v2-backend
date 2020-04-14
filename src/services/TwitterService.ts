@@ -57,6 +57,11 @@ class TwitterService {
         profile_image_url_https: status.user.profile_image_url_https,
         url: `https://twitter.com/i/web/status/${status.id_str}`,
         screen_name: status.user.screen_name,
+        extended_entities: status.extended_entities?.media.filter(media => media.type === 'photo').map(media => (
+          {
+            media_url_https: media.media_url_https,
+          }
+        )),
       };
     });
   }
