@@ -48,47 +48,24 @@ class MemberDAO extends AbstractDAO {
       {
         $match: {
           $or: [
-            {
-              $and: [
-                {
-                  ref: {
-                    $exists: true,
-                  },
-                },
-                { type: HistoryModelType.Attendee },
-              ],
-            },
+            { $and: [{ ref: { $exists: true } }, { type: HistoryModelType.Attendee }] },
             { type: HistoryModelType.PlayedQuiz },
           ],
         },
-      },
-      {
+      }, {
         $group: {
-          _id: {
-            name: '$name',
-            ref: '$ref',
-          },
+          _id: { ref: '$ref' },
           names: {
             $push: {
-              name: 'ref',
+              $cond: [{ $ifNull: ['$ref', null] }, { type: '$type' }, '$$REMOVE'],
             },
           },
-          nameCounter: {
-            $sum: 1,
-          },
+          nameCount: { $sum: 1 },
         },
-      }, //
-      { $match: { '_id.ref': { $exists: false } } }, //
-      {
-        $project: {
-          _id: 0,
-          nameCounter: 1,
-          name: '$_id.name',
-        },
-      }, //
-      { $match: { nameCounter: { $gt: 1 } } }, //
-      { $group: { _id: null, avrg: { $avg: '$nameCounter' } } }, //
-      { $project: { _id: 0, average: { $ceil: '$avrg' } } }, //
+      },
+      { $match: { '_id.ref': { $exists: true }, names: { $elemMatch: { type: HistoryModelType.Attendee } } } },
+      { $group: { _id: null, avrg: { $avg: '$nameCount' } } },
+      { $project: { _id: 0, average: { $ceil: '$avrg' } } },
     ]).exec();
 
     return {
