@@ -286,7 +286,7 @@ export class LibRouter extends AbstractRouter {
           digest,
           data: data,
           url: '',
-        });
+        }).catch(() => {});
 
         resolve(digest);
       }, 1000);
