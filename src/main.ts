@@ -156,11 +156,13 @@ if (cluster.isMaster) {
     runTest();
   }
 
-  setVapidDetails(
-    `mailto:${settings.projectEMail}`,
-    settings.vapidKeys.publicKey,
-    settings.vapidKeys.privateKey,
-  );
+  if (settings.projectEMail && settings.vapidKeys.publicKey && settings.vapidKeys.privateKey) {
+    setVapidDetails(
+      `mailto:${settings.projectEMail}`,
+      settings.vapidKeys.publicKey,
+      settings.vapidKeys.privateKey,
+    );
+  }
 
   LoggerService.info(`[Worker ${process.pid}] started`);
 }
