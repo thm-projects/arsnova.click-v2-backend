@@ -32,6 +32,9 @@
     - `AMQP_MANAGEMENT_API_PORT` (default: `15672`);
     - `AMQP_MANAGEMENT_USER` (eg: `AMQP_USER`);
     - `AMQP_MANAGEMENT_PASSWORD` (eg: `AMQP_PASSWORD`);
+    - `PROJECT_MAIL_ADDRESS`: *[Optional]* Mail Address for contacting the project owner (used by VAPID)
+    - `VAPID_PUBLIC_KEY`: *[Optional]* Public VAPID key for web push notifications
+    - `VAPID_PRIVATE_KEY`: *[Optional]* Private VAPID key for web push notifications
     - `ARSNOVA_CLICK_BACKEND_BASE_PATH`: *[Optional]* Sets the path relative to the working directory which contains the app
     - `ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL`: *[Optional]* This is the external port used for rewriting the urls of cached quizzes (default: `ARSNOVA_CLICK_BACKEND_PORT_INTERNAL`)
     - `ARSNOVA_CLICK_BACKEND_PORT_INTERNAL`: *[Optional]* This is the internal port used during the startup of the server (default: 3010)
