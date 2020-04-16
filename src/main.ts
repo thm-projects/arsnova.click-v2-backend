@@ -80,7 +80,7 @@ let server: Server;
 if (cluster.isMaster) {
   LoggerService.info(`Booting NodeJS ${process.version} on ${process.arch} architecture`);
   LoggerService.info(`[Master ${process.pid}] is running`);
-  const workers = [];
+  const workers: Array<cluster.Worker> = [];
 
   const masterModel = new Model();
   net.createServer((stream) => {
