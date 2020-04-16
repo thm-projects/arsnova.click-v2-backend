@@ -64,7 +64,8 @@ class MemberDAO extends AbstractDAO {
         },
       },
       { $match: { '_id.ref': { $exists: true }, names: { $elemMatch: { type: HistoryModelType.Attendee } } } },
-      { $group: { _id: null, avrg: { $avg: '$nameCount' } } },
+      { $project: { namesLength: { $size: '$names' } } },
+      { $group: { _id: null, avrg: { $avg: '$namesLength' } } },
       { $project: { _id: 0, average: { $ceil: '$avrg' } } },
     ]).exec();
 
