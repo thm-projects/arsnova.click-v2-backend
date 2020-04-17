@@ -4,7 +4,9 @@ import * as compress from 'compression';
 import * as cors from 'cors';
 import * as express from 'express';
 import { Request, Response, Router } from 'express';
+import * as promBundle from 'express-prom-bundle';
 import * as process from 'process';
+import { collectDefaultMetrics } from 'prom-client';
 import * as routeCache from 'route-cache';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
@@ -76,6 +78,7 @@ class App {
     this.routes();
 
     useExpressServer(this._express, routingControllerOptions);
+    collectDefaultMetrics();
   }
 
   // Configure Express middleware.
@@ -101,6 +104,12 @@ class App {
     this._express.options('*', cors(options));
     this._express.use(compress());
     this._express.disable('x-powered-by');
+
+    this._express.use(promBundle({
+      includePath: true,
+      includeMethod: true,
+      includeStatusCode: true,
+    }));
   }
 
   // Configure API endpoints.
@@ -112,9 +121,6 @@ class App {
     const router: Router = express.Router();
     router.get(`/statistics`, cors(options), routeCache.cacheSeconds(10), async (req: Request, res: Response) => {
       res.send(Object.assign({}, staticStatistics, await dynamicStatistics()));
-    });
-    router.get(`/err`, () => {
-      throw new Error('testerror');
     });
 
     this._express.use(`/`, router);

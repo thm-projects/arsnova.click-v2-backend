@@ -14,6 +14,8 @@ const localIpv4Address = localAddress ? localAddress[0].address : '127.0.0.1';
 
 const basePath = process.env.ARSNOVA_CLICK_BACKEND_BASE_PATH || config.basePath || '';
 const portInternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_INTERNAL || config.portInternal || 3010;
+const scuttlebuttPort = +process.env.ARSNOVA_CLICK_BACKEND_PORT_SCUTTLEBUTT || config.portScuttlebutt || parseInt(portInternal + 10, 10) || 3020;
+const prometheusPort = +process.env.ARSNOVA_CLICK_BACKEND_PORT_PROMETHEUS || config.portPrometheus || parseInt(scuttlebuttPort + 10, 10) || 3030;
 const portExternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_EXTERNAL || config.portExternal || portInternal;
 const routePrefix = process.env.ARSNOVA_CLICK_BACKEND_ROUTE_PREFIX || config.routePrefix || '';
 const rewriteAssetCacheUrl = process.env.ARSNOVA_CLICK_BACKEND_REWRITE_ASSET_CACHE_URL || config.rewriteAssetCacheUrl
@@ -56,6 +58,8 @@ export const staticStatistics = {
   appVersion: '2.0.0',
   hostname: hostname(),
   port: portInternal,
+  scuttlebuttPort: scuttlebuttPort,
+  prometheusPort: prometheusPort,
   routePrefix: `${routePrefix}`,
   localIpv4Address: localIpv4Address,
   rewriteAssetCacheUrl: rewriteAssetCacheUrl,

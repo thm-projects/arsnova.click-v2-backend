@@ -2,6 +2,8 @@ declare function require(name: string): any;
 
 import { setGlobalOptions } from '@typegoose/typegoose';
 import * as cluster from 'cluster';
+import * as express from 'express';
+import * as promBundle from 'express-prom-bundle';
 import * as http from 'http';
 import { Server } from 'http';
 import * as Minimist from 'minimist';
@@ -71,7 +73,9 @@ interface IInetAddress {
   MemberDAO,
 };
 
-const port: string | number | boolean = normalizePort(staticStatistics.port);
+const port = normalizePort(staticStatistics.port);
+const scuttlebuttPort = normalizePort(staticStatistics.scuttlebuttPort);
+const prometheusPort = normalizePort(staticStatistics.prometheusPort);
 App.set('port', port);
 
 const numWorkers = process.env.NODE_ENV !== 'test' ? require('os').cpus().length - 1 : 2;
@@ -85,7 +89,7 @@ if (cluster.isMaster) {
   const masterModel = new Model();
   net.createServer((stream) => {
     stream.pipe(masterModel.createStream()).pipe(stream);
-  }).listen(8000, () => {
+  }).listen(scuttlebuttPort, () => {
     for (let i = 0; i < numWorkers; i++) {
       workers[i] = cluster.fork();
 
@@ -122,10 +126,14 @@ if (cluster.isMaster) {
 
   DbDAO.connectToDb();
 
+  const metricsServer = express();
+  metricsServer.use('/metrics', promBundle.clusterMetrics());
+  metricsServer.listen(prometheusPort);
+
 } else {
 
   const workerModel = new Model();
-  const stream = net.connect(8000);
+  const stream = net.connect(scuttlebuttPort);
   stream.pipe(workerModel.createStream()).pipe(stream);
   workerModel.on('update', data => {
     switch (data[0]) {
@@ -167,17 +175,8 @@ if (cluster.isMaster) {
   LoggerService.info(`[Worker ${process.pid}] started`);
 }
 
-function normalizePort(val: number | string): number | string | boolean {
-  const portCheck: number = (
-                              typeof val === 'string'
-                            ) ? parseInt(val, 10) : val;
-  if (isNaN(portCheck)) {
-    return val;
-  } else if (portCheck >= 0) {
-    return portCheck;
-  } else {
-    return false;
-  }
+function normalizePort(val: string): number {
+  return parseInt(val, 10);
 }
 
 function onError(error: NodeJS.ErrnoException): void {
