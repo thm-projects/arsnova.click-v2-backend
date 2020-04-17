@@ -46,26 +46,16 @@ class MemberDAO extends AbstractDAO {
   public async getStatistics(): Promise<{ [key: string]: number }> {
     const average = await HistoryModel.aggregate([
       {
-        $match: {
-          $or: [
-            { $and: [{ ref: { $exists: true } }, { type: HistoryModelType.Attendee }] },
-            { type: HistoryModelType.PlayedQuiz },
-          ],
-        },
-      }, {
         $group: {
-          _id: { ref: '$ref' },
-          names: {
-            $push: {
-              $cond: [{ $ifNull: ['$ref', null] }, { type: '$type' }, '$$REMOVE'],
-            },
-          },
-          nameCount: { $sum: 1 },
+          _id: { $ifNull: ['$ref', '$name'] },
+          rounds: { $push: { $cond: [{ $ifNull: ['$ref', null] }, '$$REMOVE', true] } },
+          attendees: { $push: { $cond: [{ $ifNull: ['$ref', null] }, true, '$$REMOVE'] } },
         },
       },
-      { $match: { '_id.ref': { $exists: true }, names: { $elemMatch: { type: HistoryModelType.Attendee } } } },
-      { $project: { namesLength: { $size: '$names' } } },
-      { $group: { _id: null, avrg: { $avg: '$namesLength' } } },
+      { $project: { roundsLength: { $size: '$rounds' }, attendeesLength: { $size: '$attendees' } } },
+      { $project: { perRound: { $divide: ['$attendeesLength', '$roundsLength'] } } },
+      { $match: { perRound: { $gt: 0 } } },
+      { $group: { _id: null, avrg: { $avg: '$perRound' } } },
       { $project: { _id: 0, average: { $ceil: '$avrg' } } },
     ]).exec();
 
