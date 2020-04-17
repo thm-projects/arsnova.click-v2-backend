@@ -58,7 +58,7 @@ services:
       - rabbitmq
       - mongodb
   rabbitmq:
-    image: bitnami/rabbitmq:3.7.17
+    image: bitnami/rabbitmq:3.8.3
     container_name: arsnova-click-backend-rabbitmq
     hostname: rabbitmq
     ports:
