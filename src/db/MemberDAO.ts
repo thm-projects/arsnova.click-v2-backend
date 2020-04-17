@@ -62,7 +62,7 @@ class MemberDAO extends AbstractDAO {
     return {
       total: this._totalUsers,
       active: await MemberModel.countDocuments({}),
-      average: average[0]?.average,
+      average: isNaN(average[0]?.average) ? 0 : average[0]?.average ?? 0,
     };
   }
 
