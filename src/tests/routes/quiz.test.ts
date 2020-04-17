@@ -4,6 +4,7 @@ import * as chai from 'chai';
 import * as fs from 'fs';
 import { suite, test, timeout } from 'mocha-typescript';
 import * as path from 'path';
+import * as routeCache from 'route-cache';
 import app from '../../App';
 import DbDAO from '../../db/DbDAO';
 import QuizDAO from '../../db/QuizDAO';
@@ -64,6 +65,9 @@ class QuizApiRouterTestSuite {
 
     const doc = await QuizDAO.addQuiz(quiz);
     await QuizDAO.initQuiz(doc);
+
+    /* The response is cached so we need to purge the cache */
+    routeCache.removeCache(`${this._baseApiRoute}/status/${this._hashtag}`);
 
     const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
     expect(res.status).to.equal(200);

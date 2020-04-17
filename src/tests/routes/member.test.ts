@@ -1,11 +1,15 @@
 /// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
 import * as chai from 'chai';
+import * as fs from 'fs';
 import { suite, test } from 'mocha-typescript';
+import * as path from 'path';
+import * as routeCache from 'route-cache';
 import app from '../../App';
 import DbDAO from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { staticStatistics } from '../../statistics';
 import { generateQuiz } from '../fixtures';
 
@@ -33,7 +37,17 @@ class MemberApiRouterTestSuite {
 
   @test
   public async getRemainingNicks(): Promise<void> {
-    const res = await chai.request(app).get(`${this._baseApiRoute}/${this._hashtag}/available`);
+    const quiz: IQuiz = JSON.parse(
+      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
+    quiz.name = this._hashtag;
+
+    const doc = await QuizDAO.addQuiz(quiz);
+    await QuizDAO.initQuiz(doc);
+
+    /* The response is cached so we need to purge the cache */
+    routeCache.removeCache(`${this._baseApiRoute}/available/${this._hashtag}`);
+
+    const res = await chai.request(app).get(`${this._baseApiRoute}/available/${this._hashtag}`);
     expect(res.status).to.equal(200);
     expect(res.type).to.equal('application/json');
   }
