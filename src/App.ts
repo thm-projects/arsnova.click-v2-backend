@@ -5,6 +5,7 @@ import * as cors from 'cors';
 import * as express from 'express';
 import { Request, Response, Router } from 'express';
 import * as process from 'process';
+import * as routeCache from 'route-cache';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
 import * as timesyncServer from 'timesync/server';
@@ -109,7 +110,7 @@ class App {
     }));
 
     const router: Router = express.Router();
-    router.get(`/statistics`, cors(options), async (req: Request, res: Response) => {
+    router.get(`/statistics`, cors(options), routeCache.cacheSeconds(10), async (req: Request, res: Response) => {
       res.send(Object.assign({}, staticStatistics, await dynamicStatistics()));
     });
     router.get(`/err`, () => {

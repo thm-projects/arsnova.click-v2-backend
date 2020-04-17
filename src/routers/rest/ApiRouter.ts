@@ -6,7 +6,8 @@ import { fromBuffer } from 'file-type';
 import * as fs from 'fs';
 import { OpenAPIObject } from 'openapi3-ts';
 import * as path from 'path';
-import { Get, getMetadataArgsStorage, JsonController, NotFoundError, Param, Res } from 'routing-controllers';
+import * as routeCache from 'route-cache';
+import { Get, getMetadataArgsStorage, JsonController, NotFoundError, Param, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, routingControllersToSpec } from 'routing-controllers-openapi';
 import { routingControllerOptions } from '../../App';
 import QuizDAO from '../../db/QuizDAO';
@@ -78,6 +79,7 @@ export class ApiRouter extends AbstractRouter {
     summary: 'Swagger v2 Spec',
     description: 'Generates the Swagger Spec from the OpenAPI Spec',
   })
+  @UseBefore(routeCache.cacheSeconds(300))
   private async swaggerSpec(): Promise<void> {
     if (fs.existsSync(ApiRouter._specFile)) {
       const statsOfSpec = fs.statSync(ApiRouter._specFile);
@@ -109,6 +111,7 @@ export class ApiRouter extends AbstractRouter {
   @OpenAPI({
     summary: 'Transfers assets like sound files for the quizzes',
   })
+  @UseBefore(routeCache.cacheSeconds(300))
   private getFileByName(
     @Param('directory') directory: string, //
     @Param('subdirectory') subdirectory: string, //
@@ -136,6 +139,7 @@ export class ApiRouter extends AbstractRouter {
   @OpenAPI({
     deprecated: true,
   })
+  @UseBefore(routeCache.cacheSeconds(300))
   private async getThemeImageFileByName(
     @Param('themeName') themeName: string, //
     @Param('fileName') fileName: string, //

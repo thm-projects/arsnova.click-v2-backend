@@ -1,7 +1,8 @@
 import * as CryptoJS from 'crypto-js';
 import { Request } from 'express';
 import { ObjectId } from 'mongodb';
-import { Authorized, BadRequestError, BodyParam, Delete, Get, JsonController, Param, Post, Put, Req } from 'routing-controllers';
+import * as routeCache from 'route-cache';
+import { Authorized, BadRequestError, BodyParam, Delete, Get, JsonController, Param, Post, Put, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import * as superagent from 'superagent';
 import { sendNotification } from 'web-push';
@@ -17,6 +18,7 @@ import { AbstractRouter } from './AbstractRouter';
 export class QuizPoolRouter extends AbstractRouter {
 
   @Post('/generate') //
+  @UseBefore(routeCache.cacheSeconds(10))
   public async generateAvailablePoolQuestions( //
     @BodyParam('data', { required: true }) data: Array<{ tag: string, amount: number }>, //
   ): Promise<IMessage> {
@@ -30,6 +32,7 @@ export class QuizPoolRouter extends AbstractRouter {
   }
 
   @Get('/tags') //
+  @UseBefore(routeCache.cacheSeconds(10))
   public async getAvailablePoolTags(): Promise<IMessage> {
     const tags = (
                    await QuizPoolDAO.getPoolTags()

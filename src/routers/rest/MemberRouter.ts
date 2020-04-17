@@ -248,32 +248,4 @@ export class MemberRouter extends AbstractRouter {
       },
     };
   }
-
-  @Get('/:quizName/available')
-  public async getRemainingNicks(@Param('quizName') quizName: string, //
-  ): Promise<IMessage> {
-
-    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
-    if (!activeQuiz) {
-      return {
-        status: StatusProtocol.Success,
-        step: MessageProtocol.GetRemainingNicks,
-        payload: { nicknames: [] },
-      };
-    }
-
-    const alreadyUsed = (
-      await MemberDAO.getMembersOfQuiz(activeQuiz.name)
-    ).map(member => member.name);
-
-    const names: Array<string> = activeQuiz.sessionConfig.nicks.selectedNicks.filter(nick => {
-      return !alreadyUsed.find(member => member === nick);
-    });
-
-    return {
-      status: StatusProtocol.Success,
-      step: MessageProtocol.GetRemainingNicks,
-      payload: { nicknames: names },
-    };
-  }
 }

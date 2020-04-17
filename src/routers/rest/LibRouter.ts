@@ -7,6 +7,7 @@ import * as mjAPI from 'mathjax-node';
 import { Document } from 'mongoose';
 import * as path from 'path';
 import * as puppeteer from 'puppeteer';
+import * as routeCache from 'route-cache';
 import {
   BadRequestError,
   BodyParam,
@@ -21,6 +22,7 @@ import {
   Req,
   Res,
   UnauthorizedError,
+  UseBefore,
 } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import * as xml2js from 'xml2js';
@@ -294,6 +296,7 @@ export class LibRouter extends AbstractRouter {
   }
 
   @Get('/cache/quiz/assets/:digest')
+  @UseBefore(routeCache.cacheSeconds(300))
   public async getCache(@Param('digest') digest: string, @Res() response: Response): Promise<ArrayBufferLike> {
     const doc = await AssetDAO.getAssetByDigestAsLean(digest);
     if (!doc || !doc.data) {

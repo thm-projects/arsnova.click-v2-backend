@@ -2,6 +2,7 @@ import { Response } from 'express';
 import * as fs from 'fs';
 import { Document } from 'mongoose';
 import * as path from 'path';
+import * as routeCache from 'route-cache';
 import {
   BadRequestError,
   BodyParam,
@@ -19,6 +20,7 @@ import {
   Res,
   UnauthorizedError,
   UploadedFiles,
+  UseBefore,
 } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import AMQPConnector from '../../db/AMQPConnector';
@@ -57,6 +59,7 @@ export class QuizRouter extends AbstractRouter {
       },
     ],
   })
+  @UseBefore(routeCache.cacheSeconds(5))
   public async getIsAvailableQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
@@ -113,6 +116,7 @@ export class QuizRouter extends AbstractRouter {
       },
     ],
   })
+  @UseBefore(routeCache.cacheSeconds(5))
   public async getFullQuizStatusData(
     @Params() params: { [key: string]: any }, //
   ): Promise<object> {
@@ -139,6 +143,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/generate/demo/:languageId') //
+  @UseBefore(routeCache.cacheSeconds(300))
   @ContentType('application/json')
   public async generateDemoQuiz(
     @Param('languageId') languageId: string, //
@@ -168,6 +173,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/generate/abcd/:languageId/:answerLength?') //
+  @UseBefore(routeCache.cacheSeconds(300))
   @OpenAPI({
     summary: 'Generates a new abcd quiz with the passed language and number of answers',
     parameters: [
@@ -394,6 +400,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/currentState/:quizName')
+  @UseBefore(routeCache.cacheSeconds(10))
   public async getCurrentQuizState(@Param('quizName') quizName: string, //
   ): Promise<IMessage> {
 
@@ -442,6 +449,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/startTime/:quizName')
+  @UseBefore(routeCache.cacheSeconds(10))
   public async getQuizStartTime(@Param('quizName') quizName: string, //
   ): Promise<IMessage> {
 
@@ -462,6 +470,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/settings/:quizName')
+  @UseBefore(routeCache.cacheSeconds(10))
   public async getQuizSettings(@Param('quizName') quizName: string, //
   ): Promise<IMessage> {
 
@@ -699,6 +708,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/export/:quizName/:privateKey/:theme/:language') //
+  @UseBefore(routeCache.cacheSeconds(5))
   @ContentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') //
   public async getExportFile(
     @Param('quizName') quizName: string, //
@@ -736,6 +746,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/member-group/:quizName')
+  @UseBefore(routeCache.cacheSeconds(10))
   public async getFreeMemberGroup(@Param('quizName') quizName: string): Promise<IMessage> {
     const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
@@ -764,6 +775,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/leaderboard/:quizName/:amount/:questionIndex?') //
+  @UseBefore(routeCache.cacheSeconds(20))
   @OpenAPI({
     summary: 'Returns the leaderboard data',
     parameters: [
@@ -911,6 +923,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/quiz/:quizName?') //
+  @UseBefore(routeCache.cacheSeconds(10))
   @OpenAPI({
     summary: 'Returns the data of a quiz',
     parameters: [
