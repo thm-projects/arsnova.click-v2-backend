@@ -63,6 +63,7 @@
     "source-map-support": "^0.5.16",
     "superagent": "^5.2.2",
     "swagger-ui-express": "^4.1.4",
+    "prometheus-gc-stats": "^0.6.2",
     "timesync": "^1.0.5",
     "twitter": "^1.7.1",
     "web-push": "^3.4.3",

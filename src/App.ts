@@ -6,7 +6,8 @@ import * as express from 'express';
 import { Request, Response, Router } from 'express';
 import * as promBundle from 'express-prom-bundle';
 import * as process from 'process';
-import { collectDefaultMetrics } from 'prom-client';
+import { collectDefaultMetrics, Counter } from 'prom-client';
+import * as gcStats from 'prometheus-gc-stats';
 import * as routeCache from 'route-cache';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
@@ -110,10 +111,23 @@ class App {
       includeMethod: true,
       includeStatusCode: true,
     }));
+    gcStats()();
   }
 
   // Configure API endpoints.
   private routes(): void {
+
+    const totalRequests = new Counter({
+      name: 'http_requests_total',
+      help: 'Total number of requests',
+      labelNames: ['method', 'hostname'],
+    });
+
+    this._express.use((req, res, next) => {
+      totalRequests.inc({ method: req.method, hostname: req.hostname });
+      next();
+    });
+
     this._express.use('/api/v1/api-docs', swaggerUi.serve, swaggerUi.setup(null, {
       swaggerUrl: `${staticStatistics.rewriteAssetCacheUrl}/api/v1/api-docs.json`,
     }));
