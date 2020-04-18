@@ -18,7 +18,6 @@ import { AbstractRouter } from './AbstractRouter';
 export class QuizPoolRouter extends AbstractRouter {
 
   @Post('/generate') //
-  @UseBefore(routeCache.cacheSeconds(10))
   public async generateAvailablePoolQuestions( //
     @BodyParam('data', { required: true }) data: Array<{ tag: string, amount: number }>, //
   ): Promise<IMessage> {

@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import * as fs from 'fs';
 import { Document } from 'mongoose';
 import * as path from 'path';
@@ -143,7 +143,6 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/generate/demo/:languageId') //
-  @UseBefore(routeCache.cacheSeconds(300))
   @ContentType('application/json')
   public async generateDemoQuiz(
     @Param('languageId') languageId: string, //
@@ -173,7 +172,6 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/generate/abcd/:languageId/:answerLength?') //
-  @UseBefore(routeCache.cacheSeconds(300))
   @OpenAPI({
     summary: 'Generates a new abcd quiz with the passed language and number of answers',
     parameters: [
@@ -775,7 +773,9 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/leaderboard/:quizName/:amount/:questionIndex?') //
-  @UseBefore(routeCache.cacheSeconds(20))
+  @UseBefore(routeCache.cacheSeconds(20, (req: Request) => {
+    return `${req.url}_${req.headers.authorization}`;
+  }))
   @OpenAPI({
     summary: 'Returns the leaderboard data',
     parameters: [
