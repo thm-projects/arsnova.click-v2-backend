@@ -33,15 +33,13 @@ export class QuizPoolRouter extends AbstractRouter {
   @Get('/tags') //
   @UseBefore(routeCache.cacheSeconds(10))
   public async getAvailablePoolTags(): Promise<IMessage> {
-    const tags = (
-                   await QuizPoolDAO.getPoolTags()
-                 )[0] ?? {};
+    const tags = (await QuizPoolDAO.getPoolTags())[0] ?? {};
     const parsedTags = {};
     Object.keys(tags).forEach(key => {
       const parsedKey = key.toLowerCase()
-      .split(' ')
-      .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
-      .join(' ');
+        .split(' ')
+        .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+        .join(' ');
       parsedTags[parsedKey] = tags[key];
     });
 
@@ -67,22 +65,22 @@ export class QuizPoolRouter extends AbstractRouter {
     }
 
     return superagent.get(`${url}/api/v1/quizpool/all`) //
-    .set('Authorization', request.header('authorization')) //
-    .then(result => QuizPoolDAO.addQuestions(result.body.payload)) //
-    .then(data => {
-      return {
-        status: StatusProtocol.Success,
-        step: MessageProtocol.Added,
-        payload: data.map(val => val.toJSON({ getters: true })),
-      };
-    })
-    .catch(error => {
-      return {
-        status: StatusProtocol.Failed,
-        step: MessageProtocol.InvalidResponse,
-        payload: error,
-      };
-    });
+      .set('Authorization', request.header('authorization')) //
+      .then(result => QuizPoolDAO.addQuestions(result.body.payload)) //
+      .then(data => {
+        return {
+          status: StatusProtocol.Success,
+          step: MessageProtocol.Added,
+          payload: data.map(val => val.toJSON({ getters: true })),
+        };
+      })
+      .catch(error => {
+        return {
+          status: StatusProtocol.Failed,
+          step: MessageProtocol.InvalidResponse,
+          payload: error,
+        };
+      });
   }
 
   @Post('/') //
