@@ -70,7 +70,7 @@ services:
     env_file: rabbitmq.env
     restart: unless-stopped
     volumes:
-      - rabbitmq:/bitnami
+      - ./rabbitmq:/bitnami
       - ./rabbitmq-plugins.txt:/opt/bitnami/rabbitmq/etc/rabbitmq/enabled_plugins
   mongodb:
     image: mongo:4.0.5
@@ -84,7 +84,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-      - mongodb:/data/db
+      - ./mongodb:/data/db
 
 networks:
   app-tier:
