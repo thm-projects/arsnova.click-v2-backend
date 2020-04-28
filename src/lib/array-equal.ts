@@ -1,6 +1,6 @@
 import { objectEqual } from './object-equal';
 
-export function arraysEqual(a, b): boolean {
+export function arraysEqual(a: Array<object>, b: Array<object>): boolean {
   if (a === b) {
     return true;
   }

@@ -3,6 +3,7 @@ import * as cluster from 'cluster';
 import * as CryptoJS from 'crypto-js';
 import { EventEmitter } from 'events';
 import { Document, Error } from 'mongoose';
+import * as routeCache from 'route-cache';
 import * as superagent from 'superagent';
 import { HistoryModelType } from '../enums/HistoryModelType';
 import { IPCExchange } from '../enums/IPCExchange';
@@ -26,6 +27,7 @@ class MemberDAO extends AbstractDAO {
   set totalUsers(value: number) {
     this._totalUsers = value;
     this.totalUsersChanged.emit('update', this._totalUsers);
+    routeCache.removeCache('statistics');
   }
 
   constructor() {

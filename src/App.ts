@@ -133,7 +133,7 @@ class App {
     }));
 
     const router: Router = express.Router();
-    router.get(`/statistics`, cors(options), routeCache.cacheSeconds(10), async (req: Request, res: Response) => {
+    router.get(`/statistics`, cors(options), routeCache.cacheSeconds(10, 'statistics'), async (req: Request, res: Response) => {
       res.send(Object.assign({}, staticStatistics, await dynamicStatistics()));
     });
 

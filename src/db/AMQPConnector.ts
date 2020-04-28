@@ -60,7 +60,7 @@ class AMQPConnector {
     }
 
     this._lastStatisticRequestSent = new Date().getTime();
-    routeCache.removeCache('/statistics');
+    routeCache.removeCache('statistics');
 
     return this.channel?.publish(this.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,

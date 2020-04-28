@@ -1,4 +1,10 @@
-export function objectEqual(a, b): boolean {
+import { arraysEqual } from './array-equal';
+
+export function objectEqual(a: object, b: object): boolean {
+  if (a === b) {
+    return true;
+  }
+
   // Create arrays of property names
   const aProps = Object.getOwnPropertyNames(a);
   const bProps = Object.getOwnPropertyNames(b);
@@ -9,14 +15,10 @@ export function objectEqual(a, b): boolean {
     return false;
   }
 
-  for (let i = 0; i < aProps.length; i++) {
-    const propName = aProps[i];
-
-    // If values of same property are not equal,
-    // objects are not equivalent
-    if (a[propName] !== b[propName]) {
-      return false;
-    }
+  // If values of same property are not equal,
+  // objects are not equivalent
+  if (!arraysEqual(a as any, b as any)) {
+    return false;
   }
 
   // If we made it this far, objects
