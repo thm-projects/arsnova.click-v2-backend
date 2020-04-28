@@ -11,6 +11,7 @@ import { IQuiz } from '../interfaces/quizzes/IQuizEntity';
 import { generateToken } from '../lib/generateToken';
 import { HistoryModel } from '../models/HistoryModel';
 import { QuizModel, QuizModelItem } from '../models/quiz/QuizModelItem';
+import LoggerService from '../services/LoggerService';
 import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
@@ -32,6 +33,7 @@ class QuizDAO extends AbstractDAO {
     this._storage = storage;
 
     if (cluster.isMaster) {
+      this.initializeExchanges();
       this.restoreActiveQuizTimers();
     }
   }
@@ -524,6 +526,13 @@ class QuizDAO extends AbstractDAO {
       }
 
     }, 1000);
+  }
+
+  private async initializeExchanges(): Promise<void> {
+    const quizzes = await QuizModel.find({}).exec();
+    return Promise.all(quizzes.map(quiz => {
+      return AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quiz.name), 'fanout');
+    })).then(() => LoggerService.info('AMQP Exchanges initialized'));
   }
 }
 
