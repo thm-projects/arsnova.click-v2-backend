@@ -44,11 +44,15 @@ class AMQPConnector {
     });
   }
 
+  public prepareQuiznameForQuery(quizName: string): string {
+    return quizName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+  }
+
   public buildQuizExchange(quizname: string): string {
     if (!quizname) {
       throw new Error(`Could not build exchange name. Quizname '${quizname}' is not supported.`);
     }
-    return encodeURI(`quiz_${quizname.trim()}`);
+    return `quiz_${this.prepareQuiznameForQuery(encodeURIComponent(quizname))}`;
   }
 
   public sendRequestStatistics(): boolean {

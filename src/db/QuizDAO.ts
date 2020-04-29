@@ -465,12 +465,8 @@ class QuizDAO extends AbstractDAO {
     return QuizModel.find({ state: { $in: states } }).exec();
   }
 
-  private prepareQuiznameForQuery(quizName: string): string {
-    return quizName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-  }
-
   private buildQuiznameQuery(quizName: string = ''): RegExp {
-    return new RegExp(`^${this.prepareQuiznameForQuery(quizName)}$`, 'i');
+    return new RegExp(`^${AMQPConnector.prepareQuiznameForQuery(quizName)}$`, 'i');
   }
 
   private async cleanupQuiz(quizName: string): Promise<void> {
@@ -489,7 +485,7 @@ class QuizDAO extends AbstractDAO {
     };
 
     superagent.get(reqOptions.protocol + '//' + reqOptions.host + ':' + reqOptions.port + reqOptions.path) //
-    .set('Authorization', 'Basic ' + Buffer.from(reqOptions.auth).toString('base64')).then((res) => {
+      .set('Authorization', 'Basic ' + Buffer.from(reqOptions.auth).toString('base64')).then((res) => {
       if (Array.isArray(res.body) && res.body.length) {
         this._storage[quizName].isEmpty = false;
         return;
