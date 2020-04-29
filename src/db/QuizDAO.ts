@@ -465,8 +465,12 @@ class QuizDAO extends AbstractDAO {
     return QuizModel.find({ state: { $in: states } }).exec();
   }
 
+  private prepareQuiznameForQuery(quizName: string): string {
+    return quizName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+  }
+
   private buildQuiznameQuery(quizName: string = ''): RegExp {
-    return new RegExp(`^${quizName.trim()}$`, 'i');
+    return new RegExp(`^${this.prepareQuiznameForQuery(quizName)}$`, 'i');
   }
 
   private async cleanupQuiz(quizName: string): Promise<void> {
