@@ -22,6 +22,8 @@ import MemberDAO from './db/MemberDAO';
 import QuizDAO from './db/QuizDAO';
 import UserDAO from './db/UserDAO';
 import { IPCExchange } from './enums/IPCExchange';
+import { MemberModel } from './models/member/MemberModel';
+import { QuizModel } from './models/quiz/QuizModelItem';
 import LoggerService from './services/LoggerService';
 import TwitterService from './services/TwitterService';
 import { settings, staticStatistics } from './statistics';
@@ -124,7 +126,15 @@ if (cluster.isMaster) {
 
   MemberDAO.totalUsersChanged.on('update', totalUsers => masterModel.set(IPCExchange.TotalUsers, totalUsers));
 
-  DbDAO.connectToDb();
+
+  DbDAO.connectToDb().then(async () => {
+    const argv = Minimist(process.argv.slice(2));
+    if (argv._.includes('load-test')) {
+      LoggerService.debug(`[LoadTest Master] Removing existing loadtest quizzes and attendees`);
+      await QuizModel.deleteMany({ name: /[loadtest].*/ });
+      await MemberModel.deleteMany({ currentQuizName: /[loadtest].*/ });
+    }
+  });
 
   const metricsServer = express();
   metricsServer.use('/metrics', promBundle.clusterMetrics());
@@ -157,12 +167,12 @@ if (cluster.isMaster) {
   server.on('listening', onListening);
   server.on('close', onClose);
 
-  DbDAO.connectToDb();
-
-  const argv = Minimist(process.argv.slice(2));
-  if (argv['load-test']) {
-    runTest();
-  }
+  DbDAO.connectToDb().then(() => {
+    const argv = Minimist(process.argv.slice(2));
+    if (argv._.includes('load-test')) {
+      runTest();
+    }
+  });
 
   if (settings.projectEMail && settings.vapidKeys.publicKey && settings.vapidKeys.privateKey) {
     setVapidDetails(
@@ -209,16 +219,14 @@ function onListening(): void {
 }
 
 function runTest(): void {
-  console.log('----- Running Load Test -----');
-  console.log(`CPU Time Spent Begin: ${process.cpuUsage().user / 1000000}`);
+  LoggerService.debug('----- Running Load Test -----');
+  LoggerService.debug(`CPU Time Spent Begin: ${process.cpuUsage().user / 1000000}`);
   const startTime = new Date().getTime();
   const loadTest = new LoadTester();
   loadTest.done.on('done', () => {
-    console.log(`CPU Time Spent End: ${process.cpuUsage().user / 1000000}`);
-    console.log(`Load Test took ${(
-                                    new Date().getTime() - startTime
-                                  ) / 1000}`);
-    console.log('----- Load Test Finished -----');
+    LoggerService.debug(`CPU Time Spent End: ${process.cpuUsage().user / 1000000}`);
+    LoggerService.debug(`Load Test took ${(new Date().getTime() - startTime) / 1000} seconds`);
+    LoggerService.debug('----- Load Test Finished -----');
   });
 }
 
