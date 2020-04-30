@@ -8,6 +8,7 @@ import * as superagent from 'superagent';
 import { HistoryModelType } from '../enums/HistoryModelType';
 import { IPCExchange } from '../enums/IPCExchange';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
+import { RoutingCache } from '../enums/RoutingCache';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
 import { HistoryModel } from '../models/HistoryModel';
@@ -27,7 +28,7 @@ class MemberDAO extends AbstractDAO {
   set totalUsers(value: number) {
     this._totalUsers = value;
     this.totalUsersChanged.emit('update', this._totalUsers);
-    routeCache.removeCache('statistics');
+    routeCache.removeCache(RoutingCache.Statistics);
   }
 
   constructor() {

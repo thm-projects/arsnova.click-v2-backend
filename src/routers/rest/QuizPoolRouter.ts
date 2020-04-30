@@ -9,6 +9,7 @@ import { sendNotification } from 'web-push';
 import QuizPoolDAO from '../../db/QuizPoolDAO';
 import UserDAO from '../../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
+import { RoutingCache } from '../../enums/RoutingCache';
 import { UserRole } from '../../enums/UserRole';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
@@ -31,7 +32,7 @@ export class QuizPoolRouter extends AbstractRouter {
   }
 
   @Get('/tags') //
-  @UseBefore(routeCache.cacheSeconds(10))
+  @UseBefore(routeCache.cacheSeconds(10, RoutingCache.QuizPoolTags))
   public async getAvailablePoolTags(): Promise<IMessage> {
     const tags = (await QuizPoolDAO.getPoolTags())[0] ?? {};
     const parsedTags = {};

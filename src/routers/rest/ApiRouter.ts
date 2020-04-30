@@ -11,6 +11,7 @@ import { Get, getMetadataArgsStorage, JsonController, NotFoundError, Param, Res,
 import { OpenAPI, routingControllersToSpec } from 'routing-controllers-openapi';
 import { routingControllerOptions } from '../../App';
 import QuizDAO from '../../db/QuizDAO';
+import { RoutingCache } from '../../enums/RoutingCache';
 import { settings, staticStatistics } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
@@ -59,6 +60,7 @@ export class ApiRouter extends AbstractRouter {
       fs.mkdirSync(ApiRouter.homedir, { recursive: true });
     }
     fs.writeFileSync(ApiRouter._specFile, JSON.stringify(spec));
+    routeCache.removeCache(RoutingCache.ApiDoc);
   }
 
   @Get('/') //
@@ -79,7 +81,7 @@ export class ApiRouter extends AbstractRouter {
     summary: 'Swagger v2 Spec',
     description: 'Generates the Swagger Spec from the OpenAPI Spec',
   })
-  @UseBefore(routeCache.cacheSeconds(300))
+  @UseBefore(routeCache.cacheSeconds(1000000, RoutingCache.ApiDoc))
   private async swaggerSpec(): Promise<void> {
     if (fs.existsSync(ApiRouter._specFile)) {
       const statsOfSpec = fs.statSync(ApiRouter._specFile);
@@ -111,7 +113,7 @@ export class ApiRouter extends AbstractRouter {
   @OpenAPI({
     summary: 'Transfers assets like sound files for the quizzes',
   })
-  @UseBefore(routeCache.cacheSeconds(300))
+  @UseBefore(routeCache.cacheSeconds(300, req => `${RoutingCache.AssetFiles}_${req.url}`))
   private getFileByName(
     @Param('directory') directory: string, //
     @Param('subdirectory') subdirectory: string, //
@@ -139,7 +141,6 @@ export class ApiRouter extends AbstractRouter {
   @OpenAPI({
     deprecated: true,
   })
-  @UseBefore(routeCache.cacheSeconds(300))
   private async getThemeImageFileByName(
     @Param('themeName') themeName: string, //
     @Param('fileName') fileName: string, //

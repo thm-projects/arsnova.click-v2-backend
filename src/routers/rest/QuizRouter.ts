@@ -31,6 +31,7 @@ import { IPCExchange } from '../../enums/IPCExchange';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
+import { RoutingCache } from '../../enums/RoutingCache';
 import { UserRole } from '../../enums/UserRole';
 import { ExcelWorkbook } from '../../export/ExcelWorkbook';
 import { IMessage } from '../../interfaces/communication/IMessage';
@@ -59,7 +60,7 @@ export class QuizRouter extends AbstractRouter {
       },
     ],
   })
-  @UseBefore(routeCache.cacheSeconds(5))
+  @UseBefore(routeCache.cacheSeconds(5, req => `${RoutingCache.QuizStatus}_${req.params.quizName}`))
   public async getIsAvailableQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
@@ -116,7 +117,7 @@ export class QuizRouter extends AbstractRouter {
       },
     ],
   })
-  @UseBefore(routeCache.cacheSeconds(5))
+  @UseBefore(routeCache.cacheSeconds(5, req => `${RoutingCache.QuizFullStatus}_${req.params.quizName}`))
   public async getFullQuizStatusData(
     @Params() params: { [key: string]: any }, //
   ): Promise<object> {
@@ -305,6 +306,9 @@ export class QuizRouter extends AbstractRouter {
         state: QuizState.Running,
       });
 
+      routeCache.removeCache(`${RoutingCache.QuizStatus}_${quiz.name}`);
+      routeCache.removeCache(`${RoutingCache.QuizFullStatus}_${quiz.name}`);
+
       return {
         status: StatusProtocol.Success,
         step: MessageProtocol.ReadingConfirmationRequested,
@@ -321,6 +325,9 @@ export class QuizRouter extends AbstractRouter {
       });
 
       quiz.readingConfirmationRequested = false;
+
+      routeCache.removeCache(`${RoutingCache.QuizStatus}_${quiz.name}`);
+      routeCache.removeCache(`${RoutingCache.QuizFullStatus}_${quiz.name}`);
 
       process.send({ message: IPCExchange.QuizStart, data: quiz.name });
 
@@ -346,8 +353,21 @@ export class QuizRouter extends AbstractRouter {
       state: QuizState.Running,
     });
 
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.SetInactive,
+      payload: {
+        quizName,
+      },
+    })));
+
+    AMQPConnector.sendRequestStatistics();
+
     quiz.readingConfirmationRequested = false;
     quiz.currentStartTimestamp = currentStartTimestamp;
+
+    routeCache.removeCache(`${RoutingCache.QuizStatus}_${quiz.name}`);
+    routeCache.removeCache(`${RoutingCache.QuizFullStatus}_${quiz.name}`);
 
     process.send({ message: IPCExchange.QuizStart, data: quiz.name });
 
@@ -398,7 +418,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/currentState/:quizName')
-  @UseBefore(routeCache.cacheSeconds(10))
+  @UseBefore(routeCache.cacheSeconds(10, req => `${RoutingCache.CurrentQuizState}_${req.params.quizName}`))
   public async getCurrentQuizState(@Param('quizName') quizName: string, //
   ): Promise<IMessage> {
 
@@ -447,7 +467,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/startTime/:quizName')
-  @UseBefore(routeCache.cacheSeconds(10))
+  @UseBefore(routeCache.cacheSeconds(10, req => `${RoutingCache.QuizStartTime}_${req.params.quizName}`))
   public async getQuizStartTime(@Param('quizName') quizName: string, //
   ): Promise<IMessage> {
 
@@ -468,7 +488,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/settings/:quizName')
-  @UseBefore(routeCache.cacheSeconds(10))
+  @UseBefore(routeCache.cacheSeconds(10, req => `${RoutingCache.QuizSettings}_${req.params.quizName}`))
   public async getQuizSettings(@Param('quizName') quizName: string, //
   ): Promise<IMessage> {
 
@@ -706,7 +726,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/export/:quizName/:privateKey/:theme/:language') //
-  @UseBefore(routeCache.cacheSeconds(5))
+  @UseBefore(routeCache.cacheSeconds(5, req => `${RoutingCache.QuizExportSheet}_${req.url}`))
   @ContentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') //
   public async getExportFile(
     @Param('quizName') quizName: string, //
@@ -744,7 +764,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/member-group/:quizName')
-  @UseBefore(routeCache.cacheSeconds(10))
+  @UseBefore(routeCache.cacheSeconds(10, req => `${RoutingCache.MemberGroup}_${req.params.quizName}`))
   public async getFreeMemberGroup(@Param('quizName') quizName: string): Promise<IMessage> {
     const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
@@ -922,8 +942,14 @@ export class QuizRouter extends AbstractRouter {
     ).length;
   }
 
+  @Get('/active')
+  @UseBefore(routeCache.cacheSeconds(10, RoutingCache.ActiveQuizzes))
+  private getActiveQuizzes(): Promise<Array<string>> {
+    return QuizDAO.getJoinableQuizzes().then(quizzes => quizzes.map(quiz => quiz.name));
+  }
+
   @Get('/quiz/:quizName?') //
-  @UseBefore(routeCache.cacheSeconds(10))
+  @UseBefore(routeCache.cacheSeconds(10, req => `${RoutingCache.QuizData}_${req.params.quizName}`))
   @OpenAPI({
     summary: 'Returns the data of a quiz',
     parameters: [

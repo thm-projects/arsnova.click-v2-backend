@@ -13,6 +13,7 @@ import { RoutingControllersOptions, useExpressServer } from 'routing-controllers
 import * as swaggerUi from 'swagger-ui-express';
 import * as timesyncServer from 'timesync/server';
 import { dynamicStatistics } from './dynamic-statistics';
+import { RoutingCache } from './enums/RoutingCache';
 import options from './lib/cors.config';
 import { ErrorHandlerMiddleware } from './routers/middleware/customErrorHandler';
 import { I18nMiddleware } from './routers/middleware/i18n';
@@ -133,7 +134,7 @@ class App {
     }));
 
     const router: Router = express.Router();
-    router.get(`/statistics`, cors(options), routeCache.cacheSeconds(10, 'statistics'), async (req: Request, res: Response) => {
+    router.get(`/statistics`, cors(options), routeCache.cacheSeconds(10, RoutingCache.Statistics), async (req: Request, res: Response) => {
       res.send(Object.assign({}, staticStatistics, await dynamicStatistics()));
     });
 

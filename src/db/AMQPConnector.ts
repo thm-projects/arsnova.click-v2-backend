@@ -1,6 +1,7 @@
 import { Channel, connect, Connection } from 'amqplib';
 import * as routeCache from 'route-cache';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
+import { RoutingCache } from '../enums/RoutingCache';
 import { settings } from '../statistics';
 
 class AMQPConnector {
@@ -64,7 +65,7 @@ class AMQPConnector {
     }
 
     this._lastStatisticRequestSent = new Date().getTime();
-    routeCache.removeCache('statistics');
+    routeCache.removeCache(RoutingCache.Statistics);
 
     return this.channel?.publish(this.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,

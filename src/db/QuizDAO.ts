@@ -2,11 +2,13 @@ import { ObjectId } from 'bson';
 import * as cluster from 'cluster';
 import * as http from 'http';
 import { Document } from 'mongoose';
+import * as routeCache from 'route-cache';
 import * as superagent from 'superagent';
 import { HistoryModelType } from '../enums/HistoryModelType';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { QuizState } from '../enums/QuizState';
 import { QuizVisibility } from '../enums/QuizVisibility';
+import { RoutingCache } from '../enums/RoutingCache';
 import { IQuiz } from '../interfaces/quizzes/IQuizEntity';
 import { generateToken } from '../lib/generateToken';
 import { HistoryModel } from '../models/HistoryModel';
@@ -225,6 +227,8 @@ class QuizDAO extends AbstractDAO {
     quiz.state = QuizState.Active;
     await this.updateQuiz(new ObjectId(quiz._id), quiz);
 
+    routeCache.removeCache(RoutingCache.ActiveQuizzes);
+
     this._storage[quiz.name].emptyQuizInterval = setInterval(() => {
       this.checkExistingConnection(quiz.name, quiz.privateKey);
     }, this.CHECK_STATE_INTERVAL);
@@ -259,6 +263,8 @@ class QuizDAO extends AbstractDAO {
     } else {
       clearInterval(this._storage[quizName].emptyQuizInterval);
     }
+
+    routeCache.removeCache(RoutingCache.ActiveQuizzes);
 
     AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
@@ -334,6 +340,16 @@ class QuizDAO extends AbstractDAO {
       status: StatusProtocol.Success,
       step: MessageProtocol.Reset,
     })));
+
+    AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
+      status: StatusProtocol.Success,
+      step: MessageProtocol.SetActive,
+      payload: {
+        quizName: name,
+      },
+    })));
+
+    AMQPConnector.sendRequestStatistics();
 
     if (this._storage[name]) {
       this._storage[name].quizTimer = 1;

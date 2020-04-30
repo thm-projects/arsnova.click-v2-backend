@@ -32,6 +32,7 @@ import MathjaxDAO from '../../db/MathjaxDAO';
 import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
+import { RoutingCache } from '../../enums/RoutingCache';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { ICasData } from '../../interfaces/users/ICasData';
 import { asyncForEach } from '../../lib/async-for-each';
@@ -296,7 +297,7 @@ export class LibRouter extends AbstractRouter {
   }
 
   @Get('/cache/quiz/assets/:digest')
-  @UseBefore(routeCache.cacheSeconds(300))
+  @UseBefore(routeCache.cacheSeconds(300, req => `${RoutingCache.QuizAssets}_${req.params.digest}`))
   public async getCache(@Param('digest') digest: string, @Res() response: Response): Promise<ArrayBufferLike> {
     const doc = await AssetDAO.getAssetByDigestAsLean(digest);
     if (!doc || !doc.data) {
