@@ -9,6 +9,7 @@ import app from '../../App';
 import DbDAO from '../../db/DbDAO';
 import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol } from '../../enums/Message';
+import { RoutingCache } from '../../enums/RoutingCache';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { staticStatistics } from '../../statistics';
 
@@ -67,7 +68,7 @@ class QuizApiRouterTestSuite {
     await QuizDAO.initQuiz(doc);
 
     /* The response is cached so we need to purge the cache */
-    routeCache.removeCache(`${this._baseApiRoute}/status/${this._hashtag}`);
+    routeCache.removeCache(`${RoutingCache.QuizStatus}_${this._hashtag}`);
 
     const res = await chai.request(app).get(`${this._baseApiRoute}/status/${this._hashtag}`);
     expect(res.status).to.equal(200);
