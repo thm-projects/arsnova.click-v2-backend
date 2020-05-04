@@ -361,8 +361,6 @@ export class QuizRouter extends AbstractRouter {
       },
     })));
 
-    AMQPConnector.sendRequestStatistics();
-
     quiz.readingConfirmationRequested = false;
     quiz.currentStartTimestamp = currentStartTimestamp;
 
@@ -370,6 +368,8 @@ export class QuizRouter extends AbstractRouter {
     routeCache.removeCache(`${RoutingCache.QuizFullStatus}_${quiz.name}`);
 
     process.send({ message: IPCExchange.QuizStart, data: quiz.name });
+
+    AMQPConnector.sendRequestStatistics();
 
     return {
       status: StatusProtocol.Success,
