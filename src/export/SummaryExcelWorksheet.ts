@@ -73,7 +73,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       },
     });
 
-    let currentRowIndex = 7;
+    let currentRowIndex = 6;
     if (this.quiz.sessionConfig.confidenceSliderEnabled) {
       currentRowIndex++;
     }
@@ -205,14 +205,13 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
   public async addSheetData(): Promise<void> {
     const leaderBoardData = await this.getLeaderboardData();
     let currentRowIndex = 1;
-    const numberOfResponses = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(nickname => {
-      return nickname.responses.filter(response => {
-        return !!response.value && response.value !== -1;
-      }).length;
-    }).length;
     const allResponses: Array<MemberModelItem> = await MemberDAO.getMembersOfQuizForOwner(this.quiz.name);
     const numberOfAttendees = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length;
-    const numberOfQuestions = this.quiz.questionList.length;
+    const avrgCorrectAnsweredQuestions = ((leaderBoardData.map((x) => {
+      return x.correctQuestions.length;
+    }).reduce((a, b) => {
+      return a + b;
+    }, 0) / numberOfAttendees) || 0);
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.quiz_name')}: ${this.quiz.name}`);
     currentRowIndex++;
@@ -226,11 +225,6 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     currentRowIndex++;
 
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_correct_answered_questions')}:`);
-    const avrgCorrectAnsweredQuestions = ((leaderBoardData.map((x) => {
-      return x.correctQuestions.length;
-    }).reduce((a, b) => {
-      return a + b;
-    }, 0) / numberOfAttendees) || 0);
     this.ws.cell(currentRowIndex, 3).number(Math.round((avrgCorrectAnsweredQuestions + Number.EPSILON) * 100) / 100);
     currentRowIndex++;
 
