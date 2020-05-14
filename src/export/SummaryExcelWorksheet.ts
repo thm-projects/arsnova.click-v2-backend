@@ -328,7 +328,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     }
 
     this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.overall_response_time'));
-    this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.average_response_time'));
+    this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.score'));
     this.ws.cell(nextStartRow++, nextColumnIndex++).string(this.mf('export.bonus_token'));
 
     await asyncForEach(allResponses, async (responseItem, indexInList) => {
@@ -356,7 +356,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         // user's response time and avg. response time is added (bottom list)
         const responseTime = this.formatMillisToSeconds(leaderboardItem.responseTime);
         this.ws.cell(targetRow, nextColumnIndex++).number(responseTime);
-        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(responseTime / leaderboardItem.correctQuestions.length));
+        this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.score));
         this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.bonusToken);
       } else {
         this.ws.cell(targetRow, nextColumnIndex++).string(this.mf('export.correct_questions_none_available'));
