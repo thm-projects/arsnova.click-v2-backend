@@ -30,7 +30,6 @@
     "average_response_time": "Durchschnittliche Antwortzeit (in s)",
     "bonus_token": "Bonus-Token",
     "number_attendees": "Anzahl der Teilnehmer/innen",
-    "average_number_attendees_participated": "Durchschnittliche Teilnahmen am Quiz (in %)",
     "average_correct_answered_questions": "Durchschnittlich richtig beantwortete Fragen",
     "average_confidence": "Durchschnittliche Antwortsicherheit (in %)",
     "exported_at": "um",

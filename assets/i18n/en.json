@@ -30,7 +30,6 @@
     "average_response_time": "Average Response Time (in s)",
     "bonus_token": "Bonus Token",
     "number_attendees": "Amount of Attendees",
-    "average_number_attendees_participated": "Average Responses for the Quiz (in %)",
     "average_correct_answered_questions": "Questions answered on average correctly",
     "average_confidence": "Average confidence grade (in %)",
     "exported_at": "at",

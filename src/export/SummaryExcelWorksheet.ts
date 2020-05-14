@@ -225,16 +225,13 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.ws.cell(currentRowIndex, 3).number((await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length);
     currentRowIndex++;
 
-    this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_number_attendees_participated')}:`);
-    this.ws.cell(currentRowIndex, 3).number(Math.round((numberOfResponses / numberOfAttendees / numberOfQuestions) * 100) || 0);
-    currentRowIndex++;
-
     this.ws.cell(currentRowIndex, 1).string(`${this.mf('export.average_correct_answered_questions')}:`);
-    this.ws.cell(currentRowIndex, 3).number((leaderBoardData.map((x) => {
+    const avrgCorrectAnsweredQuestions = ((leaderBoardData.map((x) => {
       return x.correctQuestions.length;
     }).reduce((a, b) => {
       return a + b;
     }, 0) / numberOfAttendees) || 0);
+    this.ws.cell(currentRowIndex, 3).number(Math.round((avrgCorrectAnsweredQuestions + Number.EPSILON) * 100) / 100);
     currentRowIndex++;
 
     if (this.quiz.sessionConfig.confidenceSliderEnabled) {
