@@ -101,15 +101,8 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       },
     });
 
-    this.ws.row(currentRowIndex).filter({
-      firstRow: currentRowIndex,
-      firstColumn: 1,
-      lastRow: currentRowIndex,
-      lastColumn: this.columnsToFormat - 2,
-    });
-
     let dataWithoutCompleteCorrectQuestions = 0;
-    await asyncForEach(leaderBoardData, (leaderboardItem, indexInList) => {
+    await asyncForEach(leaderBoardData, (leaderboardItem) => {
       let hasNotAllQuestionsCorrect = false;
       this.quiz.questionList.forEach((item, index) => {
         if (![
@@ -165,6 +158,12 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       alignment: {
         horizontal: 'left',
       },
+    });
+    this.ws.row(currentRowIndex).filter({
+      firstRow: currentRowIndex,
+      firstColumn: 1,
+      lastRow: currentRowIndex,
+      lastColumn: this.columnsToFormat,
     });
     currentRowIndex++;
 
