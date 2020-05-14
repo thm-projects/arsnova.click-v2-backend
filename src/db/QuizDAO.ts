@@ -507,7 +507,7 @@ class QuizDAO extends AbstractDAO {
         return;
       }
 
-      if (this._storage[quizName].isEmpty) {
+      if (!this._storage[quizName] || this._storage[quizName].isEmpty) {
         return this.setQuizAsInactive(quizName, privateKey);
       }
 
