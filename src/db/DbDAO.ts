@@ -3,7 +3,7 @@ import * as cluster from 'cluster';
 import { Connection } from 'mongoose';
 import { DbCollection } from '../enums/DbOperation';
 import LoggerService from '../services/LoggerService';
-import { staticStatistics } from '../statistics';
+import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 import MongoDBConnector from './MongoDBConnector';
 
@@ -66,7 +66,7 @@ class DbDAO extends AbstractDAO {
     LoggerService.info(`[DB-Migration] start`);
 
     const migrationProcess = childProcess.execSync('node db-migration-bootstrap',
-      { cwd: staticStatistics.pathToMigrations, env: process.env, stdio: 'pipe', encoding: 'utf-8' });
+      { cwd: settings.pathToMigrations, env: process.env, stdio: 'pipe', encoding: 'utf-8' });
     const results = migrationProcess.split('\n');
     results.pop();
     results.forEach(result => LoggerService.info(result));

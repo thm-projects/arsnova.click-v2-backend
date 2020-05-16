@@ -42,7 +42,7 @@ import { MatchAssetCachedQuiz, MatchTextToAssetsDb } from '../../lib/cache/asset
 import { Leaderboard } from '../../lib/leaderboard/leaderboard';
 import { QuizModelItem } from '../../models/quiz/QuizModelItem';
 import LoggerService from '../../services/LoggerService';
-import { settings, staticStatistics } from '../../statistics';
+import { publicSettings, settings } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/quiz')
@@ -151,7 +151,7 @@ export class QuizRouter extends AbstractRouter {
   ): Promise<IQuiz> {
 
     try {
-      const basePath = path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz');
+      const basePath = path.join(settings.pathToAssets, 'predefined_quizzes', 'demo_quiz');
       let demoQuizPath = path.join(basePath, `${languageId.toLowerCase()}.demo_quiz.json`);
       if (!fs.existsSync(demoQuizPath)) {
         demoQuizPath = path.join(basePath, 'en.demo_quiz.json');
@@ -197,7 +197,7 @@ export class QuizRouter extends AbstractRouter {
 
     try {
       answerLength = parseInt(String(answerLength), 10) || 4;
-      const basePath = path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'abcd_quiz');
+      const basePath = path.join(settings.pathToAssets, 'predefined_quizzes', 'abcd_quiz');
       let abcdQuizPath = path.join(basePath, `${languageId.toLowerCase()}.abcd_quiz.json`);
       if (!fs.existsSync(abcdQuizPath)) {
         abcdQuizPath = path.join(basePath, 'en.abcd_quiz.json');
@@ -540,7 +540,7 @@ export class QuizRouter extends AbstractRouter {
   public async addQuiz(
     @HeaderParam('authorization') privateKey: string, //
     @BodyParam('quiz') quiz: IQuiz, //
-    @BodyParam('serverPassword', { required: settings.public.createQuizPasswordRequired }) serverPassword: string, //
+    @BodyParam('serverPassword', { required: publicSettings.createQuizPasswordRequired }) serverPassword: string, //
   ): Promise<QuizModelItem> {
     if (!quiz) {
       throw new BadRequestError(MessageProtocol.InvalidParameters);
@@ -552,11 +552,11 @@ export class QuizRouter extends AbstractRouter {
     }
 
     const activeQuizzesAmount = await QuizDAO.getActiveQuizzes();
-    if (activeQuizzesAmount.length >= settings.public.limitActiveQuizzes) {
+    if (activeQuizzesAmount.length >= publicSettings.limitActiveQuizzes) {
       throw new BadRequestError(MessageProtocol.TooMuchActiveQuizzes);
     }
 
-    if (settings.public.createQuizPasswordRequired) {
+    if (publicSettings.createQuizPasswordRequired) {
       if (!serverPassword) {
         throw new UnauthorizedError(MessageProtocol.ServerPasswordRequired);
       }
@@ -565,7 +565,7 @@ export class QuizRouter extends AbstractRouter {
       }
     }
 
-    if (settings.public.cacheQuizAssets) {
+    if (publicSettings.cacheQuizAssets) {
       const promises: Array<Promise<any>> = [];
 
       LoggerService.debug('[QuizRouter] Checking questionList for assets');

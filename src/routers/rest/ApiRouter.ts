@@ -12,7 +12,7 @@ import { OpenAPI, routingControllersToSpec } from 'routing-controllers-openapi';
 import { routingControllerOptions } from '../../App';
 import QuizDAO from '../../db/QuizDAO';
 import { RoutingCache } from '../../enums/RoutingCache';
-import { settings, staticStatistics } from '../../statistics';
+import { publicSettings, settings } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
 declare global {
@@ -48,8 +48,8 @@ export class ApiRouter extends AbstractRouter {
         },
       },
       info: {
-        title: staticStatistics.appName,
-        version: staticStatistics.appVersion,
+        title: settings.appName,
+        version: settings.appVersion,
       },
     });
   }
@@ -69,7 +69,7 @@ export class ApiRouter extends AbstractRouter {
   })
   private async getAll(): Promise<object> {
     return {
-      serverConfig: settings.public,
+      serverConfig: publicSettings,
       activeQuizzes: (
         await QuizDAO.getJoinableQuizzes()
       ).map(quiz => quiz.name),
@@ -120,7 +120,7 @@ export class ApiRouter extends AbstractRouter {
     @Param('fileName') fileName: string,
   ): object {
 
-    const pathToFiles: string = path.join(staticStatistics.pathToAssets, `${directory}`, `${subdirectory}`);
+    const pathToFiles: string = path.join(settings.pathToAssets, `${directory}`, `${subdirectory}`);
     let file = '';
 
     if (fileName.toLowerCase().includes('random')) {
@@ -147,7 +147,7 @@ export class ApiRouter extends AbstractRouter {
     @Res() res: Response,
   ): Promise<object> {
 
-    const pathToFiles = path.join(staticStatistics.pathToAssets, 'images', 'theme', `${themeName}`, `${fileName}`);
+    const pathToFiles = path.join(settings.pathToAssets, 'images', 'theme', `${themeName}`, `${fileName}`);
     if (fs.existsSync(pathToFiles)) {
       const data: Buffer = fs.readFileSync(pathToFiles);
       const bufferMimeData = await fromBuffer(data);

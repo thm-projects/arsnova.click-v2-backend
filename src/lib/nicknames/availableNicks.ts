@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { IAvailableNicks } from '../../interfaces/IAvailableNicks';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 
 const availableNicks: IAvailableNicks = {
   'disney': [
@@ -223,7 +223,7 @@ const availableNicks: IAvailableNicks = {
     'Maurice V. Wilkes',
     'Alan J. Perlis',
   ],
-  'emojis': fs.readdirSync(path.join(staticStatistics.pathToAssets, 'images', 'emojis'))
+  'emojis': fs.readdirSync(path.join(settings.pathToAssets, 'images', 'emojis'))
   .map(fileName => `:${fileName.substring(0, fileName.length - 4)}:`),
 };
 

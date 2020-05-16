@@ -11,7 +11,7 @@ import QuizDAO from '../../db/QuizDAO';
 import { MessageProtocol } from '../../enums/Message';
 import { RoutingCache } from '../../enums/RoutingCache';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 
 const chaiHttp = require('chai-http');
 
@@ -23,12 +23,12 @@ const privateKey = Math.random().toString(10);
 
 @suite
 class QuizApiRouterTestSuite {
-  private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/quiz`;
+  private _baseApiRoute = `${settings.routePrefix}/api/v1/quiz`;
   private _hashtag = hashtag;
   private _privateKey = privateKey;
 
   public async before(): Promise<void> {
-    staticStatistics.pathToAssets = path.join(__dirname, '..', '..', '..', 'assets');
+    settings.pathToAssets = path.join(__dirname, '..', '..', '..', 'assets');
   }
 
   public async after(): Promise<void> {
@@ -61,7 +61,7 @@ class QuizApiRouterTestSuite {
   @test
   public async getStatusWhenAvailable(): Promise<void> {
     const quiz: IQuiz = JSON.parse(
-      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
+      fs.readFileSync(path.join(settings.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
     quiz.name = this._hashtag;
 
     const doc = await QuizDAO.addQuiz(quiz);

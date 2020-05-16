@@ -4,7 +4,7 @@ import { QuestionType } from '../enums/QuestionType';
 import { IExcelWorksheet } from '../interfaces/iExcel';
 import { asyncForEach } from '../lib/async-for-each';
 import { MemberModelItem } from '../models/member/MemberModel';
-import { staticStatistics } from '../statistics';
+import { settings } from '../statistics';
 import { ExcelWorksheet } from './ExcelWorksheet';
 
 declare global {
@@ -365,7 +365,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
   private addLogoImage(): void {
     this.ws.addImage({
-      path: path.join(staticStatistics.pathToAssets, 'images', 'logo_transparent.png'),
+      path: path.join(settings.pathToAssets, 'images', 'logo_transparent.png'),
       type: 'picture',
       position: {
         type: 'twoCellAnchor',

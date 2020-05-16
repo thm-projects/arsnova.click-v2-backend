@@ -3,7 +3,7 @@ import * as path from 'path';
 import { ExpressMiddlewareInterface, Middleware } from 'routing-controllers';
 import { Language } from '../../enums/Enums';
 import LoggerService from '../../services/LoggerService';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 
 i18n.configure({
   // setup some locales - other locales default to en silently
@@ -13,7 +13,7 @@ i18n.configure({
   fallbacks: { 'nl': 'de' },
 
   // where to store json files - defaults to './locales' relative to modules directory
-  directory: path.join(staticStatistics.pathToAssets, 'i18n'),
+  directory: path.join(settings.pathToAssets, 'i18n'),
 
   // watch for changes in json files to reload locale on updates - defaults to false
   autoReload: true,

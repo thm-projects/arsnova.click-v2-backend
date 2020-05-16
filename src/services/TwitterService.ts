@@ -6,7 +6,7 @@ import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { ITweet } from '../interfaces/twitter/ITweet';
 import { ITwitterApiTweets } from '../interfaces/twitter/ITwitterApi';
 import { arraysEqual } from '../lib/array-equal';
-import { settings, staticStatistics } from '../statistics';
+import { settings } from '../statistics';
 import LoggerService from './LoggerService';
 
 class TwitterService {
@@ -83,7 +83,7 @@ class TwitterService {
       });
     }
 
-    const params: Twitter.RequestParams = { q: staticStatistics.twitter.searchKey };
+    const params: Twitter.RequestParams = { q: settings.twitter.searchKey };
     client.get('statuses/mentions_timeline', params, (error, tweets: Array<ITwitterApiTweets>, response) => {
       if (error) {
         const msg = Array.isArray(error) ? error.map(e => e.message).join(', ') : error.message ?? error;

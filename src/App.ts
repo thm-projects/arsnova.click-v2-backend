@@ -30,7 +30,7 @@ import { QuizPoolRouter } from './routers/rest/QuizPoolRouter';
 import { QuizRouter } from './routers/rest/QuizRouter';
 import { TwitterRouter } from './routers/rest/TwitterRouter';
 import LoggerService from './services/LoggerService';
-import { staticStatistics } from './statistics';
+import { publicSettings, settings } from './statistics';
 
 export const routingControllerOptions: RoutingControllersOptions = {
   defaults: {
@@ -75,6 +75,8 @@ class App {
 
     this._express = express();
     this._express.use(Handlers.requestHandler());
+    this._express.enable('etag');
+    this._express.set('etag', 'strong');
 
     this.middleware();
     this.routes();
@@ -134,12 +136,12 @@ class App {
     });
 
     this._express.use('/api/v1/api-docs', swaggerUi.serve, swaggerUi.setup(null, {
-      swaggerUrl: `${staticStatistics.rewriteAssetCacheUrl}/api/v1/api-docs.json`,
+      swaggerUrl: `${settings.rewriteAssetCacheUrl}/api/v1/api-docs.json`,
     }));
 
     const router: Router = express.Router();
     router.get(`/statistics`, cors(options), routeCache.cacheSeconds(10, RoutingCache.Statistics), async (req: Request, res: Response) => {
-      res.send(Object.assign({}, staticStatistics, await dynamicStatistics()));
+      res.send(Object.assign({}, publicSettings, await dynamicStatistics()));
     });
 
     this._express.use(`/`, router);

@@ -1,16 +1,9 @@
-import { cpus, hostname, networkInterfaces } from 'os';
+import { hostname } from 'os';
 import * as path from 'path';
 import * as process from 'process';
 import { LeaderboardConfiguration } from './enums/LeaderboardConfiguration';
 
 const config = require(path.join(__dirname, 'config.json'));
-
-const interfaces = networkInterfaces();
-const localAddress = interfaces[Object.keys(interfaces).find(netIface => {
-  const singleInterface = interfaces[netIface][0];
-  return singleInterface.family === 'IPv4' && singleInterface.internal === false;
-})];
-const localIpv4Address = localAddress ? localAddress[0].address : '127.0.0.1';
 
 const basePath = process.env.ARSNOVA_CLICK_BACKEND_BASE_PATH || config.basePath || '';
 const portInternal = +process.env.ARSNOVA_CLICK_BACKEND_PORT_INTERNAL || config.portInternal || 3010;
@@ -53,32 +46,26 @@ const projectEmail = process.env.PROJECT_MAIL_ADDRESS;
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
-export const staticStatistics = {
+export const publicSettings = {
+  leaderboardAlgorithm,
+  cacheQuizAssets: true,
+  createQuizPasswordRequired: false,
+  limitActiveQuizzes: Infinity,
+};
+
+export const settings = {
   appName: 'arsnova-click-v2-backend',
   appVersion: '2.0.0',
-  hostname: hostname(),
-  port: portInternal,
-  scuttlebuttPort: scuttlebuttPort,
-  prometheusPort: prometheusPort,
-  routePrefix: `${routePrefix}`,
-  localIpv4Address: localIpv4Address,
+  port: {
+    app: portInternal,
+    scuttlebutt: scuttlebuttPort,
+    prometheus: prometheusPort,
+  },
+  routePrefix: routePrefix,
   rewriteAssetCacheUrl: rewriteAssetCacheUrl,
   pathToAssets: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'assets'),
   pathToMigrations: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'db-migration'),
   pathToJobs: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'jobs'),
-  cpuCores: cpus().length,
-  leaderboardAlgorithm,
-  twitter: {
-    searchKey: twitterSearchKey ?? 'arsnova.click OR arsnovaclick OR arsnova-click OR @arsnovaclick OR #arsnovaclick OR #arsnova-click',
-  },
-};
-
-export const settings = {
-  public: {
-    cacheQuizAssets: true,
-    createQuizPasswordRequired: false,
-    limitActiveQuizzes: Infinity,
-  },
   jwtSecret: 'arsnova.click-v2',
   limitQuizCreationToCasAccounts: [],
   createQuizPassword: 'abc',
@@ -110,6 +97,7 @@ export const settings = {
     twitterConsumerSecret,
     twitterBearerToken,
     enabled: twitterEnabled && twitterAccessTokenKey && twitterAccessTokenSecret && twitterConsumerKey && twitterConsumerSecret,
+    searchKey: twitterSearchKey ?? 'arsnova.click OR arsnovaclick OR arsnova-click OR @arsnovaclick OR #arsnovaclick OR #arsnova-click',
   },
   chromiumPath,
   projectEMail: projectEmail,

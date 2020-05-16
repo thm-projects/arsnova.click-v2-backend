@@ -41,7 +41,7 @@ import { TwitterCard } from '../../lib/social-media/twitter/twitter-card';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
-import { settings, staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
 const casSettings = { base_url: 'https://cas.thm.de/cas' };
@@ -182,7 +182,7 @@ export class LibRouter extends AbstractRouter {
   @Get('/mathjax/example/third') @ContentType('image/svg+xml')
   public getThirdMathjaxExample(): Promise<Buffer> {
     return new Promise<Buffer>(resolve => {
-      fs.readFile(path.join(staticStatistics.pathToAssets, 'images', 'mathjax', 'example_3.svg'), (err, data: Buffer) => {
+      fs.readFile(path.join(settings.pathToAssets, 'images', 'mathjax', 'example_3.svg'), (err, data: Buffer) => {
         resolve(data);
       });
     });
@@ -277,7 +277,7 @@ export class LibRouter extends AbstractRouter {
     await page.setContent(htmlContent);
     await Promise.all([
       page.addStyleTag({ url: `https://staging.arsnova.click/theme-${theme ?? 'default'}.css` }),
-      page.addStyleTag({ path: path.join(staticStatistics.pathToAssets, 'css', 'gfm.css') }),
+      page.addStyleTag({ path: path.join(settings.pathToAssets, 'css', 'gfm.css') }),
     ]);
     return new Promise(resolve => {
       setTimeout(async () => {
@@ -312,7 +312,7 @@ export class LibRouter extends AbstractRouter {
   @Get('/quiz/twitterPost/:digest/:quizname') //
   @ContentType('text/html')
   public async postToTwitter(@Param('digest') digest: string, @Param('quizname') quizname: string, @Res() res: ICustomI18nResponse): Promise<string> {
-    return new TwitterCard(res.__mf).buildCard(`${staticStatistics.rewriteAssetCacheUrl}/lib/cache/quiz/assets/${digest}`, quizname);
+    return new TwitterCard(res.__mf).buildCard(`${settings.rewriteAssetCacheUrl}/lib/cache/quiz/assets/${digest}`, quizname);
   }
 
   @Get('/authorize/:ticket?') //

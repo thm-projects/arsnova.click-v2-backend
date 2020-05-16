@@ -7,13 +7,13 @@ import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 
 import { AssetModel, AssetModelItem } from '../../models/AssetModel';
 import LoggerService from '../../services/LoggerService';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 import { asyncForEach } from '../async-for-each';
 
 const sha256 = require('crypto-js/sha256');
 
 export const assetsUrlRegex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
-const assetsPathUrlRegex = '(' + staticStatistics.rewriteAssetCacheUrl + '([a-z]*[\\/])*([0-9a-z]*))';
+const assetsPathUrlRegex = '(' + settings.rewriteAssetCacheUrl + '([a-z]*[\\/])*([0-9a-z]*))';
 
 export function GetAssetUrlByDigest(digest: string): Promise<Document & AssetModelItem> {
   return AssetModel.findOne({ digest }, {
@@ -62,7 +62,7 @@ export async function MatchAssetCachedQuiz(quiz: IQuiz): Promise<IQuiz> {
 export function MatchTextToAssetsDb(value: string): Promise<string> {
   const acceptedFileTypes = [/image\/*/];
   const foundUrls = value.match(assetsUrlRegex);
-  const assetsBasePath = `${staticStatistics.rewriteAssetCacheUrl}/lib/cache/quiz/assets`;
+  const assetsBasePath = `${settings.rewriteAssetCacheUrl}/lib/cache/quiz/assets`;
 
   return new Promise<string>(resolve => {
     if (!foundUrls) {

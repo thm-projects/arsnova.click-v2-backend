@@ -5,7 +5,7 @@ import { suite, test } from 'mocha-typescript';
 
 import app from '../../App';
 import DbDAO from '../../db/DbDAO';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 
 const chaiHttp = require('chai-http');
 
@@ -16,7 +16,7 @@ const hashtag = 'mocha-test-api-v1';
 
 @suite
 class NicksApiRouterTestSuite {
-  private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/nicks`;
+  private _baseApiRoute = `${settings.routePrefix}/api/v1/nicks`;
 
   public async after(): Promise<void> {
     await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));

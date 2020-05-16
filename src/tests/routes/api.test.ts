@@ -5,14 +5,14 @@ import { slow, suite, test } from 'mocha-typescript';
 
 import app from '../../App';
 import DbDAO from '../../db/DbDAO';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 
 chai.use(require('chai-http'));
 const expect = chai.expect;
 
 @suite
 class ApiRouterTestSuite {
-  private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/`;
+  private _baseApiRoute = `${settings.routePrefix}/api/v1/`;
 
   public async after(): Promise<void> {
     await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));

@@ -10,7 +10,7 @@ import DbDAO from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 import { generateQuiz } from '../fixtures';
 
 const chaiHttp = require('chai-http');
@@ -20,7 +20,7 @@ const expect = chai.expect;
 
 @suite
 class MemberApiRouterTestSuite {
-  private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/member`;
+  private _baseApiRoute = `${settings.routePrefix}/api/v1/member`;
   private readonly _hashtag = 'mocha-test-api-v1-member';
   private _nickname = 'testNickname';
 
@@ -38,7 +38,7 @@ class MemberApiRouterTestSuite {
   @test
   public async getRemainingNicks(): Promise<void> {
     const quiz: IQuiz = JSON.parse(
-      fs.readFileSync(path.join(staticStatistics.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
+      fs.readFileSync(path.join(settings.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
     quiz.name = this._hashtag;
 
     const doc = await QuizDAO.addQuiz(quiz);

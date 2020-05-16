@@ -10,7 +10,7 @@ import { MessageProtocol } from '../../enums/Message';
 import { UserRole } from '../../enums/UserRole';
 import { QuizPoolModel } from '../../models/quiz/QuizPoolModelItem';
 import { AuthService } from '../../services/AuthService';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 import { generateQuiz } from '../fixtures';
 
 const chaiHttp = require('chai-http');
@@ -23,11 +23,11 @@ const privateKey = Math.random().toString(10);
 
 @suite
 class QuizPoolApiRouterTestSuite {
-  private _baseApiRoute = `${staticStatistics.routePrefix}/api/v1/quizpool`;
+  private _baseApiRoute = `${settings.routePrefix}/api/v1/quizpool`;
   private _hashtag = hashtag;
 
   public async before(): Promise<void> {
-    staticStatistics.pathToAssets = path.join(__dirname, '..', '..', '..', 'assets');
+    settings.pathToAssets = path.join(__dirname, '..', '..', '..', 'assets');
   }
 
   public async after(): Promise<void> {

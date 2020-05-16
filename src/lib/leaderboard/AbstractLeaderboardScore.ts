@@ -1,11 +1,11 @@
 import * as path from 'path';
 import { ILeaderboardConfigurationAlgorithm } from '../../interfaces/leaderboard/ILeaderboardConfigurationAlgorithm';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 
 export abstract class AbstractLeaderboardScore {
   protected algorithm: ILeaderboardConfigurationAlgorithm;
   protected readonly algorithms: Array<ILeaderboardConfigurationAlgorithm> = require(
-    path.join(staticStatistics.pathToAssets, 'leaderboard-config.json'));
+    path.join(settings.pathToAssets, 'leaderboard-config.json'));
 
   public abstract getScoreForCorrect(responseTime: number, quizTimer: number): number;
 

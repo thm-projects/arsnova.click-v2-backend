@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 
-const themeData = JSON.parse(fs.readFileSync(path.join(staticStatistics.pathToAssets, 'themeData.json')).toString());
+const themeData = JSON.parse(fs.readFileSync(path.join(settings.pathToAssets, 'themeData.json')).toString());
 
 export class ExcelTheme {
   private _selectedTheme: string;

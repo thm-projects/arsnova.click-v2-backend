@@ -14,7 +14,7 @@ import { ExcelWorkbook } from '../../export/ExcelWorkbook';
 import { IQuestionRanged } from '../../interfaces/questions/IQuestionRanged';
 import { IQuestionSurvey } from '../../interfaces/questions/IQuestionSurvey';
 import LoggerService from '../../services/LoggerService';
-import { staticStatistics } from '../../statistics';
+import { settings } from '../../statistics';
 import { generateQuiz } from '../fixtures';
 
 @suite
@@ -32,7 +32,7 @@ class ExcelExportTestSuite {
     i18n.configure({
       locales: ['en'],
       defaultLocale: 'en',
-      directory: path.join(staticStatistics.pathToAssets, 'i18n'),
+      directory: path.join(settings.pathToAssets, 'i18n'),
       indent: '\t',
       extension: '.json',
       prefix: '',

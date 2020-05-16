@@ -2,7 +2,7 @@ import * as bunyan from 'bunyan';
 import { LogLevel } from 'bunyan';
 import * as bunyan_express_serializer from 'bunyan-express-serializer';
 import * as process from 'process';
-import { staticStatistics } from '../statistics';
+import { settings } from '../statistics';
 
 class LoggerService {
 
@@ -87,7 +87,7 @@ class LoggerService {
 
   private createLogging(level: LogLevel, streams: Array<bunyan.Stream>): void {
     this._logger = bunyan.createLogger({
-      name: staticStatistics.appName,
+      name: settings.appName,
       level,
       streams,
       serializers: {

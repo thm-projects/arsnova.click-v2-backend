@@ -9,7 +9,7 @@ import { IQuestionRanged } from '../../interfaces/questions/IQuestionRanged';
 import { IQuizBase } from '../../interfaces/quizzes/IQuizEntity';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
 import LoggerService from '../../services/LoggerService';
-import { staticStatistics } from '../../statistics';
+import { publicSettings } from '../../statistics';
 import { AbstractLeaderboardScore } from './AbstractLeaderboardScore';
 import { PointBasedLeaderboardScore } from './PointBasedLeaderboardScore';
 import { TimeBasedLeaderboardScore } from './TimeBasedLeaderboardScore';
@@ -20,7 +20,7 @@ export class Leaderboard {
   private readonly _defaultLeaderboard: AbstractLeaderboardScore;
 
   constructor() {
-    switch (staticStatistics.leaderboardAlgorithm) {
+    switch (publicSettings.leaderboardAlgorithm) {
       case LeaderboardConfiguration.TimeBased:
         this._defaultLeaderboard = this._timebasedLeaderboard;
         break;

@@ -26,7 +26,7 @@ import { MemberModel } from './models/member/MemberModel';
 import { QuizModel } from './models/quiz/QuizModelItem';
 import LoggerService from './services/LoggerService';
 import TwitterService from './services/TwitterService';
-import { settings, staticStatistics } from './statistics';
+import { settings } from './statistics';
 import { LoadTester } from './tests/LoadTester';
 
 setGlobalOptions({
@@ -75,9 +75,9 @@ interface IInetAddress {
   MemberDAO,
 };
 
-const port = normalizePort(staticStatistics.port);
-const scuttlebuttPort = normalizePort(staticStatistics.scuttlebuttPort);
-const prometheusPort = normalizePort(staticStatistics.prometheusPort);
+const port = normalizePort(settings.port.app);
+const scuttlebuttPort = normalizePort(settings.port.scuttlebutt);
+const prometheusPort = normalizePort(settings.port.prometheus);
 App.set('port', port);
 
 const numWorkers = process.env.NODE_ENV !== 'test' ? require('os').cpus().length - 1 : 2;
