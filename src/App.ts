@@ -94,6 +94,9 @@ class App {
           method: req.method,
           url: req.url,
         },
+        res: {
+          statusCode: res.statusCode
+        }
       });
       next();
     });
