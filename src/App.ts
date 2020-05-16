@@ -100,7 +100,6 @@ class App {
       });
       next();
     });
-    this._express.use('/timesync', timesyncServer.requestHandler);
     this._express.use(bodyParser.json({ limit: '50mb' }));
     this._express.use(bodyParser.urlencoded({
       limit: '50mb',
@@ -126,6 +125,8 @@ class App {
       help: 'Total number of requests',
       labelNames: ['method', 'hostname'],
     });
+
+    this._express.use('/timesync', timesyncServer.requestHandler);
 
     this._express.use((req, res, next) => {
       totalRequests.inc({ method: req.method, hostname: req.hostname });
