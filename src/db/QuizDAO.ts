@@ -5,6 +5,7 @@ import { Document } from 'mongoose';
 import * as routeCache from 'route-cache';
 import * as superagent from 'superagent';
 import { HistoryModelType } from '../enums/HistoryModelType';
+import { IPCExchange } from '../enums/IPCExchange';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { QuizState } from '../enums/QuizState';
 import { QuizVisibility } from '../enums/QuizVisibility';
@@ -351,11 +352,8 @@ class QuizDAO extends AbstractDAO {
 
     AMQPConnector.sendRequestStatistics();
 
-    if (this._storage[name]) {
-      this._storage[name].quizTimer = 1;
-    } else {
-      await QuizModel.updateOne({ _id: doc._id }, { currentStartTimestamp: -1 }).exec();
-    }
+    process.send({ message: IPCExchange.QuizStop, data: name });
+    await QuizModel.updateOne({ _id: doc._id }, { currentStartTimestamp: -1 }).exec();
 
     return doc;
   }
