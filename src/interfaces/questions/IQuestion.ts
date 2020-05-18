@@ -9,6 +9,7 @@ export interface IQuestionBase {
   questionText: string;
   answerOptionList: Array<IAnswer | IFreetextAnswer>;
   tags: Array<string>;
+  requiredForToken: boolean;
 }
 
 export interface IQuestion extends IQuestionBase {

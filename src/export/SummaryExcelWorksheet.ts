@@ -85,8 +85,6 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       },
     });
 
-    if (this.quiz.sessionConfig.confidenceSliderEnabled) {
-    }
     this.ws.cell(this.quiz.sessionConfig.confidenceSliderEnabled ? currentRowIndex - 1 : currentRowIndex, 3, currentRowIndex, 3).style({
       numberFormat: defaultStyles.numberFormat,
     });
@@ -130,11 +128,17 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         },
         numberFormat: defaultStyles.numberFormat,
       });
-      this.ws.cell(currentRowIndex, nextColumnIndex).style({
+      this.ws.cell(currentRowIndex, nextColumnIndex++).style({
         alignment: {
           horizontal: 'center',
         },
         numberFormat: defaultStyles.numberFormat,
+      });
+      this.ws.cell(currentRowIndex, nextColumnIndex).style({
+        alignment: {
+          horizontal: 'center',
+        },
+        numberFormat: '#',
       });
     });
 
@@ -190,7 +194,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         alignment: {
           horizontal: 'center',
         },
-        numberFormat: defaultStyles.numberFormat,
+        numberFormat: '#',
       });
       this.ws.cell(targetRow, nextColumnIndex).style({
         alignment: {
@@ -273,6 +277,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.overall_response_time'));
     this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.average_response_time'));
+    this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.score'));
     currentRowIndex++;
 
     let nextStartRow = currentRowIndex + 5;
@@ -301,6 +306,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       const responseTime = this.formatMillisToSeconds(leaderboardItem.responseTime);
       this.ws.cell(targetRow, nextColumnIndex++).number(responseTime);
       this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(responseTime / leaderBoardData.length));
+      this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.score));
       nextColumnIndex++;
     });
 
@@ -354,9 +360,17 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         }
         // user's response time and avg. response time is added (bottom list)
         const responseTime = this.formatMillisToSeconds(leaderboardItem.responseTime);
+        const canNotUseToken = this.quiz.questionList.some((item, index) => {
+          return ![QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(item.TYPE) &&
+                 item.requiredForToken &&
+                 leaderboardItem.correctQuestions.indexOf((index)) === -1;
+        });
+
         this.ws.cell(targetRow, nextColumnIndex++).number(responseTime);
         this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.score));
-        this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.bonusToken);
+        if (!canNotUseToken) {
+          this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.bonusToken);
+        }
       } else {
         this.ws.cell(targetRow, nextColumnIndex++).string(this.mf('export.correct_questions_none_available'));
       }

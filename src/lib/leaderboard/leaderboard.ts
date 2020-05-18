@@ -67,7 +67,7 @@ export class Leaderboard {
     }).filter(value => value.score > 0);
   }
 
-  public async buildLeaderboard(activeQuiz: IQuizBase, questionIndex?: number): Promise<any> {
+  public async buildLeaderboard(activeQuiz: IQuizBase, questionIndex?: number, attendeeName?: string): Promise<any> {
     let scoringLeaderboard: AbstractLeaderboardScore;
 
     if (activeQuiz.sessionConfig.leaderboardAlgorithm === LeaderboardConfiguration.TimeBased) {
@@ -87,7 +87,9 @@ export class Leaderboard {
     const members = await MemberDAO.getMembersOfQuiz(activeQuiz.name);
 
     activeQuiz.sessionConfig.nicks.memberGroups.forEach((memberGroup) => {
-      const membersOfGroup = members.filter(member => member.groupName === memberGroup);
+      const membersOfGroup = members
+        .filter(attendee => attendeeName ? attendee.name === attendeeName : true)
+        .filter(member => member.groupName === memberGroup);
 
       memberGroupResults[memberGroup] = {
         correctQuestions: [],

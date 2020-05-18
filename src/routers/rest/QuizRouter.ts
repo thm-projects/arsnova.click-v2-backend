@@ -29,6 +29,7 @@ import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { IPCExchange } from '../../enums/IPCExchange';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
+import { QuestionType } from '../../enums/QuestionType';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
 import { RoutingCache } from '../../enums/RoutingCache';
@@ -48,6 +49,26 @@ import { AbstractRouter } from './AbstractRouter';
 @JsonController('/api/v1/quiz')
 export class QuizRouter extends AbstractRouter {
   private readonly _leaderboard: Leaderboard = new Leaderboard();
+
+  @Get('/bonus-token')
+  public async getCanUseBonusToken(
+    @HeaderParam('authorization', { required: true }) token: string, //
+  ): Promise<boolean> {
+    const attendee = await MemberDAO.getMemberByToken(token);
+    if (!attendee) {
+      throw new UnauthorizedError();
+    }
+    const quiz = await QuizDAO.getActiveQuizByName(attendee.currentQuizName);
+    if (!quiz || quiz.currentQuestionIndex < quiz.questionList.length - 1) {
+      return false;
+    }
+    const canNotUseToken = quiz.questionList.some((value, index) => {
+      return ![QuestionType.ABCDSingleChoiceQuestion, QuestionType.SurveyQuestion].includes(value.TYPE) &&
+             value.requiredForToken &&
+             this._leaderboard.isCorrectResponse(attendee.responses[index], value) !== 1;
+    });
+    return !canNotUseToken;
+  }
 
   @Get('/status/:quizName?') //
   @OpenAPI({
