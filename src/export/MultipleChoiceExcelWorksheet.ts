@@ -225,7 +225,12 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(responseItem.responses[this._questionIndex].confidence));
       }
-      this.ws.cell(nextStartRow, nextColumnIndex++).number(this.formatMillisToSeconds(responseItem.responses[this._questionIndex].responseTime));
+      const responseTime = this.formatMillisToSeconds(responseItem.responses[this._questionIndex].responseTime);
+      if (responseTime) {
+        this.ws.cell(nextStartRow, nextColumnIndex++).number(responseTime);
+      } else {
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.no_answer'));
+      }
     });
     if (nextStartRow === 10) {
       this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));

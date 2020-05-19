@@ -203,7 +203,12 @@ class MemberDAO extends AbstractDAO {
 
   public async addResponseValue(member: Document & MemberModelItem, data: string | number | Array<number>): Promise<void> {
     const quiz = await QuizDAO.getQuizByName(member.currentQuizName);
-    const responseTime = new Date().getTime() - quiz.currentStartTimestamp;
+    let responseTime;
+    if (quiz.currentStartTimestamp > 0) {
+      responseTime = new Date().getTime() - quiz.currentStartTimestamp;
+    } else {
+      responseTime = 0;
+    }
 
     member.responses[quiz.currentQuestionIndex].value = data;
 

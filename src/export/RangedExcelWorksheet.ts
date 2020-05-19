@@ -285,7 +285,12 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
       }
-      this.ws.cell(nextStartRow, nextColumnIndex++).number(this.formatMillisToSeconds(leaderboardItem.responseTime));
+      const responseTime = this.formatMillisToSeconds(leaderboardItem.responseTime);
+      if (responseTime) {
+        this.ws.cell(nextStartRow, nextColumnIndex++).number(responseTime);
+      } else {
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.no_answer'));
+      }
     });
 
     if (nextStartRow === 10) {

@@ -84,24 +84,26 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       }));
     }
 
-    this.ws.cell(6, 1, this.responsesWithConfidenceValue.length > 0 ? 8 : 7, columnsToFormat).style(defaultStyles.statisticsRowStyle);
-    this.ws.cell(6, 2, this.responsesWithConfidenceValue.length > 0 ? 8 : 7, columnsToFormat).style({
+    let nextRowIndex = this.responsesWithConfidenceValue.length > 0 ? 9 : 8;
+    this.ws.cell(6, 1, nextRowIndex, columnsToFormat).style(defaultStyles.statisticsRowStyle);
+    this.ws.cell(6, 2, nextRowIndex, columnsToFormat).style({
       alignment: {
         horizontal: 'center',
       },
     });
+    nextRowIndex += 3;
 
-    this.ws.cell(10, 1, 10, columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
-    this.ws.cell(10, 1).style({
+    this.ws.cell(nextRowIndex, 1, nextRowIndex, columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
+    this.ws.cell(nextRowIndex, 1).style({
       alignment: {
         horizontal: 'left',
       },
     });
 
-    this.ws.row(10).filter({
-      firstRow: 10,
+    this.ws.row(nextRowIndex).filter({
+      firstRow: nextRowIndex,
       firstColumn: 1,
-      lastRow: 10,
+      lastRow: nextRowIndex,
       lastColumn: minColums,
     });
 
@@ -113,11 +115,12 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
         horizontal: 'center',
       },
     });
-    this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
+    nextRowIndex++;
+    this.ws.cell(nextRowIndex, 1, attendeeEntryRows + nextRowIndex - 1, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
     responses.forEach((responseItem, indexInList): void => {
       let nextColumnIndex = 2;
-      const targetRow: number = indexInList + 11;
+      const targetRow: number = indexInList + nextRowIndex;
       if (this._isCasRequired) {
         nextColumnIndex += 2;
       }
@@ -176,28 +179,35 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
                                                / (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
+    this.ws.cell(8, 1).string(this.mf('export.required_for_token') + ':');
+    this.ws.cell(8, 2).string(this.mf('global.' + (this._question.requiredForToken ? 'yes' : 'no')));
+
+    let nextRowIndex = 9;
     if (this.responsesWithConfidenceValue.length > 0) {
-      this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
+      this.ws.cell(nextRowIndex, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
       (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
-      this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
+      this.ws.cell(nextRowIndex++, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
+    } else {
+      nextRowIndex++;
     }
+    nextRowIndex++;
 
     let nextColumnIndex = 1;
-    this.ws.cell(10, nextColumnIndex++).string(this.mf('export.attendee'));
+    this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.attendee'));
     if (this._isCasRequired) {
-      this.ws.cell(10, nextColumnIndex++).string(this.mf('export.cas_account_id'));
-      this.ws.cell(10, nextColumnIndex++).string(this.mf('export.cas_account_email'));
+      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_id'));
+      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_email'));
     }
-    this.ws.cell(10, nextColumnIndex++).string(this.mf('export.answer'));
+    this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.answer'));
     if (this.responsesWithConfidenceValue.length > 0) {
-      this.ws.cell(10, nextColumnIndex++).string(this.mf('export.confidence_level'));
+      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.confidence_level'));
     }
-    this.ws.cell(10, nextColumnIndex++).string(this.mf('export.time'));
+    this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.time'));
 
-    let nextStartRow = 10;
+    let nextStartRow = nextRowIndex;
     await asyncForEach(allResponses, async responseItem => {
       nextColumnIndex = 1;
       nextStartRow++;
@@ -213,11 +223,16 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(responseItem.responses[this._questionIndex].confidence));
       }
-      this.ws.cell(nextStartRow, nextColumnIndex++).number(this.formatMillisToSeconds(responseItem.responses[this._questionIndex].responseTime));
+      const responseTime = this.formatMillisToSeconds(responseItem.responses[this._questionIndex].responseTime);
+      if (responseTime) {
+        this.ws.cell(nextStartRow, nextColumnIndex++).number(responseTime);
+      } else {
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.no_answer'));
+      }
     });
 
-    if (nextStartRow === 10) {
-      this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));
+    if (nextStartRow === nextRowIndex) {
+      this.ws.cell(nextRowIndex + 1, 1).string(this.mf('export.attendee_complete_correct_none_available'));
     }
   }
 }

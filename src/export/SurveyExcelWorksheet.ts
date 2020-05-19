@@ -177,7 +177,12 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(nickItem.responses[this._questionIndex].confidence));
       }
-      this.ws.cell(nextStartRow, nextColumnIndex++).number(this.formatMillisToSeconds(nickItem.responses[this._questionIndex].responseTime));
+      const responseTime = this.formatMillisToSeconds(nickItem.responses[this._questionIndex].responseTime);
+      if (responseTime) {
+        this.ws.cell(nextStartRow, nextColumnIndex++).number(responseTime);
+      } else {
+        this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.no_answer'));
+      }
     });
     if (nextStartRow === 9) {
       this.ws.cell(10, 1).string(this.mf('export.attendee_complete_correct_none_available'));

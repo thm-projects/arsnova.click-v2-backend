@@ -35,6 +35,8 @@
     "average_confidence": "Average confidence grade (in %)",
     "exported_at": "at",
     "exported_at_time": "o'clock",
+    "no_answer": "No response",
+    "required_for_token": "Required question",
     "type": {
       "SurveyQuestion": "SurveyQuestion",
       "TrueFalseSingleChoiceQuestion": "TrueFalseSingleChoiceQuestion",

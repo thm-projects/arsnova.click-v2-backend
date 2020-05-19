@@ -20,7 +20,7 @@
     "attendee_complete_correct_none_available": "Keine Einträge vorhanden",
     "correct_questions_none_available": "Keine",
     "attendee_all_entries": "Alle Teilnehmer/innen",
-    "time": "Antwortzeit (in ms)",
+    "time": "Antwortzeit (in s)",
     "confidence_level": "Antwortsicherheit",
     "correct_value": "Richtiger Wert",
     "min_range": "Mindestwert",
@@ -35,6 +35,8 @@
     "average_confidence": "Durchschnittliche Antwortsicherheit (in %)",
     "exported_at": "um",
     "exported_at_time": "Uhr",
+    "no_answer": "Keine Antwort",
+    "required_for_token": "Erforderliche Quizfrage",
     "type": {
       "SurveyQuestion": "Umfrage",
       "TrueFalseSingleChoiceQuestion": "Wahr-Falsch Frage",
