@@ -76,24 +76,26 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       },
     });
 
-    this.ws.cell(6, 1, this.responsesWithConfidenceValue.length > 0 ? 8 : 7, columnsToFormat).style(defaultStyles.statisticsRowStyle);
-    this.ws.cell(6, 2, this.responsesWithConfidenceValue.length > 0 ? 8 : 7, 2).style({
+    let nextRowIndex = this.responsesWithConfidenceValue.length > 0 ? 9 : 8;
+    this.ws.cell(6, 1, nextRowIndex, columnsToFormat).style(defaultStyles.statisticsRowStyle);
+    this.ws.cell(6, 2, nextRowIndex++, 2).style({
       alignment: {
         horizontal: 'center',
       },
     });
+    nextRowIndex += 2;
 
-    this.ws.cell(10, 1, 10, columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
-    this.ws.cell(10, 1).style({
+    this.ws.cell(nextRowIndex, 1, nextRowIndex, columnsToFormat).style(defaultStyles.attendeeHeaderRowStyle);
+    this.ws.cell(nextRowIndex, 1).style({
       alignment: {
         horizontal: 'left',
       },
     });
 
-    this.ws.row(10).filter({
-      firstRow: 10,
+    this.ws.row(nextRowIndex).filter({
+      firstRow: nextRowIndex,
       firstColumn: 1,
-      lastRow: 10,
+      lastRow: nextRowIndex++,
       lastColumn: minColums,
     });
 
@@ -104,12 +106,12 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
         horizontal: 'center',
       },
     });
-    this.ws.cell(11, 1, attendeeEntryRows + 10, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
+    this.ws.cell(nextRowIndex, 1, attendeeEntryRows + nextRowIndex - 1, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
     await asyncForEach(this.allResponses, async (responseItem, indexInList) => {
       const leaderboardItem = (await this.getLeaderboardData()).filter(lbItem => lbItem.name === responseItem.name)[0];
       let nextColumnIndex = 2;
-      const targetRow = indexInList + 11;
+      const targetRow = indexInList + nextRowIndex;
       if (this._isCasRequired) {
         nextColumnIndex += 2;
       }
@@ -149,51 +151,53 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     this.ws.cell(4, 1).string(this._question.questionText.replace(/[#]*[*]*/g, ''));
     this.ws.cell(4, 2).string(answerOption.answerText);
 
-    this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
-    this.ws.cell(6, 2).number(this.allResponses.length);
+    let nextRowIndex = 6;
+    this.ws.cell(nextRowIndex, 1).string(this.mf('export.number_of_answers') + ':');
+    this.ws.cell(nextRowIndex, 2).number(this.allResponses.length);
 
-    this.ws.cell(6, 3).string(`
-      ${this.mf('view.answeroptions.free_text_question.config_case_sensitive')}:
-       ${this.mf(answerOption.configCaseSensitive ? 'global.yes' : 'global.no')}`);
-    this.ws.cell(6, 4).string(`
-      ${this.mf('view.answeroptions.free_text_question.config_trim_whitespaces')}:
-       ${this.mf(answerOption.configTrimWhitespaces ? 'global.yes' : 'global.no')}`);
+    const configCaseSensitive = this.mf(answerOption.configCaseSensitive ? 'global.yes' : 'global.no');
+    const configTrimWhitespaces = this.mf(answerOption.configTrimWhitespaces ? 'global.yes' : 'global.no');
+    const configUseKeywords = this.mf(answerOption.configUseKeywords ? 'global.yes' : 'global.no');
+    const configUsePunctuation = this.mf(answerOption.configUsePunctuation ? 'global.yes' : 'global.no');
 
-    this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
+    this.ws.cell(nextRowIndex, 3).string(`${this.mf('view.answeroptions.free_text_question.config_case_sensitive')}: ${configCaseSensitive}`);
+    this.ws.cell(nextRowIndex++, 4).string(`${this.mf('view.answeroptions.free_text_question.config_trim_whitespaces')}: ${configTrimWhitespaces}`);
+
+    this.ws.cell(nextRowIndex, 1).string(this.mf('export.percent_correct') + ':');
     const correctResponsesPercentage: number = (await this.getLeaderboardData()).map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
                                                / (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length * 100;
-    this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
+    this.ws.cell(nextRowIndex, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));
 
-    this.ws.cell(7, 3).string(`
-      ${this.mf('view.answeroptions.free_text_question.config_use_keywords')}:
-       ${this.mf(answerOption.configUseKeywords ? 'global.yes' : 'global.no')}`);
-    this.ws.cell(7, 4).string(`
-      ${this.mf('view.answeroptions.free_text_question.config_use_punctuation')}:
-       ${this.mf(answerOption.configUsePunctuation ? 'global.yes' : 'global.no')}`);
+    this.ws.cell(nextRowIndex, 3).string(`${this.mf('view.answeroptions.free_text_question.config_use_keywords')}: ${configUseKeywords}`);
+    this.ws.cell(nextRowIndex++, 4).string(`${this.mf('view.answeroptions.free_text_question.config_use_punctuation')}: ${configUsePunctuation}`);
 
     if (this.responsesWithConfidenceValue.length > 0) {
-      this.ws.cell(8, 1).string(this.mf('export.average_confidence') + ':');
+      this.ws.cell(nextRowIndex, 1).string(this.mf('export.average_confidence') + ':');
       let confidenceSummary = 0;
       (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).forEach((nickItem) => {
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
-      this.ws.cell(8, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
+      this.ws.cell(nextRowIndex++, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
     }
+
+    this.ws.cell(nextRowIndex, 1).string(this.mf('export.required_for_token') + ':');
+    this.ws.cell(nextRowIndex++, 2).string(this.mf('global.' + (this._question.requiredForToken ? 'yes' : 'no')));
 
     let nextColumnIndex = 1;
-    this.ws.cell(10, nextColumnIndex++).string(this.mf('export.attendee'));
+    nextRowIndex += 2;
+    this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.attendee'));
     if (this._isCasRequired) {
-      this.ws.cell(10, nextColumnIndex++).string(this.mf('export.cas_account_id'));
-      this.ws.cell(10, nextColumnIndex++).string(this.mf('export.cas_account_email'));
+      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_id'));
+      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_email'));
     }
-    this.ws.cell(10, nextColumnIndex++).string(this.mf('export.answer'));
+    this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.answer'));
     if (this.responsesWithConfidenceValue.length > 0) {
-      this.ws.cell(10, nextColumnIndex++).string(this.mf('export.confidence_level'));
+      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.confidence_level'));
     }
-    this.ws.cell(10, nextColumnIndex++).string(this.mf('export.time'));
+    this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.time'));
 
-    let nextStartRow = 10;
+    let nextStartRow = nextRowIndex;
     this.allResponses.forEach((nickItem) => {
       nextColumnIndex = 1;
       nextStartRow++;
@@ -214,8 +218,8 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
         this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.no_answer'));
       }
     });
-    if (nextStartRow === 10) {
-      this.ws.cell(11, 1).string(this.mf('export.attendee_complete_correct_none_available'));
+    if (nextStartRow === nextRowIndex) {
+      this.ws.cell(nextRowIndex + 1, 1).string(this.mf('export.attendee_complete_correct_none_available'));
     }
   }
 }
