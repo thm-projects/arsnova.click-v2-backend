@@ -1,6 +1,9 @@
+import { Document } from 'mongoose';
 import MemberDAO from '../../db/MemberDAO';
+import { AnswerState } from '../../enums/AnswerState';
 import { LeaderboardConfiguration } from '../../enums/LeaderboardConfiguration';
 import { QuestionType } from '../../enums/QuestionType';
+import { IAnswerResult } from '../../interfaces/IAnswerResult';
 import { ILeaderBoardItemBase } from '../../interfaces/leaderboard/ILeaderBoardItemBase';
 import { IQuestionBase } from '../../interfaces/questions/IQuestion';
 import { IQuestionChoice } from '../../interfaces/questions/IQuestionChoice';
@@ -8,6 +11,8 @@ import { IQuestionFreetext } from '../../interfaces/questions/IQuestionFreetext'
 import { IQuestionRanged } from '../../interfaces/questions/IQuestionRanged';
 import { IQuizBase } from '../../interfaces/quizzes/IQuizEntity';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
+import { MemberModelItem } from '../../models/member/MemberModel';
+import { QuizModelItem } from '../../models/quiz/QuizModelItem';
 import LoggerService from '../../services/LoggerService';
 import { publicSettings } from '../../statistics';
 import { AbstractLeaderboardScore } from './AbstractLeaderboardScore';
@@ -170,6 +175,46 @@ export class Leaderboard {
     }
   }
 
+  public async getAnswerResult(attendee: Document & MemberModelItem, quiz: Document & QuizModelItem): Promise<IAnswerResult> {
+    let scoringLeaderboard: AbstractLeaderboardScore;
+    if (quiz.sessionConfig.leaderboardAlgorithm === LeaderboardConfiguration.TimeBased) {
+      scoringLeaderboard = this._timebasedLeaderboard;
+    } else if (quiz.sessionConfig.leaderboardAlgorithm === LeaderboardConfiguration.PointBased) {
+      scoringLeaderboard = this._pointbasedLeaderboard;
+    } else {
+      scoringLeaderboard = this._defaultLeaderboard;
+    }
+
+    const { correctResponses } = await this.buildLeaderboard(quiz, quiz.currentQuestionIndex);
+    const sortedCorrectResponses = this.sortBy(correctResponses, 'score');
+    const ownLeaderboardElement = sortedCorrectResponses.find(value => value.name === attendee.name);
+    const rank = sortedCorrectResponses.indexOf(ownLeaderboardElement) + 1;
+
+    const response = attendee.responses[quiz.currentQuestionIndex];
+    const question = quiz.questionList[quiz.currentQuestionIndex];
+    const correctState = this.isCorrectResponse(response, question);
+    const state = correctState === 1 ? AnswerState.Correct : correctState === 0 ? AnswerState.PartiallyCorrect : AnswerState.Wrong;
+    let pointsGained;
+    if (state === AnswerState.Correct) {
+      pointsGained = scoringLeaderboard.getScoreForCorrect(response.responseTime, question.timer);
+    } else if (state === AnswerState.PartiallyCorrect) {
+      pointsGained = scoringLeaderboard.getScoreForPartiallyCorrect(response.responseTime, question.timer);
+    } else {
+      pointsGained = scoringLeaderboard.getScoreForWrongAnswer(response.responseTime, question.timer);
+    }
+    const amountCorrect = this.getCorrectAnswers(Array.isArray(response.value) ? response.value : [response.value], question);
+    let amountAvailable: number;
+    if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
+      amountAvailable = 0;
+    } else if ([QuestionType.RangedQuestion, QuestionType.FreeTextQuestion].includes(question.TYPE)) {
+      amountAvailable = 1;
+    } else {
+      amountAvailable = question.answerOptionList.filter(answer => answer.isCorrect).length;
+    }
+
+    return {state, pointsGained, rank, amountAvailable, amountCorrect};
+  }
+
   private isCorrectSingleChoiceQuestion(response: number, question: IQuestionChoice): boolean {
     if (typeof response === 'undefined' || typeof response !== 'number' || !question.answerOptionList[response]) {
       return false;
@@ -178,27 +223,52 @@ export class Leaderboard {
     return question.answerOptionList[response] && question.answerOptionList[response].isCorrect;
   }
 
+  private getCorrectAnswers(response: Array<string | number>, question: IQuestionBase): number {
+    switch (question.TYPE) {
+      case QuestionType.ABCDSingleChoiceQuestion:
+      case QuestionType.SurveyQuestion:
+        return 0;
+      case QuestionType.FreeTextQuestion:
+        return this.isCorrectFreeTextQuestion(response[0] as string, question as IQuestionFreetext) ? 1 : 0;
+      case QuestionType.RangedQuestion:
+        return this.isCorrectRangedQuestion(response[0] as number, question as IQuestionRanged) ? 1 : 0;
+      case QuestionType.MultipleChoiceQuestion:
+        const {correct} = this.getMultipleChoiceAnswerResult(response as Array<number>, question as IQuestionChoice);
+        return correct;
+      case QuestionType.SingleChoiceQuestion:
+      case QuestionType.TrueFalseSingleChoiceQuestion:
+      case QuestionType.YesNoSingleChoiceQuestion:
+        return this.isCorrectSingleChoiceQuestion(response[0] as number, question as IQuestionChoice) ? 1 : 0;
+    }
+  }
+
+  private getMultipleChoiceAnswerResult(response: Array<number>, question: IQuestionChoice): {correct: number, wrong: number} {
+    let correct = 0;
+    let wrong = 0;
+    question.answerOptionList.forEach((answeroption, answerIndex) => {
+      if (answeroption.isCorrect) {
+        if (response.indexOf(answerIndex) > -1) {
+          correct++;
+        } else {
+          wrong++;
+        }
+      } else {
+        if (response.indexOf(answerIndex) > -1) {
+          wrong++;
+        }
+      }
+    });
+    return {correct, wrong};
+  }
+
   private isCorrectMultipleChoiceQuestion(response: Array<number>, question: IQuestionChoice): number {
     if (!Array.isArray(response)) {
       return -1;
     }
 
-    let hasCorrectAnswers = 0;
-    let hasWrongAnswers = 0;
-    question.answerOptionList.forEach((answeroption, answerIndex) => {
-      if (answeroption.isCorrect) {
-        if (response.indexOf(answerIndex) > -1) {
-          hasCorrectAnswers++;
-        } else {
-          hasWrongAnswers++;
-        }
-      } else {
-        if (response.indexOf(answerIndex) > -1) {
-          hasWrongAnswers++;
-        }
-      }
-    });
-    return !hasWrongAnswers && hasCorrectAnswers ? 1 : hasWrongAnswers && hasCorrectAnswers ? 0 : -1;
+    const {correct, wrong} = this.getMultipleChoiceAnswerResult(response, question);
+
+    return !wrong && correct ? 1 : wrong && correct ? 0 : -1;
   }
 
   private isCorrectRangedQuestion(response: number, question: IQuestionRanged): number {

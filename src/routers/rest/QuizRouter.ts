@@ -36,6 +36,7 @@ import { RoutingCache } from '../../enums/RoutingCache';
 import { UserRole } from '../../enums/UserRole';
 import { ExcelWorkbook } from '../../export/ExcelWorkbook';
 import { IMessage } from '../../interfaces/communication/IMessage';
+import { IAnswerResult } from '../../interfaces/IAnswerResult';
 import { IQuizStatusPayload } from '../../interfaces/IQuizStatusPayload';
 import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { asyncForEach } from '../../lib/async-for-each';
@@ -49,6 +50,22 @@ import { AbstractRouter } from './AbstractRouter';
 @JsonController('/api/v1/quiz')
 export class QuizRouter extends AbstractRouter {
   private readonly _leaderboard: Leaderboard = new Leaderboard();
+
+  @Get('/answer-result')
+  public async getAnswerResult(
+    @HeaderParam('authorization', { required: true }) token: string, //
+  ): Promise<IAnswerResult> {
+    const attendee = await MemberDAO.getMemberByToken(token);
+    if (!attendee) {
+      throw new UnauthorizedError();
+    }
+    const quiz = await QuizDAO.getActiveQuizByName(attendee.currentQuizName);
+    if (!quiz) {
+      throw new BadRequestError();
+    }
+
+    return this._leaderboard.getAnswerResult(attendee, quiz);
+  }
 
   @Get('/bonus-token')
   public async getCanUseBonusToken(
