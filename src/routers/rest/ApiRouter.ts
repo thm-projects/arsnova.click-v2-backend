@@ -32,7 +32,8 @@ export class ApiRouter extends AbstractRouter {
     const metadatas = (
       getFromContainer(MetadataStorage) as any
     ).validationMetadatas;
-    const schemas = validationMetadatasToSchemas(metadatas, {
+    const schemas = validationMetadatasToSchemas({
+      ...metadatas,
       refPointerPrefix: '#/components/schemas/',
     });
 
