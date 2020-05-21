@@ -190,8 +190,6 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
         confidenceSummary += nickItem.responses[this._questionIndex].confidence;
       });
       this.ws.cell(nextRowIndex++, 2).number(Math.round(confidenceSummary / this.responsesWithConfidenceValue.length));
-    } else {
-      nextRowIndex++;
     }
     nextRowIndex += 2;
 
