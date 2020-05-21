@@ -114,34 +114,34 @@ export class Leaderboard {
           if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
             continue;
           }
+          const responseTime = attendee.responses[i].responseTime;
+
           if (!responses[attendee.name]) {
             responses[attendee.name] = {
-              responseTime: 0,
+              responseTime: responseTime,
               correctQuestions: [],
-              confidenceValue: 0,
+              confidenceValue: attendee.responses[i].confidence,
               score: 0,
             };
           }
-          responses[attendee.name].confidenceValue += <number>attendee.responses[i].confidence;
-          responses[attendee.name].responseTime += <number>attendee.responses[i].responseTime;
 
-          memberGroupResults[memberGroup].responseTime += <number>attendee.responses[i].responseTime;
+          memberGroupResults[memberGroup].responseTime += responseTime;
 
           const isCorrect = this.isCorrectResponse(attendee.responses[i], question);
           if (isCorrect === 1) {
             responses[attendee.name].correctQuestions.push(i);
-            responses[attendee.name].score += scoringLeaderboard.getScoreForCorrect(attendee.responses[i].responseTime, question.timer);
+            responses[attendee.name].score += question.difficulty * scoringLeaderboard.getScoreForCorrect(responseTime, question.timer);
 
             memberGroupResults[memberGroup].correctQuestions.push(i);
 
           } else if (isCorrect === 0) {
             responses[attendee.name].correctQuestions.push(i);
-            responses[attendee.name].score += scoringLeaderboard.getScoreForPartiallyCorrect(attendee.responses[i].responseTime, question.timer);
+            responses[attendee.name].score += question.difficulty * scoringLeaderboard.getScoreForPartiallyCorrect(responseTime, question.timer);
 
             memberGroupResults[memberGroup].correctQuestions.push(i);
 
           } else {
-            responses[attendee.name].score += scoringLeaderboard.getScoreForWrongAnswer(attendee.responses[i].responseTime, question.timer);
+            responses[attendee.name].score += question.difficulty * scoringLeaderboard.getScoreForWrongAnswer(responseTime, question.timer);
           }
         }
       });
@@ -194,16 +194,19 @@ export class Leaderboard {
     const question = quiz.questionList[quiz.currentQuestionIndex];
     const correctState = this.isCorrectResponse(response, question);
     const state = correctState === 1 ? AnswerState.Correct : correctState === 0 ? AnswerState.PartiallyCorrect : AnswerState.Wrong;
-    let pointsGained;
-    if (state === AnswerState.Correct) {
-      pointsGained = scoringLeaderboard.getScoreForCorrect(response.responseTime, question.timer);
-    } else if (state === AnswerState.PartiallyCorrect) {
-      pointsGained = scoringLeaderboard.getScoreForPartiallyCorrect(response.responseTime, question.timer);
-    } else {
-      pointsGained = scoringLeaderboard.getScoreForWrongAnswer(response.responseTime, question.timer);
-    }
     const amountCorrect = this.getCorrectAnswers(Array.isArray(response.value) ? response.value : [response.value], question);
+
+    let pointsGained: number;
     let amountAvailable: number;
+
+    if (state === AnswerState.Correct) {
+      pointsGained = question.difficulty * scoringLeaderboard.getScoreForCorrect(response.responseTime, question.timer);
+    } else if (state === AnswerState.PartiallyCorrect) {
+      pointsGained = question.difficulty * scoringLeaderboard.getScoreForPartiallyCorrect(response.responseTime, question.timer);
+    } else {
+      pointsGained = question.difficulty * scoringLeaderboard.getScoreForWrongAnswer(response.responseTime, question.timer);
+    }
+
     if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
       amountAvailable = 0;
     } else if ([QuestionType.RangedQuestion, QuestionType.FreeTextQuestion].includes(question.TYPE)) {

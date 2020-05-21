@@ -145,6 +145,8 @@ class QuizDAO extends AbstractDAO {
       }
     }
 
+    legacyQuiz.questionList.forEach(question => question.difficulty = question.difficulty ?? 5);
+
     if (legacyQuiz.hasOwnProperty('configuration')) {
 
       // Detected old v1 arsnova.click quiz
@@ -171,6 +173,11 @@ class QuizDAO extends AbstractDAO {
             lobby: legacyQuiz.configuration.music.lobbyEnabled,
             countdownRunning: legacyQuiz.configuration.music.countdownRunningEnabled,
             countdownEnd: legacyQuiz.configuration.music.countdownEndEnabled,
+          },
+          shared: {
+            lobby: false,
+            countdownRunning: false,
+            countdownEnd: false,
           },
         },
         nicks: {

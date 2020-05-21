@@ -1,4 +1,4 @@
-import { arrayProp, getModelForClass, index, pre, prop, Severity } from '@typegoose/typegoose';
+import { getModelForClass, index, pre, prop, Severity } from '@typegoose/typegoose';
 import { IsArray, IsBoolean, IsObject, IsString } from 'class-validator';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
@@ -25,7 +25,7 @@ export class MemberModelItem implements IMemberSerialized {
   @prop() @IsString() public colorCode: string;
   @prop({ required: false }) @IsString() public groupName: string;
   @prop() @IsString() public name: string;
-  @arrayProp({ items: Object }) @IsArray() public responses: Array<IQuizResponse>;
+  @prop({ items: Object }) @IsArray() public responses: Array<IQuizResponse>;
   @prop({ required: false }) @IsString() public ticket: string;
   @prop() @IsString() public token: string;
   @prop() @IsString() public currentQuizName: string;

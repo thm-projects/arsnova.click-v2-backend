@@ -1,4 +1,4 @@
-import { arrayProp, getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
+import { getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
 import { IsArray, IsString } from 'class-validator';
 import { PushSubscription } from 'web-push';
 import DbDAO from '../../db/DbDAO';
@@ -10,11 +10,11 @@ export class UserModelItem implements IUserSerialized {
   @prop({ required: true }) @IsString() public name: string;
   @prop({ required: false }) @IsString() public passwordHash: string;
   @prop({ required: false }) @IsString() public tokenHash: string;
-  @arrayProp({
+  @prop({
     required: true,
     items: String,
   }) @IsArray() public userAuthorizations: Array<string>;
-  @arrayProp({
+  @prop({
     required: true,
     items: Object,
   }) @IsArray() public subscriptions: Array<PushSubscription>;

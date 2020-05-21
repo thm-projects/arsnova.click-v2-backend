@@ -1,4 +1,4 @@
-import { arrayProp, getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
+import { getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
 import { IsArray, IsBoolean, IsDate, IsEnum, IsNumber, IsObject, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 import DbDAO from '../../db/DbDAO';
@@ -26,7 +26,7 @@ export class QuizModelItem {
     minlength: 2,
     trim: true,
   }) @IsString() public name: string;
-  @arrayProp({ items: Object }) @IsArray() public questionList: Array<IQuestion>;
+  @prop({ items: Object }) @IsArray() public questionList: Array<IQuestion>;
   @prop({
     default: QuizState.Inactive,
     enum: QuizState,
