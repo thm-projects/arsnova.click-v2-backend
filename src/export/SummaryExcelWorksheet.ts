@@ -305,7 +305,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       // user's response time and avg. response time is added (top list)
       const responseTime = this.formatMillisToSeconds(leaderboardItem.responseTime);
       this.ws.cell(targetRow, nextColumnIndex++).number(responseTime);
-      this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(responseTime / leaderBoardData.length));
+      this.ws.cell(targetRow, nextColumnIndex++).number(this.formatMillisToSeconds(responseTime / this.quiz.questionList.length * 1000));
       this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.score));
       nextColumnIndex++;
     });

@@ -193,7 +193,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     } else {
       nextRowIndex++;
     }
-    nextRowIndex++;
+    nextRowIndex += 2;
 
     let nextColumnIndex = 1;
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.attendee'));

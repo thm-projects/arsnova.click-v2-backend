@@ -196,7 +196,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.answer'));
 
     if (this.responsesWithConfidenceValue.length > 0) {
-      this.ws.cell(nextRowIndex++, nextColumnIndex++).string(this.mf('export.confidence_level'));
+      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.confidence_level'));
     }
 
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.time'));
