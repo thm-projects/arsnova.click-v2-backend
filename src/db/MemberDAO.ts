@@ -27,8 +27,12 @@ class MemberDAO extends AbstractDAO {
 
   set totalUsers(value: number) {
     this._totalUsers = value;
-    this.totalUsersChanged.emit('update', this._totalUsers);
     routeCache.removeCache(RoutingCache.Statistics);
+    this.totalUsersChanged.emit('update', this._totalUsers);
+
+    if (cluster.isMaster) {
+      setTimeout(() => AMQPConnector.sendRequestStatistics(), 800);
+    }
   }
 
   constructor() {
@@ -331,7 +335,6 @@ class MemberDAO extends AbstractDAO {
 
       if (this._totalUsers !== total) {
         this.totalUsers = total;
-        AMQPConnector.sendRequestStatistics();
       }
     }, 10000);
   }

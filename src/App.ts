@@ -141,7 +141,7 @@ class App {
 
     const router: Router = express.Router();
     router.get(`/statistics`, cors(options), routeCache.cacheSeconds(10, RoutingCache.Statistics), async (req: Request, res: Response) => {
-      res.send(Object.assign({}, publicSettings, await dynamicStatistics()));
+      res.send({...publicSettings, ...await dynamicStatistics()});
     });
 
     this._express.use(`/`, router);

@@ -59,13 +59,16 @@ class AMQPConnector {
   public sendRequestStatistics(): boolean {
     const diff = new Date().getTime() - this._lastStatisticRequestSent;
     clearTimeout(this._sendStatisticsTimeout);
-    if (diff < 5000) {
+    if (diff < 500) {
       this._sendStatisticsTimeout = setTimeout(() => this.sendRequestStatistics(), diff);
       return;
     }
 
     this._lastStatisticRequestSent = new Date().getTime();
+
+    console.log('sending requeststatistics, cachelength before drop:', routeCache.cacheStore.length);
     routeCache.removeCache(RoutingCache.Statistics);
+    console.log('sending requeststatistics, cachelength after drop:', routeCache.cacheStore.length);
 
     return this.channel?.publish(this.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
