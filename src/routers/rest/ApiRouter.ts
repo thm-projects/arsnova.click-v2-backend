@@ -2,7 +2,7 @@ import * as Converter from 'api-spec-converter';
 import { getFromContainer, MetadataStorage } from 'class-validator';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import { Response } from 'express';
-import { fromBuffer } from 'file-type';
+import { fromBuffer, fromFile } from 'file-type';
 import * as fs from 'fs';
 import { OpenAPIObject } from 'openapi3-ts';
 import * as path from 'path';
@@ -115,11 +115,12 @@ export class ApiRouter extends AbstractRouter {
     summary: 'Transfers assets like sound files for the quizzes',
   })
   @UseBefore(routeCache.cacheSeconds(300, req => `${RoutingCache.AssetFiles}_${req.url}`))
-  private getFileByName(
+  private async getFileByName(
     @Param('directory') directory: string, //
     @Param('subdirectory') subdirectory: string, //
-    @Param('fileName') fileName: string,
-  ): object {
+    @Param('fileName') fileName: string, //
+    @Res() res: Response,
+  ): Promise<object> {
 
     const pathToFiles: string = path.join(settings.pathToAssets, `${directory}`, `${subdirectory}`);
     let file = '';
@@ -135,6 +136,8 @@ export class ApiRouter extends AbstractRouter {
       file = fileName;
     }
 
+    const mimeData = await fromFile(path.join(`${pathToFiles}`, file));
+    res.contentType(mimeData?.mime ?? 'audio/mpeg');
     return fs.readFileSync(path.join(`${pathToFiles}`, file));
   }
 
