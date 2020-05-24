@@ -29,11 +29,7 @@ export class PointBasedLeaderboardScore extends AbstractLeaderboardScore {
 
   public getScoreForGroup({ memberGroupResults, correctResponses, activeQuiz }): object {
     Object.values(memberGroupResults).forEach((memberGroup: any) => {
-      memberGroup.score = Math.round((
-                                       memberGroup.correctQuestions.length / memberGroup.memberAmount / activeQuiz.questionList.length
-                                     ) * (
-                                       memberGroup.responseTime / memberGroup.memberAmount
-                                     ));
+      memberGroup.score = Math.round(memberGroup.score / memberGroup.memberAmount);
     });
 
     return memberGroupResults;

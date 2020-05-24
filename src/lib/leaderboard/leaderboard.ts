@@ -133,15 +133,18 @@ export class Leaderboard {
             responses[attendee.name].score += question.difficulty * scoringLeaderboard.getScoreForCorrect(responseTime, question.timer);
 
             memberGroupResults[memberGroup].correctQuestions.push(i);
+            memberGroupResults[memberGroup].score += responses[attendee.name].score;
 
           } else if (isCorrect === 0) {
             responses[attendee.name].correctQuestions.push(i);
             responses[attendee.name].score += question.difficulty * scoringLeaderboard.getScoreForPartiallyCorrect(responseTime, question.timer);
 
             memberGroupResults[memberGroup].correctQuestions.push(i);
+            memberGroupResults[memberGroup].score += responses[attendee.name].score;
 
           } else {
             responses[attendee.name].score += question.difficulty * scoringLeaderboard.getScoreForWrongAnswer(responseTime, question.timer);
+            memberGroupResults[memberGroup].score += responses[attendee.name].score;
           }
         }
       });
@@ -185,10 +188,8 @@ export class Leaderboard {
       scoringLeaderboard = this._defaultLeaderboard;
     }
 
-    const { correctResponses } = await this.buildLeaderboard(quiz, quiz.currentQuestionIndex);
-    const sortedCorrectResponses = this.sortBy(correctResponses, 'score');
-    const ownLeaderboardElement = sortedCorrectResponses.find(value => value.name === attendee.name);
-    const rank = sortedCorrectResponses.indexOf(ownLeaderboardElement) + 1;
+    const { correctResponses, memberGroupResults } = await this.buildLeaderboard(quiz, quiz.currentQuestionIndex);
+    const orderByGroups = quiz.sessionConfig.nicks.memberGroups.length > 1;
 
     const response = attendee.responses[quiz.currentQuestionIndex];
     const question = quiz.questionList[quiz.currentQuestionIndex];
@@ -198,13 +199,21 @@ export class Leaderboard {
 
     let pointsGained: number;
     let amountAvailable: number;
+    let rank: number;
 
-    if (state === AnswerState.Correct) {
-      pointsGained = question.difficulty * scoringLeaderboard.getScoreForCorrect(response.responseTime, question.timer);
-    } else if (state === AnswerState.PartiallyCorrect) {
-      pointsGained = question.difficulty * scoringLeaderboard.getScoreForPartiallyCorrect(response.responseTime, question.timer);
+    if (orderByGroups) {
+      rank = this.sortBy(memberGroupResults, 'score').findIndex(value => value.name === attendee.groupName) + 1;
+      pointsGained = memberGroupResults[attendee.groupName].score;
     } else {
-      pointsGained = question.difficulty * scoringLeaderboard.getScoreForWrongAnswer(response.responseTime, question.timer);
+      rank = this.sortBy(correctResponses, 'score').findIndex(value => value.name === attendee.name) + 1;
+
+      if (state === AnswerState.Correct) {
+        pointsGained = question.difficulty * scoringLeaderboard.getScoreForCorrect(response.responseTime, question.timer);
+      } else if (state === AnswerState.PartiallyCorrect) {
+        pointsGained = question.difficulty * scoringLeaderboard.getScoreForPartiallyCorrect(response.responseTime, question.timer);
+      } else {
+        pointsGained = question.difficulty * scoringLeaderboard.getScoreForWrongAnswer(response.responseTime, question.timer);
+      }
     }
 
     if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
