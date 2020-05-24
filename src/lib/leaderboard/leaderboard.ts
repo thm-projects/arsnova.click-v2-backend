@@ -91,12 +91,13 @@ export class Leaderboard {
     const memberGroupResults = {};
     const members = await MemberDAO.getMembersOfQuiz(activeQuiz.name);
 
-    activeQuiz.sessionConfig.nicks.memberGroups.forEach((memberGroup) => {
+    const groups = activeQuiz.sessionConfig.nicks.memberGroups.length > 0 ? activeQuiz.sessionConfig.nicks.memberGroups : [{name: 'Default'}];
+    groups.forEach((memberGroup) => {
       const membersOfGroup = members
         .filter(attendee => attendeeName ? attendee.name === attendeeName : true)
-        .filter(member => member.groupName === memberGroup);
+        .filter(member => member.groupName === memberGroup.name);
 
-      memberGroupResults[memberGroup] = {
+      memberGroupResults[memberGroup.name] = {
         correctQuestions: [],
         responseTime: 0,
         score: 0,
@@ -125,26 +126,26 @@ export class Leaderboard {
             };
           }
 
-          memberGroupResults[memberGroup].responseTime += responseTime;
+          memberGroupResults[memberGroup.name].responseTime += responseTime;
 
           const isCorrect = this.isCorrectResponse(attendee.responses[i], question);
           if (isCorrect === 1) {
             responses[attendee.name].correctQuestions.push(i);
             responses[attendee.name].score += question.difficulty * scoringLeaderboard.getScoreForCorrect(responseTime, question.timer);
 
-            memberGroupResults[memberGroup].correctQuestions.push(i);
-            memberGroupResults[memberGroup].score += responses[attendee.name].score;
+            memberGroupResults[memberGroup.name].correctQuestions.push(i);
+            memberGroupResults[memberGroup.name].score += responses[attendee.name].score;
 
           } else if (isCorrect === 0) {
             responses[attendee.name].correctQuestions.push(i);
             responses[attendee.name].score += question.difficulty * scoringLeaderboard.getScoreForPartiallyCorrect(responseTime, question.timer);
 
-            memberGroupResults[memberGroup].correctQuestions.push(i);
-            memberGroupResults[memberGroup].score += responses[attendee.name].score;
+            memberGroupResults[memberGroup.name].correctQuestions.push(i);
+            memberGroupResults[memberGroup.name].score += responses[attendee.name].score;
 
           } else {
             responses[attendee.name].score += question.difficulty * scoringLeaderboard.getScoreForWrongAnswer(responseTime, question.timer);
-            memberGroupResults[memberGroup].score += responses[attendee.name].score;
+            memberGroupResults[memberGroup.name].score += responses[attendee.name].score;
           }
         }
       });
@@ -189,7 +190,7 @@ export class Leaderboard {
     }
 
     const { correctResponses, memberGroupResults } = await this.buildLeaderboard(quiz, quiz.currentQuestionIndex);
-    const orderByGroups = quiz.sessionConfig.nicks.memberGroups.length > 1;
+    const orderByGroups = quiz.sessionConfig.nicks.memberGroups.length > 0;
 
     const response = attendee.responses[quiz.currentQuestionIndex];
     const question = quiz.questionList[quiz.currentQuestionIndex];

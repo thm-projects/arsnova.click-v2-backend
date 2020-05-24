@@ -1,5 +1,7 @@
+import { IMemberGroupBase } from '../../users/IMemberGroupBase';
+
 export interface INickSessionConfiguration {
-  memberGroups: Array<string>;
+  memberGroups: Array<IMemberGroupBase>;
   maxMembersPerGroup: number;
   autoJoinToGroup: boolean;
   selectedNicks: Array<string>;

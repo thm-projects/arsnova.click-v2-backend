@@ -11,6 +11,7 @@ import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { RoutingCache } from '../enums/RoutingCache';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
+import { IMemberGroupBase } from '../interfaces/users/IMemberGroupBase';
 import { HistoryModel } from '../models/HistoryModel';
 import { MemberModel, MemberModelItem } from '../models/member/MemberModel';
 import { QuizModelItem } from '../models/quiz/QuizModelItem';
@@ -144,9 +145,9 @@ class MemberDAO extends AbstractDAO {
     AMQPConnector.sendRequestStatistics();
   }
 
-  public async getMemberAmountPerQuizGroup(name: string, groups: Array<string>): Promise<object> {
+  public async getMemberAmountPerQuizGroup(name: string, groups: Array<IMemberGroupBase>): Promise<{[key: string]: number}> {
     const result = {};
-    groups.forEach(g => result[g] = 0);
+    groups.forEach(g => result[g.name] = 0);
 
     (
       await this.getMembersOfQuiz(name)

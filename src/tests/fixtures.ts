@@ -35,7 +35,7 @@ export const generateQuiz = (name: string): IQuiz => {
         },
       },
       nicks: {
-        memberGroups: ['Default'],
+        memberGroups: [],
         maxMembersPerGroup: 10,
         autoJoinToGroup: false,
         blockIllegalNicks: true,
