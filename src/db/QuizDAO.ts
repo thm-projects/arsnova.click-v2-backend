@@ -19,6 +19,7 @@ import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
 import MemberDAO from './MemberDAO';
+import UserDAO from './UserDAO';
 
 interface IQuizDAOStorage {
   quizTimer: number;
@@ -256,6 +257,11 @@ class QuizDAO extends AbstractDAO {
   }
 
   public async setQuizAsInactive(quizName: string, privateKey: string): Promise<void> {
+    const purgedQuizData = (await UserDAO.getUserByPrivateKey(privateKey)) ? {} : {
+      sessionConfig: null,
+      questionList: null,
+    };
+
     await QuizModel.updateOne({
       name: this.buildQuiznameQuery(quizName),
       privateKey,
@@ -264,6 +270,7 @@ class QuizDAO extends AbstractDAO {
       currentQuestionIndex: -1,
       currentStartTimestamp: -1,
       readingConfirmationRequested: false,
+      ...purgedQuizData
     }).exec();
 
     if (!this._storage[quizName]) {

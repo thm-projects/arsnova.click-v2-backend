@@ -70,6 +70,10 @@ class UserDAO extends AbstractDAO {
   public async getUsersByRole(role: UserRole): Promise<Array<Document & UserModelItem>> {
     return UserModel.find({ userAuthorizations: role }).exec();
   }
+
+  public async getUserByPrivateKey(privateKey: string): Promise<Document & UserModelItem> {
+    return UserModel.findOne({ privateKey }).exec();
+  }
 }
 
 export default UserDAO.getInstance();
