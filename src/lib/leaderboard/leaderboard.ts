@@ -87,7 +87,7 @@ export class Leaderboard {
     const endIndex: number = isNaN(questionIndex) || questionIndex < 0 || questionIndex > questionAmount ? questionAmount : questionIndex + 1;
     const responses: any = {};
 
-    const orderByGroups = activeQuiz.sessionConfig.nicks.memberGroups.length > 1;
+    const orderByGroups = activeQuiz.sessionConfig.nicks.memberGroups.length > 0;
     const memberGroupResults = {};
     const members = await MemberDAO.getMembersOfQuiz(activeQuiz.name);
 

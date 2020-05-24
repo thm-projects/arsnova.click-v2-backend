@@ -36,9 +36,7 @@
       "selectedNicks": [],
       "blockIllegalNicks": true,
       "restrictToCasLogin": false,
-      "memberGroups": [
-        "Default"
-      ],
+      "memberGroups": [],
       "maxMembersPerGroup": 10,
       "autoJoinToGroup": false
     },
