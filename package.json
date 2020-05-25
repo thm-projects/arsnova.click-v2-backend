@@ -11,6 +11,7 @@
     "prebuild:PROD": "npm run clean",
     "build:DEV": "tsc && cp -r assets dist/",
     "build:PROD": "tsc && cp -r assets dist/",
+    "build:WATCH": "tsc --watch --incremental",
     "start:NO_DB": "cd ./dist/ && node main.js --no-db",
     "dependency-check": "npx --ignore-existing madge --circular --extensions ts src"
   },
