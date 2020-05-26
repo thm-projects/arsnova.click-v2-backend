@@ -2,7 +2,7 @@ import { IQuizResponse } from '../../quizzes/IQuizResponse';
 
 export interface IMemberBase {
   name: string;
-  groupName: string;
+  groupName?: string;
   token: string;
   currentQuizName: string;
   colorCode?: string;

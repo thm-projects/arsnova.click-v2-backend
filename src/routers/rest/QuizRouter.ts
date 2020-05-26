@@ -813,7 +813,7 @@ export class QuizRouter extends AbstractRouter {
       };
     }
 
-    let groupName = 'Default';
+    let groupName;
     if (activeQuiz.sessionConfig.nicks.memberGroups.length > 0) {
       const memberGroupLoad = await MemberDAO.getMemberAmountPerQuizGroup(activeQuiz.name, activeQuiz.sessionConfig.nicks.memberGroups);
       if (memberGroupLoad) {

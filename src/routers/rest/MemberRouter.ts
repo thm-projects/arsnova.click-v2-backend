@@ -93,10 +93,6 @@ export class MemberRouter extends AbstractRouter {
     }
 
     try {
-      if (!member.groupName) {
-        member.groupName = 'Default';
-      }
-
       member.token = token;
       member.responses = MemberDAO.generateResponseForQuiz(activeQuiz.questionList.length);
 
