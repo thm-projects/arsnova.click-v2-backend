@@ -193,6 +193,10 @@ class QuizDAO extends AbstractDAO {
         confidenceSliderEnabled: legacyQuiz.configuration.confidenceSliderEnabled,
       };
       delete legacyQuiz.configuration;
+    } else {
+      if (Array.isArray(legacyQuiz.sessionConfig?.nicks?.memberGroups)) {
+        legacyQuiz.sessionConfig.nicks.memberGroups = legacyQuiz.sessionConfig.nicks.memberGroups.filter(v => typeof v !== 'string');
+      }
     }
 
     return legacyQuiz;
