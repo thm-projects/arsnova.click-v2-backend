@@ -79,6 +79,7 @@ export class Leaderboard {
     const response = attendee.responses[index];
     const question = quiz.questionList[index];
     const amountCorrect = this.getCorrectAnswers(Array.isArray(response.value) ? response.value : [response.value], question);
+    let amountWrong = 0;
     let amountAvailable: number;
 
     if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
@@ -87,12 +88,17 @@ export class Leaderboard {
       amountAvailable = 1;
     } else {
       amountAvailable = question.answerOptionList.filter(answer => answer.isCorrect).length;
+
+      if ([QuestionType.MultipleChoiceQuestion].includes(question.TYPE)) {
+        amountWrong = this.getMultipleChoiceAnswerResult(response.value as Array<number>, question as IQuestionChoice).wrong;
+      }
     }
 
     return {
       pointsGained: this.getScoreForResponse(quiz, response.value, response.responseTime),
       state: this.getAnswerStateForResponse(response.value, question),
       amountCorrect,
+      amountWrong,
       amountAvailable,
       rank: await this.getMemberRank({
         quiz,
@@ -129,7 +135,7 @@ export class Leaderboard {
 
     if (state === AnswerState.Correct) {
       return question.difficulty * scoringLeaderboard.getScoreForCorrect(responseTime, question.timer);
-    } else if (state === AnswerState.PartiallyCorrect) {
+    } else if (![QuestionType.MultipleChoiceQuestion].includes(question.TYPE) && state === AnswerState.PartiallyCorrect) {
       return question.difficulty * scoringLeaderboard.getScoreForPartiallyCorrect(responseTime, question.timer);
     }
 
@@ -204,15 +210,16 @@ export class Leaderboard {
     }
   }
 
-  private static getMultipleChoiceAnswerResult(response: Array<number>, question: IQuestionChoice): {correct: number, wrong: number} {
+  private static getMultipleChoiceAnswerResult(response: Array<number>, question: IQuestionChoice): {correct: number, wrong: number, missed: number} {
     let correct = 0;
     let wrong = 0;
+    let missed = 0;
     question.answerOptionList.forEach((answeroption, answerIndex) => {
       if (answeroption.isCorrect) {
         if (response.indexOf(answerIndex) > -1) {
           correct++;
         } else {
-          wrong++;
+          missed++;
         }
       } else {
         if (response.indexOf(answerIndex) > -1) {
@@ -220,7 +227,7 @@ export class Leaderboard {
         }
       }
     });
-    return {correct, wrong};
+    return {correct, wrong, missed};
   }
 
   private static isCorrectMultipleChoiceQuestion(response: Array<number>, question: IQuestionChoice): AnswerState {
@@ -228,9 +235,9 @@ export class Leaderboard {
       return AnswerState.Wrong;
     }
 
-    const {correct, wrong} = this.getMultipleChoiceAnswerResult(response, question);
+    const {correct, wrong, missed} = this.getMultipleChoiceAnswerResult(response, question);
 
-    return !wrong && correct ? AnswerState.Correct : wrong && correct ? AnswerState.PartiallyCorrect : AnswerState.Wrong;
+    return !wrong && !missed && correct ? AnswerState.Correct : (wrong && correct) || missed ? AnswerState.PartiallyCorrect : AnswerState.Wrong;
   }
 
   private static isCorrectRangedQuestion(response: number, question: IQuestionRanged): AnswerState {
