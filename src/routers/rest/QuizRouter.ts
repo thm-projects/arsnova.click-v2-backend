@@ -27,6 +27,7 @@ import AMQPConnector from '../../db/AMQPConnector';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
+import { AnswerState } from '../../enums/AnswerState';
 import { IPCExchange } from '../../enums/IPCExchange';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuestionType } from '../../enums/QuestionType';
@@ -49,7 +50,6 @@ import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/quiz')
 export class QuizRouter extends AbstractRouter {
-  private readonly _leaderboard: Leaderboard = new Leaderboard();
 
   @Get('/answer-result')
   public async getAnswerResult(
@@ -64,7 +64,7 @@ export class QuizRouter extends AbstractRouter {
       throw new BadRequestError();
     }
 
-    return this._leaderboard.getAnswerResult(attendee, quiz);
+    return Leaderboard.getAnswerResult(attendee, quiz);
   }
 
   @Get('/bonus-token')
@@ -82,7 +82,7 @@ export class QuizRouter extends AbstractRouter {
     const canNotUseToken = quiz.questionList.some((value, index) => {
       return ![QuestionType.ABCDSingleChoiceQuestion, QuestionType.SurveyQuestion].includes(value.TYPE) &&
              value.requiredForToken &&
-             this._leaderboard.isCorrectResponse(attendee.responses[index], value) !== 1;
+             Leaderboard.getAnswerStateForResponse(attendee.responses[index].value, value) !== AnswerState.Wrong;
     });
     return !canNotUseToken;
   }
@@ -871,15 +871,16 @@ export class QuizRouter extends AbstractRouter {
     }
     const member = await MemberDAO.getMemberByToken(authorization);
 
-    const { correctResponses, memberGroupResults } = await this._leaderboard.buildLeaderboard(activeQuiz, questionIndex);
+    const correctResponses = await Leaderboard.getCorrectResponses(activeQuiz, questionIndex);
+    const memberGroupResults = activeQuiz.sessionConfig.nicks.memberGroups.length ?
+                               await Leaderboard.getRankingForGroup(activeQuiz, questionIndex) : null;
 
-    const sortedCorrectResponses = this._leaderboard.sortBy(correctResponses, 'score');
     const ownResponse: { [key: string]: any } = {};
     if (member) {
-      ownResponse.element = sortedCorrectResponses.find(value => value.name === member.name);
-      ownResponse.index = sortedCorrectResponses.indexOf(ownResponse.element);
+      ownResponse.element = correctResponses.find(value => value.name === member.name);
+      ownResponse.index = correctResponses.indexOf(ownResponse.element);
       if (ownResponse.index > 0) {
-        ownResponse.closestOpponent = sortedCorrectResponses[ownResponse.index - 1];
+        ownResponse.closestOpponent = correctResponses[ownResponse.index - 1];
       }
     }
 
@@ -887,9 +888,9 @@ export class QuizRouter extends AbstractRouter {
       status: StatusProtocol.Success,
       step: MessageProtocol.GetLeaderboardData,
       payload: {
-        correctResponses: sortedCorrectResponses.splice(0, amount),
+        correctResponses: correctResponses.splice(0, amount),
         ownResponse,
-        memberGroupResults: this._leaderboard.sortBy(memberGroupResults, 'score'),
+        memberGroupResults: memberGroupResults,
       },
     };
   }

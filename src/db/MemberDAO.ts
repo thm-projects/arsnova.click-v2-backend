@@ -12,6 +12,7 @@ import { RoutingCache } from '../enums/RoutingCache';
 import { IMemberSerialized } from '../interfaces/entities/Member/IMemberSerialized';
 import { IQuizResponse } from '../interfaces/quizzes/IQuizResponse';
 import { IMemberGroupBase } from '../interfaces/users/IMemberGroupBase';
+import { Leaderboard } from '../lib/leaderboard/leaderboard';
 import { HistoryModel } from '../models/HistoryModel';
 import { MemberModel, MemberModelItem } from '../models/member/MemberModel';
 import { QuizModelItem } from '../models/quiz/QuizModelItem';
@@ -171,8 +172,6 @@ class MemberDAO extends AbstractDAO {
   public async setReadingConfirmation(member: Document & MemberModelItem): Promise<void> {
     const quiz = await QuizDAO.getQuizByName(member.currentQuizName);
 
-    member.responses[quiz.currentQuestionIndex].readingConfirmation = true;
-
     const queryPath = `responses.${quiz.currentQuestionIndex}.readingConfirmation`;
     await MemberModel.updateOne({ _id: member._id }, { [queryPath]: true }).exec();
 
@@ -190,8 +189,6 @@ class MemberDAO extends AbstractDAO {
   public async setConfidenceValue(member: Document & MemberModelItem, confidenceValue: number): Promise<void> {
     const quiz = await QuizDAO.getQuizByName(member.currentQuizName);
 
-    member.responses[quiz.currentQuestionIndex].confidence = confidenceValue;
-
     const queryPath = `responses.${quiz.currentQuestionIndex}.confidence`;
     await MemberModel.updateOne({ _id: member._id }, { [queryPath]: confidenceValue }).exec();
 
@@ -208,20 +205,17 @@ class MemberDAO extends AbstractDAO {
 
   public async addResponseValue(member: Document & MemberModelItem, data: string | number | Array<number>): Promise<void> {
     const quiz = await QuizDAO.getQuizByName(member.currentQuizName);
-    let responseTime;
-    if (quiz.currentStartTimestamp > 0) {
-      responseTime = new Date().getTime() - quiz.currentStartTimestamp;
-    } else {
-      responseTime = 0;
-    }
-
-    member.responses[quiz.currentQuestionIndex].value = data;
+    const responseTime = quiz.currentStartTimestamp === 0 ? 0 : new Date().getTime() - quiz.currentStartTimestamp;
+    const score = Leaderboard.getScoreForResponse(quiz, data, responseTime);
 
     const queryPathValue = `responses.${quiz.currentQuestionIndex}.value`;
     const queryPathResponseTime = `responses.${quiz.currentQuestionIndex}.responseTime`;
+    const queryPathScore = `responses.${quiz.currentQuestionIndex}.score`;
+
     await MemberModel.updateOne({ _id: member._id }, {
       [queryPathValue]: data,
       [queryPathResponseTime]: responseTime,
+      [queryPathScore]: score,
     }).exec();
 
     AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
@@ -237,13 +231,13 @@ class MemberDAO extends AbstractDAO {
       },
     })));
 
-    if ((
-      await this.getMembersOfQuiz(quiz.name)
-    ).every(nick => {
+    if (!(await this.getMembersOfQuiz(quiz.name)).some(nick => {
       const val = nick.responses[quiz.currentQuestionIndex].value;
-      return typeof val === 'number' ? val > -1 : Array.isArray(val) ? val.length > 0 : (
-        val !== null && typeof val !== 'undefined'
-      );
+      const hasResponse = typeof val === 'number' ?
+                          val > -1 : Array.isArray(val) ?
+                                     val.length > 0 : (val !== null && typeof val !== 'undefined');
+
+      return !hasResponse;
     })) {
       process.send({ message: IPCExchange.QuizStop, data: quiz.name });
       await QuizDAO.stopQuiz(quiz);
@@ -302,6 +296,7 @@ class MemberDAO extends AbstractDAO {
         responseTime: -1,
         confidence: -1,
         readingConfirmation: false,
+        score: 0,
       };
     }
     return responses;

@@ -46,7 +46,6 @@ export abstract class ExcelWorksheet {
   protected _options: Object;
   protected _theme: ExcelTheme;
   protected _translation: string;
-  protected leaderBoard = new Leaderboard();
   protected readonly loaded = new EventEmitter();
   private readonly _mf: MessageFormat.Msg;
   private readonly _createdAt: string;
@@ -104,8 +103,7 @@ export abstract class ExcelWorksheet {
   }
 
   protected async getLeaderboardData(): Promise<Array<ILeaderBoardItemBase>> {
-    const { correctResponses } = await this.leaderBoard.buildLeaderboard(this.quiz);
-    return this.leaderBoard.sortBy(correctResponses, 'score');
+    return await Leaderboard.getCorrectResponses(this.quiz);
   }
 
   protected formatMillisToSeconds(value: number, digits: number = 2): number {

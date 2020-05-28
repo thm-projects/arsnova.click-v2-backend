@@ -3,4 +3,5 @@ export interface IQuizResponse {
   responseTime: number;
   confidence: number;
   readingConfirmation: boolean;
+  score: number;
 }

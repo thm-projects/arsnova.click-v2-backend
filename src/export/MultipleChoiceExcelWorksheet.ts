@@ -108,38 +108,35 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     });
     nextRowIndex++;
 
-    await asyncForEach(this.quiz.sessionConfig.nicks.memberGroups, async memberGroup => {
-      const responses = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(attendee => attendee.groupName === memberGroup)
-      .map(nickname => nickname.responses[this._questionIndex]);
-      const hasEntries: boolean = responses.length > 0;
-      const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
-      const attendeeEntryRowStyle: Object = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle,
-        {
-          alignment: {
-            horizontal: 'center',
-          },
-        });
-      this.ws.cell(nextRowIndex, 1, attendeeEntryRows + nextRowIndex - 1, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
+    const responses = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).map(nickname => nickname.responses[this._questionIndex]);
+    const hasEntries: boolean = responses.length > 0;
+    const attendeeEntryRows: number = hasEntries ? (responses.length) : 1;
+    const attendeeEntryRowStyle: Object = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle,
+      {
+        alignment: {
+          horizontal: 'center',
+        },
+      });
+    this.ws.cell(nextRowIndex, 1, attendeeEntryRows + nextRowIndex - 1, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
-      responses.forEach((responseItem: IQuizResponse, indexInList: number): void => {
-        let nextColumnIndex = 3;
-        const targetRow: number = indexInList + nextRowIndex;
-        if (this._isCasRequired) {
-          nextColumnIndex += 2;
-        }
-        if (this.responsesWithConfidenceValue.length > 0) {
-          this.ws.cell(targetRow, nextColumnIndex++).style({
-            alignment: {
-              horizontal: 'center',
-            },
-          });
-        }
-        this.ws.cell(targetRow, nextColumnIndex).style({
+    responses.forEach((responseItem: IQuizResponse, indexInList: number): void => {
+      let nextColumnIndex = 3;
+      const targetRow: number = indexInList + nextRowIndex;
+      if (this._isCasRequired) {
+        nextColumnIndex += 2;
+      }
+      if (this.responsesWithConfidenceValue.length > 0) {
+        this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
             horizontal: 'center',
           },
-          numberFormat: defaultStyles.numberFormat,
         });
+      }
+      this.ws.cell(targetRow, nextColumnIndex).style({
+        alignment: {
+          horizontal: 'center',
+        },
+        numberFormat: defaultStyles.numberFormat,
       });
     });
   }
