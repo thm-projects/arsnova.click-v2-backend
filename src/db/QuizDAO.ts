@@ -368,6 +368,8 @@ class QuizDAO extends AbstractDAO {
       },
     })));
 
+    routeCache.removeCache(RoutingCache.ActiveQuizzes);
+
     AMQPConnector.sendRequestStatistics();
 
     process.send({ message: IPCExchange.QuizStop, data: name });
