@@ -90,7 +90,9 @@ class QuizPoolDAO extends AbstractDAO {
     return QuizPoolModel.find({ approved: true }).exec();
   }
 
-  public async approvePoolQuestion(id: ObjectId, question?: IQuestion, hash?: string, approved?: boolean, subscription?: PushSubscriptionJSON): Promise<void> {
+  public async approvePoolQuestion(
+    id: ObjectId, question?: IQuestion, hash?: string, approved?: boolean, subscription?: PushSubscriptionJSON
+  ): Promise<void> {
     const query: Partial<QuizPoolModelItem> = {};
     if (typeof approved !== 'undefined' && approved !== null) {
       query.approved = approved;
@@ -136,7 +138,9 @@ class QuizPoolDAO extends AbstractDAO {
     return QuizPoolModel.findOne({ hash });
   }
 
-  public async addQuizToPool(question: IQuestion, hash: string, origin: string, subscription?: PushSubscriptionJSON): Promise<Document & QuizPoolModelItem> {
+  public async addQuizToPool(
+    question: IQuestion, hash: string, origin: string, subscription?: PushSubscriptionJSON
+  ): Promise<Document & QuizPoolModelItem> {
     const result = await QuizPoolModel.create({
       approved: false,
       question,
