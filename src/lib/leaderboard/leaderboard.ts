@@ -29,11 +29,13 @@ function selectLeaderboard(algorithm: LeaderboardConfiguration = publicSettings.
 
 export class Leaderboard {
   public static getRankingForGroup(quiz: IQuizBase, questionIndex?: number): Promise<Array<ILeaderBoardItemBase>> {
+    const endIndex = (questionIndex ?? false) ? questionIndex + 1 : quiz.questionList.length;
+
     return MemberModel.aggregate([
       { $match: { currentQuizName: quiz.name } },
       { $project: {
           groupName: '$groupName',
-          responses: { $slice: [ '$responses', questionIndex ?? quiz.questionList.length ] },
+          responses: { $slice: [ '$responses', endIndex ] },
           name: '$name'
         }
       },
@@ -152,6 +154,8 @@ export class Leaderboard {
       matchQuery.$match = { currentQuizName: quiz.name };
     }
 
+    const endIndex = (questionIndex ?? false) ? questionIndex + 1 : quiz.questionList.length;
+
     return MemberModel.aggregate([
       matchQuery,
       { $project: {
@@ -159,7 +163,7 @@ export class Leaderboard {
           name: 1,
           responseTime: { $sum: '$responses.responseTime' },
           confidence: { $avg: '$responses.confidence' },
-          responses: { $slice: [ '$responses', questionIndex ?? quiz.questionList.length ] },
+          responses: { $slice: [ '$responses', endIndex ] },
         }
       },
       { $addFields: { score: { $sum: [ '$responses.score' ] } } },

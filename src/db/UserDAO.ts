@@ -1,10 +1,12 @@
 import { ObjectId } from 'bson';
 import { DeleteWriteOpResultObject } from 'mongodb';
 import { Document } from 'mongoose';
+import { PushSubscription } from 'web-push';
 import { UserRole } from '../enums/UserRole';
 import { IUserSerialized } from '../interfaces/users/IUserSerialized';
 import { UserModel, UserModelItem } from '../models/UserModelItem/UserModel';
 import { AuthService } from '../services/AuthService';
+import LoggerService from '../services/LoggerService';
 import { AbstractDAO } from './AbstractDAO';
 
 class UserDAO extends AbstractDAO {
@@ -73,6 +75,17 @@ class UserDAO extends AbstractDAO {
 
   public async getUserByPrivateKey(privateKey: string): Promise<Document & UserModelItem> {
     return UserModel.findOne({ privateKey }).exec();
+  }
+
+  public deleteSubscription(user: Document & UserModelItem, sub: PushSubscription): Promise<Document & UserModelItem> {
+    const index = user.subscriptions.findIndex(subscription => subscription.endpoint === sub.endpoint);
+    if (index === -1) {
+      LoggerService.error('Should remove subscription from user but could not find it', user.name, sub.endpoint);
+      return;
+    }
+
+    user.subscriptions.splice(index, 1);
+    return this.updateUser(user.id, {subscriptions: user.subscriptions});
   }
 }
 

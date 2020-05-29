@@ -5,7 +5,7 @@ import * as routeCache from 'route-cache';
 import { Authorized, BadRequestError, BodyParam, Delete, Get, JsonController, Param, Post, Put, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import * as superagent from 'superagent';
-import { sendNotification } from 'web-push';
+import { sendNotification, WebPushError } from 'web-push';
 import QuizPoolDAO from '../../db/QuizPoolDAO';
 import UserDAO from '../../db/UserDAO';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
@@ -13,6 +13,7 @@ import { RoutingCache } from '../../enums/RoutingCache';
 import { UserRole } from '../../enums/UserRole';
 import { IMessage } from '../../interfaces/communication/IMessage';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
+import LoggerService from '../../services/LoggerService';
 import { AbstractRouter } from './AbstractRouter';
 
 @JsonController('/api/v1/quizpool')
@@ -102,14 +103,23 @@ export class QuizPoolRouter extends AbstractRouter {
       const users = await UserDAO.getUsersByRole(UserRole.SuperAdmin);
       await Promise.all(users.map(user => {
         return Promise.all(user.subscriptions.map(async sub => {
-          sendNotification(sub, JSON.stringify({
+          return sendNotification(sub, JSON.stringify({
             step: MessageProtocol.PendingPoolQuestion,
             payload: {
               amount: await QuizPoolDAO.getPendingPoolQuestionsAmount(),
             },
-          })).catch(() => {});
+          })).catch(reason => {
+            if (reason instanceof WebPushError && [404, 410].includes(reason.statusCode)) {
+              LoggerService.info('Deleting inactive subscription');
+              UserDAO.deleteSubscription(user, sub);
+            }
+          });
         }));
-      }));
+      })).then(done => {
+        console.log(done);
+      }).catch(reason => {
+        console.log(reason);
+      });
     }
 
     return {
