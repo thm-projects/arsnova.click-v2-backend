@@ -89,7 +89,7 @@ export class QuizPoolRouter extends AbstractRouter {
   public async addNewPoolQuestion( //
     @BodyParam('question') question: IQuestion, //
     @BodyParam('origin', { required: false }) origin: string = 'quiz-pool', //
-    @BodyParam('notificationMail', { required: false }) notificationMail?: string, //
+    @BodyParam('subscription', { required: false }) subscription?: PushSubscriptionJSON, //
   ): Promise<IMessage> {
     if (!question || !Array.isArray(question.tags) || !question.tags.length) {
       throw new BadRequestError('no valid question or tag list found');
@@ -98,7 +98,7 @@ export class QuizPoolRouter extends AbstractRouter {
     const hash = CryptoJS.SHA3(JSON.stringify(question)).toString();
     const exists = await QuizPoolDAO.getPoolQuestionByHash(hash);
     if (!exists) {
-      await QuizPoolDAO.addQuizToPool(question, hash, origin, notificationMail);
+      await QuizPoolDAO.addQuizToPool(question, hash, origin, subscription);
 
       const users = await UserDAO.getUsersByRole(UserRole.SuperAdmin);
       await Promise.all(users.map(user => {
@@ -111,14 +111,14 @@ export class QuizPoolRouter extends AbstractRouter {
           })).catch(reason => {
             if (reason instanceof WebPushError && [404, 410].includes(reason.statusCode)) {
               LoggerService.info('Deleting inactive subscription');
-              UserDAO.deleteSubscription(user, sub);
+              return UserDAO.deleteSubscription(user, sub);
             }
           });
         }));
       })).then(done => {
-        console.log(done);
+        LoggerService.info('Sending notifications', JSON.stringify(done.filter(v => Boolean(v))));
       }).catch(reason => {
-        console.log(reason);
+        LoggerService.error('Sending notifications failed', JSON.stringify(reason));
       });
     }
 
@@ -220,7 +220,7 @@ export class QuizPoolRouter extends AbstractRouter {
     if (question) {
       hash = CryptoJS.SHA3(JSON.stringify(question)).toString();
     }
-    await QuizPoolDAO.approvePoolQuestion(parsedId, question, hash, approved);
+    await QuizPoolDAO.approvePoolQuestion(parsedId, question, hash, approved, exists.subscription);
 
     return {
       status: StatusProtocol.Success,

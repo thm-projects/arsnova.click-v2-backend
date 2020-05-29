@@ -84,8 +84,7 @@ class UserDAO extends AbstractDAO {
       return;
     }
 
-    user.subscriptions.splice(index, 1);
-    return this.updateUser(user.id, {subscriptions: user.subscriptions});
+    return this.updateUser(user.id, { $pull: { subscriptions: sub } });
   }
 }
 

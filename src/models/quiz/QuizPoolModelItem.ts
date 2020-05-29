@@ -35,7 +35,7 @@ export class QuizPoolModelItem {
     allow_display_name: true,
     allow_utf8_local_part: true,
   }) //
-  public notificationMail?: string;
+  public subscription?: PushSubscriptionJSON;
 }
 
 export const QuizPoolModel = getModelForClass(QuizPoolModelItem, {

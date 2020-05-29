@@ -1,8 +1,10 @@
 import { ObjectId } from 'bson';
 import { Document } from 'mongoose';
+import { PushSubscription, sendNotification, WebPushError } from 'web-push';
 import { MessageProtocol, StatusProtocol } from '../enums/Message';
 import { IQuestion } from '../interfaces/questions/IQuestion';
 import { QuizPoolModel, QuizPoolModelItem } from '../models/quiz/QuizPoolModelItem';
+import LoggerService from '../services/LoggerService';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
 
@@ -88,7 +90,7 @@ class QuizPoolDAO extends AbstractDAO {
     return QuizPoolModel.find({ approved: true }).exec();
   }
 
-  public async approvePoolQuestion(id: ObjectId, question?: IQuestion, hash?: string, approved?: boolean): Promise<void> {
+  public async approvePoolQuestion(id: ObjectId, question?: IQuestion, hash?: string, approved?: boolean, subscription?: PushSubscriptionJSON): Promise<void> {
     const query: Partial<QuizPoolModelItem> = {};
     if (typeof approved !== 'undefined' && approved !== null) {
       query.approved = approved;
@@ -116,21 +118,32 @@ class QuizPoolDAO extends AbstractDAO {
       },
     })));
 
-    // Todo send mail to notificationMail of quizpool model item
+    if (!subscription) {
+      return;
+    }
+
+    sendNotification(subscription as PushSubscription, JSON.stringify({
+      step: MessageProtocol.PoolQuestionApproved,
+      payload: {},
+    })).catch(reason => {
+      if (reason instanceof WebPushError && [404, 410].includes(reason.statusCode)) {
+        LoggerService.info('Cannot send Quiz Pool approval notification since the target is not reachable');
+      }
+    });
   }
 
   public async getPoolQuestionByHash(hash: string): Promise<Document & QuizPoolModelItem> {
     return QuizPoolModel.findOne({ hash });
   }
 
-  public async addQuizToPool(question: IQuestion, hash: string, origin: string, notificationMail?: string): Promise<Document & QuizPoolModelItem> {
+  public async addQuizToPool(question: IQuestion, hash: string, origin: string, subscription?: PushSubscriptionJSON): Promise<Document & QuizPoolModelItem> {
     const result = await QuizPoolModel.create({
       approved: false,
       question,
       hash,
       contentHash: this.generateHashFromPoolQuestion(question),
       origin,
-      notificationMail,
+      subscription,
     });
 
     AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({

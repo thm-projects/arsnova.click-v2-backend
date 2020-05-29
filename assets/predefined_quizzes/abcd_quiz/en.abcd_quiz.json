@@ -40,7 +40,7 @@
       "maxMembersPerGroup": 10,
       "autoJoinToGroup": false
     },
-    "theme": "theme-Material",
+    "theme": "Material",
     "readingConfirmationEnabled": false,
     "showResponseProgress": true,
     "confidenceSliderEnabled": false
