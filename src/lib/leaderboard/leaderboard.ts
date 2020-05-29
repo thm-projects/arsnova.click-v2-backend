@@ -163,6 +163,7 @@ export class Leaderboard {
         }
       },
       { $addFields: { score: { $sum: [ '$responses.score' ] } } },
+      { $match: { score: { $gt: 0 } } },
       { $sort: { score: -1 } },
     ]).exec();
   }
