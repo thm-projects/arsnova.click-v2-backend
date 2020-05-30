@@ -3,7 +3,7 @@ import { AnswerState } from '../../enums/AnswerState';
 import { LeaderboardConfiguration } from '../../enums/LeaderboardConfiguration';
 import { QuestionType } from '../../enums/QuestionType';
 import { IAnswerResult } from '../../interfaces/IAnswerResult';
-import { ILeaderBoardItemBase } from '../../interfaces/leaderboard/ILeaderBoardItemBase';
+import { ILeaderBoardItemBase, ILeaderboardMemberGroupItem } from '../../interfaces/leaderboard/ILeaderBoardItemBase';
 import { IQuestion, IQuestionBase } from '../../interfaces/questions/IQuestion';
 import { IQuestionChoice } from '../../interfaces/questions/IQuestionChoice';
 import { IQuestionFreetext } from '../../interfaces/questions/IQuestionFreetext';
@@ -28,7 +28,7 @@ function selectLeaderboard(algorithm: LeaderboardConfiguration = publicSettings.
 }
 
 export class Leaderboard {
-  public static getRankingForGroup(quiz: IQuizBase, questionIndex?: number): Promise<Array<ILeaderBoardItemBase>> {
+  public static getRankingForGroup(quiz: IQuizBase, questionIndex?: number): Promise<Array<ILeaderboardMemberGroupItem>> {
     const endIndex = (questionIndex ?? false) ? questionIndex + 1 : quiz.questionList.length;
 
     return MemberModel.aggregate([
@@ -96,17 +96,24 @@ export class Leaderboard {
       }
     }
 
+    let rank;
+    if (quiz.sessionConfig.nicks.memberGroups.length) {
+      rank = (await Leaderboard.getRankingForGroup(quiz, index)).findIndex(group => group._id === attendee.groupName) + 1;
+    } else {
+      rank = await this.getMemberRank({
+        quiz,
+        questionIndex: index,
+        nickName: attendee.name
+      });
+    }
+
     return {
       pointsGained: this.getScoreForResponse(quiz, response.value, response.responseTime),
       state: this.getAnswerStateForResponse(response.value, question),
       amountCorrect,
       amountWrong,
       amountAvailable,
-      rank: await this.getMemberRank({
-        quiz,
-        questionIndex: index,
-        nickName: attendee.name
-      })
+      rank
     };
   }
 
@@ -182,7 +189,7 @@ export class Leaderboard {
     const ranking = await Leaderboard.getRanking(quiz, questionIndex);
     const rank = ranking.findIndex(v => v.name === nickName);
     if (rank === -1) {
-      throw new Error(`Nickname '${nickName}' has no rank in quiz '${quiz.name}' (was filtering for questionIndex '${questionIndex}')`);
+      return -1;
     }
 
     return rank + 1;
