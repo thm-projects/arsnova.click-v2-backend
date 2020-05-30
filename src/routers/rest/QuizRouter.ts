@@ -802,7 +802,6 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/member-group/:quizName')
-  @UseBefore(routeCache.cacheSeconds(10, req => `${RoutingCache.MemberGroup}_${req.params.quizName}`))
   public async getFreeMemberGroup(@Param('quizName') quizName: string): Promise<IMessage> {
     const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
@@ -813,13 +812,7 @@ export class QuizRouter extends AbstractRouter {
       };
     }
 
-    let groupName;
-    if (activeQuiz.sessionConfig.nicks.memberGroups.length > 0) {
-      const memberGroupLoad = await MemberDAO.getMemberAmountPerQuizGroup(activeQuiz.name, activeQuiz.sessionConfig.nicks.memberGroups);
-      if (memberGroupLoad) {
-        groupName = Object.entries(memberGroupLoad).sort((a, b) => a[1] - b[1])[0][0];
-      }
-    }
+    const groupName = await MemberDAO.getFreeMemberGroup(activeQuiz.name, [...activeQuiz.sessionConfig.nicks.memberGroups] as any);
 
     return {
       status: StatusProtocol.Success,

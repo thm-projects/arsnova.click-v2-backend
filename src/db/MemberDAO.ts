@@ -146,17 +146,21 @@ class MemberDAO extends AbstractDAO {
     AMQPConnector.sendRequestStatistics();
   }
 
-  public async getMemberAmountPerQuizGroup(name: string, groups: Array<IMemberGroupBase>): Promise<{[key: string]: number}> {
-    const result = {};
-    groups.forEach(g => result[g.name] = 0);
+  public async getFreeMemberGroup(name: string, groups: Array<IMemberGroupBase & {count: number}>): Promise<string> {
+    const usedGroups: Array<{_id: string, count: number}> = await MemberModel.aggregate([
+      { $match: { currentQuizName: name } }, //
+      { $group: { _id: { '$toLower': { '$trim': { input: '$groupName' } } }, count: { '$sum': 1 } } }, //
+    ]).exec();
 
-    (
-      await this.getMembersOfQuiz(name)
-    ).forEach(member => {
-      result[member.groupName]++;
-    });
+    usedGroups.forEach(usedGroup => groups.find(g => g.name === usedGroup._id).count = usedGroup.count);
 
-    return result;
+    return groups.sort((a, b) => {
+      return a.count === undefined ?
+             -1 : b.count === undefined ?
+                  1 : a.count === b.count ?
+                      0 : a.count < b.count ?
+                          -1 : 1;
+    })[0].name;
   }
 
   public async resetMembersOfQuiz(name: string, questionAmount: number): Promise<any> {
