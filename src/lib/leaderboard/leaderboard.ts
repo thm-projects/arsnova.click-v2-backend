@@ -249,7 +249,7 @@ export class Leaderboard {
 
     const {correct, wrong, missed} = this.getMultipleChoiceAnswerResult(response, question);
 
-    return !wrong && !missed && correct ? AnswerState.Correct : (wrong && correct) || missed ? AnswerState.PartiallyCorrect : AnswerState.Wrong;
+    return !wrong && !missed && correct ? AnswerState.Correct : correct && (wrong || missed) ? AnswerState.PartiallyCorrect : AnswerState.Wrong;
   }
 
   private static isCorrectRangedQuestion(response: number, question: IQuestionRanged): AnswerState {
