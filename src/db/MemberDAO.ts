@@ -54,17 +54,9 @@ class MemberDAO extends AbstractDAO {
 
   public async getStatistics(): Promise<{ [key: string]: number }> {
     const average = await HistoryModel.aggregate([
-      {
-        $group: {
-          _id: { $ifNull: ['$ref', '$name'] },
-          rounds: { $push: { $cond: [{ $ifNull: ['$ref', null] }, '$$REMOVE', true] } },
-          attendees: { $push: { $cond: [{ $ifNull: ['$ref', null] }, true, '$$REMOVE'] } },
-        },
-      },
-      { $project: { roundsLength: { $size: '$rounds' }, attendeesLength: { $size: '$attendees' } } },
-      { $project: { perRound: { $divide: ['$attendeesLength', '$roundsLength'] } } },
-      { $match: { perRound: { $gt: 0 } } },
-      { $group: { _id: null, avrg: { $avg: '$perRound' } } },
+      { $match: {type: HistoryModelType.PlayedQuiz }, },
+      { $project: { _id: 0, nameCount: { $size: '$attendees' }, } },
+      { $group: { _id: null, avrg: { $avg: '$nameCount' } } },
       { $project: { _id: 0, average: { $ceil: '$avrg' } } },
     ]).exec();
 

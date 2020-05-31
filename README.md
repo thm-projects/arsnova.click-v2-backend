@@ -74,6 +74,7 @@ Enter `npm run build:PROD` in the root directory to run the prod build.
 Db Migrations are performed when the application starts. However, they can also be triggered manually.
 Run `npm i -g migrate-mongo` and `cd` into the `db-migration` folder.
 Then run `migrate-mongo up` to perform the pending migrations.
+Use `migrate-mongo create [description]` to add a new migration.
 
 - Required env variables:
     - `MONGODB_DB_MIGRATION_CONN_URL`, eg `mongodb://user:pass@localhost:27017`

@@ -1,5 +1,5 @@
 import { getModelForClass, prop, Severity } from '@typegoose/typegoose';
-import { IsEnum, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsString } from 'class-validator';
 import DbDAO from '../db/DbDAO';
 import { DbCollection } from '../enums/DbOperation';
 import { HistoryModelType } from '../enums/HistoryModelType';
@@ -18,6 +18,10 @@ export class HistoryModelItem {
   @prop({ type: String, required: false }) //
   @IsString() //
   public ref: string;
+
+  @prop({ type: Array, required: false, default: [] }) //
+  @IsArray() //
+  public attendees?: Array<string>;
 }
 
 export const HistoryModel = getModelForClass(HistoryModelItem, {
