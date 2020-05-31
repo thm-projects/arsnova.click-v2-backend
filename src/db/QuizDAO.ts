@@ -280,6 +280,11 @@ class QuizDAO extends AbstractDAO {
 
     HistoryModel.find({ref: quizName}).then(async data => {
       const lastQuizElement = await HistoryModel.findOne({name: quizName}).sort({createdAt: -1}).exec();
+      if (!data?.length) {
+        await HistoryModel.deleteOne({_id: lastQuizElement._id}).exec();
+        return;
+      }
+
       await HistoryModel.updateOne({_id: lastQuizElement._id}, {attendees: data.map(v => v.name)}).exec();
       return HistoryModel.deleteMany({ref: quizName}).exec();
     }).catch(() => {
