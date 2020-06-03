@@ -47,6 +47,7 @@ import {QuizModelItem} from '../../models/quiz/QuizModelItem';
 import LoggerService from '../../services/LoggerService';
 import {publicSettings, settings} from '../../statistics';
 import {AbstractRouter} from './AbstractRouter';
+import HistogramDAO from '../../db/HistogramDAO';
 
 @JsonController('/api/v1/quiz')
 export class QuizRouter extends AbstractRouter {
@@ -894,6 +895,8 @@ export class QuizRouter extends AbstractRouter {
       @Param('questionIndex') questionIndex: number, //
       @HeaderParam('authorization') authorization: string, //
   ): Promise<IMessage> {
+
+    const previousRenderedData = HistogramDAO.getAllPreviouslyRenderedData(quizName, questionIndex);
 
     return {
       status: StatusProtocol.Success,

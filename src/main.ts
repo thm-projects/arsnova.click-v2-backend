@@ -16,6 +16,7 @@ import App from './App';
 import AssetDAO from './db/AssetDAO';
 import CasDAO from './db/CasDAO';
 import DbDAO from './db/DbDAO';
+import HistogramDAO from './db/HistogramDAO';
 import I18nDAO from './db/I18nDAO';
 import MathjaxDAO from './db/MathjaxDAO';
 import MemberDAO from './db/MemberDAO';
@@ -43,7 +44,7 @@ declare var global: any;
 
 export interface IGlobal extends NodeJS.Global {
   DAO: {
-    AssetDAO: {}, CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizDAO: {}, DbDAO: {}, UserDAO: {}, MemberDAO: {},
+    AssetDAO: {}, CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizDAO: {}, HistogramDAO: {}, DbDAO: {}, UserDAO: {}, MemberDAO: {},
   };
   Services: {
     TwitterService: {}
@@ -70,6 +71,7 @@ interface IInetAddress {
   I18nDAO,
   MathjaxDAO,
   QuizDAO,
+  HistogramDAO,
   DbDAO,
   UserDAO,
   MemberDAO,
