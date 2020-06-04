@@ -7,6 +7,25 @@ export class Histogram {
 
   public static async renderHistogramSVG(quizName: string, questionIndex: number, histogramType: string = 'bar'): Promise<string> {
     // TODO
-    return HistogramBarChart.renderSVG();
+    const dummyData = [
+      {
+        key: 'A',
+        val: 13
+      },
+      {
+        key: 'B',
+        val: 9
+      },
+      {
+        key: 'C',
+        val: 5
+      },
+      {
+        key: 'D',
+        val: 14
+      },
+    ];
+
+    return HistogramBarChart.renderSVG(dummyData);
   }
 }

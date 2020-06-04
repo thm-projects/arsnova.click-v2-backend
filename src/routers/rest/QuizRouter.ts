@@ -897,7 +897,7 @@ export class QuizRouter extends AbstractRouter {
   ): Promise<IMessage> {
 
     // const previousRenderedData = HistogramDAO.getAllPreviouslyRenderedData(quizName, questionIndex);
-    const svg = Histogram.renderHistogramSVG(quizName, questionIndex);
+    const svg = await Histogram.renderHistogramSVG(quizName, questionIndex);
 
     return {
       status: StatusProtocol.Success,
