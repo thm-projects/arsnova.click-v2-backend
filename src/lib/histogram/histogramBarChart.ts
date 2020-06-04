@@ -22,13 +22,6 @@ export class HistogramBarChart {
     const x = d3.scaleBand().range([0, width]).padding(0.4);
     const y = d3.scaleLinear().range([height, 0]);
 
-    const svg = d3n.createSVG()
-      .attr('viewBox', '0, 0, ' + svgWidth + ', ' + svgHeight);
-
-    const g = svg
-      .append('g')
-      .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-
     x.domain(data.map(function (d): string {
       return d.key;
     }));
@@ -37,23 +30,39 @@ export class HistogramBarChart {
       return d.val;
     })]);
 
-    g.append('g')
+    const svg = d3n.createSVG()
+      .attr('viewBox', '0, 0, ' + svgWidth + ', ' + svgHeight)
+      .append('g')
+      .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+    svg.append('g')
       .attr('transform', 'translate(0,' + height + ')')
       .call(d3.axisBottom(x));
 
-    g.append('g')
+    svg.append('g')
       .call(d3.axisLeft(y).tickFormat(function(d): string {
         return d;
       }));
 
-    g.selectAll('.bar')
+    const bar = svg.selectAll('.bar')
       .data(data)
-      .enter().append('rect')
+      .enter().append('g')
       .attr('class', 'bar')
+      .attr('transform', function (d): string { return 'translate(0,' + y(d.val) + ')'; });
+
+    bar.append('rect')
       .attr('x', function(d): number { return x(d.key); })
-      .attr('y', function(d): number { return y(d.val); })
+      // .attr('y', function(d): number { return y(d.val); })
       .attr('width', x.bandwidth())
       .attr('height', function(d): number { return height - y(d.val); });
+
+    bar.append('text')
+      .attr('dy', '.75em')
+      .attr('y', function(d): number { return height - y(d.val) < 25 ? -15 : 6; })
+      .attr('x', (function(d): number { return x(d.key) + x.bandwidth() / 2; }))
+      .attr('text-anchor', 'middle')
+      .text(function (d): string { return d.val > 0 ? d.val : ''; });
+
 
     return d3n.svgString();
   }
