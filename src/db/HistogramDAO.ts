@@ -1,4 +1,4 @@
-import {AbstractDAO} from './AbstractDAO';
+import { AbstractDAO } from './AbstractDAO';
 
 class HistogramDAO extends AbstractDAO {
   private _storage: object = {};

@@ -1,6 +1,6 @@
-import {Request, Response} from 'express';
+import { Request, Response } from 'express';
 import * as fs from 'fs';
-import {Document} from 'mongoose';
+import { Document } from 'mongoose';
 import * as path from 'path';
 import * as routeCache from 'route-cache';
 import {
@@ -22,32 +22,32 @@ import {
   UploadedFiles,
   UseBefore,
 } from 'routing-controllers';
-import {OpenAPI} from 'routing-controllers-openapi';
+import { OpenAPI } from 'routing-controllers-openapi';
 import AMQPConnector from '../../db/AMQPConnector';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
-import {AnswerState} from '../../enums/AnswerState';
-import {IPCExchange} from '../../enums/IPCExchange';
-import {MessageProtocol, StatusProtocol} from '../../enums/Message';
-import {QuestionType} from '../../enums/QuestionType';
-import {QuizState} from '../../enums/QuizState';
-import {QuizVisibility} from '../../enums/QuizVisibility';
-import {RoutingCache} from '../../enums/RoutingCache';
-import {UserRole} from '../../enums/UserRole';
-import {ExcelWorkbook} from '../../export/ExcelWorkbook';
-import {IMessage} from '../../interfaces/communication/IMessage';
-import {IAnswerResult} from '../../interfaces/IAnswerResult';
-import {IQuizStatusPayload} from '../../interfaces/IQuizStatusPayload';
-import {IQuiz} from '../../interfaces/quizzes/IQuizEntity';
-import {asyncForEach} from '../../lib/async-for-each';
-import {MatchAssetCachedQuiz, MatchTextToAssetsDb} from '../../lib/cache/assets';
-import {Leaderboard} from '../../lib/leaderboard/leaderboard';
-import {QuizModelItem} from '../../models/quiz/QuizModelItem';
+import { AnswerState } from '../../enums/AnswerState';
+import { IPCExchange } from '../../enums/IPCExchange';
+import { MessageProtocol, StatusProtocol } from '../../enums/Message';
+import { QuestionType } from '../../enums/QuestionType';
+import { QuizState } from '../../enums/QuizState';
+import { QuizVisibility } from '../../enums/QuizVisibility';
+import { RoutingCache } from '../../enums/RoutingCache';
+import { UserRole } from '../../enums/UserRole';
+import { ExcelWorkbook } from '../../export/ExcelWorkbook';
+import { IMessage } from '../../interfaces/communication/IMessage';
+import { IAnswerResult } from '../../interfaces/IAnswerResult';
+import { IQuizStatusPayload } from '../../interfaces/IQuizStatusPayload';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
+import { asyncForEach } from '../../lib/async-for-each';
+import { MatchAssetCachedQuiz, MatchTextToAssetsDb } from '../../lib/cache/assets';
+import { Leaderboard } from '../../lib/leaderboard/leaderboard';
+import { QuizModelItem } from '../../models/quiz/QuizModelItem';
 import LoggerService from '../../services/LoggerService';
-import {publicSettings, settings} from '../../statistics';
-import {AbstractRouter} from './AbstractRouter';
-import HistogramDAO from '../../db/HistogramDAO';
+import { publicSettings, settings } from '../../statistics';
+import { AbstractRouter } from './AbstractRouter';
+import { Histogram } from '../../lib/histogram/histogram';
 
 @JsonController('/api/v1/quiz')
 export class QuizRouter extends AbstractRouter {
@@ -891,19 +891,21 @@ export class QuizRouter extends AbstractRouter {
 
   @Get('/histogram/:quizName/:questionIndex')
   public async getHistogramData(
-      @Param('quizName') quizName: string, //
-      @Param('questionIndex') questionIndex: number, //
-      @HeaderParam('authorization') authorization: string, //
+    @Param('quizName') quizName: string, //
+    @Param('questionIndex') questionIndex: number, //
+    @HeaderParam('authorization') authorization: string, //
   ): Promise<IMessage> {
 
-    const previousRenderedData = HistogramDAO.getAllPreviouslyRenderedData(quizName, questionIndex);
+    // const previousRenderedData = HistogramDAO.getAllPreviouslyRenderedData(quizName, questionIndex);
+    const svg = Histogram.renderHistogramSVG(quizName, questionIndex);
 
     return {
       status: StatusProtocol.Success,
       step: null,
       payload: {
+        svg: svg,
         quizName: quizName,
-        questionIndex: questionIndex
+        questionIndex: questionIndex,
       },
     };
   }
