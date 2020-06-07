@@ -4,15 +4,15 @@ import { IFreetextAnswer } from '../answeroptions/IFreetextAnswer';
 
 export interface IQuestionBase {
   readonly TYPE: QuestionType;
-  displayAnswerText?: boolean;
+  displayAnswerText: boolean;
   timer: number;
   questionText: string;
-  answerOptionList?: Array<IAnswer | IFreetextAnswer>;
+  answerOptionList: Array<IAnswer | IFreetextAnswer>;
   tags: Array<string>;
   requiredForToken: boolean;
   difficulty: number;
 }
 
 export interface IQuestion extends IQuestionBase {
-  answerOptionList?: Array<IAnswer>;
+  answerOptionList: Array<IAnswer>;
 }
