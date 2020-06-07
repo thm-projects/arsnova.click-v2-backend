@@ -6,6 +6,7 @@ import { DbCollection } from '../../enums/DbOperation';
 import { QuizState } from '../../enums/QuizState';
 import { QuizVisibility } from '../../enums/QuizVisibility';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
+import { IQuiz } from '../../interfaces/quizzes/IQuizEntity';
 import { SessionConfigurationModelItem } from '../session-config/SessionConfigurationModelItem';
 
 @index({ name: 1 }, {
@@ -15,7 +16,7 @@ import { SessionConfigurationModelItem } from '../session-config/SessionConfigur
     strength: 1,
   },
 })
-export class QuizModelItem {
+export class QuizModelItem implements IQuiz {
   @prop({ required: false }) @IsDate() public expiry?: Date;
   @prop({
     required: false,
