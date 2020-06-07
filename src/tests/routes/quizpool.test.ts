@@ -51,7 +51,7 @@ class QuizPoolApiRouterTestSuite {
     const quiz = generateQuiz(this._hashtag);
     quiz.questionList[0].tags = ['test-tag'];
     const id = new ObjectId();
-    await QuizPoolModel.create({ _id: id, approved: false, question: quiz.questionList[0] });
+    await QuizPoolModel.create({ _id: id, approved: false, question: quiz.questionList[0] } as any);
 
     const res = await chai.request(app).get(`${this._baseApiRoute}/tags`);
     expect(res.status).to.equal(200);
@@ -110,7 +110,7 @@ class QuizPoolApiRouterTestSuite {
     quiz.questionList[0].tags = ['test-tag'];
     const id = new ObjectId();
 
-    await QuizPoolModel.create({ _id: id, approved: false, question: quiz.questionList[0] });
+    await QuizPoolModel.create({ _id: id, approved: false, question: quiz.questionList[0] } as any);
 
     const res = await chai.request(app).put(`${this._baseApiRoute}/pending`).set('authorization', AuthService.createToken({
       name: 'user',
