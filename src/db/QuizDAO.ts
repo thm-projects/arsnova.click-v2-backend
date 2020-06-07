@@ -247,7 +247,7 @@ class QuizDAO extends AbstractDAO {
       this.checkExistingConnection(quiz.name, quiz.privateKey);
     }, this.CHECK_STATE_INTERVAL);
 
-    HistoryModel.create({ type: HistoryModelType.PlayedQuiz, name: quiz.name });
+    HistoryModel.create({ type: HistoryModelType.PlayedQuiz, name: quiz.name } as any);
   }
 
   public getAllQuizzes(): Promise<Array<Document & QuizModelItem>> {

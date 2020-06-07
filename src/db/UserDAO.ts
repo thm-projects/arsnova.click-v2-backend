@@ -58,7 +58,7 @@ class UserDAO extends AbstractDAO {
   }
 
   public addUser(user: IUserSerialized): Promise<Document & UserModelItem> {
-    return UserModel.create(user);
+    return UserModel.create(user as any);
   }
 
   public updateUser(id: ObjectId, changedFields: object): Promise<Document & UserModelItem> {

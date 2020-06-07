@@ -19,7 +19,7 @@ class AssetDAO extends AbstractDAO {
   }
 
   public addAsset(document: IAssetSerialized): Promise<Document & AssetModelItem> {
-    return AssetModel.create(document);
+    return AssetModel.create(document as any);
   }
 
   public updateAsset(id: ObjectId, updatedFields: any): Promise<Document & AssetModelItem> {

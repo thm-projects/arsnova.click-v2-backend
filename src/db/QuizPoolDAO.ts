@@ -148,7 +148,7 @@ class QuizPoolDAO extends AbstractDAO {
       contentHash: this.generateHashFromPoolQuestion(question),
       origin,
       subscription,
-    });
+    } as any);
 
     AMQPConnector.channel.publish(AMQPConnector.globalExchange, '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
