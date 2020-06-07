@@ -203,11 +203,11 @@ class QuizDAO extends AbstractDAO {
     return legacyQuiz;
   }
 
-  public async addQuiz(quizDoc: Partial<IQuiz>): Promise<Document & QuizModelItem> {
+  public async addQuiz(quizDoc: IQuiz): Promise<Document & QuizModelItem> {
     await AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quizDoc.name), 'fanout');
     delete quizDoc._id;
     delete quizDoc.id;
-    const result = QuizModel.create(quizDoc);
+    const result = QuizModel.create(quizDoc as any);
     AMQPConnector.sendRequestStatistics();
     return result;
   }
