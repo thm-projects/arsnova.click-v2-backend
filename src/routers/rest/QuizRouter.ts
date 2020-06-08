@@ -776,7 +776,7 @@ export class QuizRouter extends AbstractRouter {
 
     const quiz = await QuizDAO.getQuizForAttendee(quizName);
     if (!quiz || ![QuizState.Active, QuizState.Running, QuizState.Finished].includes(quiz.state)) {
-      return;
+      throw new BadRequestError('Quiz not found');
     }
 
     const parsedQuiz = await MatchAssetCachedQuiz(quiz.toJSON());
@@ -788,14 +788,7 @@ export class QuizRouter extends AbstractRouter {
       mf: res.__mf,
     });
     await new Promise(resolve => wb.renderingFinished.on('done', () => resolve()));
-
-    const date: Date = new Date();
-    const dateFormatted = `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}-${date.getHours()}_${date.getMinutes()}`;
-    const name = `Export-${quizName}-${dateFormatted}.xlsx`;
     const buffer = await wb.writeToBuffer();
-
-    res.header('Content-Disposition',
-      'attachment; filename="' + encodeURIComponent(name) + '"; filename*=utf-8\'\'' + encodeURIComponent(name) + ';');
     res.header('Content-Length', buffer.length.toString());
 
     return buffer;
@@ -911,6 +904,9 @@ export class QuizRouter extends AbstractRouter {
   @Post('/public/init')
   private async initQuizInstance(
     @BodyParam('name') quizName: string,
+    @BodyParam('readingConfirmationEnabled', {required: false}) readingConfirmationEnabled: boolean,
+    @BodyParam('confidenceSliderEnabled', {required: false}) confidenceSliderEnabled: boolean,
+    @BodyParam('theme', {required: false}) theme: string,
     @HeaderParam('X-Access-Token') loginToken: string,
     @HeaderParam('authorization') privateKey: string,
   ): Promise<IMessage> {
@@ -924,12 +920,17 @@ export class QuizRouter extends AbstractRouter {
       throw new NotFoundError('Quiz name not found');
     }
 
+    quiz.origin = quizName;
     quiz.name = await QuizDAO.getRenameAsToken(quiz.name);
     quiz.privateKey = privateKey;
     quiz.visibility = QuizVisibility.Account;
     quiz.currentQuestionIndex = -1;
     quiz.currentStartTimestamp = -1;
     quiz.readingConfirmationRequested = false;
+
+    quiz.sessionConfig.readingConfirmationEnabled = readingConfirmationEnabled ?? quiz.sessionConfig.readingConfirmationEnabled;
+    quiz.sessionConfig.confidenceSliderEnabled = confidenceSliderEnabled ?? quiz.sessionConfig.confidenceSliderEnabled;
+    quiz.sessionConfig.theme = theme ?? quiz.sessionConfig.theme;
 
     const doc = await QuizDAO.addQuiz(quiz.toJSON());
     await QuizDAO.initQuiz(doc);

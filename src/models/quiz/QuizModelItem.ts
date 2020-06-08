@@ -27,7 +27,12 @@ export class QuizModelItem implements IQuiz {
     minlength: 2,
     trim: true,
   }) @IsString() public name: string;
-  @prop({ items: Object }) @IsArray() public questionList: Array<IQuestion>;
+  @prop({
+    minlength: 2,
+    trim: true,
+    required: false,
+  }) @IsString() public origin?: string;
+  @prop({ type: Object }) @IsArray() public questionList: Array<IQuestion>;
   @prop({
     default: QuizState.Inactive,
     enum: QuizState,

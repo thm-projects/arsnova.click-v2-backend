@@ -12,11 +12,11 @@ export class UserModelItem implements IUserSerialized {
   @prop({ required: false }) @IsString() public tokenHash: string;
   @prop({
     required: true,
-    items: String,
+    type: String,
   }) @IsArray() public userAuthorizations: Array<string>;
   @prop({
     required: true,
-    items: Object,
+    type: Object,
   }) @IsArray() public subscriptions: Array<PushSubscription>;
   @prop({ required: true }) @IsString() public privateKey: string;
   @prop() @IsString() public gitlabToken?: string;
