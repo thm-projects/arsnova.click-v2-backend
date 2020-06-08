@@ -29,6 +29,7 @@ import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
 import { AnswerState } from '../../enums/AnswerState';
+import { DiagramType } from '../../enums/DiagramType';
 import { IPCExchange } from '../../enums/IPCExchange';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { QuestionType } from '../../enums/QuestionType';
@@ -894,9 +895,10 @@ export class QuizRouter extends AbstractRouter {
   public async getHistogramData(
     @Param('quizName') quizName: string, //
     @Param('questionIndex') questionIndex: number, //
-    @Param('histogramType') histogramType: string, //
+    // @Param('histogramType') histogramType: string, //
     @HeaderParam('authorization') authorization: string, //
   ): Promise<IMessage> {
+    const histogramType = DiagramType.Bar;
 
     const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {

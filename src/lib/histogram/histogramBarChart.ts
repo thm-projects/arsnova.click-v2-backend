@@ -22,46 +22,39 @@ export class HistogramBarChart {
     const x = d3.scaleBand().range([0, width]).padding(0.4);
     const y = d3.scaleLinear().range([height, 0]);
 
-    x.domain(data.map(function (d): string {
-      return d.key;
-    }));
+    x.domain(data.map(d => d.key));
 
-    y.domain([0, d3.max(data, function (d): number {
-      return d.val;
-    })]);
+    y.domain([0, d3.max(data, d => d.val)]);
 
     const svg = d3n.createSVG()
-      .attr('viewBox', '0, 0, ' + svgWidth + ', ' + svgHeight)
+      .attr('viewBox', `0, 0, ${svgWidth}, ${svgHeight}`)
       .append('g')
-      .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+      .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
     svg.append('g')
-      .attr('transform', 'translate(0,' + height + ')')
+      .attr('transform', `translate(0, ${height})`)
       .call(d3.axisBottom(x));
 
     svg.append('g')
-      .call(d3.axisLeft(y).tickFormat(function(d): string {
-        return d;
-      }));
+      .call(d3.axisLeft(y).tickFormat(d => d));
 
     const bar = svg.selectAll('.bar')
       .data(data)
       .enter().append('g')
       .attr('class', 'bar')
-      .attr('transform', function (d): string { return 'translate(0,' + y(d.val) + ')'; });
+      .attr('transform', d => `translate(0, ${y(d.val)})`);
 
     bar.append('rect')
-      .attr('x', function(d): number { return x(d.key); })
-      // .attr('y', function(d): number { return y(d.val); })
+      .attr('x', d => x(d.key))
       .attr('width', x.bandwidth())
-      .attr('height', function(d): number { return height - y(d.val); });
+      .attr('height', d => height - y(d.val));
 
     bar.append('text')
       .attr('dy', '.75em')
-      .attr('y', function(d): number { return height - y(d.val) < 25 ? -15 : 6; })
-      .attr('x', (function(d): number { return x(d.key) + x.bandwidth() / 2; }))
+      .attr('y', d => height - y(d.val) < 25 ? -15 : 6)
+      .attr('x', d => x(d.key) + x.bandwidth() / 2)
       .attr('text-anchor', 'middle')
-      .text(function (d): string { return d.val > 0 ? d.val : ''; });
+      .text(d => d.val > 0 ? d.val : '');
 
 
     return d3n.svgString();
