@@ -15,15 +15,15 @@ class HistogramDAO extends AbstractDAO {
     return this.instance;
   }
 
-  public getPreviouslyRenderedData(quizName: string, questionIndex: number, histogramType: string = DiagramType.Bar): object {
-    return this.storage?.[quizName]?.[questionIndex]?.[histogramType] ?? null;
+  public getPreviouslyRenderedData(quizName: string, questionIndex: number, diagramType: string = DiagramType.Bar): string {
+    return this.storage?.[quizName]?.[questionIndex]?.[diagramType] ?? null;
   }
 
-  public updateRenderedData(renderedData, quizName: string, questionIndex: number, histogramType: string = DiagramType.Bar): void {
+  public updateRenderedData(renderedData, quizName: string, questionIndex: number, diagramType: string = DiagramType.Bar): void {
     if (!this.storage[quizName]) { this.storage[quizName] = {}; }
     if (!this.storage[quizName][questionIndex]) { this.storage[quizName][questionIndex] = {}; }
-    if (!this.storage[quizName][questionIndex][histogramType]) { this.storage[quizName][questionIndex][histogramType] = {}; }
-    this.storage[quizName][questionIndex][histogramType] = renderedData;
+    if (!this.storage[quizName][questionIndex][diagramType]) { this.storage[quizName][questionIndex][diagramType] = {}; }
+    this.storage[quizName][questionIndex][diagramType] = renderedData;
   }
 
   public async getStatistics(): Promise<{ [p: string]: number }> {

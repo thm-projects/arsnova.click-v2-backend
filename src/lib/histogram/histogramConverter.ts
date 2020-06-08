@@ -1,5 +1,6 @@
 import { IHistData } from '../../interfaces/IHistData';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
+import { IQuestionRanged } from '../../interfaces/questions/IQuestionRanged';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
 
 export class HistogramConverter {
@@ -26,27 +27,22 @@ export class HistogramConverter {
   }
 
   public static convertRangedQuestion(
-    questionData: IQuestion,
+    questionData: IQuestionRanged,
     responsesRaw: Array<IQuizResponse>
   ): Array<IHistData> {
-    return [
-      {
-        key: 'A',
-        val: 13
-      },
-      {
-        key: 'B',
-        val: 9
-      },
-      {
-        key: 'C',
-        val: 5
-      },
-      {
-        key: 'D',
-        val: 14
-      },
-    ];
+
+    const data: Array<IHistData> = [];
+
+    for (let i = questionData.rangeMin; i <= questionData.rangeMax; i++) {
+      data[i] = {
+        key: i.toString(),
+        val: 0
+      };
+    }
+
+    responsesRaw.forEach(response => data[<number>response.value].val++);
+
+    return data;
   }
 
   public static convertSingleChoiceQuestion(
