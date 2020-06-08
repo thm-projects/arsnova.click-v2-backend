@@ -1,32 +1,36 @@
 import { DiagramType } from '../../enums/DiagramType';
+import { IHistData } from '../../interfaces/IHistData';
+import { IQuestion } from '../../interfaces/questions/IQuestion';
+import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
 import { HistogramBarChart } from './histogramBarChart';
+import { HistogramConverter } from './histogramConverter';
+import { HistogramPieChart } from './histogramPieChart';
 
 export class Histogram {
-  public static async getHistogramData(responsesRaw: object, questionData: object): Promise<void> {
-    // TODO
+  public static getHistogramData(
+    responsesRaw: Array<IQuizResponse>,
+    questionData: IQuestion
+  ): Array<IHistData> {
+    console.log(questionData);
+    return HistogramConverter[`convert${questionData.TYPE}`](questionData, responsesRaw);
   }
 
-  public static async renderHistogramSVG(responsesRaw: object, questionData: object, histogramType: string = DiagramType.Bar): Promise<string> {
-    // TODO
-    const dummyData = [
-      {
-        key: 'A',
-        val: 13
-      },
-      {
-        key: 'B',
-        val: 9
-      },
-      {
-        key: 'C',
-        val: 5
-      },
-      {
-        key: 'D',
-        val: 14
-      },
-    ];
+  public static renderHistogramSVG(
+    responsesRaw: Array<IQuizResponse>,
+    questionData: IQuestion,
+    diagramType: DiagramType = DiagramType.Bar
+  ): string {
 
-    return HistogramBarChart.renderSVG(dummyData);
+    const histData = this.getHistogramData(responsesRaw, questionData);
+
+    switch (diagramType) {
+      case DiagramType.Bar:
+        return HistogramBarChart.renderSVG(histData);
+      case DiagramType.Pie:
+        return HistogramPieChart.renderSVG(histData);
+    }
+
+    return null;
   }
+
 }

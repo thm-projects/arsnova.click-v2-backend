@@ -891,14 +891,15 @@ export class QuizRouter extends AbstractRouter {
     };
   }
 
-  @Get('/histogram/:quizName/:questionIndex/:histogramType?')
+  @Get('/histogram/:quizName/:questionIndex/:diagramType?')
   public async getHistogramData(
     @Param('quizName') quizName: string, //
     @Param('questionIndex') questionIndex: number, //
-    // @Param('histogramType') histogramType: string, //
+    @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization') authorization: string, //
   ): Promise<IMessage> {
-    const histogramType = DiagramType.Bar;
+
+    const diagramType = params.diagramType ?? DiagramType.Bar;
 
     const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
     if (!activeQuiz) {
@@ -909,7 +910,7 @@ export class QuizRouter extends AbstractRouter {
       };
     }
 
-    const previousRenderedData = HistogramDAO.getPreviouslyRenderedData(quizName, questionIndex, histogramType);
+    const previousRenderedData = HistogramDAO.getPreviouslyRenderedData(quizName, questionIndex, diagramType);
     if (previousRenderedData) {
       return {
         status: StatusProtocol.Success,
@@ -925,8 +926,8 @@ export class QuizRouter extends AbstractRouter {
     const questionData = activeQuiz.questionList[questionIndex];
     const responsesRaw = (await MemberDAO.getMembersOfQuiz(quizName)).map(member => member.responses[questionIndex]);
 
-    const svg = await Histogram.renderHistogramSVG(responsesRaw, questionData, histogramType);
-    HistogramDAO.updateRenderedData(svg, quizName, questionIndex, histogramType);
+    const svg = await Histogram.renderHistogramSVG(responsesRaw, questionData, diagramType);
+    HistogramDAO.updateRenderedData(svg, quizName, questionIndex, diagramType);
 
     return {
       status: StatusProtocol.Success,
