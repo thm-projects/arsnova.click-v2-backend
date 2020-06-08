@@ -79,7 +79,7 @@ class MemberDAO extends AbstractDAO {
     memberSerialized.bonusToken = this.generateBonusToken(memberSerialized.currentQuizName, memberSerialized.name);
     memberSerialized.isActive = true;
 
-    const doc = await MemberModel.create(memberSerialized);
+    const doc = await MemberModel.create(memberSerialized as any);
     const docSerialized = doc.toJSON();
     delete docSerialized.token;
     delete docSerialized.ticket;
@@ -94,7 +94,7 @@ class MemberDAO extends AbstractDAO {
 
     AMQPConnector.sendRequestStatistics();
 
-    HistoryModel.create({ type: HistoryModelType.Attendee, name: docSerialized.name, ref: docSerialized.currentQuizName });
+    HistoryModel.create({ type: HistoryModelType.Attendee, name: docSerialized.name, ref: docSerialized.currentQuizName } as any);
 
     return doc;
   }

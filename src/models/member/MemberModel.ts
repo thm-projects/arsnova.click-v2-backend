@@ -25,7 +25,7 @@ export class MemberModelItem implements IMemberSerialized {
   @prop() @IsString() public colorCode: string;
   @prop({ required: false }) @IsString() public groupName: string;
   @prop() @IsString() public name: string;
-  @prop({ items: Object }) @IsArray() public responses: Array<IQuizResponse>;
+  @prop({ type: Object }) @IsArray() public responses: Array<IQuizResponse>;
   @prop({ required: false }) @IsString() public ticket: string;
   @prop() @IsString() public token: string;
   @prop() @IsString() public currentQuizName: string;

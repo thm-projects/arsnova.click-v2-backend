@@ -17,7 +17,7 @@ export class HistoryModelItem {
 
   @prop({ type: String, required: false }) //
   @IsString() //
-  public ref: string;
+  public ref?: string;
 
   @prop({ type: Array, required: false, default: [] }) //
   @IsArray() //

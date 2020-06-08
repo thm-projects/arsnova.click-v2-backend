@@ -111,7 +111,7 @@ class CacheQuizAssetsLibRouterTestSuite {
       digest: 'e5cf0e52c29860e10b80617d794e5aee0f6620701ab487591881e6635f142ef0',
       mimeType: 'image/jpeg',
       data: Buffer.from([1]),
-    });
+    } as any);
   }
 
   public async after(): Promise<void> {

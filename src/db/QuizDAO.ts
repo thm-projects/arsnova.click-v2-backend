@@ -207,7 +207,7 @@ class QuizDAO extends AbstractDAO {
     await AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quizDoc.name), 'fanout');
     delete quizDoc._id;
     delete quizDoc.id;
-    const result = QuizModel.create(quizDoc);
+    const result = QuizModel.create(quizDoc as any);
     AMQPConnector.sendRequestStatistics();
     return result;
   }
@@ -247,7 +247,7 @@ class QuizDAO extends AbstractDAO {
       this.checkExistingConnection(quiz.name, quiz.privateKey);
     }, this.CHECK_STATE_INTERVAL);
 
-    HistoryModel.create({ type: HistoryModelType.PlayedQuiz, name: quiz.name });
+    HistoryModel.create({ type: HistoryModelType.PlayedQuiz, name: quiz.name } as any);
   }
 
   public getAllQuizzes(): Promise<Array<Document & QuizModelItem>> {

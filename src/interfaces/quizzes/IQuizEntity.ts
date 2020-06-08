@@ -24,4 +24,5 @@ export interface IQuizBase {
   privateKey: string;
   visibility?: QuizVisibility;
   description?: string;
+  origin?: string;
 }
