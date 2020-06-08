@@ -1,26 +1,29 @@
 import { IHistData } from '../../interfaces/IHistData';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
+import { IQuestionChoice } from '../../interfaces/questions/IQuestionChoice';
+import { IQuestionFreetext } from '../../interfaces/questions/IQuestionFreetext';
 import { IQuestionRanged } from '../../interfaces/questions/IQuestionRanged';
+import { IQuestionSurvey } from '../../interfaces/questions/IQuestionSurvey';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
 
 export class HistogramConverter {
 
   public static convertABCDSingleChoiceQuestion(
-    questionData: IQuestion,
+    questionData: IQuestionChoice,
     responsesRaw: Array<IQuizResponse>
   ): Array<IHistData> {
     return [];
   }
 
   public static convertFreeTextQuestion(
-    questionData: IQuestion,
+    questionData: IQuestionFreetext,
     responsesRaw: Array<IQuizResponse>
   ): Array<IHistData> {
     return [];
   }
 
   public static convertMultipleChoiceQuestion(
-    questionData: IQuestion,
+    questionData: IQuestionChoice,
     responsesRaw: Array<IQuizResponse>
   ): Array<IHistData> {
     return [];
@@ -46,28 +49,28 @@ export class HistogramConverter {
   }
 
   public static convertSingleChoiceQuestion(
-    questionData: IQuestion,
+    questionData: IQuestionChoice,
     responsesRaw: Array<IQuizResponse>
   ): Array<IHistData> {
     return [];
   }
 
   public static convertSurveyQuestion(
-    questionData: IQuestion,
+    questionData: IQuestionSurvey,
     responsesRaw: Array<IQuizResponse>
   ): Array<IHistData> {
     return [];
   }
 
   public static convertTrueFalseSingleChoiceQuestion(
-    questionData: IQuestion,
+    questionData: IQuestionChoice,
     responsesRaw: Array<IQuizResponse>
   ): Array<IHistData> {
     return [];
   }
 
   public static convertYesNoSingleChoiceQuestion(
-    questionData: IQuestion,
+    questionData: IQuestionChoice,
     responsesRaw: Array<IQuizResponse>
   ): Array<IHistData> {
     return [];

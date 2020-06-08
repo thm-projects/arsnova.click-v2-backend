@@ -4,6 +4,8 @@ import { IQuestion } from '../../interfaces/questions/IQuestion';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
 import { HistogramBarChart } from './histogramBarChart';
 import { HistogramConverter } from './histogramConverter';
+import { HistogramDonutChart } from './histogramDonutChart';
+import { HistogramLineChart } from './histogramLineChart';
 import { HistogramPieChart } from './histogramPieChart';
 
 export class Histogram {
@@ -11,8 +13,9 @@ export class Histogram {
     responsesRaw: Array<IQuizResponse>,
     questionData: IQuestion
   ): Array<IHistData> {
-    console.log(questionData);
+
     return HistogramConverter[`convert${questionData.TYPE}`](questionData, responsesRaw);
+
   }
 
   public static renderHistogramSVG(
@@ -28,6 +31,10 @@ export class Histogram {
         return HistogramBarChart.renderSVG(histData);
       case DiagramType.Pie:
         return HistogramPieChart.renderSVG(histData);
+      case DiagramType.Line:
+        return HistogramLineChart.renderSVG(histData);
+      case DiagramType.Donut:
+        return HistogramDonutChart.renderSVG(histData);
     }
 
     return null;
