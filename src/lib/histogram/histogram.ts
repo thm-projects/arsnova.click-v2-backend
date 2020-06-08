@@ -1,11 +1,12 @@
+import { DiagramType } from '../../enums/DiagramType';
 import { HistogramBarChart } from './histogramBarChart';
 
 export class Histogram {
-  public static async getHistogramData(): Promise<void> {
+  public static async getHistogramData(responsesRaw: object, questionData: object): Promise<void> {
     // TODO
   }
 
-  public static async renderHistogramSVG(quizName: string, questionIndex: number, histogramType: string = 'bar'): Promise<string> {
+  public static async renderHistogramSVG(responsesRaw: object, questionData: object, histogramType: string = DiagramType.Bar): Promise<string> {
     // TODO
     const dummyData = [
       {

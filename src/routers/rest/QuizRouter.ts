@@ -24,6 +24,7 @@ import {
 } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import AMQPConnector from '../../db/AMQPConnector';
+import HistogramDAO from '../../db/HistogramDAO';
 import MemberDAO from '../../db/MemberDAO';
 import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
@@ -889,15 +890,41 @@ export class QuizRouter extends AbstractRouter {
     };
   }
 
-  @Get('/histogram/:quizName/:questionIndex')
+  @Get('/histogram/:quizName/:questionIndex/:histogramType?')
   public async getHistogramData(
     @Param('quizName') quizName: string, //
     @Param('questionIndex') questionIndex: number, //
+    @Param('histogramType') histogramType: string, //
     @HeaderParam('authorization') authorization: string, //
   ): Promise<IMessage> {
 
-    // const previousRenderedData = HistogramDAO.getAllPreviouslyRenderedData(quizName, questionIndex);
-    const svg = await Histogram.renderHistogramSVG(quizName, questionIndex);
+    const activeQuiz = await QuizDAO.getActiveQuizByName(quizName);
+    if (!activeQuiz) {
+      return {
+        status: StatusProtocol.Failed,
+        step: null,
+        payload: {},
+      };
+    }
+
+    const previousRenderedData = HistogramDAO.getPreviouslyRenderedData(quizName, questionIndex, histogramType);
+    if (previousRenderedData) {
+      return {
+        status: StatusProtocol.Success,
+        step: null,
+        payload: {
+          svg: previousRenderedData,
+          quizName: quizName,
+          questionIndex: questionIndex,
+        },
+      };
+    }
+
+    const questionData = activeQuiz.questionList[questionIndex];
+    const responsesRaw = (await MemberDAO.getMembersOfQuiz(quizName)).map(member => member.responses[questionIndex]);
+
+    const svg = await Histogram.renderHistogramSVG(responsesRaw, questionData, histogramType);
+    HistogramDAO.updateRenderedData(svg, quizName, questionIndex, histogramType);
 
     return {
       status: StatusProtocol.Success,

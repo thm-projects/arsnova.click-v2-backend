@@ -1,3 +1,4 @@
+import { DiagramType } from '../enums/DiagramType';
 import { AbstractDAO } from './AbstractDAO';
 
 class HistogramDAO extends AbstractDAO {
@@ -14,12 +15,15 @@ class HistogramDAO extends AbstractDAO {
     return this.instance;
   }
 
-  public getAllPreviouslyRenderedData(quizName: string, questionIndex: number): object {
-    return this.storage[quizName][questionIndex];
+  public getPreviouslyRenderedData(quizName: string, questionIndex: number, histogramType: string = DiagramType.Bar): object {
+    return this.storage?.[quizName]?.[questionIndex]?.[histogramType] ?? null;
   }
 
-  public updateRenderedData(renderedData, quizName: string, questionIndex: number): void {
-    this.storage[quizName][questionIndex] = renderedData;
+  public updateRenderedData(renderedData, quizName: string, questionIndex: number, histogramType: string = DiagramType.Bar): void {
+    if (!this.storage[quizName]) { this.storage[quizName] = {}; }
+    if (!this.storage[quizName][questionIndex]) { this.storage[quizName][questionIndex] = {}; }
+    if (!this.storage[quizName][questionIndex][histogramType]) { this.storage[quizName][questionIndex][histogramType] = {}; }
+    this.storage[quizName][questionIndex][histogramType] = renderedData;
   }
 
   public async getStatistics(): Promise<{ [p: string]: number }> {
