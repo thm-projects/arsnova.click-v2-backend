@@ -80,7 +80,7 @@ export class QuizRouter extends AbstractRouter {
       return false;
     }
     const canNotUseToken = quiz.questionList.some((value, index) => {
-      return ![QuestionType.ABCDSingleChoiceQuestion, QuestionType.SurveyQuestion].includes(value.TYPE) &&
+      return ![QuestionType.ABCDSurveyQuestion, QuestionType.SurveyQuestion].includes(value.TYPE) &&
              value.requiredForToken &&
              Leaderboard.getAnswerStateForResponse(attendee.responses[index].value, value) !== AnswerState.Wrong;
     });

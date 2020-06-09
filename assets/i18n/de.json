@@ -41,7 +41,7 @@
       "SurveyQuestion": "Umfrage",
       "TrueFalseSingleChoiceQuestion": "Wahr-Falsch Frage",
       "YesNoSingleChoiceQuestion": "Ja-Nein Frage",
-      "ABCDSingleChoiceQuestion": "ABCD Single-Choice Frage",
+      "ABCDSurveyQuestion": "ABCD Single-Choice Frage",
       "SingleChoiceQuestion": "Single-Choice Frage",
       "RangedQuestion": "Schätzfrage",
       "FreeTextQuestion": "Freitext Frage",

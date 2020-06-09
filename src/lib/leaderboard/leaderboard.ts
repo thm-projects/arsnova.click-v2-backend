@@ -84,7 +84,7 @@ export class Leaderboard {
     let amountWrong = 0;
     let amountAvailable: number;
 
-    if ([QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(question.TYPE)) {
+    if ([QuestionType.SurveyQuestion, QuestionType.ABCDSurveyQuestion].includes(question.TYPE)) {
       amountAvailable = 0;
     } else if ([QuestionType.RangedQuestion, QuestionType.FreeTextQuestion].includes(question.TYPE)) {
       amountAvailable = 1;
@@ -125,7 +125,7 @@ export class Leaderboard {
         return Leaderboard.isCorrectSingleChoiceQuestion(data[0] as number, question as IQuestionChoice) ? AnswerState.Correct : AnswerState.Wrong;
       case QuestionType.MultipleChoiceQuestion:
         return this.isCorrectMultipleChoiceQuestion(data as Array<number>, question as IQuestionChoice);
-      case QuestionType.ABCDSingleChoiceQuestion:
+      case QuestionType.ABCDSurveyQuestion:
       case QuestionType.SurveyQuestion:
         return AnswerState.Wrong;
       case QuestionType.RangedQuestion:
@@ -205,7 +205,7 @@ export class Leaderboard {
 
   private static getCorrectAnswers(response: Array<string | number>, question: IQuestionBase): number {
     switch (question.TYPE) {
-      case QuestionType.ABCDSingleChoiceQuestion:
+      case QuestionType.ABCDSurveyQuestion:
       case QuestionType.SurveyQuestion:
         return 0;
       case QuestionType.FreeTextQuestion:

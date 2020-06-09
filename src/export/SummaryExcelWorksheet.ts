@@ -104,7 +104,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       let hasNotAllQuestionsCorrect = false;
       this.quiz.questionList.forEach((item, index) => {
         if (![
-          QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion,
+          QuestionType.SurveyQuestion, QuestionType.ABCDSurveyQuestion,
         ].includes(item.TYPE) && leaderboardItem.correctQuestions.indexOf((index)) === -1) {
           hasNotAllQuestionsCorrect = true;
         }
@@ -282,7 +282,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     let nextStartRow = currentRowIndex + 5;
     await asyncForEach(leaderBoardData, async (leaderboardItem, indexInList) => {
-      if (this.quiz.questionList.some((item, index) => ![QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(item.TYPE)
+      if (this.quiz.questionList.some((item, index) => ![QuestionType.SurveyQuestion, QuestionType.ABCDSurveyQuestion].includes(item.TYPE)
                                                        && leaderboardItem.correctQuestions.indexOf((index)) === -1)) {
         return;
       }
@@ -361,7 +361,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         // user's response time and avg. response time is added (bottom list)
         const responseTime = this.formatMillisToSeconds(leaderboardItem.responseTime);
         const canNotUseToken = this.quiz.questionList.some((item, index) => {
-          return ![QuestionType.SurveyQuestion, QuestionType.ABCDSingleChoiceQuestion].includes(item.TYPE) &&
+          return ![QuestionType.SurveyQuestion, QuestionType.ABCDSurveyQuestion].includes(item.TYPE) &&
                  item.requiredForToken &&
                  leaderboardItem.correctQuestions.indexOf((index)) === -1;
         });

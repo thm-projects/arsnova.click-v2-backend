@@ -122,7 +122,7 @@ class ExcelExportTestSuite {
             }
             break;
           case QuestionType.SingleChoiceQuestion:
-          case QuestionType.ABCDSingleChoiceQuestion:
+          case QuestionType.ABCDSurveyQuestion:
             value = [this.randomIntFromInterval(0, question.answerOptionList.length - 1)];
             break;
           case QuestionType.MultipleChoiceQuestion:

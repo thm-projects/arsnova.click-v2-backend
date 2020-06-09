@@ -41,7 +41,7 @@
       "SurveyQuestion": "SurveyQuestion",
       "TrueFalseSingleChoiceQuestion": "TrueFalseSingleChoiceQuestion",
       "YesNoSingleChoiceQuestion": "YesNoSingleChoiceQuestion",
-      "ABCDSingleChoiceQuestion": "ABCDSingleChoiceQuestion",
+      "ABCDSurveyQuestion": "ABCDSurveyQuestion",
       "SingleChoiceQuestion": "SingleChoiceQuestion",
       "RangedQuestion": "RangedQuestion",
       "FreeTextQuestion": "FreeTextQuestion",

@@ -122,7 +122,7 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
      * - export.type.SurveyQuestion,
      * - export.type.TrueFalseSingleChoiceQuestion,
      * - export.type.YesNoSingleChoiceQuestion,
-     * - export.type.ABCDSingleChoiceQuestion,
+     * - export.type.ABCDSurveyQuestion,
      * - export.type.SingleChoiceQuestion,
      * - export.type.RangedQuestion,
      * - export.type.FreeTextQuestion,

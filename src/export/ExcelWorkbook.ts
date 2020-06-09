@@ -83,7 +83,7 @@ export class ExcelWorkbook implements IExcelWorkbook {
           this._worksheets.push(new RangedExcelWorksheet(worksheetOptions));
           break;
         case QuestionType.SurveyQuestion:
-        case QuestionType.ABCDSingleChoiceQuestion:
+        case QuestionType.ABCDSurveyQuestion:
           this._worksheets.push(new SurveyExcelWorksheet(worksheetOptions));
           break;
         case QuestionType.FreeTextQuestion:
