@@ -37,6 +37,7 @@
     "exported_at_time": "Uhr",
     "no_answer": "Keine Antwort",
     "required_for_token": "Erforderliche Quizfrage",
+    "team": "Team",
     "type": {
       "SurveyQuestion": "Umfrage",
       "TrueFalseSingleChoiceQuestion": "Wahr-Falsch Frage",

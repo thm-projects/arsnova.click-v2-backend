@@ -3,7 +3,7 @@ import * as xlsx from 'excel4node';
 import * as MessageFormat from 'messageformat';
 import { Document } from 'mongoose';
 import MemberDAO from '../db/MemberDAO';
-import { ILeaderBoardItemBase } from '../interfaces/leaderboard/ILeaderBoardItemBase';
+import { ILeaderBoardItemBase, ILeaderboardMemberGroupItem } from '../interfaces/leaderboard/ILeaderBoardItemBase';
 import { IQuizBase } from '../interfaces/quizzes/IQuizEntity';
 import { Leaderboard } from '../lib/leaderboard/leaderboard';
 import { MemberModelItem } from '../models/member/MemberModel';
@@ -104,6 +104,10 @@ export abstract class ExcelWorksheet {
 
   protected async getLeaderboardData(): Promise<Array<ILeaderBoardItemBase>> {
     return await Leaderboard.getCorrectResponses(this.quiz);
+  }
+
+  protected async getLeaderboardGroupData(): Promise<Array<ILeaderboardMemberGroupItem>> {
+    return await Leaderboard.getRankingForGroup(this.quiz);
   }
 
   protected formatMillisToSeconds(value: number, digits: number = 2): number {

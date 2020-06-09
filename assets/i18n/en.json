@@ -37,6 +37,7 @@
     "exported_at_time": "o'clock",
     "no_answer": "No response",
     "required_for_token": "Required question",
+    "team": "Team",
     "type": {
       "SurveyQuestion": "SurveyQuestion",
       "TrueFalseSingleChoiceQuestion": "TrueFalseSingleChoiceQuestion",
