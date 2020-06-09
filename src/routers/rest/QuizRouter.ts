@@ -781,6 +781,8 @@ export class QuizRouter extends AbstractRouter {
 
     const parsedQuiz = await MatchAssetCachedQuiz(quiz.toJSON());
 
+    res.locale = translation;
+
     const wb = new ExcelWorkbook({
       themeName,
       translation,
