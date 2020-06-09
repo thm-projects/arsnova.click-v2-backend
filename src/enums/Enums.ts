@@ -15,7 +15,4 @@ export enum GitlabCommitAction {
 export enum Language {
   De = 'de', //
   En = 'en', //
-  //  Fr = 'fr', //
-  //  Es = 'es', //
-  //  It = 'it', //
 }
