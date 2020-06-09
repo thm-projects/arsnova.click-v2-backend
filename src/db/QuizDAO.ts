@@ -327,7 +327,7 @@ class QuizDAO extends AbstractDAO {
   public getAllPublicQuizzes(): Promise<Array<Document & QuizModelItem>> {
     return QuizModel.find({
       visibility: QuizVisibility.Any,
-      expiry: { $gte: new Date() },
+      $or: [ { expiry: null }, { expiry: {$gte: new Date()} } ],
     }).exec();
   }
 
@@ -335,7 +335,7 @@ class QuizDAO extends AbstractDAO {
     return QuizModel.findOne({
       name: this.buildQuiznameQuery(quizName),
       visibility: QuizVisibility.Any,
-      expiry: { $gte: new Date() },
+      $or: [ { expiry: null }, { expiry: {$gte: new Date()} } ],
     }).exec();
   }
 

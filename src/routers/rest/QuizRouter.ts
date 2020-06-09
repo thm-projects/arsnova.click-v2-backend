@@ -729,6 +729,13 @@ export class QuizRouter extends AbstractRouter {
     @Param('quizName') quizName: string, //
     @HeaderParam('authorization') privateKey: string, //
   ): Promise<IMessage> {
+    const existingQuiz = await QuizDAO.getQuizByName(quizName);
+    if (existingQuiz) {
+      if (existingQuiz.privateKey !== privateKey) {
+        throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
+      }
+    }
+
     try {
       await QuizDAO.removeQuizByName(quizName);
       return {
