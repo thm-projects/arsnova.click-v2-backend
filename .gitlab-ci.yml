@@ -99,6 +99,13 @@ ts_lint:
     - npm install tslint@6.0.0 typescript@3.7.5
     - node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json
 
+i18n_check:
+  stage: test
+  tags:
+    - nodejs
+  script:
+    - node i18n-check.js
+
 npm_test:
   stage: test
   tags:
