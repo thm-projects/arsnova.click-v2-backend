@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/node';
+import { captureException, setExtras } from '@sentry/node';
 import { ObjectId } from 'bson';
 import * as cluster from 'cluster';
 import * as http from 'http';
@@ -280,6 +280,10 @@ class QuizDAO extends AbstractDAO {
 
     HistoryModel.find({ref: quizName}).then(async data => {
       const lastQuizElement = await HistoryModel.findOne({name: quizName}).sort({createdAt: -1}).exec();
+      if (!lastQuizElement) {
+        return;
+      }
+
       if (!data?.length) {
         await HistoryModel.deleteOne({_id: lastQuizElement._id}).exec();
         return;
@@ -287,8 +291,9 @@ class QuizDAO extends AbstractDAO {
 
       await HistoryModel.updateOne({_id: lastQuizElement._id}, {attendees: data.map(v => v.name)}).exec();
       return HistoryModel.deleteMany({ref: quizName}).exec();
-    }).catch(() => {
-      captureException(new Error('Error while reordering of HistoryModel Elements'));
+    }).catch(e => {
+      setExtras({topic: 'Error while reordering of HistoryModel Elements'});
+      captureException(e);
     });
 
     if (!this._storage[quizName]) {
