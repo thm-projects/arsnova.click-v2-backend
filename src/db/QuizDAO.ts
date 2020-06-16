@@ -373,6 +373,7 @@ class QuizDAO extends AbstractDAO {
 
     const doc = await this.getQuizByName(name);
     await MemberDAO.resetMembersOfQuiz(name, doc.questionList.length);
+    await QuizModel.updateOne({ _id: doc._id }, { currentStartTimestamp: -1 }).exec();
 
     AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(name), '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
@@ -392,7 +393,6 @@ class QuizDAO extends AbstractDAO {
     AMQPConnector.sendRequestStatistics();
 
     process.send({ message: IPCExchange.QuizStop, data: name });
-    await QuizModel.updateOne({ _id: doc._id }, { currentStartTimestamp: -1 }).exec();
 
     return doc;
   }
