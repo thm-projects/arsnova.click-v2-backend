@@ -288,7 +288,8 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       this.ws.cell(currentRowIndex, nextColumnIndex).string(this.mf('export.team'));
       this.ws.cell(currentRowIndex++, nextColumnIndex + 1).string(this.mf('export.score'));
 
-      this.leaderboardGroup.forEach(group => {
+      this.quiz.sessionConfig.nicks.memberGroups.forEach(memberGroup => {
+        const group = this.leaderboardGroup.find(lbGroup => lbGroup._id === memberGroup.name);
         this.ws.cell(currentRowIndex, nextColumnIndex).string(group._id);
         this.ws.cell(currentRowIndex++, nextColumnIndex + 1).number(group.score);
       });
