@@ -195,7 +195,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     });
     currentRowIndex++;
 
-    this.ws.cell(currentRowIndex, 1, (this.leaderboard.length + (currentRowIndex)), this.columnsToFormat)
+    this.ws.cell(currentRowIndex, 1, (this.leaderboard.length + (currentRowIndex - 1)), this.columnsToFormat)
         .style(defaultStyles.attendeeEntryRowStyle);
 
     this.leaderboard.forEach((leaderboardItem, indexInList) => {

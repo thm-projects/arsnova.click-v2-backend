@@ -8,7 +8,6 @@ import { IQuiz, IQuizBase } from '../interfaces/quizzes/IQuizEntity';
 import { Leaderboard } from '../lib/leaderboard/leaderboard';
 import { ArchivedQuizWorksheet } from './ArchivedQuizWorksheet';
 import { FreeTextExcelWorksheet } from './FreeTextExcelWorksheet';
-
 import { ExcelTheme } from './lib/excel_default_styles';
 import { MultipleChoiceExcelWorksheet } from './MultipleChoiceExcelWorksheet';
 import { RangedExcelWorksheet } from './RangedExcelWorksheet';
