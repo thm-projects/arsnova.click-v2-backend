@@ -9,13 +9,15 @@ export class SurveyExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
   private _question: IQuestionSurvey;
   private readonly _questionIndex: number;
 
-  constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
+  constructor({ wb, theme, translation, quiz, mf, questionIndex, leaderboard, leaderboardGroup }) {
     super({
       theme,
       translation,
       quiz,
       mf,
       questionIndex,
+      leaderboard,
+      leaderboardGroup
     });
     this._ws = wb.addWorksheet(`${this.mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;

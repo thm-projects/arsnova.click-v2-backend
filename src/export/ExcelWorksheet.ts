@@ -5,7 +5,6 @@ import { Document } from 'mongoose';
 import MemberDAO from '../db/MemberDAO';
 import { ILeaderBoardItemBase, ILeaderboardMemberGroupItem } from '../interfaces/leaderboard/ILeaderBoardItemBase';
 import { IQuizBase } from '../interfaces/quizzes/IQuizEntity';
-import { Leaderboard } from '../lib/leaderboard/leaderboard';
 import { MemberModelItem } from '../models/member/MemberModel';
 import { excelDefaultWorksheetOptions } from './lib/excel_default_options';
 import { ExcelTheme } from './lib/excel_default_styles';
@@ -43,6 +42,17 @@ export abstract class ExcelWorksheet {
     return this._columnsToFormat;
   }
 
+  private readonly _leaderboard: Array<ILeaderBoardItemBase>;
+
+  get leaderboard(): Array<ILeaderBoardItemBase> {
+    return this._leaderboard;
+  }
+
+  private readonly _leaderboardGroup: Array<ILeaderboardMemberGroupItem>;
+  get leaderboardGroup(): Array<ILeaderboardMemberGroupItem> {
+    return this._leaderboardGroup;
+  }
+
   protected _options: Object;
   protected _theme: ExcelTheme;
   protected _translation: string;
@@ -51,7 +61,7 @@ export abstract class ExcelWorksheet {
   private readonly _createdAt: string;
   private readonly _quiz: IQuizBase;
 
-  protected constructor({ theme, translation, quiz, mf, questionIndex }) {
+  protected constructor({ theme, translation, quiz, mf, questionIndex, leaderboard, leaderboardGroup }) {
     this._theme = theme;
     this._translation = translation;
     this._quiz = quiz;
@@ -69,6 +79,8 @@ export abstract class ExcelWorksheet {
         scaleWithDoc: false,
       },
     });
+    this._leaderboard = leaderboard;
+    this._leaderboardGroup = leaderboardGroup;
 
     this._columnsToFormat = 5;
 
@@ -100,14 +112,6 @@ export abstract class ExcelWorksheet {
     const dateYMD = `${this.prefixNumberWithZero(date.getDate())}.${this.prefixNumberWithZero(date.getMonth() + 1)}.${date.getFullYear()}`;
     const dateHM = `${this.prefixNumberWithZero(date.getHours())}:${this.prefixNumberWithZero(date.getMinutes())}`;
     return `${dateYMD} ${this._mf('export.exported_at')} ${dateHM} ${this._mf('export.exported_at_time')}`;
-  }
-
-  protected async getLeaderboardData(): Promise<Array<ILeaderBoardItemBase>> {
-    return await Leaderboard.getCorrectResponses(this.quiz);
-  }
-
-  protected async getLeaderboardGroupData(): Promise<Array<ILeaderboardMemberGroupItem>> {
-    return await Leaderboard.getRankingForGroup(this.quiz);
   }
 
   protected formatMillisToSeconds(value: number, digits: number = 2): number {

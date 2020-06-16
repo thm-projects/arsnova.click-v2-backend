@@ -15,13 +15,15 @@ declare global {
 
 export class ArchivedQuizWorksheet extends ExcelWorksheet implements IExcelWorksheet {
 
-  constructor({ wb, theme, translation, quiz, mf }) {
+  constructor({ wb, theme, translation, quiz, mf, leaderboard, leaderboardGroup }) {
     super({
       theme,
       translation,
       quiz,
       mf,
       questionIndex: null,
+      leaderboard,
+      leaderboardGroup
     });
 
     this._ws = wb.addWorksheet(mf('export.session_excel_sheet_name'), this._options);

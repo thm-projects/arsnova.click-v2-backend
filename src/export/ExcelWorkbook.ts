@@ -5,6 +5,7 @@ import * as MessageFormat from 'messageformat';
 import { QuestionType } from '../enums/QuestionType';
 import { IExcelWorkbook, IExcelWorksheet } from '../interfaces/iExcel';
 import { IQuiz, IQuizBase } from '../interfaces/quizzes/IQuizEntity';
+import { Leaderboard } from '../lib/leaderboard/leaderboard';
 import { ArchivedQuizWorksheet } from './ArchivedQuizWorksheet';
 import { FreeTextExcelWorksheet } from './FreeTextExcelWorksheet';
 
@@ -64,7 +65,12 @@ export class ExcelWorkbook implements IExcelWorkbook {
       translation: this._translation,
       quiz: this._quiz,
       mf: this._mf,
+      leaderboard: await Leaderboard.getCorrectResponses(this._quiz),
     };
+
+    if (this._quiz.sessionConfig.nicks.memberGroups.length) {
+      worksheetOptions.leaderboardGroup = await Leaderboard.getRankingForGroup(this._quiz);
+    }
 
     this._worksheets.push(new SummaryExcelWorksheet(worksheetOptions));
 
