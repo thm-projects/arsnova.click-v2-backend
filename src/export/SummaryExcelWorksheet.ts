@@ -297,8 +297,8 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
         currentRowIndex += 1;
       });
-      currentRowIndex += 1;
     }
+    currentRowIndex += 2;
 
     this.ws.cell(currentRowIndex, nextColumnIndex).string(this.mf('export.attendee_complete_correct'));
     currentRowIndex += 1;
@@ -319,7 +319,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
     this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.score'));
     currentRowIndex++;
 
-    let nextStartRow = currentRowIndex + 3;
+    let nextStartRow = currentRowIndex + 5;
     await asyncForEach(this.leaderboard, async (leaderboardItem, indexInList) => {
       if (this.quiz.questionList.some((item, index) => ![QuestionType.SurveyQuestion, QuestionType.ABCDSurveyQuestion].includes(item.TYPE)
                                                        && leaderboardItem.correctQuestions.indexOf((index)) === -1)) {
