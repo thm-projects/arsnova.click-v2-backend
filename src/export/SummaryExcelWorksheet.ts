@@ -290,8 +290,12 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
       this.quiz.sessionConfig.nicks.memberGroups.forEach(memberGroup => {
         const group = this.leaderboardGroup.find(lbGroup => lbGroup._id === memberGroup.name);
-        this.ws.cell(currentRowIndex, nextColumnIndex).string(group._id);
-        this.ws.cell(currentRowIndex++, nextColumnIndex + 1).number(group.score);
+        this.ws.cell(currentRowIndex, nextColumnIndex).string(memberGroup.name);
+        if (group) {
+          this.ws.cell(currentRowIndex, nextColumnIndex + 1).number(group.score);
+        }
+
+        currentRowIndex += 1;
       });
       currentRowIndex += 1;
     }
