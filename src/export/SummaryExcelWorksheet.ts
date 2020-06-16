@@ -298,7 +298,6 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
         currentRowIndex += 1;
       });
     }
-    currentRowIndex += 2;
 
     this.ws.cell(currentRowIndex, nextColumnIndex).string(this.mf('export.attendee_complete_correct'));
     currentRowIndex += 1;
