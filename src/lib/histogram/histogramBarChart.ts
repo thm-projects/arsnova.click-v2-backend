@@ -1,44 +1,29 @@
-import * as D3Node from 'd3-node';
 import * as d3 from 'd3';
+import { IHistData } from '../../interfaces/IHistData';
+import { HistogramChart } from './histogramChart';
 
-export class HistogramBarChart {
+export class HistogramBarChart extends HistogramChart {
 
-  public static renderSVG(data): string {
-    const styles = `.bar rect { fill: black; } .bar text { fill: #fff; font: 10px sans-serif; }`;
+  constructor() {
+    const styles = '.bar rect { fill: black; } .bar text { fill: #fff; font: 10px sans-serif; }';
+    super(styles);
+  }
 
-    const options = {
-      styles: styles,
-      d3Module: d3
-    };
-
-    const d3n = new D3Node(options);
-
-    const margin = {top: 10, right: 30, bottom: 30, left: 30};
-    const width = 960 - margin.left - margin.right;
-    const height = 500 - margin.top - margin.bottom;
-    const svgWidth = width + margin.left + margin.right;
-    const svgHeight = height + margin.top + margin.bottom;
-
-    const x = d3.scaleBand().range([0, width]).padding(0.4);
-    const y = d3.scaleLinear().range([height, 0]);
+  public renderData(data: Array<IHistData>): HistogramChart {
+    const x = d3.scaleBand().range([0, this.innerWidth]).padding(0.4);
+    const y = d3.scaleLinear().range([this.innerHeight, 0]);
 
     x.domain(data.map(d => d.key));
-
     y.domain([0, d3.max(data, d => d.val)]);
 
-    const svg = d3n.createSVG()
-      .attr('viewBox', `0, 0, ${svgWidth}, ${svgHeight}`)
-      .append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`);
-
-    svg.append('g')
-      .attr('transform', `translate(0, ${height})`)
+    this.svg.append('g')
+      .attr('transform', `translate(0, ${this.innerHeight})`)
       .call(d3.axisBottom(x));
 
-    svg.append('g')
+    this.svg.append('g')
       .call(d3.axisLeft(y).tickFormat(d => d));
 
-    const bar = svg.selectAll('.bar')
+    const bar = this.svg.selectAll('.bar')
       .data(data)
       .enter().append('g')
       .attr('class', 'bar')
@@ -47,16 +32,15 @@ export class HistogramBarChart {
     bar.append('rect')
       .attr('x', d => x(d.key))
       .attr('width', x.bandwidth())
-      .attr('height', d => height - y(d.val));
+      .attr('height', d => this.innerHeight - y(d.val));
 
     bar.append('text')
       .attr('dy', '.75em')
-      .attr('y', d => height - y(d.val) < 25 ? -15 : 6)
+      .attr('y', d => this.innerHeight - y(d.val) < 25 ? -15 : 6)
       .attr('x', d => x(d.key) + x.bandwidth() / 2)
       .attr('text-anchor', 'middle')
       .text(d => d.val > 0 ? d.val : '');
 
-
-    return d3n.svgString();
+    return this;
   }
 }

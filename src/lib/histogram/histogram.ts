@@ -3,6 +3,7 @@ import { IHistData } from '../../interfaces/IHistData';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
 import { HistogramBarChart } from './histogramBarChart';
+import { HistogramChart } from './histogramChart';
 import { HistogramConverter } from './histogramConverter';
 import { HistogramDonutChart } from './histogramDonutChart';
 import { HistogramLineChart } from './histogramLineChart';
@@ -26,18 +27,26 @@ export class Histogram {
 
     const histData = this.getHistogramData(responsesRaw, questionData);
 
+    let chart: HistogramChart;
+
     switch (diagramType) {
       case DiagramType.Bar:
-        return HistogramBarChart.renderSVG(histData);
+        chart = new HistogramBarChart();
+        break;
       case DiagramType.Pie:
-        return HistogramPieChart.renderSVG(histData);
+        chart = new HistogramPieChart();
+        break;
       case DiagramType.Line:
-        return HistogramLineChart.renderSVG(histData);
+        chart = new HistogramLineChart();
+        break;
       case DiagramType.Donut:
-        return HistogramDonutChart.renderSVG(histData);
+        chart = new HistogramDonutChart();
+        break;
+      default:
+        return null;
     }
 
-    return null;
+    return chart.renderData(histData).toSVG();
   }
 
 }
