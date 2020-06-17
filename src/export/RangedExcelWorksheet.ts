@@ -11,13 +11,15 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
   private readonly _question: IQuestionRanged;
   private readonly _questionIndex: number;
 
-  constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
+  constructor({ wb, theme, translation, quiz, mf, questionIndex, leaderboard, leaderboardGroup }) {
     super({
       theme,
       translation,
       quiz,
       mf,
       questionIndex,
+      leaderboard,
+      leaderboardGroup
     });
     this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
@@ -120,11 +122,9 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       lastColumn: minColums,
     });
 
-    const leaderBoardData = await this.getLeaderboardData();
-
-    const hasEntries = leaderBoardData.length > 0;
+    const hasEntries = this.leaderboard.length > 0;
     const attendeeEntryRows = hasEntries ? (
-      leaderBoardData.length
+      this.leaderboard.length
     ) : 1;
     const attendeeEntryRowStyle = hasEntries ? defaultStyles.attendeeEntryRowStyle : Object.assign({}, defaultStyles.attendeeEntryRowStyle, {
       alignment: {
@@ -134,7 +134,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     nextRowIndex++;
     this.ws.cell(nextRowIndex, 1, attendeeEntryRows + nextRowIndex - 1, columnsToFormat, !hasEntries).style(attendeeEntryRowStyle);
 
-    await asyncForEach(leaderBoardData, async (leaderboardItem, indexInList) => {
+    await asyncForEach(this.leaderboard, async (leaderboardItem, indexInList) => {
       let nextColumnIndex = 2;
       const targetRow = indexInList + nextRowIndex;
       if (this._isCasRequired) {
@@ -183,7 +183,6 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
   }
 
   public async addSheetData(): Promise<void> {
-    const leaderBoardData = await this.getLeaderboardData();
     const castedQuestion = this._question as IQuestionRanged;
     const numberOfInputValuesPerGroup = await calculateNumberOfRangedAnswers(this.quiz, this._questionIndex, castedQuestion.rangeMin,
       castedQuestion.correctValue, castedQuestion.rangeMax);
@@ -207,7 +206,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(nextRowIndex++, 4).number(numberOfInputValuesPerGroup.maxRange);
 
     this.ws.cell(nextRowIndex, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = leaderBoardData.map(leaderboard => leaderboard.correctQuestions)
+    const correctResponsesPercentage: number = this.leaderboard.map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length / (
                                                  await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)
                                                ).length * 100;
@@ -244,7 +243,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.time'));
 
     let nextStartRow = nextRowIndex;
-    await asyncForEach(leaderBoardData, async leaderboardItem => {
+    await asyncForEach(this.leaderboard, async leaderboardItem => {
       const responseItem = (
         await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)
       ).filter(nickitem => {

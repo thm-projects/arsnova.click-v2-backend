@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/node';
+import { captureException, setExtras } from '@sentry/node';
 import { ObjectId } from 'bson';
 import * as cluster from 'cluster';
 import * as http from 'http';
@@ -280,6 +280,10 @@ class QuizDAO extends AbstractDAO {
 
     HistoryModel.find({ref: quizName}).then(async data => {
       const lastQuizElement = await HistoryModel.findOne({name: quizName}).sort({createdAt: -1}).exec();
+      if (!lastQuizElement) {
+        return;
+      }
+
       if (!data?.length) {
         await HistoryModel.deleteOne({_id: lastQuizElement._id}).exec();
         return;
@@ -287,8 +291,9 @@ class QuizDAO extends AbstractDAO {
 
       await HistoryModel.updateOne({_id: lastQuizElement._id}, {attendees: data.map(v => v.name)}).exec();
       return HistoryModel.deleteMany({ref: quizName}).exec();
-    }).catch(() => {
-      captureException(new Error('Error while reordering of HistoryModel Elements'));
+    }).catch(e => {
+      setExtras({topic: 'Error while reordering of HistoryModel Elements'});
+      captureException(e);
     });
 
     if (!this._storage[quizName]) {
@@ -327,7 +332,7 @@ class QuizDAO extends AbstractDAO {
   public getAllPublicQuizzes(): Promise<Array<Document & QuizModelItem>> {
     return QuizModel.find({
       visibility: QuizVisibility.Any,
-      expiry: { $gte: new Date() },
+      $or: [ { expiry: null }, { expiry: {$gte: new Date()} } ],
     }).exec();
   }
 
@@ -335,7 +340,7 @@ class QuizDAO extends AbstractDAO {
     return QuizModel.findOne({
       name: this.buildQuiznameQuery(quizName),
       visibility: QuizVisibility.Any,
-      expiry: { $gte: new Date() },
+      $or: [ { expiry: null }, { expiry: {$gte: new Date()} } ],
     }).exec();
   }
 
@@ -368,6 +373,7 @@ class QuizDAO extends AbstractDAO {
 
     const doc = await this.getQuizByName(name);
     await MemberDAO.resetMembersOfQuiz(name, doc.questionList.length);
+    await QuizModel.updateOne({ _id: doc._id }, { currentStartTimestamp: -1 }).exec();
 
     AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(name), '.*', Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
@@ -387,7 +393,6 @@ class QuizDAO extends AbstractDAO {
     AMQPConnector.sendRequestStatistics();
 
     process.send({ message: IPCExchange.QuizStop, data: name });
-    await QuizModel.updateOne({ _id: doc._id }, { currentStartTimestamp: -1 }).exec();
 
     return doc;
   }

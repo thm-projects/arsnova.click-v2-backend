@@ -201,7 +201,7 @@ class MemberDAO extends AbstractDAO {
 
   public async addResponseValue(member: Document & MemberModelItem, data: string | number | Array<number>): Promise<void> {
     const quiz = await QuizDAO.getQuizByName(member.currentQuizName);
-    const responseTime = quiz.currentStartTimestamp === 0 ? 0 : new Date().getTime() - quiz.currentStartTimestamp;
+    const responseTime = quiz.currentStartTimestamp <= 0 ? 0 : new Date().getTime() - quiz.currentStartTimestamp;
     const score = Leaderboard.getScoreForResponse(quiz, data, responseTime);
 
     const queryPathValue = `responses.${quiz.currentQuestionIndex}.value`;

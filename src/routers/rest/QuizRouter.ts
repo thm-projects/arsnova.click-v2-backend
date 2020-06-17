@@ -82,10 +82,21 @@ export class QuizRouter extends AbstractRouter {
     if (!quiz || quiz.currentQuestionIndex < quiz.questionList.length - 1) {
       return false;
     }
+    if (quiz.questionList.every(value => {
+      return [QuestionType.ABCDSurveyQuestion, QuestionType.SurveyQuestion].includes(value.TYPE) ||
+             !value.requiredForToken;
+    })) {
+      return false;
+    }
+
     const canNotUseToken = quiz.questionList.some((value, index) => {
-      return ![QuestionType.ABCDSingleChoiceQuestion, QuestionType.SurveyQuestion].includes(value.TYPE) &&
-             value.requiredForToken &&
-             Leaderboard.getAnswerStateForResponse(attendee.responses[index].value, value) !== AnswerState.Wrong;
+      const relevantQuestion = ![QuestionType.ABCDSurveyQuestion, QuestionType.SurveyQuestion].includes(value.TYPE) &&
+                               value.requiredForToken;
+      if (!relevantQuestion) {
+        return false;
+      }
+
+      return Leaderboard.getAnswerStateForResponse(attendee.responses[index].value, value) !== AnswerState.Correct;
     });
     return !canNotUseToken;
   }
@@ -732,6 +743,13 @@ export class QuizRouter extends AbstractRouter {
     @Param('quizName') quizName: string, //
     @HeaderParam('authorization') privateKey: string, //
   ): Promise<IMessage> {
+    const existingQuiz = await QuizDAO.getQuizByName(quizName);
+    if (existingQuiz) {
+      if (existingQuiz.privateKey !== privateKey) {
+        throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
+      }
+    }
+
     try {
       await QuizDAO.removeQuizByName(quizName);
       return {
@@ -783,6 +801,8 @@ export class QuizRouter extends AbstractRouter {
     }
 
     const parsedQuiz = await MatchAssetCachedQuiz(quiz.toJSON());
+
+    res.locale = translation;
 
     const wb = new ExcelWorkbook({
       themeName,

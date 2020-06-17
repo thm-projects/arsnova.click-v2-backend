@@ -1,30 +1,4 @@
 {
-  "arsnova-dot-click-contrast": {
-    "quizNameRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#23425b"
-    },
-    "exportedAtRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#23425b"
-    },
-    "statisticsRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#424242"
-    },
-    "attendeeHeaderGroupRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#814E33"
-    },
-    "attendeeHeaderRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#562b81"
-    },
-    "attendeeEntryRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#424242"
-    }
-  },
   "blackbeauty": {
     "quizNameRowStyle": {
       "fg": "#FFFFFF",
@@ -49,84 +23,6 @@
     "attendeeEntryRowStyle": {
       "fg": "#FFFFFF",
       "bg": "#444444"
-    }
-  },
-  "decent-blue": {
-    "quizNameRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#455A64"
-    },
-    "exportedAtRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#455A64"
-    },
-    "statisticsRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#90A4AE"
-    },
-    "attendeeHeaderGroupRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#607D8B"
-    },
-    "attendeeHeaderRowStyle": {
-      "fg": "#000000",
-      "bg": "#00C853"
-    },
-    "attendeeEntryRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#90A4AE"
-    }
-  },
-  "elegant": {
-    "quizNameRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#002d47"
-    },
-    "exportedAtRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#002d47"
-    },
-    "statisticsRowStyle": {
-      "fg": "#000000",
-      "bg": "#dbe4e9"
-    },
-    "attendeeHeaderGroupRowStyle": {
-      "fg": "#000000",
-      "bg": "#B1C5D0"
-    },
-    "attendeeHeaderRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#374e5b"
-    },
-    "attendeeEntryRowStyle": {
-      "fg": "#000000",
-      "bg": "#dbe4e9"
-    }
-  },
-  "GreyBlue-Lime": {
-    "quizNameRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#455a64"
-    },
-    "exportedAtRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#455a64"
-    },
-    "statisticsRowStyle": {
-      "fg": "#000000",
-      "bg": "#cfd8dc"
-    },
-    "attendeeHeaderGroupRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#607d8b"
-    },
-    "attendeeHeaderRowStyle": {
-      "fg": "#000000",
-      "bg": "#c0ca33"
-    },
-    "attendeeEntryRowStyle": {
-      "fg": "#000000",
-      "bg": "#cfd8dc"
     }
   },
   "Material": {
@@ -155,100 +51,22 @@
       "bg": "#B2DFDB"
     }
   },
-  "Material-blue": {
-    "quizNameRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#303F9F"
-    },
-    "exportedAtRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#303F9F"
-    },
-    "statisticsRowStyle": {
-      "fg": "#000000",
-      "bg": "#C5CAE9"
-    },
-    "attendeeHeaderGroupRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#3F51B5"
-    },
-    "attendeeHeaderRowStyle": {
-      "fg": "#000000",
-      "bg": "#4CAF50"
-    },
-    "attendeeEntryRowStyle": {
-      "fg": "#000000",
-      "bg": "#C5CAE9"
-    }
-  },
-  "Material-hope": {
-    "quizNameRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#689F38"
-    },
-    "exportedAtRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#689F38"
-    },
-    "statisticsRowStyle": {
-      "fg": "#000000",
-      "bg": "#AED581"
-    },
-    "attendeeHeaderGroupRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#8BC34A"
-    },
-    "attendeeHeaderRowStyle": {
-      "fg": "#000000",
-      "bg": "#FFC400"
-    },
-    "attendeeEntryRowStyle": {
-      "fg": "#000000",
-      "bg": "#AED581"
-    }
-  },
-  "spiritual-purple": {
-    "quizNameRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#512da8"
-    },
-    "exportedAtRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#512da8"
-    },
-    "statisticsRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#9575cd"
-    },
-    "attendeeHeaderGroupRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#673ab7"
-    },
-    "attendeeHeaderRowStyle": {
-      "fg": "#000000",
-      "bg": "#00bcd4"
-    },
-    "attendeeEntryRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#9575cd"
-    }
-  },
   "westermann-blue": {
     "quizNameRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#00796B"
+      "fg": "#000000",
+      "bg": "#a2c2e4"
     },
     "exportedAtRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#00796B"
+      "fg": "#000000",
+      "bg": "#a2c2e4"
     },
     "statisticsRowStyle": {
       "fg": "#000000",
-      "bg": "#B2DFDB"
+      "bg": "#a2c2e4"
     },
     "attendeeHeaderGroupRowStyle": {
-      "fg": "#FFFFFF",
-      "bg": "#009688"
+      "fg": "#000000",
+      "bg": "#a2c2e4"
     },
     "attendeeHeaderRowStyle": {
       "fg": "#000000",
@@ -256,7 +74,7 @@
     },
     "attendeeEntryRowStyle": {
       "fg": "#000000",
-      "bg": "#B2DFDB"
+      "bg": "#EFF4FA"
     }
   }
 }

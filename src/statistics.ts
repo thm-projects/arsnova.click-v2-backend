@@ -46,6 +46,8 @@ const projectEmail = process.env.PROJECT_MAIL_ADDRESS;
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
+const logoFilename = process.env.LOGO_FILE_NAME ?? 'logo_transparent.png';
+
 export const publicSettings = {
   leaderboardAlgorithm,
   cacheQuizAssets: true,
@@ -65,9 +67,7 @@ export const settings = {
   rewriteAssetCacheUrl: rewriteAssetCacheUrl,
   pathToAssets: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'assets'),
   pathToMigrations: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'db-migration'),
-  pathToJobs: path.join(__dirname, basePath, process.env.NODE_ENV === 'production' ? '' : '..', 'jobs'),
   jwtSecret: 'arsnova.click-v2',
-  limitQuizCreationToCasAccounts: [],
   createQuizPassword: 'abc',
   amqp: {
     protocol: amqpProtocol,
@@ -105,5 +105,6 @@ export const settings = {
     publicKey: vapidPublicKey,
     privateKey: vapidPrivateKey,
   },
+  logoFilename: logoFilename,
 };
 

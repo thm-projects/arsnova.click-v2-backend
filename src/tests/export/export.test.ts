@@ -122,7 +122,7 @@ class ExcelExportTestSuite {
             }
             break;
           case QuestionType.SingleChoiceQuestion:
-          case QuestionType.ABCDSingleChoiceQuestion:
+          case QuestionType.ABCDSurveyQuestion:
             value = [this.randomIntFromInterval(0, question.answerOptionList.length - 1)];
             break;
           case QuestionType.MultipleChoiceQuestion:
@@ -162,8 +162,8 @@ class ExcelExportTestSuite {
 
   @test(slow(500))
   public async generateExcelWorkbook(): Promise<void> {
-    const doc = await QuizDAO.addQuiz(generateQuiz(this._hashtag));
-    await QuizDAO.initQuiz(doc);
+    await this.addResponses();
+    const doc = await QuizDAO.getQuizByName(this._hashtag);
 
     const wb = new ExcelWorkbook({
       themeName: this._theme,
@@ -172,6 +172,9 @@ class ExcelExportTestSuite {
       mf: (i18n.__mf as unknown as MessageFormat),
     });
 
+    await new Promise(resolve => wb.renderingFinished.once('done', () => {
+      resolve();
+    }));
     const buffer = await wb.writeToBuffer();
     fs.open(this._exportLocation, 'w', (err, fd) => {
       if (err) {

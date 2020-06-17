@@ -37,11 +37,12 @@
     "exported_at_time": "Uhr",
     "no_answer": "Keine Antwort",
     "required_for_token": "Erforderliche Quizfrage",
+    "team": "Team",
     "type": {
       "SurveyQuestion": "Umfrage",
       "TrueFalseSingleChoiceQuestion": "Wahr-Falsch Frage",
       "YesNoSingleChoiceQuestion": "Ja-Nein Frage",
-      "ABCDSingleChoiceQuestion": "ABCD Single-Choice Frage",
+      "ABCDSurveyQuestion": "ABCD Single-Choice Frage",
       "SingleChoiceQuestion": "Single-Choice Frage",
       "RangedQuestion": "Schätzfrage",
       "FreeTextQuestion": "Freitext Frage",

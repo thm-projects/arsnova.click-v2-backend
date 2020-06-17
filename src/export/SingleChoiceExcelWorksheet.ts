@@ -13,13 +13,15 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
   private _question: IQuestionChoice;
   private readonly _questionIndex: number;
 
-  constructor({ wb, theme, translation, quiz, mf, questionIndex }) {
+  constructor({ wb, theme, translation, quiz, mf, questionIndex, leaderboard, leaderboardGroup }) {
     super({
       theme,
       translation,
       quiz,
       mf,
       questionIndex,
+      leaderboard,
+      leaderboardGroup
     });
     this._ws = wb.addWorksheet(`${mf('export.question')} ${questionIndex + 1}`, this._options);
     this._questionIndex = questionIndex;
@@ -174,7 +176,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     this.ws.cell(6, 1).string(this.mf('export.number_of_answers') + ':');
 
     this.ws.cell(7, 1).string(this.mf('export.percent_correct') + ':');
-    const correctResponsesPercentage: number = (await this.getLeaderboardData()).map(leaderboard => leaderboard.correctQuestions)
+    const correctResponsesPercentage: number = (this.leaderboard).map(leaderboard => leaderboard.correctQuestions)
                                                .filter(correctQuestions => correctQuestions.includes(this._questionIndex)).length
                                                / (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).length * 100;
     this.ws.cell(7, 2).number((isNaN(correctResponsesPercentage) ? 0 : Math.round(correctResponsesPercentage)));

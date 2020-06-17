@@ -9,7 +9,7 @@
       "questionIndex": 0,
       "displayAnswerText": false,
       "answerOptionList": [],
-      "type": "ABCDSingleChoiceQuestion"
+      "type": "ABCDSurveyQuestion"
     }
   ],
   "sessionConfig": {
