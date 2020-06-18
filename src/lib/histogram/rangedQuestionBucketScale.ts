@@ -22,39 +22,23 @@ export class RangedQuestionBucketScale {
     let bucketIndex = 0;
     let valIndex = min;
 
-    if (scale === 1) {
-      for (let i = min; i <= max; i++) {
-        this.buckets[bucketIndex] = this.getEmptyBucket(i.toString(), i === hit);
-        this.bucketMap[i] = bucketIndex;
-        bucketIndex++;
-      }
-      return;
-    }
-
     this.buckets[bucketIndex] = this.getEmptyBucket(`< ${firstBucketRightBorder + 1}`);
 
-    for (valIndex; valIndex < hit; valIndex++) {
-      if ((hit - valIndex) % scale === 0 && valIndex > min) {
-        bucketIndex++;
-        this.buckets[bucketIndex] = this.getEmptyBucket(`${valIndex} - ${valIndex + scale - 1}`);
-      }
-      this.bucketMap[valIndex] = bucketIndex;
-    }
-
-    bucketIndex++;
-    this.buckets[bucketIndex] = this.getEmptyBucket(valIndex.toString(), true);
-    this.bucketMap[valIndex] = bucketIndex;
-    valIndex++;
-
     for (valIndex; valIndex <= max; valIndex++) {
-      if ((valIndex - hit - 1) % scale === 0) {
+      if (valIndex < hit && (hit - valIndex) % scale === 0 && valIndex > min) {
         bucketIndex++;
-        this.buckets[bucketIndex] = this.getEmptyBucket(
-          valIndex === lastBucketLeftBorder
-            ? `> ${lastBucketLeftBorder - 1}`
-            : `${valIndex} - ${valIndex + scale - 1}`
-        );
+        this.buckets[bucketIndex] = this.getEmptyBucket(scale > 1 ? `${valIndex} - ${valIndex + scale - 1}` : valIndex.toString());
+      } else if (valIndex === hit) {
+        bucketIndex++;
+        this.buckets[bucketIndex] = this.getEmptyBucket(valIndex.toString(), true);
+      } else if (valIndex === lastBucketLeftBorder) {
+        bucketIndex++;
+        this.buckets[bucketIndex] = this.getEmptyBucket(`> ${lastBucketLeftBorder - 1}`);
+      } else if (valIndex > hit && (valIndex - hit - 1) % scale === 0) {
+        bucketIndex++;
+        this.buckets[bucketIndex] = this.getEmptyBucket(scale > 1 ? `${valIndex} - ${valIndex + scale - 1}` : valIndex.toString());
       }
+
       this.bucketMap[valIndex] = bucketIndex;
     }
 
