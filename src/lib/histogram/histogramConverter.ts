@@ -43,17 +43,6 @@ export class HistogramConverter {
     return bucketScale.getBuckets();
   }
 
-  private static getBucketIndex(question: IQuestionRanged, val: number, scale: number): number {
-    const min = question.rangeMin;
-    const max = question.rangeMax;
-    const hit = question.correctValue;
-    const bucket = 0;
-
-
-
-    return val > hit ? bucket + 1 : bucket;
-  }
-
   public static convertSingleChoiceQuestion(
     questionData: IQuestionChoice,
     responsesRaw: Array<IQuizResponse>

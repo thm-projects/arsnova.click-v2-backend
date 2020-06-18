@@ -22,6 +22,15 @@ export class RangedQuestionBucketScale {
     let bucketIndex = 0;
     let valIndex = min;
 
+    if (scale === 1) {
+      for (let i = min; i <= max; i++) {
+        this.buckets[bucketIndex] = this.getEmptyBucket(i.toString(), i === hit);
+        this.bucketMap[i] = bucketIndex;
+        bucketIndex++;
+      }
+      return;
+    }
+
     this.buckets[bucketIndex] = this.getEmptyBucket(`< ${firstBucketRightBorder + 1}`);
 
     for (valIndex; valIndex < hit; valIndex++) {

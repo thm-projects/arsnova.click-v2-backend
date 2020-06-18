@@ -16,7 +16,7 @@ export class HistogramBarChart extends HistogramChart {
     const y = d3.scaleLinear().range([this.innerHeight, 0]);
 
     x.domain(data.map(d => d.key));
-    y.domain([0, Math.floor((d3.max(data, d => d.percentage) * 10) + 1) / 10]);
+    y.domain([0, Math.min(Math.floor((d3.max(data, d => d.percentage) * 10) + 1) / 10, 1)]);
 
     this.svg.append('g')
       .attr('transform', `translate(0, ${this.innerHeight})`)
