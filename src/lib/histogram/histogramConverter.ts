@@ -5,6 +5,7 @@ import { IQuestionFreetext } from '../../interfaces/questions/IQuestionFreetext'
 import { IQuestionRanged } from '../../interfaces/questions/IQuestionRanged';
 import { IQuestionSurvey } from '../../interfaces/questions/IQuestionSurvey';
 import { IQuizResponse } from '../../interfaces/quizzes/IQuizResponse';
+import { RangedQuestionBucketScale } from './rangedQuestionBucketScale';
 
 export class HistogramConverter {
 
@@ -34,18 +35,23 @@ export class HistogramConverter {
     responsesRaw: Array<IQuizResponse>
   ): Array<IHistData> {
 
-    const data: Array<IHistData> = [];
+    const bucketScale = new RangedQuestionBucketScale(questionData);
 
-    for (let i = questionData.rangeMin; i <= questionData.rangeMax; i++) {
-      data[i] = {
-        key: i.toString(),
-        val: 0
-      };
-    }
+    responsesRaw.forEach(response => bucketScale.addValue(<number>response.value));
+    bucketScale.calculatePercentages();
 
-    responsesRaw.forEach(response => data[<number>response.value].val++);
+    return bucketScale.getBuckets();
+  }
 
-    return data;
+  private static getBucketIndex(question: IQuestionRanged, val: number, scale: number): number {
+    const min = question.rangeMin;
+    const max = question.rangeMax;
+    const hit = question.correctValue;
+    const bucket = 0;
+
+
+
+    return val > hit ? bucket + 1 : bucket;
   }
 
   public static convertSingleChoiceQuestion(

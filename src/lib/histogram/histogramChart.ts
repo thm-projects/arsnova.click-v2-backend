@@ -10,15 +10,15 @@ export abstract class HistogramChart {
   private margin = {
     top: 10,
     right: 30,
-    bottom: 30,
-    left: 30
+    bottom: 75,
+    left: 45
   };
 
   protected svg: D3Node;
   protected innerWidth: number;
   protected innerHeight: number;
 
-  protected constructor(styles: string) {
+  protected constructor(styles: string = '') {
     const options = {
       styles: styles,
       d3Module: d3

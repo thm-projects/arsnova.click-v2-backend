@@ -4,8 +4,7 @@ import { HistogramChart } from './histogramChart';
 export class HistogramDonutChart extends HistogramChart {
 
   constructor() {
-    const styles = '';
-    super(styles);
+    super();
   }
 
   public renderData(data: Array<IHistData>): HistogramChart {
