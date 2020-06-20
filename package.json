@@ -1,11 +1,18 @@
 {
   "name": "arsnova-click-v2-backend",
-  "version": "1.0.0",
-  "license": "MIT",
-  "repository": "git@git.thm.de:arsnova/arsnova.click-v2.git",
+  "version": "2.0.0",
+  "license": "GPL",
+  "repository": {
+    "type": "git",
+    "url": "https://git.thm.de/arsnova/arsnova-click-v2-backend"
+  },
+  "bugs": {
+    "url": "https://github.com/thm-projects/arsnova.click-v2"
+  },
+  "homepage": "arsnova.click",
   "description": "Version 2 of arsnova.click (Backend)",
   "scripts": {
-    "clean": "rm -rf ./dist/*",
+    "clean": "rimraf dist",
     "test": "node node_modules/nyc/bin/nyc.js --reporter=text node_modules/mocha/bin/mocha",
     "prebuild:DEV": "npm run clean",
     "prebuild:PROD": "npm run clean",
@@ -103,12 +110,19 @@
     "mocha-typescript": "^1.1.17",
     "mongodb-memory-server": "^6.6.1",
     "nyc": "^15.1.0",
+    "rimraf": "^3.0.2",
     "sinon": "^9.0.2",
     "ts-loader": "^7.0.4",
     "ts-node": "^8.10.1",
     "tslint": "^6.1.2",
     "typescript": "^3.9.5"
   },
+  "keywords": [
+    "arsnova",
+    "arsnova.click",
+    "Audience Response System"
+  ],
+  "author": "Christopher Fullarton",
   "nyc": {
     "extension": [
       ".ts",
