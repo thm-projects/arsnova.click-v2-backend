@@ -3,17 +3,14 @@ import * as bodyParser from 'body-parser';
 import * as compress from 'compression';
 import * as cors from 'cors';
 import * as express from 'express';
-import { Request, Response, Router } from 'express';
+import { Router } from 'express';
 import * as promBundle from 'express-prom-bundle';
 import * as process from 'process';
 import { collectDefaultMetrics, Counter } from 'prom-client';
 import * as gcStats from 'prometheus-gc-stats';
-import * as routeCache from 'route-cache';
 import { RoutingControllersOptions, useExpressServer } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
 import * as timesyncServer from 'timesync/server';
-import { dynamicStatistics } from './dynamic-statistics';
-import { RoutingCache } from './enums/RoutingCache';
 import options from './lib/cors.config';
 import { ErrorHandlerMiddleware } from './routers/middleware/customErrorHandler';
 import { I18nMiddleware } from './routers/middleware/i18n';
@@ -30,7 +27,7 @@ import { QuizPoolRouter } from './routers/rest/QuizPoolRouter';
 import { QuizRouter } from './routers/rest/QuizRouter';
 import { TwitterRouter } from './routers/rest/TwitterRouter';
 import LoggerService from './services/LoggerService';
-import { publicSettings, settings } from './statistics';
+import { settings } from './statistics';
 
 export const routingControllerOptions: RoutingControllersOptions = {
   defaults: {
@@ -140,10 +137,6 @@ class App {
     }));
 
     const router: Router = express.Router();
-    router.get(`/statistics`, cors(options), routeCache.cacheSeconds(10, RoutingCache.Statistics), async (req: Request, res: Response) => {
-      res.send({...publicSettings, ...await dynamicStatistics()});
-    });
-
     this._express.use(`/`, router);
   }
 

@@ -31,6 +31,7 @@ import CasDAO from '../../db/CasDAO';
 import MathjaxDAO from '../../db/MathjaxDAO';
 import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
+import { dynamicStatistics } from '../../dynamic-statistics';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { RoutingCache } from '../../enums/RoutingCache';
 import { IMessage } from '../../interfaces/communication/IMessage';
@@ -41,7 +42,7 @@ import { TwitterCard } from '../../lib/social-media/twitter/twitter-card';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
-import { settings } from '../../statistics';
+import { publicSettings, settings } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
 const casSettings = { base_url: 'https://cas.thm.de/cas' };
@@ -102,6 +103,12 @@ export class LibRouter extends AbstractRouter {
         },
       ],
     };
+  }
+
+  @Get('/statistics')
+  @UseBefore(routeCache.cacheSeconds(10, RoutingCache.Statistics))
+  public async getStatistics(): Promise<object> {
+    return {...publicSettings, ...await dynamicStatistics()};
   }
 
   @Get('/mathjax/example/first')
