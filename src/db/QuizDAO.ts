@@ -15,7 +15,6 @@ import { IQuiz } from '../interfaces/quizzes/IQuizEntity';
 import { generateToken } from '../lib/generateToken';
 import { HistoryModel } from '../models/HistoryModel';
 import { QuizModel, QuizModelItem } from '../models/quiz/QuizModelItem';
-import LoggerService from '../services/LoggerService';
 import { settings } from '../statistics';
 import { AbstractDAO } from './AbstractDAO';
 import AMQPConnector from './AMQPConnector';
@@ -38,7 +37,6 @@ class QuizDAO extends AbstractDAO {
     this._storage = storage;
 
     if (cluster.isMaster) {
-      this.initializeExchanges();
       this.restoreActiveQuizTimers();
     }
   }
@@ -204,7 +202,6 @@ class QuizDAO extends AbstractDAO {
   }
 
   public async addQuiz(quizDoc: IQuiz): Promise<Document & QuizModelItem> {
-    await AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quizDoc.name), 'fanout');
     delete quizDoc._id;
     delete quizDoc.id;
     const result = QuizModel.create(quizDoc as any);
@@ -314,7 +311,7 @@ class QuizDAO extends AbstractDAO {
 
     AMQPConnector.sendRequestStatistics();
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quizName), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Closed,
     })));
@@ -375,7 +372,7 @@ class QuizDAO extends AbstractDAO {
     await MemberDAO.resetMembersOfQuiz(name, doc.questionList.length);
     await QuizModel.updateOne({ _id: doc._id }, { currentStartTimestamp: -1 }).exec();
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(name), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(name), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Reset,
     })));
@@ -406,7 +403,7 @@ class QuizDAO extends AbstractDAO {
 
     await QuizModel.updateOne({ _id: quiz._id }, { currentQuestionIndex: nextIndex }).exec();
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quiz.name), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.NextQuestion,
       payload: {
@@ -422,7 +419,7 @@ class QuizDAO extends AbstractDAO {
 
     await QuizModel.updateOne({ _id: quiz._id }, { readingConfirmationRequested: true }).exec();
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quiz.name), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.ReadingConfirmationRequested,
       payload: {},
@@ -431,7 +428,7 @@ class QuizDAO extends AbstractDAO {
 
   public async startNextQuestion(quizName: string): Promise<void> {
     const quiz = await this.getQuizByName(quizName);
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quiz.name), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Start,
       payload: {},
@@ -449,7 +446,7 @@ class QuizDAO extends AbstractDAO {
       this._storage[quizName].quizTimer = 1;
     }
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quizName), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.Stop,
     })));
@@ -459,7 +456,7 @@ class QuizDAO extends AbstractDAO {
     await this.updateQuiz(quiz._id, { ['sessionConfig.' + quizSettings.target]: quizSettings.state });
     quiz.sessionConfig[quizSettings.target] = quizSettings.state;
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quiz.name), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.UpdatedSettings,
       payload: {
@@ -524,8 +521,6 @@ class QuizDAO extends AbstractDAO {
 
   private async cleanupQuiz(quizName: string): Promise<void> {
     delete this._storage[quizName];
-
-    await AMQPConnector.channel.deleteExchange(AMQPConnector.buildQuizExchange(quizName));
   }
 
   private checkExistingConnection(quizName: string, privateKey: string): void {
@@ -565,7 +560,7 @@ class QuizDAO extends AbstractDAO {
     this._storage[quiz.name].quizTimer = quizTimer;
     this._storage[quiz.name].quizTimerInterval = setInterval(() => {
       this._storage[quiz.name].quizTimer--;
-      AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+      AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quiz.name), Buffer.from(JSON.stringify({
         status: StatusProtocol.Success,
         step: MessageProtocol.Countdown,
         payload: {
@@ -579,13 +574,6 @@ class QuizDAO extends AbstractDAO {
       }
 
     }, 1000);
-  }
-
-  private async initializeExchanges(): Promise<void> {
-    const quizzes = await QuizModel.find({}).exec();
-    return Promise.all(quizzes.map(quiz => {
-      return AMQPConnector.channel.assertExchange(AMQPConnector.buildQuizExchange(quiz.name), 'fanout');
-    })).then(() => LoggerService.info('AMQP Exchanges initialized'));
   }
 }
 

@@ -8,6 +8,7 @@ class AMQPConnector {
   private static _instance: AMQPConnector;
   public readonly RECONNECT_INTERVAL = 1000 * 60; // 1 Minute
   public readonly globalExchange: string = 'global';
+  public readonly quizExchange: string = 'quiz';
 
   private _channel: Channel;
   private _sendStatisticsTimeout: any;
@@ -53,7 +54,7 @@ class AMQPConnector {
     if (!quizname) {
       throw new Error(`Could not build exchange name. Quizname '${quizname}' is not supported.`);
     }
-    return `quiz_${this.prepareQuiznameForQuery(encodeURIComponent(quizname))}`;
+    return `${this.prepareQuiznameForQuery(encodeURIComponent(quizname))}`;
   }
 
   public sendRequestStatistics(): boolean {

@@ -58,12 +58,16 @@ class MongoDbConnector {
     });
   }
 
-  private async initRabbitMQConnection(): Promise<Replies.AssertExchange> {
+  private async initRabbitMQConnection(): Promise<Array<Replies.AssertExchange>> {
     try {
       return AMQPConnector.initConnection().then(() => {
-        return AMQPConnector.channel.assertExchange(AMQPConnector.globalExchange, 'fanout').then(reply => {
+        return Promise.all([
+          AMQPConnector.channel.assertExchange(AMQPConnector.quizExchange, 'topic'),
+          AMQPConnector.channel.assertExchange(AMQPConnector.globalExchange, 'fanout')
+        ]).then(result => {
+          LoggerService.info('AMQP Exchanges initialized');
           this.rabbitEventEmitter.emit('connected');
-          return reply;
+          return result;
         });
       });
     } catch (ex) {

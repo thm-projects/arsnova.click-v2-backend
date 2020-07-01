@@ -86,11 +86,14 @@ class MemberDAO extends AbstractDAO {
     delete docSerialized.casProfile;
     delete docSerialized.bonusToken;
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(memberSerialized.currentQuizName), '.*', Buffer.from(JSON.stringify({
-      status: StatusProtocol.Success,
-      step: MessageProtocol.Added,
-      payload: { member: docSerialized },
-    })));
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange,
+      AMQPConnector.buildQuizExchange(memberSerialized.currentQuizName),
+      Buffer.from(JSON.stringify({
+        status: StatusProtocol.Success,
+        step: MessageProtocol.Added,
+        payload: { member: docSerialized },
+      }))
+    );
 
     AMQPConnector.sendRequestStatistics();
 
@@ -127,7 +130,7 @@ class MemberDAO extends AbstractDAO {
   public async removeMembersOfQuiz(quizName: string): Promise<void> {
     const members = await MemberModel.find({ currentQuizName: quizName }).exec();
     members.forEach(member => {
-      AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(member.currentQuizName), '.*', Buffer.from(JSON.stringify({
+      AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(member.currentQuizName), Buffer.from(JSON.stringify({
         status: StatusProtocol.Success,
         step: MessageProtocol.Removed,
         payload: { name: member.name },
@@ -171,7 +174,7 @@ class MemberDAO extends AbstractDAO {
     const queryPath = `responses.${quiz.currentQuestionIndex}.readingConfirmation`;
     await MemberModel.updateOne({ _id: member._id }, { [queryPath]: true }).exec();
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quiz.name), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.UpdatedResponse,
       payload: {
@@ -188,7 +191,7 @@ class MemberDAO extends AbstractDAO {
     const queryPath = `responses.${quiz.currentQuestionIndex}.confidence`;
     await MemberModel.updateOne({ _id: member._id }, { [queryPath]: confidenceValue }).exec();
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quiz.name), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.UpdatedResponse,
       payload: {
@@ -214,7 +217,7 @@ class MemberDAO extends AbstractDAO {
       [queryPathScore]: score,
     }).exec();
 
-    AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quiz.name), '.*', Buffer.from(JSON.stringify({
+    AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quiz.name), Buffer.from(JSON.stringify({
       status: StatusProtocol.Success,
       step: MessageProtocol.UpdatedResponse,
       payload: {
@@ -257,7 +260,7 @@ class MemberDAO extends AbstractDAO {
         }, {
           isActive: false,
         }).exec();
-        AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+        AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quizName), Buffer.from(JSON.stringify({
           status: StatusProtocol.Success,
           step: MessageProtocol.Updated,
           payload: { name: nickname },
@@ -267,7 +270,7 @@ class MemberDAO extends AbstractDAO {
           currentQuizName: quizName,
           name: nickname,
         }).exec();
-        AMQPConnector.channel.publish(AMQPConnector.buildQuizExchange(quizName), '.*', Buffer.from(JSON.stringify({
+        AMQPConnector.channel.publish(AMQPConnector.quizExchange, AMQPConnector.buildQuizExchange(quizName), Buffer.from(JSON.stringify({
           status: StatusProtocol.Success,
           step: MessageProtocol.Removed,
           payload: { name: nickname },
