@@ -18,7 +18,7 @@ const privateKey = Math.random().toString(10);
 
 @suite
 class LibRouterTestSuite {
-  private _baseApiRoute = `${settings.routePrefix}/lib`;
+  private _baseApiRoute = `${settings.routePrefix}/api/lib`;
 
   public async after(): Promise<void> {
     await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
@@ -55,7 +55,7 @@ class LibRouterTestSuite {
 
 @suite
 class MathjaxLibRouterTestSuite {
-  private _baseApiRoute = `${settings.routePrefix}/lib/mathjax`;
+  private _baseApiRoute = `${settings.routePrefix}/api/lib/mathjax`;
 
   public async after(): Promise<void> {
     await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
@@ -103,7 +103,7 @@ class MathjaxLibRouterTestSuite {
 
 @suite
 class CacheQuizAssetsLibRouterTestSuite {
-  private _baseApiRoute = `${settings.routePrefix}/lib/cache/quiz/assets`;
+  private _baseApiRoute = `${settings.routePrefix}/api/lib/cache/quiz/assets`;
 
   public async before(): Promise<void> {
     await AssetModel.create({
@@ -127,7 +127,7 @@ class CacheQuizAssetsLibRouterTestSuite {
 
 @suite
 class AuthorizeLibRouterTestSuite {
-  private _baseApiRoute = `${settings.routePrefix}/lib/authorize`;
+  private _baseApiRoute = `${settings.routePrefix}/api/lib/authorize`;
 
   public async after(): Promise<void> {
     await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));

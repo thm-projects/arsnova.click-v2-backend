@@ -14,7 +14,7 @@ const expect = chai.expect;
 
 @suite
 class AppRouterTestSuite {
-  private _baseApiRoute = `${settings.routePrefix}`;
+  private _baseApiRoute = `${settings.routePrefix}/api/lib`;
 
   public async after(): Promise<void> {
     await Promise.all(Object.keys(DbDAO.dbCon.collections).map(c => DbDAO.dbCon.collection(c).deleteMany({})));
