@@ -31,6 +31,7 @@ import CasDAO from '../../db/CasDAO';
 import MathjaxDAO from '../../db/MathjaxDAO';
 import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
+import { dynamicStatistics } from '../../dynamic-statistics';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { RoutingCache } from '../../enums/RoutingCache';
 import { IMessage } from '../../interfaces/communication/IMessage';
@@ -41,12 +42,12 @@ import { TwitterCard } from '../../lib/social-media/twitter/twitter-card';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
-import { settings } from '../../statistics';
+import { publicSettings, settings } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
 
 const casSettings = { base_url: 'https://cas.thm.de/cas' };
 
-@JsonController('/lib')
+@JsonController('/api/lib')
 export class LibRouter extends AbstractRouter {
 
   constructor() {
@@ -312,7 +313,7 @@ export class LibRouter extends AbstractRouter {
   @Get('/quiz/twitterPost/:digest/:quizname') //
   @ContentType('text/html')
   public async postToTwitter(@Param('digest') digest: string, @Param('quizname') quizname: string, @Res() res: ICustomI18nResponse): Promise<string> {
-    return new TwitterCard(res.__mf).buildCard(`${settings.rewriteAssetCacheUrl}/lib/cache/quiz/assets/${digest}`, quizname);
+    return new TwitterCard(res.__mf).buildCard(`${settings.rewriteAssetCacheUrl}/api/lib/cache/quiz/assets/${digest}`, quizname);
   }
 
   @Get('/authorize/:ticket?') //
@@ -489,5 +490,11 @@ export class LibRouter extends AbstractRouter {
       status: StatusProtocol.Success,
       step: MessageProtocol.AuthenticateStatic,
     };
+  }
+
+  @Get('/statistics')
+  @UseBefore(routeCache.cacheSeconds(10, () => `${RoutingCache.Statistics}`))
+  private async getStatistics(): Promise<object> {
+    return {...publicSettings, ...await dynamicStatistics()};
   }
 }
