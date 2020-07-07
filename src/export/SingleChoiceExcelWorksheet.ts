@@ -2,14 +2,12 @@ import MemberDAO from '../db/MemberDAO';
 import { IAnswer } from '../interfaces/answeroptions/IAnswerEntity';
 import { IExcelWorksheet } from '../interfaces/iExcel';
 import { IQuestionChoice } from '../interfaces/questions/IQuestionChoice';
-import { ICasData } from '../interfaces/users/ICasData';
 import { asyncForEach } from '../lib/async-for-each';
 import { MemberModelItem } from '../models/member/MemberModel';
 import { ExcelWorksheet } from './ExcelWorksheet';
 import { calculateNumberOfAnswers } from './lib/excel_function_library';
 
 export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
-  private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
   private _question: IQuestionChoice;
   private readonly _questionIndex: number;
 
@@ -48,9 +46,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     if (this.responsesWithConfidenceValue.length > 0) {
       minColums++;
     }
-    if (this._isCasRequired) {
-      minColums += 2;
-    }
+
     const answerList = this._question.answerOptionList;
     const columnsToFormat: number = answerList.length + 1 < minColums ? minColums : answerList.length + 1;
 
@@ -123,9 +119,6 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
     responses.forEach((responseItem, indexInList): void => {
       let nextColumnIndex = 2;
       const targetRow: number = indexInList + nextRowIndex;
-      if (this._isCasRequired) {
-        nextColumnIndex += 2;
-      }
       const responseValue = <number>responseItem.value[0];
       let correctIndex = -1;
       this._question.answerOptionList.forEach((answer, index) => answer.isCorrect ? correctIndex = index : null);
@@ -197,10 +190,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
 
     let nextColumnIndex = 1;
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.attendee'));
-    if (this._isCasRequired) {
-      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_id'));
-      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_email'));
-    }
+
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.answer'));
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.confidence_level'));
@@ -212,12 +202,7 @@ export class SingleChoiceExcelWorksheet extends ExcelWorksheet implements IExcel
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.name);
-      if (this._isCasRequired) {
-        const profile: ICasData = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(
-          nickname => nickname.name === responseItem.name)[0].casProfile;
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(Array.isArray(profile.mail) ? profile.mail.slice(-1)[0] : profile.mail);
-      }
+
       const chosenAnswer: IAnswer = this._question.answerOptionList[responseItem.responses[this._questionIndex].value[0]];
       this.ws.cell(nextStartRow, nextColumnIndex++).string(chosenAnswer ? chosenAnswer.answerText : '');
       if (this.responsesWithConfidenceValue.length > 0) {

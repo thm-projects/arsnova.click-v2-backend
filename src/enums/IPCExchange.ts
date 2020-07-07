@@ -4,4 +4,5 @@ export enum IPCExchange {
   QuizStart,
   QuizStop,
   TotalUsers,
+  PurgeCache,
 }

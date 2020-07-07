@@ -183,7 +183,6 @@ class QuizDAO extends AbstractDAO {
         nicks: {
           selectedNicks: legacyQuiz.configuration.nicks.selectedValues,
           blockIllegalNicks: legacyQuiz.configuration.nicks.blockIllegal,
-          restrictToCasLogin: legacyQuiz.configuration.nicks.restrictToCASLogin,
           memberGroups: [],
         },
         theme: legacyQuiz.configuration.theme,

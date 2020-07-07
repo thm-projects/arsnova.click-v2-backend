@@ -68,9 +68,7 @@ export class MemberRouter extends AbstractRouter {
       };
     }
 
-    if (!member.name || (
-      activeQuiz.sessionConfig.nicks.restrictToCasLogin && !member.ticket
-    )) {
+    if (!member.name) {
       throw new BadRequestError(JSON.stringify({
         status: StatusProtocol.Failed,
         step: MessageProtocol.InvalidParameters,

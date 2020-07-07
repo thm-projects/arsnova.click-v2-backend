@@ -6,7 +6,6 @@ import { MemberModelItem } from '../models/member/MemberModel';
 import { ExcelWorksheet } from './ExcelWorksheet';
 
 export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
-  private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
   private _question: IQuestionFreetext;
   private readonly _questionIndex: number;
   private allResponses: Array<MemberModelItem> = [];
@@ -41,9 +40,6 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     let minColums = 3;
     if (this.responsesWithConfidenceValue.length > 0) {
       minColums++;
-    }
-    if (this._isCasRequired) {
-      minColums += 2;
     }
     const columnsToFormat = 4 < minColums ? minColums : 4;
 
@@ -114,9 +110,6 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       const leaderboardItem = (this.leaderboard).filter(lbItem => lbItem.name === responseItem.name)[0];
       let nextColumnIndex = 2;
       const targetRow = indexInList + nextRowIndex;
-      if (this._isCasRequired) {
-        nextColumnIndex += 2;
-      }
       this.ws.cell(targetRow, nextColumnIndex++).style({
         font: {
           color: 'FFFFFFFF',
@@ -189,10 +182,6 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
     let nextColumnIndex = 1;
     nextRowIndex += 2;
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.attendee'));
-    if (this._isCasRequired) {
-      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_id'));
-      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_email'));
-    }
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.answer'));
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.confidence_level'));
@@ -204,11 +193,6 @@ export class FreeTextExcelWorksheet extends ExcelWorksheet implements IExcelWork
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(nickItem.name);
-      if (this._isCasRequired) {
-        const profile = nickItem.casProfile;
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
-      }
       this.ws.cell(nextStartRow, nextColumnIndex++).string(nickItem.responses[this._questionIndex].value);
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(nextStartRow, nextColumnIndex++).number(Math.round(nickItem.responses[this._questionIndex].confidence));

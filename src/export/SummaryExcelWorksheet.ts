@@ -20,7 +20,6 @@ declare global {
 }
 
 export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
-  private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
 
   constructor({ wb, theme, translation, quiz, mf, leaderboard, leaderboardGroup }) {
     super({
@@ -45,7 +44,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     this.ws.row(1).setHeight(20);
     this.ws.column(1).setWidth(30);
-    this.ws.column(2).setWidth(this._isCasRequired ? 10 : this.quiz.sessionConfig.readingConfirmationEnabled ? 25 : 20);
+    this.ws.column(2).setWidth(this.quiz.sessionConfig.readingConfirmationEnabled ? 25 : 20);
     for (let i = 3; i <= this.columnsToFormat; i++) {
       if (i === this.columnsToFormat) {
         this.ws.column(i).setWidth(70);
@@ -304,11 +303,6 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.attendee'));
 
-    if (this._isCasRequired) {
-      this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_id'));
-      this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_email'));
-    }
-
     if (this.quiz.sessionConfig.confidenceSliderEnabled) {
       this.ws.cell(currentRowIndex, nextColumnIndex++).string(this.mf('export.average_confidence'));
     }
@@ -328,13 +322,6 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       nextStartRow++;
       const targetRow = indexInList + currentRowIndex;
       this.ws.cell(targetRow, nextColumnIndex++).string(leaderboardItem.name);
-      if (this._isCasRequired) {
-        const profile = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter((nick: MemberModelItem) => {
-          return nick.name === leaderboardItem.name;
-        })[0].casProfile;
-        this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
-        this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail[0]);
-      }
 
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(targetRow, nextColumnIndex++).number(Math.round(leaderboardItem.confidenceValue));
@@ -359,11 +346,6 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
 
     this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.attendee'));
 
-    if (this._isCasRequired) {
-      this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.cas_account_id'));
-      this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.cas_account_email'));
-    }
-
     this.ws.cell(nextStartRow, nextColumnIndex++).string(this.mf('export.correct_questions'));
 
     if (this.quiz.sessionConfig.confidenceSliderEnabled) {
@@ -379,13 +361,7 @@ export class SummaryExcelWorksheet extends ExcelWorksheet implements IExcelWorks
       const targetRow = indexInList + nextStartRow;
       // name is added to summary (bottom list)
       this.ws.cell(targetRow, nextColumnIndex++).string(responseItem.name);
-      if (this._isCasRequired) {
-        const profile = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).find((nick: MemberModelItem) => {
-          return nick.name === responseItem.name;
-        }).casProfile;
-        this.ws.cell(targetRow, nextColumnIndex++).string(profile.username[0]);
-        this.ws.cell(targetRow, nextColumnIndex++).string(profile.mail[0]);
-      }
+
       const leaderboardItem = this.leaderboard.find((item) => item.name === responseItem.name);
       if (leaderboardItem) {
         if (leaderboardItem.correctQuestions.length > 0) {

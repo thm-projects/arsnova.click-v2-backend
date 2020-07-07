@@ -101,10 +101,6 @@ export abstract class ExcelWorksheet {
 
       this.loaded.emit('load');
     });
-
-    if (this._quiz.sessionConfig.nicks.restrictToCasLogin) {
-      this._columnsToFormat += 2;
-    }
   }
 
   protected generateCreatedAtString(): string {

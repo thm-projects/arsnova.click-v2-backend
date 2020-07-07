@@ -1,8 +1,7 @@
 import { SHA256 } from 'crypto-js';
 import * as Hex from 'crypto-js/enc-hex';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import * as fs from 'fs';
-import * as https from 'https';
 import * as mjAPI from 'mathjax-node';
 import { Document } from 'mongoose';
 import * as path from 'path';
@@ -17,17 +16,12 @@ import {
   JsonController,
   NotFoundError,
   Param,
-  Params,
   Post,
-  Req,
   Res,
   UnauthorizedError,
   UseBefore,
 } from 'routing-controllers';
-import { OpenAPI } from 'routing-controllers-openapi';
-import * as xml2js from 'xml2js';
 import AssetDAO from '../../db/AssetDAO';
-import CasDAO from '../../db/CasDAO';
 import MathjaxDAO from '../../db/MathjaxDAO';
 import QuizDAO from '../../db/QuizDAO';
 import UserDAO from '../../db/UserDAO';
@@ -35,17 +29,13 @@ import { dynamicStatistics } from '../../dynamic-statistics';
 import { MessageProtocol, StatusProtocol } from '../../enums/Message';
 import { RoutingCache } from '../../enums/RoutingCache';
 import { IMessage } from '../../interfaces/communication/IMessage';
-import { ICasData } from '../../interfaces/users/ICasData';
 import { asyncForEach } from '../../lib/async-for-each';
 import { MatchAssetCachedQuiz } from '../../lib/cache/assets';
 import { TwitterCard } from '../../lib/social-media/twitter/twitter-card';
 import { UserModelItem } from '../../models/UserModelItem/UserModel';
 import { AuthService } from '../../services/AuthService';
-import LoggerService from '../../services/LoggerService';
 import { publicSettings, settings } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
-
-const casSettings = { base_url: 'https://cas.thm.de/cas' };
 
 @JsonController('/api/lib')
 export class LibRouter extends AbstractRouter {
@@ -314,90 +304,6 @@ export class LibRouter extends AbstractRouter {
   @ContentType('text/html')
   public async postToTwitter(@Param('digest') digest: string, @Param('quizname') quizname: string, @Res() res: ICustomI18nResponse): Promise<string> {
     return new TwitterCard(res.__mf).buildCard(`${settings.rewriteAssetCacheUrl}/api/lib/cache/quiz/assets/${digest}`, quizname);
-  }
-
-  @Get('/authorize/:ticket?') //
-  @OpenAPI({
-    summary: 'Authorizes a cas user by a ticket',
-    deprecated: true,
-    parameters: [
-      {
-        name: 'ticket',
-        in: 'path',
-        required: false,
-      },
-    ],
-  })
-  public authorize(
-    @Params() params: { [key: string]: any }, //
-    @Req() req: Request, //
-    @Res() res: Response, //
-  ): Promise<object> {
-
-    const ticket = params.ticket;
-    let serviceUrl = req.headers.referer;
-    if (Array.isArray(serviceUrl)) {
-      serviceUrl = serviceUrl[0];
-    }
-    serviceUrl = encodeURIComponent(serviceUrl.replace(`?ticket=${ticket}`, ''));
-
-    if (!ticket) {
-      const loginUrl = `${casSettings.base_url}/login?service=${serviceUrl}`;
-      res.redirect(loginUrl);
-      return;
-    }
-
-    return new Promise<object>(resolve => {
-
-      const casRequest = https.get(`${casSettings.base_url}/serviceValidate?ticket=${ticket}&service=${serviceUrl}`, (casResponse) => {
-
-        let data = '';
-
-        casResponse.on('data', (chunk) => {
-          data += chunk;
-        });
-
-        casResponse.on('end', () => {
-          xml2js.parseString(data, (err, result) => {
-            LoggerService.info('received response from cas server', err.message, result);
-            if (err || result['cas:serviceResponse']['cas:authenticationFailure']) {
-              throw new UnauthorizedError(JSON.stringify({
-                status: StatusProtocol.Failed,
-                step: MessageProtocol.Authenticate,
-                payload: {
-                  err,
-                  result,
-                },
-              }));
-            } else {
-              const resultData = result['cas:serviceResponse']['cas:authenticationSuccess'][0]['cas:attributes'][0];
-              const casDataElement: ICasData = {
-                username: resultData['cas:username'],
-                displayName: resultData['cas:displayNmae'],
-                mail: resultData['cas:mail'],
-              };
-              CasDAO.add(ticket, casDataElement);
-              resolve({
-                status: StatusProtocol.Success,
-                step: MessageProtocol.Authenticate,
-                payload: { ticket },
-              });
-            }
-          });
-        });
-      });
-
-      casRequest.on('error', (error) => {
-        LoggerService.info('error at requesting cas url', error.message);
-        casRequest.abort();
-        throw new UnauthorizedError(JSON.stringify({
-          status: StatusProtocol.Failed,
-          step: MessageProtocol.Authenticate,
-          payload: { error },
-        }));
-      });
-
-    });
   }
 
   @Post('/authorize/static')

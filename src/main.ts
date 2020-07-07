@@ -10,11 +10,11 @@ import * as Minimist from 'minimist';
 import * as net from 'net';
 import * as process from 'process';
 import 'reflect-metadata';
+import * as routeCache from 'route-cache';
 import * as Model from 'scuttlebutt/model';
 import { setVapidDetails } from 'web-push';
 import App from './App';
 import AssetDAO from './db/AssetDAO';
-import CasDAO from './db/CasDAO';
 import DbDAO from './db/DbDAO';
 import I18nDAO from './db/I18nDAO';
 import MathjaxDAO from './db/MathjaxDAO';
@@ -22,6 +22,7 @@ import MemberDAO from './db/MemberDAO';
 import QuizDAO from './db/QuizDAO';
 import UserDAO from './db/UserDAO';
 import { IPCExchange } from './enums/IPCExchange';
+import { RoutingCache } from './enums/RoutingCache';
 import { MemberModel } from './models/member/MemberModel';
 import { QuizModel } from './models/quiz/QuizModelItem';
 import LoggerService from './services/LoggerService';
@@ -43,7 +44,7 @@ declare var global: any;
 
 export interface IGlobal extends NodeJS.Global {
   DAO: {
-    AssetDAO: {}, CasDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizDAO: {}, DbDAO: {}, UserDAO: {}, MemberDAO: {},
+    AssetDAO: {}, I18nDAO: {}, MathjaxDAO: {}, QuizDAO: {}, DbDAO: {}, UserDAO: {}, MemberDAO: {},
   };
   Services: {
     TwitterService: {}
@@ -66,7 +67,6 @@ interface IInetAddress {
   <IGlobal>global
 ).DAO = {
   AssetDAO,
-  CasDAO,
   I18nDAO,
   MathjaxDAO,
   QuizDAO,
@@ -99,10 +99,26 @@ if (cluster.isMaster) {
         switch (message) {
           case IPCExchange.QuizStart:
             LoggerService.info(`[Master] QuizStart for quiz (${data}) from worker received`);
+            DbDAO.caches.emit('purge', [
+              `${RoutingCache.QuizStatus}_${data}`,
+              `${RoutingCache.QuizFullStatus}_${data}`,
+              `${RoutingCache.CurrentQuizState}_${data}`,
+              `${RoutingCache.QuizStartTime}_${data}`,
+              `${RoutingCache.QuizSettings}_${data}`,
+              `${RoutingCache.QuizData}_${data}`
+            ]);
             QuizDAO.startNextQuestion(data);
             break;
           case IPCExchange.QuizStop:
             LoggerService.info(`[Master] QuizStop for quiz (${data}) from worker received`);
+            DbDAO.caches.emit('purge', [
+              `${RoutingCache.QuizStatus}_${data}`,
+              `${RoutingCache.QuizFullStatus}_${data}`,
+              `${RoutingCache.CurrentQuizState}_${data}`,
+              `${RoutingCache.QuizStartTime}_${data}`,
+              `${RoutingCache.QuizSettings}_${data}`,
+              `${RoutingCache.QuizData}_${data}`
+            ]);
             QuizDAO.stopQuizTimer(data);
             break;
         }
@@ -126,7 +142,6 @@ if (cluster.isMaster) {
 
   MemberDAO.totalUsersChanged.on('update', totalUsers => masterModel.set(IPCExchange.TotalUsers, totalUsers));
 
-
   DbDAO.connectToDb().then(async () => {
     const argv = Minimist(process.argv.slice(2));
     if (argv._.includes('load-test')) {
@@ -135,6 +150,7 @@ if (cluster.isMaster) {
       await MemberModel.deleteMany({ currentQuizName: /[loadtest].*/ });
     }
   });
+  DbDAO.caches.on('purge', keys => masterModel.set(IPCExchange.PurgeCache, keys));
 
   const metricsServer = express();
   metricsServer.use('/metrics', promBundle.clusterMetrics());
@@ -158,6 +174,10 @@ if (cluster.isMaster) {
       case IPCExchange.TotalUsers:
         MemberDAO.totalUsers = workerModel.get(data[0]);
         LoggerService.info(`[Worker] received total-users update`);
+        break;
+      case IPCExchange.PurgeCache:
+        LoggerService.info(`[Worker] received purge-cache update. Purging http cache`);
+        workerModel.get(data[0]).forEach(key => routeCache.removeCache(key));
     }
   });
 

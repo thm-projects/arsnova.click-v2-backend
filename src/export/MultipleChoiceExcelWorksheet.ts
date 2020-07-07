@@ -9,7 +9,6 @@ import { ExcelWorksheet } from './ExcelWorksheet';
 import { calculateNumberOfAnswers } from './lib/excel_function_library';
 
 export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
-  private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
   private _question: IQuestionChoice;
   private readonly _questionIndex: number;
 
@@ -38,9 +37,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     if (this.responsesWithConfidenceValue.length > 0) {
       minColums++;
     }
-    if (this._isCasRequired) {
-      minColums += 2;
-    }
+
     const answerList = this._question.answerOptionList;
     const columnsToFormat: number = answerList.length + 1 < minColums ? minColums : answerList.length + 1;
     const answerCellStyle: Object = {
@@ -124,9 +121,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
     responses.forEach((responseItem: IQuizResponse, indexInList: number): void => {
       let nextColumnIndex = 3;
       const targetRow: number = indexInList + nextRowIndex;
-      if (this._isCasRequired) {
-        nextColumnIndex += 2;
-      }
+
       if (this.responsesWithConfidenceValue.length > 0) {
         this.ws.cell(targetRow, nextColumnIndex++).style({
           alignment: {
@@ -187,11 +182,6 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
 
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.attendee'));
 
-    if (this._isCasRequired) {
-      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_id'));
-      this.ws.cell(nextRowIndex++, nextColumnIndex++).string(this.mf('export.cas_account_email'));
-    }
-
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.answer'));
 
     if (this.responsesWithConfidenceValue.length > 0) {
@@ -205,13 +195,7 @@ export class MultipleChoiceExcelWorksheet extends ExcelWorksheet implements IExc
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.name);
-      if (this._isCasRequired) {
-        const profile = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter((nick: MemberModelItem) => {
-          return nick.name === responseItem.name;
-        })[0].casProfile;
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
-      }
+
       const nickItem = (await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)).filter(nick => nick.name === responseItem.name)[0];
       const chosenAnswer = this._question.answerOptionList.filter((answer, index) => {
         const responseValue = nickItem.responses[this._questionIndex].value;

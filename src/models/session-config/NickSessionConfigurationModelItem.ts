@@ -8,6 +8,5 @@ export class NickSessionConfigurationModelItem implements INickSessionConfigurat
   @prop() @IsBoolean() public blockIllegalNicks: boolean;
   @prop() @IsNumber() public maxMembersPerGroup: number;
   @prop() @IsArray() public memberGroups: Array<IMemberGroupBase>;
-  @prop() @IsBoolean() public restrictToCasLogin: boolean;
   @prop() @IsArray() public selectedNicks: Array<string>;
 }

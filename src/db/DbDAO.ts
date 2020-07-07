@@ -1,5 +1,6 @@
 import * as childProcess from 'child_process';
 import * as cluster from 'cluster';
+import { EventEmitter } from 'events';
 import { Connection } from 'mongoose';
 import { DbCollection } from '../enums/DbOperation';
 import LoggerService from '../services/LoggerService';
@@ -10,6 +11,7 @@ import MongoDBConnector from './MongoDBConnector';
 class DbDAO extends AbstractDAO {
   private static DB_RECONNECT_INTERVAL = 1000 * 60; // 1 Minute
   public readonly DB = MongoDBConnector.dbName;
+  public readonly caches = new EventEmitter();
 
   private _dbCon: Connection = null;
 

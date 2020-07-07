@@ -2,12 +2,10 @@ import MemberDAO from '../db/MemberDAO';
 import { IExcelWorksheet } from '../interfaces/iExcel';
 import { IQuestionRanged } from '../interfaces/questions/IQuestionRanged';
 import { asyncForEach } from '../lib/async-for-each';
-import { MemberModelItem } from '../models/member/MemberModel';
 import { ExcelWorksheet } from './ExcelWorksheet';
 import { calculateNumberOfRangedAnswers } from './lib/excel_function_library';
 
 export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksheet {
-  private _isCasRequired = this.quiz.sessionConfig.nicks.restrictToCasLogin;
   private readonly _question: IQuestionRanged;
   private readonly _questionIndex: number;
 
@@ -50,9 +48,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     if (this.responsesWithConfidenceValue.length > 0) {
       minColums++;
     }
-    if (this._isCasRequired) {
-      minColums += 2;
-    }
+
     const columnsToFormat = 4 < minColums ? minColums : 4;
 
     this.ws.row(1).setHeight(20);
@@ -137,9 +133,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     await asyncForEach(this.leaderboard, async (leaderboardItem, indexInList) => {
       let nextColumnIndex = 2;
       const targetRow = indexInList + nextRowIndex;
-      if (this._isCasRequired) {
-        nextColumnIndex += 2;
-      }
+
       const responseItem = (
         await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)
       ).filter(nickitem => {
@@ -232,10 +226,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
     nextRowIndex += 2;
 
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.attendee'));
-    if (this._isCasRequired) {
-      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_id'));
-      this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.cas_account_email'));
-    }
+
     this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.answer'));
     if (this.responsesWithConfidenceValue.length > 0) {
       this.ws.cell(nextRowIndex, nextColumnIndex++).string(this.mf('export.confidence_level'));
@@ -253,15 +244,7 @@ export class RangedExcelWorksheet extends ExcelWorksheet implements IExcelWorksh
       nextColumnIndex = 1;
       nextStartRow++;
       this.ws.cell(nextStartRow, nextColumnIndex++).string(leaderboardItem.name);
-      if (this._isCasRequired) {
-        const profile = (
-          await MemberDAO.getMembersOfQuizForOwner(this.quiz.name)
-        ).filter((nick: MemberModelItem) => {
-          return nick.name === leaderboardItem.name;
-        })[0].casProfile;
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.username[0]);
-        this.ws.cell(nextStartRow, nextColumnIndex++).string(profile.mail[0]);
-      }
+
       const value = parseInt(responseItem.value as string, 10);
       if (isNaN(value)) {
         this.ws.cell(nextStartRow, nextColumnIndex++).string(responseItem.value);

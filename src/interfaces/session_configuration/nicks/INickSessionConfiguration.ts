@@ -6,5 +6,4 @@ export interface INickSessionConfiguration {
   autoJoinToGroup: boolean;
   selectedNicks: Array<string>;
   blockIllegalNicks: boolean;
-  restrictToCasLogin: boolean;
 }

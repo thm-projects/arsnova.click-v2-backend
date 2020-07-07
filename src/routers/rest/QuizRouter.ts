@@ -130,7 +130,6 @@ export class QuizRouter extends AbstractRouter {
     if (quiz) {
       if ([QuizState.Active, QuizState.Running].includes(quiz.state)) {
         payload.provideNickSelection = quiz.sessionConfig.nicks.selectedNicks.length > 0;
-        payload.authorizeViaCas = quiz.sessionConfig.nicks.restrictToCasLogin;
         payload.maxMembersPerGroup = quiz.sessionConfig.nicks.maxMembersPerGroup;
         payload.autoJoinToGroup = quiz.sessionConfig.nicks.autoJoinToGroup;
         payload.memberGroups = quiz.sessionConfig.nicks.memberGroups;
@@ -176,11 +175,10 @@ export class QuizRouter extends AbstractRouter {
     }
 
     const step = [QuizState.Active, QuizState.Running].includes(quiz.state) ? MessageProtocol.Available : MessageProtocol.Unavailable;
-    const payload: { quiz?: QuizModelItem, status?: { authorizeViaCas: boolean, provideNickSelection: boolean } } = {};
+    const payload: { quiz?: QuizModelItem, status?: { provideNickSelection: boolean } } = {};
     if (step === MessageProtocol.Available) {
       payload.quiz = quiz.toJSON();
       payload.status = {
-        authorizeViaCas: quiz.sessionConfig.nicks.restrictToCasLogin,
         provideNickSelection: quiz.sessionConfig.nicks.selectedNicks.length > 0,
       };
     }
@@ -338,7 +336,6 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError(MessageProtocol.InsufficientPermissions);
     }
 
-    const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
     let nextQuestionIndex;
     let currentStartTimestamp;
 
@@ -350,7 +347,7 @@ export class QuizRouter extends AbstractRouter {
 
       await QuizDAO.requestReadingConfirmation(quiz);
 
-      await QuizDAO.updateQuiz(existingQuiz._id, {
+      await QuizDAO.updateQuiz(quiz._id, {
         readingConfirmationRequested: true,
         state: QuizState.Running,
       });
@@ -367,16 +364,13 @@ export class QuizRouter extends AbstractRouter {
     if (quiz.readingConfirmationRequested) {
       currentStartTimestamp = new Date().getTime();
 
-      await QuizDAO.updateQuiz(existingQuiz._id, {
+      await QuizDAO.updateQuiz(quiz._id, {
         currentStartTimestamp,
         readingConfirmationRequested: false,
         state: QuizState.Running,
       });
 
       quiz.readingConfirmationRequested = false;
-
-      routeCache.removeCache(`${RoutingCache.QuizStatus}_${quiz.name}`);
-      routeCache.removeCache(`${RoutingCache.QuizFullStatus}_${quiz.name}`);
 
       process.send({ message: IPCExchange.QuizStart, data: quiz.name });
 
@@ -396,7 +390,7 @@ export class QuizRouter extends AbstractRouter {
     }
     currentStartTimestamp = new Date().getTime();
 
-    await QuizDAO.updateQuiz(existingQuiz._id, {
+    await QuizDAO.updateQuiz(quiz._id, {
       currentStartTimestamp,
       readingConfirmationRequested: false,
       state: QuizState.Running,
@@ -412,9 +406,6 @@ export class QuizRouter extends AbstractRouter {
 
     quiz.readingConfirmationRequested = false;
     quiz.currentStartTimestamp = currentStartTimestamp;
-
-    routeCache.removeCache(`${RoutingCache.QuizStatus}_${quiz.name}`);
-    routeCache.removeCache(`${RoutingCache.QuizFullStatus}_${quiz.name}`);
 
     process.send({ message: IPCExchange.QuizStart, data: quiz.name });
 
