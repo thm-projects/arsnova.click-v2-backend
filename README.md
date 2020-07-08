@@ -1,5 +1,10 @@
 #### arsnova.click v2 Backend
 
+###### Installation 
+
+You can find an Installationguide [here](https://git.thm.de/arsnova/arsnova-click-v2/-/blob/master/documentation/Backend-Installationguide.md)  
+
+
 ###### Additional noticable files
 - arsnova-click.env - This file contains all environment variables for the arsnova-click backend
     - `TWITTER_ENABLED`: Flag if the twitter polling should be enabled (default: `false`)
