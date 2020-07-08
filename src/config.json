@@ -4,5 +4,6 @@
   "portExternal": 3010,
   "routePrefix": "",
   "rewriteAssetCacheUrl": "",
-  "leaderboardAlgorithm": "PointBased"
+  "leaderboardAlgorithm": "PointBased",
+  "version": "__VERSION__"
 }

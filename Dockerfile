@@ -18,4 +18,9 @@ COPY . .
 RUN npm install \
     && npm run build:DEV
 WORKDIR /usr/src/app/dist
+
+RUN echo "Building unique version hash for the build"
+RUN HASH=$(date | md5sum | head -c32)
+RUN sed -i s/__VERSION__/$HASH/ config.json
+
 CMD ["node", "main.js"]

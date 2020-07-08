@@ -48,11 +48,14 @@ const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
 const logoFilename = process.env.LOGO_FILE_NAME ?? 'logo_transparent.png';
 
+const version = config.version ?? '__VERSION__';
+
 export const publicSettings = {
   leaderboardAlgorithm,
   cacheQuizAssets: true,
   createQuizPasswordRequired: false,
   limitActiveQuizzes: Infinity,
+  version,
 };
 
 export const settings = {
