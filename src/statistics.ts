@@ -55,12 +55,11 @@ export const publicSettings = {
   cacheQuizAssets: true,
   createQuizPasswordRequired: false,
   limitActiveQuizzes: Infinity,
-  version,
 };
 
 export const settings = {
   appName: 'arsnova-click-v2-backend',
-  appVersion: '2.0.0',
+  appVersion: version,
   port: {
     app: portInternal,
     scuttlebutt: scuttlebuttPort,

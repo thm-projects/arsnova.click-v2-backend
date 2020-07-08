@@ -27,7 +27,7 @@ import { QuizPoolRouter } from './routers/rest/QuizPoolRouter';
 import { QuizRouter } from './routers/rest/QuizRouter';
 import { TwitterRouter } from './routers/rest/TwitterRouter';
 import LoggerService from './services/LoggerService';
-import { publicSettings, settings } from './statistics';
+import { settings } from './statistics';
 
 export const routingControllerOptions: RoutingControllersOptions = {
   defaults: {
@@ -147,7 +147,7 @@ class App {
         new Integrations.OnUncaughtException(), new Integrations.OnUnhandledRejection(),
       ],
       enabled: Boolean(process.env.SENTRY_DSN),
-      release: publicSettings.version
+      release: settings.appVersion
     });
   }
 }
