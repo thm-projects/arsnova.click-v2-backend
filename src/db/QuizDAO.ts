@@ -523,11 +523,16 @@ class QuizDAO extends AbstractDAO {
   }
 
   private checkExistingConnection(quizName: string, privateKey: string): void {
+    // FIXME must be rewritten to use the correct quiz exchange and routing key path
+    if (true) {
+      return;
+    }
+
     const reqOptions: http.RequestOptions = {
       protocol: settings.amqp.managementApi.protocol,
       host: settings.amqp.managementApi.host,
       port: settings.amqp.managementApi.port,
-      path: `/api/exchanges/${encodeURIComponent(settings.amqp.vhost)}/quiz_${encodeURIComponent(encodeURIComponent(quizName))}/bindings/source`,
+      path: `/api/exchanges/${encodeURIComponent(settings.amqp.vhost)}/${encodeURIComponent(AMQPConnector.quizExchange)}/bindings/source`,
       auth: `${settings.amqp.managementApi.user}:${settings.amqp.managementApi.password}`,
     };
 
