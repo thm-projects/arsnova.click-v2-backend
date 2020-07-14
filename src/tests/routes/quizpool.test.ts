@@ -73,7 +73,7 @@ class QuizPoolApiRouterTestSuite {
 
   @test
   public async getPendingPoolQuestions(): Promise<void> {
-    const res = await chai.request(app).get(`${this._baseApiRoute}/pending`).set('authorization', AuthService.createToken({
+    const res = await chai.request(app).get(`${this._baseApiRoute}/pending`).set('authorization', 'Bearer ' + AuthService.createToken({
       name: 'user',
       userAuthorizations: [UserRole.SuperAdmin],
     }));
@@ -84,7 +84,7 @@ class QuizPoolApiRouterTestSuite {
 
   @test
   public async getPendingPoolQuestionById(): Promise<void> {
-    const res = await chai.request(app).get(`${this._baseApiRoute}/all/${new ObjectId()}`).set('authorization', AuthService.createToken({
+    const res = await chai.request(app).get(`${this._baseApiRoute}/all/${new ObjectId()}`).set('authorization', 'Bearer ' + AuthService.createToken({
       name: 'user',
       userAuthorizations: [UserRole.SuperAdmin],
     }));
@@ -95,7 +95,7 @@ class QuizPoolApiRouterTestSuite {
 
   @test
   public async deletePoolQuestion(): Promise<void> {
-    const res = await chai.request(app).del(`${this._baseApiRoute}/${new ObjectId()}`).set('authorization', AuthService.createToken({
+    const res = await chai.request(app).del(`${this._baseApiRoute}/${new ObjectId()}`).set('authorization', 'Bearer ' + AuthService.createToken({
       name: 'user',
       userAuthorizations: [UserRole.SuperAdmin],
     }));
@@ -112,7 +112,7 @@ class QuizPoolApiRouterTestSuite {
 
     await QuizPoolModel.create({ _id: id, approved: false, question: quiz.questionList[0] } as any);
 
-    const res = await chai.request(app).put(`${this._baseApiRoute}/pending`).set('authorization', AuthService.createToken({
+    const res = await chai.request(app).put(`${this._baseApiRoute}/pending`).set('authorization', 'Bearer ' + AuthService.createToken({
       name: 'user',
       userAuthorizations: [UserRole.SuperAdmin],
     })).send({
