@@ -523,11 +523,6 @@ class QuizDAO extends AbstractDAO {
   }
 
   private checkExistingConnection(quizName: string, privateKey: string): void {
-    // FIXME must be rewritten to use the correct quiz exchange and routing key path
-    if (true) {
-      return;
-    }
-
     const reqOptions: http.RequestOptions = {
       protocol: settings.amqp.managementApi.protocol,
       host: settings.amqp.managementApi.host,
@@ -536,18 +531,25 @@ class QuizDAO extends AbstractDAO {
       auth: `${settings.amqp.managementApi.user}:${settings.amqp.managementApi.password}`,
     };
 
+    const encodedQuizName = encodeURIComponent(quizName);
+
     superagent.get(reqOptions.protocol + '//' + reqOptions.host + ':' + reqOptions.port + reqOptions.path) //
       .set('Authorization', 'Basic ' + Buffer.from(reqOptions.auth).toString('base64')).then((res) => {
-      if (Array.isArray(res.body) && res.body.length) {
-        this._storage[quizName].isEmpty = false;
-        return;
-      }
+        if (!Array.isArray(res.body)) {
+          throw new Error('Invalid response from RabbitMQ while requesting the active state of quizzes');
+        }
 
-      if (!this._storage[quizName] || this._storage[quizName].isEmpty) {
-        return this.setQuizAsInactive(quizName, privateKey);
-      }
+        const quizSubscriptions = res.body.filter(subscription => subscription.routing_key === encodedQuizName);
+        if (quizSubscriptions.length) {
+          this._storage[quizName].isEmpty = false;
+          return;
+        }
 
-      this._storage[quizName].isEmpty = true;
+        if (!this._storage[quizName] || this._storage[quizName].isEmpty) {
+          return this.setQuizAsInactive(quizName, privateKey);
+        }
+
+        this._storage[quizName].isEmpty = true;
     });
   }
 
