@@ -27,8 +27,9 @@ export async function roleAuthorizationChecker(action: Action, searchRoles: User
 
         username = decBasicAuth[0];
         password = decBasicAuth[1];
-      } else {
-        const decodedToken = AuthService.decodeToken(action.request.headers.authorization);
+      } else if (action.request.headers.authorization.startsWith('Bearer ')) {
+        const token = action.request.headers.authorization.replace('Bearer ', '');
+        const decodedToken = AuthService.decodeToken(token);
 
         if (typeof decodedToken !== 'object' || !(decodedToken as any).name) {
           return false;
@@ -36,6 +37,8 @@ export async function roleAuthorizationChecker(action: Action, searchRoles: User
 
         return (searchRoles as unknown as Array<string>).some(role => (decodedToken as any).userAuthorizations.includes(UserRole[role]));
       }
+
+      return false;
     }
 
     const authenticated = await AuthService.authenticate({
