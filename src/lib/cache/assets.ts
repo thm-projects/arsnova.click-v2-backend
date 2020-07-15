@@ -62,7 +62,7 @@ export async function MatchAssetCachedQuiz(quiz: IQuiz): Promise<IQuiz> {
 export function MatchTextToAssetsDb(value: string): Promise<string> {
   const acceptedFileTypes = [/image\/*/];
   const foundUrls = value.match(assetsUrlRegex);
-  const assetsBasePath = `${settings.rewriteAssetCacheUrl}/lib/cache/quiz/assets`;
+  const assetsBasePath = `${settings.rewriteAssetCacheUrl}/api/lib/cache/quiz/assets`;
 
   return new Promise<string>(resolve => {
     if (!foundUrls) {
