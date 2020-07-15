@@ -60,7 +60,7 @@ export class QuizRouter extends AbstractRouter {
       throw new UnauthorizedError();
     }
     const quiz = await QuizDAO.getActiveQuizByName(attendee.currentQuizName);
-    if (!quiz) {
+    if (!quiz || quiz.currentQuestionIndex === -1 || !attendee.responses[quiz.currentQuestionIndex]) {
       throw new BadRequestError();
     }
 
