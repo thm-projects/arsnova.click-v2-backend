@@ -277,20 +277,26 @@ export class Leaderboard {
       result = refValue === response;
     }
     if (answerOption.configTrimWhitespaces) {
-      refValue = refValue.replace(/ /g, '');
-      response = response.replace(/ /g, '');
+      refValue = refValue.replace(/[ ]/g, '');
+      response = response.replace(/[ ]/g, '');
       result = refValue === response;
     } else {
+      refValue = refValue.replace(/[-]/g, ' ');
+      response = response.replace(/[-]/g, ' ');
+
       if (!answerOption.configUsePunctuation) {
         refValue = refValue.replace(/[,:\(\)\[\]\.\*\?]/g, '');
         response = response.replace(/[,:\(\)\[\]\.\*\?]/g, '');
       }
-      if (!answerOption.configUseKeywords) {
-        result = refValue.split(' ').filter((elem) => {
-          return response.indexOf(elem) === -1;
-        }).length === 0;
+
+      const revValueSplitted = refValue.split(/[ ]/);
+      const revSplitted = response.split(/[ ]/);
+      if (answerOption.configUseKeywords) {
+        result = revSplitted.length === revValueSplitted.length &&
+                 revSplitted.every((elem, index) => revValueSplitted[index] === elem);
       } else {
-        result = refValue === response;
+        result = revSplitted.length === revValueSplitted.length &&
+                 revSplitted.every((elem) => revValueSplitted.includes(elem));
       }
     }
     return result;
