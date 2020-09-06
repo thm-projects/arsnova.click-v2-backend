@@ -93,7 +93,8 @@ export class QuizRouter extends AbstractRouter {
         return false;
       }
 
-      return Leaderboard.getAnswerStateForResponse(attendee.responses[index].value, value) !== AnswerState.Correct;
+      const leaderboardResult = Leaderboard.getAnswerStateForResponse(attendee.responses[index].value, value);
+      return value.TYPE === QuestionType.RangedQuestion ? leaderboardResult === AnswerState.Wrong : leaderboardResult !== AnswerState.Correct;
     });
     return !canNotUseToken;
   }
