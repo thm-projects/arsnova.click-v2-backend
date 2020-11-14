@@ -132,6 +132,8 @@
       "jobs/**",
       "src/tests/**",
       "src/interfaces/**",
+      "mongodb",
+      "rabbitmq",
       "*.js"
     ],
     "reporter": [
