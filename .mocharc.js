@@ -12,6 +12,5 @@ module.exports = {
   timeout: 60000,
   recursive: true,
   require: ["ts-node/register", "source-map-support/register", "src/tests/mongo-mock.ts"],
-  ui: 'mocha-typescript',
   'watch-files': ['src/**/*.ts'],
 };

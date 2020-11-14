@@ -1,7 +1,7 @@
 /// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
+import { slow, suite, test } from '@testdeck/mocha';
 import * as chai from 'chai';
-import { slow, suite, test } from 'mocha-typescript';
 import * as puppeteer from 'puppeteer';
 import * as sinon from 'sinon';
 import router from '../../App';

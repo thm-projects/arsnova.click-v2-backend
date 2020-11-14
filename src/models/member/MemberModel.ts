@@ -1,4 +1,4 @@
-import { getModelForClass, index, pre, prop, Severity } from '@typegoose/typegoose';
+import { getModelForClass, index, modelOptions, pre, prop, Severity } from '@typegoose/typegoose';
 import { IsArray, IsBoolean, IsObject, IsString } from 'class-validator';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
@@ -20,7 +20,8 @@ import { ICasData } from '../../interfaces/users/ICasData';
   if (!this.colorCode && this.name) {
     this.colorCode = generateRandomColorCode(this.name);
   }
-})
+}) //
+@modelOptions({ options: { allowMixed: Severity.ALLOW } }) //
 export class MemberModelItem implements IMemberSerialized {
   @prop() @IsString() public colorCode: string;
   @prop({ required: false }) @IsString() public groupName: string;

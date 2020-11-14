@@ -1,4 +1,4 @@
-import { getModelForClass, index, prop, Severity } from '@typegoose/typegoose';
+import { getModelForClass, index, modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { IsArray, IsBoolean, IsDate, IsEnum, IsNumber, IsObject, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 import DbDAO from '../../db/DbDAO';
@@ -15,7 +15,8 @@ import { SessionConfigurationModelItem } from '../session-config/SessionConfigur
     locale: 'en',
     strength: 1,
   },
-})
+}) //
+@modelOptions({ options: { allowMixed: Severity.ALLOW } }) //
 export class QuizModelItem implements IQuiz {
   @prop({ required: false }) @IsDate() public expiry?: Date;
   @prop({

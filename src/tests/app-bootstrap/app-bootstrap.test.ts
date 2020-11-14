@@ -1,6 +1,6 @@
 /// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
-import { suite, test } from 'mocha-typescript';
+import { suite, test } from '@testdeck/mocha';
 import DbDAO from '../../db/DbDAO';
 
 @suite

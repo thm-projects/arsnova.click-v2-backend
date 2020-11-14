@@ -1,4 +1,4 @@
-import { Gitlab } from 'gitlab';
+import { Gitlab } from '@gitbeaker/node';
 import { GitlabCommitAction, GitlabProject, Language } from '../enums/Enums';
 import { IGitlabCommitAction } from '../interfaces/gitlab/apiv11';
 import { asyncForEach } from '../lib/async-for-each';

@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-expression */
+import { suite, test } from '@testdeck/mocha';
 import * as chai from 'chai';
-import { suite, test } from 'mocha-typescript';
 import DbDAO from '../../db/DbDAO';
 import QuizDAO from '../../db/QuizDAO';
 import { QuizState } from '../../enums/QuizState';

@@ -1,9 +1,10 @@
-import { getModelForClass, prop, Severity } from '@typegoose/typegoose';
+import { getModelForClass, modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { IsBoolean, IsEmail, IsObject, IsString } from 'class-validator';
 import DbDAO from '../../db/DbDAO';
 import { DbCollection } from '../../enums/DbOperation';
 import { IQuestion } from '../../interfaces/questions/IQuestion';
 
+@modelOptions({ options: { allowMixed: Severity.ALLOW } }) //
 export class QuizPoolModelItem {
   @prop({ validate: (value: IQuestion) => Array.isArray(value.tags) && value.tags.length > 0 }) //
   @IsObject() //

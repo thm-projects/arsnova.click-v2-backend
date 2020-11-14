@@ -1,10 +1,10 @@
 /// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
+import { slow, suite, test, timeout } from '@testdeck/mocha';
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as i18n from 'i18n';
 import * as MessageFormat from 'messageformat';
-import { slow, suite, test, timeout } from 'mocha-typescript';
 import * as path from 'path';
 import DbDAO from '../../db/DbDAO';
 import MemberDAO from '../../db/MemberDAO';

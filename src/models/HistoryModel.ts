@@ -1,9 +1,10 @@
-import { getModelForClass, prop, Severity } from '@typegoose/typegoose';
+import { getModelForClass, modelOptions, prop, Severity } from '@typegoose/typegoose';
 import { IsArray, IsEnum, IsString } from 'class-validator';
 import DbDAO from '../db/DbDAO';
 import { DbCollection } from '../enums/DbOperation';
 import { HistoryModelType } from '../enums/HistoryModelType';
 
+@modelOptions({ options: { allowMixed: Severity.ALLOW } }) //
 export class HistoryModelItem {
   @prop({
     enum: HistoryModelType,

@@ -1,4 +1,4 @@
-import { suite, test } from 'mocha-typescript';
+import { suite, test } from '@testdeck/mocha';
 import * as sinon from 'sinon';
 import DbDAO from '../../db/DbDAO';
 import MongoDBConnector from '../../db/MongoDBConnector';

@@ -1,8 +1,8 @@
 /// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
+import { suite, test } from '@testdeck/mocha';
 import * as chai from 'chai';
 import * as fs from 'fs';
-import { suite, test } from 'mocha-typescript';
 import * as path from 'path';
 import * as routeCache from 'route-cache';
 import app from '../../App';
@@ -38,7 +38,7 @@ class MemberApiRouterTestSuite {
   @test
   public async getRemainingNicks(): Promise<void> {
     const quiz: IQuiz = JSON.parse(
-      fs.readFileSync(path.join(settings.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('UTF-8'));
+      fs.readFileSync(path.join(settings.pathToAssets, 'predefined_quizzes', 'demo_quiz', 'en.demo_quiz.json')).toString('utf-8'));
     quiz.name = this._hashtag;
 
     const doc = await QuizDAO.addQuiz(quiz);

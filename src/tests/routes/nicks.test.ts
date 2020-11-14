@@ -1,7 +1,7 @@
 /// <reference path="../../../node_modules/chai-http/types/index.d.ts" />
 
+import { suite, test } from '@testdeck/mocha';
 import * as chai from 'chai';
-import { suite, test } from 'mocha-typescript';
 
 import app from '../../App';
 import DbDAO from '../../db/DbDAO';
