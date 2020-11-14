@@ -134,7 +134,8 @@
       "src/interfaces/**",
       "mongodb",
       "rabbitmq",
-      "*.js"
+      "*.js",
+      "db-migration"
     ],
     "reporter": [
       "text"
