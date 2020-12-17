@@ -260,7 +260,7 @@ class QuizDAO extends AbstractDAO {
   public async setQuizAsInactive(quizName: string, privateKey: string): Promise<void> {
     const quiz = await this.getQuizByName(quizName);
 
-    const purgedQuizData = quiz.visibility === QuizVisibility.Any || (await UserDAO.getUserByPrivateKey(privateKey)) ? {} : {
+    const purgedQuizData = (quiz?.visibility === QuizVisibility.Any || (await UserDAO.getUserByPrivateKey(privateKey))) ? {} : {
       sessionConfig: null,
       questionList: null,
     };

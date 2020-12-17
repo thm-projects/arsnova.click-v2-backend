@@ -686,7 +686,7 @@ export class QuizRouter extends AbstractRouter {
           step: MessageProtocol.SaveQuiz,
           payload: (
             await QuizDAO.getQuizByName(quiz.name)
-          ).toJSON({ getters: true }),
+          ).toJSON(),
         };
       }
     }
