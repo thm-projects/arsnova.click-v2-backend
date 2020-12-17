@@ -104,7 +104,7 @@ class App {
       limit: '50mb',
       extended: true,
     }));
-    this._express.options('*', cors(options));
+    this._express.use('*', cors(options));
     this._express.use(compress());
     this._express.disable('x-powered-by');
 
