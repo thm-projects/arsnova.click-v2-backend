@@ -13,7 +13,7 @@
   "description": "Version 2 of arsnova.click (Backend)",
   "scripts": {
     "clean": "rimraf dist",
-    "test": "node node_modules/nyc/bin/nyc.js --reporter=text node_modules/mocha/bin/mocha",
+    "test": "node node_modules/nyc/bin/nyc.js --reporter=text --reporter=lcov --report-dir=.lcov_output node_modules/mocha/bin/mocha",
     "prebuild:DEV": "npm run clean",
     "prebuild:PROD": "npm run clean",
     "build:DEV": "tsc && cp -r assets dist/",
