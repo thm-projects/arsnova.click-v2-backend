@@ -112,7 +112,6 @@ npm_test:
   tags:
     - nodejs
   artifacts:
-    untracked: true
     paths:
       - .lcov_output
   script:
@@ -129,6 +128,7 @@ sonarqube:
   only:
     - staging
   script:
+    - npm i
     - sonar-scanner -Dsonar.login=$SONAR_TOKEN -Dsonar.host.url=https://scm.thm.de/sonar/
 
 deploy:
