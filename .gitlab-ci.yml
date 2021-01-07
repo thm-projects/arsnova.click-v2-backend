@@ -3,6 +3,7 @@ variables:
 
 stages:
   - test
+  - analyze
   - build
   - deploy
 
@@ -110,10 +111,25 @@ npm_test:
   stage: test
   tags:
     - nodejs
+  artifacts:
+    paths:
+      - .lcov_output
   script:
     - npm install
     - export NODE_ENV='test'
-    - node_modules/nyc/bin/nyc.js --reporter=text node_modules/mocha/bin/mocha
+    - node_modules/nyc/bin/nyc.js --reporter=text --reporter=lcov --report-dir=.lcov_output node_modules/mocha/bin/mocha
+
+sonarqube:
+  stage: analyze
+  tags:
+    - sonar-cli
+  dependencies:
+    - npm_test
+  only:
+    - staging
+  script:
+    - npm i
+    - sonar-scanner -Dsonar.login=$SONAR_TOKEN -Dsonar.host.url=https://scm.thm.de/sonar/
 
 deploy:
   stage: deploy
