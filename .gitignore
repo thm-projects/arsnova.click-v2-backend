@@ -61,3 +61,7 @@ rabbitmq.env
 init-mongo.js
 mongodb
 rabbitmq
+
+# Analysis Folder
+.lcov_output
+.scannerwork
