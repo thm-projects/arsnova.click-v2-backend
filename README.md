@@ -1,6 +1,6 @@
 #### arsnova.click v2 Backend
 
-###### Installation 
+###### Installation
 
 You can find an Installationguide [here](https://github.com/thm-projects/arsnova.click-v2/blob/master/documentation/Backend-Installationguide.md)  
 
@@ -63,11 +63,22 @@ are likely faster online. The node server tries to connect every 60 seconds to t
 the connection fails when starting the app.
 
 ###### Test
-Enter `npm test` in the root directory to run the unit tests. 
+Enter `npm test` in the root directory to run the unit tests.
 Note that since is uses a TypeScript runner for Mocha it is not required to build the server app before testing it.
 Thus, the server gets started up during the test so the specified port must be available.
-Currently the routing and the quiz export is covered by the tests. 
+Currently the routing and the quiz export is covered by the tests.
 The export unit test will generate a random filled Excel export file in the `${rootDir}/test-generated` folder.
+
+###### Code style analysis
+For a local code style analysis with docker-compose you'll need docker and docker-compose installed.
+To run a local code style check with sonarqube, follow these steps:
+1. switch into the analysis folder  
+  `cd analysis`
+2. start the sonarqube server  
+  `docker-compose up -d sonarqube`
+3. when sonarqube has started, you may run analysis whenever you want with  
+  `docker-compose run --rm analysis`
+
 
 ###### Build (DEV)
 Enter `npm run build:DEV` in the root directory to run the dev build.
