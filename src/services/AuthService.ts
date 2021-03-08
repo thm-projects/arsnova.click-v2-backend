@@ -67,7 +67,9 @@ export class AuthService {
 
   public static decodeLoginToken(req: Request, res: Response, next: NextFunction): void {
     const token = req.headers.authorization;
-    req.headers.authorization = token?.match(/bearer /i) ? (this.decodeToken(token.substr(7)) as any).privateKey : token;
+    req.headers.authorization = token?.match(/bearer /i) ? (jwt.verify(token, settings.jwtSecret, {
+      algorithms: ['HS512'],
+    }) as any).privateKey : token;
 
     return next();
   }
