@@ -33,7 +33,7 @@ export class MemberRouter extends AbstractRouter {
   }
 
   @Get('/token/bonus')
-  @UseBefore((req, res, next) => req.headers.authorization = (AuthService.decodeLoginToken(req.headers.authorization) as any) && next())
+  @UseBefore(AuthService.decodeLoginToken)
   public async getCurrentBonusToken(@HeaderParam('authorization') token: string): Promise<string> {
     const member = await MemberDAO.getMemberByToken(token);
     if (!member) {
@@ -55,7 +55,7 @@ export class MemberRouter extends AbstractRouter {
   }
 
   @Put('/')
-  @UseBefore((req, res, next) => req.headers.authorization = (AuthService.decodeLoginToken(req.headers.authorization) as any) && next())
+  @UseBefore(AuthService.decodeLoginToken)
   public async addMember(
     @BodyParam('member') member: IMemberSerialized, //
     @HeaderParam('authorization') token: string, //
@@ -114,7 +114,7 @@ export class MemberRouter extends AbstractRouter {
   }
 
   @Put('/reading-confirmation')
-  @UseBefore((req, res, next) => req.headers.authorization = (AuthService.decodeLoginToken(req.headers.authorization) as any) && next())
+  @UseBefore(AuthService.decodeLoginToken)
   public async addReadingConfirmation(@HeaderParam('authorization') token: string, //
   ): Promise<IMessage> {
 
@@ -138,7 +138,7 @@ export class MemberRouter extends AbstractRouter {
   }
 
   @Put('/confidence-value')
-  @UseBefore((req, res, next) => req.headers.authorization = (AuthService.decodeLoginToken(req.headers.authorization) as any) && next())
+  @UseBefore(AuthService.decodeLoginToken)
   public async addConfidenceValue(
     @HeaderParam('authorization') token: string, //
     @BodyParam('confidenceValue') confidenceValue: number, //
@@ -164,7 +164,7 @@ export class MemberRouter extends AbstractRouter {
   }
 
   @Put('/response')
-  @UseBefore((req, res, next) => req.headers.authorization = (AuthService.decodeLoginToken(req.headers.authorization) as any) && next())
+  @UseBefore(AuthService.decodeLoginToken)
   public async addResponse(
     @HeaderParam('authorization') token: string, //
     @Body() body: any, // Must use body since string value '3,14' of body.response results in a JSON.parse error if using BodyParam

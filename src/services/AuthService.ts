@@ -1,3 +1,4 @@
+import { NextFunction, Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { UnauthorizedError } from 'routing-controllers';
 import UserDAO from '../db/UserDAO';
@@ -64,7 +65,10 @@ export class AuthService {
     });
   }
 
-  public static decodeLoginToken(token: string): string {
-    return token?.match(/bearer /i) ? (this.decodeToken(token.substr(7)) as any).privateKey : token;
+  public static decodeLoginToken(req: Request, res: Response, next: NextFunction): void {
+    const token = req.headers.authorization;
+    req.headers.authorization = token?.match(/bearer /i) ? (this.decodeToken(token.substr(7)) as any).privateKey : token;
+
+    return next();
   }
 }
