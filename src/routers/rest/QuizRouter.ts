@@ -44,6 +44,7 @@ import { asyncForEach } from '../../lib/async-for-each';
 import { MatchAssetCachedQuiz, MatchTextToAssetsDb } from '../../lib/cache/assets';
 import { Leaderboard } from '../../lib/leaderboard/leaderboard';
 import { QuizModelItem } from '../../models/quiz/QuizModelItem';
+import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
 import { publicSettings, settings } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
@@ -585,6 +586,9 @@ export class QuizRouter extends AbstractRouter {
   ): Promise<QuizModelItem> {
     if (!quiz) {
       throw new BadRequestError(MessageProtocol.InvalidParameters);
+    }
+    if (privateKey.match(/bearer .*/i)) {
+      privateKey = (AuthService.decodeToken(privateKey.substr(7)) as any).privateKey;
     }
 
     const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
