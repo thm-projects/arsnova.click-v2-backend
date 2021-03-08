@@ -587,9 +587,6 @@ export class QuizRouter extends AbstractRouter {
     if (!quiz) {
       throw new BadRequestError(MessageProtocol.InvalidParameters);
     }
-    if (privateKey.match(/bearer .*/i)) {
-      privateKey = (AuthService.decodeToken(privateKey.substr(7)) as any).privateKey;
-    }
 
     const existingQuiz = await QuizDAO.getQuizByName(quiz.name);
     if (existingQuiz && existingQuiz.privateKey !== privateKey) {

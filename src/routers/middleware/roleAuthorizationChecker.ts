@@ -34,6 +34,7 @@ export async function roleAuthorizationChecker(action: Action, searchRoles: User
         if (typeof decodedToken !== 'object' || !(decodedToken as any).name) {
           return false;
         }
+        action.request.headers.authorization = (decodedToken as any).privateKey;
 
         return (searchRoles as unknown as Array<string>).some(role => (decodedToken as any).userAuthorizations.includes(UserRole[role]));
       }
