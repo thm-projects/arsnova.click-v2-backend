@@ -11,7 +11,7 @@ module.exports = {
 
     await Promise.all(quizzes.map(async quiz => {
 
-      const privateKey = jwt.verify(
+      const privateKey = jwt.decode(
         quiz.privateKey.substr(7),
         'arsnova.click-v2', {
           algorithms: ['HS512'],

@@ -63,4 +63,8 @@ export class AuthService {
       algorithms: ['HS512'],
     });
   }
+
+  public static decodeLoginToken(token: string): string {
+    return token.match(/bearer /i) ? (this.decodeToken(token.substr(7)) as any).privateKey : null;
+  }
 }
