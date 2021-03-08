@@ -789,8 +789,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/export/:quizName/:privateKey/:theme/:language') //
-  @UseBefore(AuthService.decodeLoginToken)
-  @UseBefore(routeCache.cacheSeconds(5, req => `${RoutingCache.QuizExportSheet}_${req.url}`))
+  @UseBefore(
+    AuthService.decodeLoginToken,
+    routeCache.cacheSeconds(5, req => `${RoutingCache.QuizExportSheet}_${req.url}`)
+  )
   @ContentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') //
   public async getExportFile(
     @Param('quizName') quizName: string, //
@@ -845,10 +847,12 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/leaderboard/:quizName/:amount/:questionIndex?') //
-  @UseBefore(AuthService.decodeLoginToken)
-  @UseBefore(routeCache.cacheSeconds(20, (req: Request) => {
-    return `${req.url}_${req.headers.authorization}`;
-  }))
+  @UseBefore(
+    AuthService.decodeLoginToken,
+    routeCache.cacheSeconds(20, (req: Request) => {
+      return `${req.url}_${req.headers.authorization}`;
+    })
+  )
   @OpenAPI({
     summary: 'Returns the leaderboard data',
     parameters: [
@@ -1017,8 +1021,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/quiz/:quizName?') //
-  @UseBefore(AuthService.decodeLoginToken)
-  @UseBefore(routeCache.cacheSeconds(10, req => `${RoutingCache.QuizData}_${req.params.quizName}`))
+  @UseBefore(
+    AuthService.decodeLoginToken,
+    routeCache.cacheSeconds(10, req => `${RoutingCache.QuizData}_${req.params.quizName}`)
+  )
   @OpenAPI({
     summary: 'Returns the data of a quiz',
     parameters: [
