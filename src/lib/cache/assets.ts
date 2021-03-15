@@ -25,9 +25,9 @@ export function GetAssetUrlByDigest(digest: string): Promise<Document & AssetMod
 export async function MatchAssetCachedQuiz(quiz: IQuiz): Promise<IQuiz> {
   quiz.questionList = await Promise.all<IQuestionBase>((
     quiz.questionList as Array<IQuestionBase>
-  ).map(async question => {
+  )?.map(async question => {
 
-    question.answerOptionList = await Promise.all(question.answerOptionList.map(async answer => {
+    question.answerOptionList = await Promise.all(question.answerOptionList?.map(async answer => {
       const answerMatched = answer.answerText.matchAll(new RegExp(assetsPathUrlRegex, 'gi'));
       let answerTextMatcher = answerMatched.next();
       while (!answerTextMatcher.done) {

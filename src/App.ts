@@ -38,7 +38,7 @@ export const routingControllerOptions: RoutingControllersOptions = {
     },
   },
   authorizationChecker: roleAuthorizationChecker,
-  defaultErrorHandler: false,
+  defaultErrorHandler: true,
   cors: options,
   controllers: [
     AdminRouter,

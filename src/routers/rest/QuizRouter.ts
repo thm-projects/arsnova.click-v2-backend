@@ -44,6 +44,7 @@ import { asyncForEach } from '../../lib/async-for-each';
 import { MatchAssetCachedQuiz, MatchTextToAssetsDb } from '../../lib/cache/assets';
 import { Leaderboard } from '../../lib/leaderboard/leaderboard';
 import { QuizModelItem } from '../../models/quiz/QuizModelItem';
+import { AuthService } from '../../services/AuthService';
 import LoggerService from '../../services/LoggerService';
 import { publicSettings, settings } from '../../statistics';
 import { AbstractRouter } from './AbstractRouter';
@@ -52,6 +53,7 @@ import { AbstractRouter } from './AbstractRouter';
 export class QuizRouter extends AbstractRouter {
 
   @Get('/answer-result')
+  @UseBefore(AuthService.decodeLoginToken)
   public async getAnswerResult(
     @HeaderParam('authorization', { required: true }) token: string, //
   ): Promise<IAnswerResult> {
@@ -68,6 +70,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/bonus-token')
+  @UseBefore(AuthService.decodeLoginToken)
   public async getCanUseBonusToken(
     @HeaderParam('authorization', { required: true }) token: string, //
   ): Promise<boolean> {
@@ -110,7 +113,10 @@ export class QuizRouter extends AbstractRouter {
       },
     ],
   })
-  @UseBefore(routeCache.cacheSeconds(5, req => `${RoutingCache.QuizStatus}_${req.params.quizName}`))
+  @UseBefore(...[
+    AuthService.decodeLoginToken,
+    routeCache.cacheSeconds(5, req => `${RoutingCache.QuizStatus}_${req.params.quizName}`),
+  ])
   public async getIsAvailableQuiz(
     @Params() params: { [key: string]: any }, //
     @HeaderParam('authorization', { required: false }) token: string, //
@@ -269,6 +275,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/upload')
+  @UseBefore(AuthService.decodeLoginToken)
   public async uploadQuiz(
     @HeaderParam('authorization') privateKey: string, //
     @UploadedFiles('uploadFiles[]') uploadedFiles: any, //
@@ -320,6 +327,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/next')
+  @UseBefore(AuthService.decodeLoginToken)
   public async startQuiz(
     @HeaderParam('authorization') token: string, //
     @BodyParam('quizName') quizName: string, //
@@ -442,6 +450,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/start-time')
+  @UseBefore(AuthService.decodeLoginToken)
   public async getStartTime(@HeaderParam('authorization') token: string): Promise<number> {
     const member = await MemberDAO.getMemberByToken(token);
     if (!member) {
@@ -550,6 +559,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/settings')
+  @UseBefore(AuthService.decodeLoginToken)
   public async updateQuizSettings(
     @HeaderParam('authorization') token: string, //
     @BodyParam('quizName') quizName: string, //
@@ -578,6 +588,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Put('/')
+  @UseBefore(AuthService.decodeLoginToken)
   public async addQuiz(
     @HeaderParam('authorization') privateKey: string, //
     @BodyParam('quiz') quiz: IQuiz, //
@@ -669,6 +680,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Put('/save')
+  @UseBefore(AuthService.decodeLoginToken)
   public async saveQuiz(
     @HeaderParam('authorization') privateKey: string, //
     @BodyParam('quiz') quiz: IQuiz, //
@@ -709,6 +721,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Delete('/active/:quizName')
+  @UseBefore(AuthService.decodeLoginToken)
   public async deleteActiveQuiz(
     @Param('quizName') quizName: string, //
     @HeaderParam('authorization') privateKey: string, //
@@ -728,6 +741,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Delete('/:quizName')
+  @UseBefore(AuthService.decodeLoginToken)
   public async deleteQuiz(
     @Param('quizName') quizName: string, //
     @HeaderParam('authorization') privateKey: string, //
@@ -752,6 +766,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/reset/:quizName')
+  @UseBefore(AuthService.decodeLoginToken)
   public async resetQuiz(
     @Param('quizName') quizName: string, //
     @HeaderParam('authorization') privateKey: string, //
@@ -774,7 +789,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/export/:quizName/:privateKey/:theme/:language') //
-  @UseBefore(routeCache.cacheSeconds(5, req => `${RoutingCache.QuizExportSheet}_${req.url}`))
+  @UseBefore(
+    AuthService.decodeLoginToken,
+    routeCache.cacheSeconds(5, req => `${RoutingCache.QuizExportSheet}_${req.url}`)
+  )
   @ContentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') //
   public async getExportFile(
     @Param('quizName') quizName: string, //
@@ -829,9 +847,12 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/leaderboard/:quizName/:amount/:questionIndex?') //
-  @UseBefore(routeCache.cacheSeconds(20, (req: Request) => {
-    return `${req.url}_${req.headers.authorization}`;
-  }))
+  @UseBefore(
+    AuthService.decodeLoginToken,
+    routeCache.cacheSeconds(20, (req: Request) => {
+      return `${req.url}_${req.headers.authorization}`;
+    })
+  )
   @OpenAPI({
     summary: 'Returns the leaderboard data',
     parameters: [
@@ -894,6 +915,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/private')
+  @UseBefore(AuthService.decodeLoginToken)
   private async setQuizAsPrivate(@BodyParam('name') quizName: string, @HeaderParam('authorization') privateKey: string): Promise<void> {
     const existingQuiz = await QuizDAO.getQuizByName(quizName);
     if (!existingQuiz) {
@@ -907,6 +929,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/public')
+  @UseBefore(AuthService.decodeLoginToken)
   private async getPublicQuizzes(@HeaderParam('authorization') privateKey: string): Promise<Array<QuizModelItem>> {
     return (
       await QuizDAO.getAllPublicQuizzes()
@@ -914,6 +937,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Post('/public/init')
+  @UseBefore(AuthService.decodeLoginToken)
   private async initQuizInstance(
     @BodyParam('name') quizName: string,
     @BodyParam('readingConfirmationEnabled', {required: false}) readingConfirmationEnabled: boolean,
@@ -967,6 +991,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/public/amount')
+  @UseBefore(AuthService.decodeLoginToken)
   private async getPublicQuizAmount(@HeaderParam('authorization') privateKey: string): Promise<number> {
     return (
       await this.getPublicQuizzes(privateKey)
@@ -974,6 +999,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/public/own')
+  @UseBefore(AuthService.decodeLoginToken)
   private async getOwnPublicQuizzes(@HeaderParam('authorization') privateKey: string): Promise<Array<QuizModelItem>> {
     return (
       await QuizDAO.getAllPublicQuizzes()
@@ -981,6 +1007,7 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/public/amount/own')
+  @UseBefore(AuthService.decodeLoginToken)
   private async getOwnPublicQuizAmount(@HeaderParam('authorization') privateKey: string): Promise<number> {
     return (
       await this.getOwnPublicQuizzes(privateKey)
@@ -994,7 +1021,10 @@ export class QuizRouter extends AbstractRouter {
   }
 
   @Get('/quiz/:quizName?') //
-  @UseBefore(routeCache.cacheSeconds(10, req => `${RoutingCache.QuizData}_${req.params.quizName}`))
+  @UseBefore(
+    AuthService.decodeLoginToken,
+    routeCache.cacheSeconds(10, req => `${RoutingCache.QuizData}_${req.params.quizName}`)
+  )
   @OpenAPI({
     summary: 'Returns the data of a quiz',
     parameters: [

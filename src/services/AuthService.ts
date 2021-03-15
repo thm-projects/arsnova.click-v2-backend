@@ -1,3 +1,4 @@
+import { NextFunction, Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { UnauthorizedError } from 'routing-controllers';
 import UserDAO from '../db/UserDAO';
@@ -62,5 +63,14 @@ export class AuthService {
     return jwt.verify(token, settings.jwtSecret, {
       algorithms: ['HS512'],
     });
+  }
+
+  public static decodeLoginToken(req: Request, res: Response, next: NextFunction): void {
+    const token = req.headers.authorization;
+    req.headers.authorization = token?.match(/bearer /i) ? (jwt.verify(token.substr(7), settings.jwtSecret, {
+      algorithms: ['HS512'],
+    }) as any).privateKey : token;
+
+    return next();
   }
 }

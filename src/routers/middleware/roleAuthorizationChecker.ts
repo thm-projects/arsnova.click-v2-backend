@@ -17,28 +17,18 @@ export async function roleAuthorizationChecker(action: Action, searchRoles: User
         return false;
       }
 
-      if (action.request.headers.authorization.startsWith('Basic ')) {
-        const encBasicAuth = (action.request.headers.authorization || '').replace('Basic ', '');
-        const decBasicAuth = Buffer.from(encBasicAuth, 'base64').toString().split(':');
-
-        if (!decBasicAuth || decBasicAuth.length !== 2) {
-          return false;
-        }
-
-        username = decBasicAuth[0];
-        password = decBasicAuth[1];
-      } else if (action.request.headers.authorization.startsWith('Bearer ')) {
-        const token = action.request.headers.authorization.replace('Bearer ', '');
-        const decodedToken = AuthService.decodeToken(token);
-
-        if (typeof decodedToken !== 'object' || !(decodedToken as any).name) {
-          return false;
-        }
-
-        return (searchRoles as unknown as Array<string>).some(role => (decodedToken as any).userAuthorizations.includes(UserRole[role]));
+      if (action.request.headers.authorization.startsWith('Bearer ')) {
+        action.request.headers.authorization = action.request.headers.authorization.replace('Bearer ', '');
       }
 
-      return false;
+      const decodedToken = AuthService.decodeToken(action.request.headers.authorization);
+
+      if (typeof decodedToken !== 'object' || !(decodedToken as any).name) {
+        return false;
+      }
+      action.request.headers.authorization = (decodedToken as any).privateKey;
+
+      return (searchRoles as unknown as Array<string>).some(role => (decodedToken as any).userAuthorizations.includes(UserRole[role]));
     }
 
     const authenticated = await AuthService.authenticate({

@@ -351,7 +351,11 @@ export class LibRouter extends AbstractRouter {
       token = await AuthService.generateToken(user);
       await UserDAO.updateUser(user.id, { token });
       const quizzes = await QuizDAO.getQuizzesByPrivateKey(user.privateKey) || [];
-      const parsedQuizzes = await Promise.all(quizzes.map(quiz => MatchAssetCachedQuiz(quiz.toJSON({getters: true}))));
+      const parsedQuizzes = await Promise.all(
+        quizzes
+          .filter(quiz => quiz.questionList?.length)
+          .map(quiz => MatchAssetCachedQuiz(quiz.toJSON({getters: true})))
+      );
 
       return {
         status: StatusProtocol.Success,
