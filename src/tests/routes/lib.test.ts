@@ -35,12 +35,12 @@ class LibRouterTestSuite {
     const sandbox = sinon.createSandbox();
     sandbox.stub(puppeteer, 'launch').value(() => new Promise(resolve => resolve({
       newPage: () => new Promise(resolve2 => resolve2({
-        setViewport: () => new Promise(resolve1 => resolve1()),
-        setContent: () => new Promise(resolve1 => resolve1()),
-        addStyleTag: () => new Promise(resolve1 => resolve1()),
+        setViewport: () => new Promise<void>(resolve1 => resolve1()),
+        setContent: () => new Promise<void>(resolve1 => resolve1()),
+        addStyleTag: () => new Promise<void>(resolve1 => resolve1()),
         screenshot: () => new Promise(resolve1 => resolve1(Buffer.from([1]))),
       })),
-      close: () => new Promise(resolve1 => resolve1()),
+      close: () => new Promise<void>(resolve1 => resolve1()),
     })));
 
     const res = await chai.request(router).post(`${this._baseApiRoute}/image/quiz`).send({

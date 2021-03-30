@@ -172,7 +172,7 @@ class ExcelExportTestSuite {
       mf: (i18n.__mf as unknown as MessageFormat),
     });
 
-    await new Promise(resolve => wb.renderingFinished.once('done', () => {
+    await new Promise<void>(resolve => wb.renderingFinished.once('done', () => {
       resolve();
     }));
     const buffer = await wb.writeToBuffer();

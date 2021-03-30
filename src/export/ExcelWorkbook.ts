@@ -100,6 +100,6 @@ export class ExcelWorkbook implements IExcelWorkbook {
     }
     this._worksheets.push(new ArchivedQuizWorksheet(worksheetOptions));
 
-    return await Promise.all(this._worksheets.map(val => new Promise(resolve => val.renderingFinished.on('done', () => resolve()))));
+    return await Promise.all(this._worksheets.map(val => new Promise<void>(resolve => val.renderingFinished.on('done', () => resolve()))));
   }
 }

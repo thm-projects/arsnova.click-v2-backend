@@ -817,7 +817,7 @@ export class QuizRouter extends AbstractRouter {
       quiz: parsedQuiz,
       mf: res.__mf,
     });
-    await new Promise(resolve => wb.renderingFinished.on('done', () => resolve()));
+    await new Promise<void>(resolve => wb.renderingFinished.on('done', () => resolve()));
     const buffer = await wb.writeToBuffer();
     res.header('Content-Length', buffer.length.toString());
 

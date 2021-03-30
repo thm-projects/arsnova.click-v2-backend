@@ -9,10 +9,10 @@ const MongoMemoryServer = require('mongodb-memory-server').MongoMemoryServer;
 prepare(async (done) => {
   process.send = () => true;
   const sandbox = sinon.createSandbox();
-  sandbox.stub(AMQPConnector, 'initConnection').value(() => new Promise(resolve => resolve()));
+  sandbox.stub(AMQPConnector, 'initConnection').value(() => new Promise<void>(resolve => resolve()));
   sandbox.stub(AMQPConnector, 'channel').value({
-    deleteExchange: () => new Promise(resolve => resolve()),
-    assertExchange: () => new Promise(resolve => resolve()),
+    deleteExchange: () => new Promise<void>(resolve => resolve()),
+    assertExchange: () => new Promise<void>(resolve => resolve()),
     publish: () => {},
   });
 
